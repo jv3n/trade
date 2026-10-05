@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 import { StbToast } from '@portfolioai/ui';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AccountRepository } from '../../core/api/account/account.repository';
@@ -294,6 +294,47 @@ describe('TodayPage', () => {
   });
 
   // A failed call, or stats slower than the candidates, read as « nothing left » and ticked step 4.
+  // #544 : the page rendered off empty data, so a false « to do » / « nothing today » flashed.
+  it('shows no step state while a source is on its way, then the steps once it answers', () => {
+    vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] });
+    vi.setSystemTime(FRIDAY_PREMARKET);
+    const answer = new Subject<Candidate[]>();
+    TestBed.overrideProvider(CandidatesRepository, {
+      useValue: { listForDate: () => answer, promoteDay } as unknown as CandidatesRepository,
+    });
+    const fixture = TestBed.createComponent(TodayPage);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+
+    expect(fixture.componentInstance.stepsLoaded()).toBe(false);
+    expect(el.querySelector('.step-dot')).toBeNull();
+
+    vi.advanceTimersByTime(200);
+    fixture.detectChanges();
+    expect(el.querySelector('.steps ui-skeleton')).not.toBeNull();
+    expect(el.querySelector('.step-dot')).toBeNull();
+
+    answer.next([]);
+    answer.complete();
+    fixture.detectChanges();
+    vi.advanceTimersByTime(300);
+    fixture.detectChanges();
+    expect(el.querySelector('.steps ui-skeleton')).toBeNull();
+    expect(el.querySelector('.step--current')).not.toBeNull();
+  });
+
+  it('a source that fails still lets the steps show — it is answered, not pending', () => {
+    TestBed.overrideProvider(TradingDayRepository, {
+      useValue: {
+        get: () => throwError(() => new Error('500')),
+        put: putTradingDay,
+      } as unknown as TradingDayRepository,
+    });
+    const page = setup();
+
+    expect(page.stepsLoaded()).toBe(true);
+  });
+
   it('keeps the stats step open while the stats to complete are unknown', () => {
     reconciledToday = true;
     candidates = [makeCandidate({ stats: IN_STATS })];
