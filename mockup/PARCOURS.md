@@ -204,6 +204,9 @@ expense, never as a trade.
   their total shares and cost, the day header the **day's total**.
 - A locate is **never cancelled** by the app : once taken it is spent. Deleting one is fixing a
   typo — its account line goes with it.
+- **A locate listed back** on TradeZero (unused, taken by another trader) refunds part of its
+  cost : that refund is an ordinary **adjustment** on the account — typed by hand, or caught by the
+  next morning's reconciliation. The locate itself keeps what was paid : its shares were paid for.
 - **A locate with no candidate** (a ticker off the radar) is typed from the **Account** page.
 - **Not on the Stats page** : it measures trades, and a locate with no trade has nothing to attach
   to there.
@@ -972,8 +975,10 @@ hidden by default, so the gap tile above is what keeps them in sight.
 shares, price per share, the cost shown live. Each locate is its own **read-only line**, like a
 trade's. The **retained P&L of a trade stays gross of locates** — the locate is never inside it,
 or it would be counted twice. A fifth KPI tile, **« Locates » of the period**, shows underneath
-the part **paid for nothing** — on a ticker with no trade that day (today's counts once the session
-is over), in amber : what the discipline costs. The **trade sheet** shows the day's locates on its
+the part **paid for nothing** — on a ticker with no trade that day, today's counted once **New York
+has closed** (16:00, the market clock of the Today page) — in amber : what the discipline costs. It
+is an **upper bound** : a locate listed back and partly refunded still counts in full, its refund
+being an adjustment. The **trade sheet** shows the day's locates on its
 ticker, read-only, with a link to the candidate.
 
 **A figure on the page is current or visibly absent** (#493) : the page loads in three calls — the
