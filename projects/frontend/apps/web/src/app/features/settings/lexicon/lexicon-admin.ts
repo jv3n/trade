@@ -1,19 +1,33 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   MatDialog,
   StbButtonModule,
   StbIconModule,
-  StbProgressSpinnerModule,
+  StbSkeletonTable,
   StbToast,
+  stbLoadGate,
 } from '@portfolioai/ui';
-import { EMPTY, catchError, filter, switchMap, tap } from 'rxjs';
+import { EMPTY, Observable, catchError, filter, switchMap, tap } from 'rxjs';
 
 import { LexiconEntry, LexiconEntryInput } from '../../../core/api/lexicon/lexicon.model';
 import { LexiconRepository } from '../../../core/api/lexicon/lexicon.repository';
 import { ConfirmService } from '../../../core/app-state/confirm.service';
+import {
+  skeletonHeaderKeys,
+  toSkeletonColumns,
+  type SkeletonColumnDefs,
+} from '../../../shared/skeleton-columns/skeleton-columns';
 import { LexiconDialog, LexiconDialogData } from '../../lexicon/lexicon-dialog/lexicon-dialog';
 import { LexiconTable } from '../../lexicon/lexicon-table/lexicon-table';
+
+/** The lexicon table as its skeleton shows it (#539). */
+const SKELETON_COLUMNS: SkeletonColumnDefs = {
+  term: { key: 'lexicon.fields.term' },
+  definition: { key: 'lexicon.fields.definition' },
+  actions: { variant: 'actions' },
+};
 
 /**
  * ADMIN lexicon management — the same shared [LexiconTable] as the public `/lexicon` page, but in
@@ -26,7 +40,7 @@ import { LexiconTable } from '../../lexicon/lexicon-table/lexicon-table';
  */
 @Component({
   selector: 'app-lexicon-admin',
-  imports: [StbButtonModule, StbIconModule, StbProgressSpinnerModule, TranslatePipe, LexiconTable],
+  imports: [StbButtonModule, StbIconModule, TranslatePipe, LexiconTable, StbSkeletonTable],
   templateUrl: './lexicon-admin.html',
   styleUrl: './lexicon-admin.scss',
 })
@@ -38,6 +52,18 @@ export class LexiconAdminPage {
   private readonly toasts = inject(StbToast);
 
   readonly loading = signal(true);
+
+  /** First load only (#539) : a refetch keeps the content on screen. */
+  readonly gate = stbLoadGate(this.loading);
+  private readonly headerLabels = toSignal(
+    this.translate.stream(skeletonHeaderKeys(SKELETON_COLUMNS)) as Observable<
+      Record<string, string>
+    >,
+    { initialValue: {} },
+  );
+  readonly skeletonColumns = computed(() =>
+    toSkeletonColumns(['term', 'definition', 'actions'], SKELETON_COLUMNS, this.headerLabels()),
+  );
   readonly error = signal<string | null>(null);
   readonly entries = signal<LexiconEntry[]>([]);
 

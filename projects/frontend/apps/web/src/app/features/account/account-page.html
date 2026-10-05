@@ -145,6 +145,8 @@
         </mat-card>
       }
     </section>
+  } @else if (gate.skeleton()) {
+    <ui-skeleton-kpi-row [label]="'account.loading' | translate" />
   }
 
   <!-- Morning reconciliation (#198) — the same block as step 1 of the Today page. -->
@@ -203,11 +205,10 @@
       </mat-form-field>
     </div>
 
-    @if (loading()) {
-      <div class="loading-state">
-        <mat-spinner diameter="20" />
-        <span>{{ 'account.loading' | translate }}</span>
-      </div>
+    @if (gate.skeleton()) {
+      <ui-skeleton-table [columns]="skeletonColumns()" [label]="'account.loading' | translate" />
+    } @else if (!gate.content()) {
+      <!-- The first load, inside its show delay : nothing yet, so a fast answer never flashes. -->
     } @else if (movementsFailed()) {
       <div class="empty-state" data-testid="movements-unavailable">
         <mat-icon>cloud_off</mat-icon>
@@ -219,7 +220,7 @@
         <p>{{ 'account.empty' | translate }}</p>
       </div>
     } @else {
-      <div stbTable>
+      <div stbTable class="stb-fade-in" [busy]="loading()">
         <table mat-table [dataSource]="movements()">
           <ng-container matColumnDef="valueDate">
             <th mat-header-cell *matHeaderCellDef>{{ 'account.fields.valueDate' | translate }}</th>

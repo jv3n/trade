@@ -501,6 +501,35 @@ function sessionOf(entry: StatEntry): SessionModel {
   };
 }
 
+/** The listing's columns as its skeleton shows them (#539). */
+const SKELETON_COLUMNS: SkeletonColumnDefs = {
+  tradeDate: { key: 'stats.fields.tradeDate' },
+  ticker: { key: 'stats.fields.ticker', variant: 'ticker' },
+  pattern: { key: 'stats.fields.pattern' },
+  gap: { key: 'stats.fields.gap', variant: 'numeric' },
+  pmPush: { key: 'stats.fields.pmPush', variant: 'numeric' },
+  float: { key: 'stats.fields.float', variant: 'numeric' },
+  volume: { key: 'stats.fields.volume', variant: 'numeric' },
+  locate: { key: 'stats.fields.locate', variant: 'numeric' },
+  openPrice: { key: 'stats.fields.openPriceShort', variant: 'numeric' },
+  hold: { key: 'stats.fields.hold', variant: 'numeric' },
+  pushOpen: { key: 'stats.fields.pushOpen', variant: 'numeric' },
+  hod: { key: 'stats.fields.hod', variant: 'numeric' },
+  lod: { key: 'stats.fields.lod', variant: 'numeric' },
+  eod: { key: 'stats.fields.eod', variant: 'numeric' },
+  dtStart: { key: 'stats.fields.dtStart', variant: 'numeric' },
+  dtTop: { key: 'stats.doubleTop.columnA', variant: 'numeric' },
+  dtLow: { key: 'stats.doubleTop.columnB', variant: 'numeric' },
+  dtRetest: { key: 'stats.doubleTop.columnC', variant: 'numeric' },
+  dtDuration: { key: 'stats.fields.dtDuration', variant: 'numeric' },
+  brief: { key: 'stats.fields.brief' },
+  flags: { key: 'stats.fields.flags' },
+  // The completion tick : an icon button — `$icon-button-size`.
+  completed: { text: '✓', variant: 'blank', width: '36px' },
+  trade: { key: 'stats.fields.trade' },
+  actions: { variant: 'actions' },
+};
+
 /**
  * Stats page — the sheet filled as the day goes and ticked once complete (cf. `mockup/stats.html`
  * and `mockup/PARCOURS.md`, step 5) :
@@ -528,35 +557,6 @@ function sessionOf(entry: StatEntry): SessionModel {
  * column (#193) is the **only** way a trade comes into existence : one per stat, confirmed, and the
  * row shows a link to that trade from then on.
  */
-/** The listing's columns as its skeleton shows them (#539). */
-const SKELETON_COLUMNS: SkeletonColumnDefs = {
-  tradeDate: { key: 'stats.fields.tradeDate' },
-  ticker: { key: 'stats.fields.ticker', variant: 'ticker' },
-  pattern: { key: 'stats.fields.pattern' },
-  gap: { key: 'stats.fields.gap', variant: 'numeric' },
-  pmPush: { key: 'stats.fields.pmPush', variant: 'numeric' },
-  float: { key: 'stats.fields.float', variant: 'numeric' },
-  volume: { key: 'stats.fields.volume', variant: 'numeric' },
-  locate: { key: 'stats.fields.locate', variant: 'numeric' },
-  openPrice: { key: 'stats.fields.openPriceShort', variant: 'numeric' },
-  hold: { key: 'stats.fields.hold', variant: 'numeric' },
-  pushOpen: { key: 'stats.fields.pushOpen', variant: 'numeric' },
-  hod: { key: 'stats.fields.hod', variant: 'numeric' },
-  lod: { key: 'stats.fields.lod', variant: 'numeric' },
-  eod: { key: 'stats.fields.eod', variant: 'numeric' },
-  dtStart: { key: 'stats.fields.dtStart', variant: 'numeric' },
-  dtTop: { key: 'stats.doubleTop.columnA', variant: 'numeric' },
-  dtLow: { key: 'stats.doubleTop.columnB', variant: 'numeric' },
-  dtRetest: { key: 'stats.doubleTop.columnC', variant: 'numeric' },
-  dtDuration: { key: 'stats.fields.dtDuration', variant: 'numeric' },
-  brief: { key: 'stats.fields.brief' },
-  flags: { key: 'stats.fields.flags' },
-  // The completion tick : a small icon button.
-  completed: { text: '✓', variant: 'blank', width: '36px' },
-  trade: { key: 'stats.fields.trade' },
-  actions: { variant: 'actions' },
-};
-
 @Component({
   selector: 'app-stats-page',
   imports: [

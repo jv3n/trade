@@ -108,6 +108,24 @@ function dayKey(day: JournalDay): string {
   return `${day.tradeDate.toDateString()}|${day.ticker}`;
 }
 
+/** The listing's columns as its skeleton shows them (#539). */
+const SKELETON_COLUMNS: SkeletonColumnDefs = {
+  // The chevron of a day with several trades — `$icon-lg`.
+  expand: { variant: 'blank', width: '24px' },
+  tradeDate: { key: 'journal.fields.tradeDate' },
+  ticker: { key: 'journal.fields.ticker', variant: 'ticker' },
+  patterns: { key: 'journal.fields.pattern' },
+  directions: { key: 'journal.fields.direction' },
+  tradeCount: { key: 'journal.fields.tradeCount', variant: 'numeric' },
+  maxSize: { key: 'journal.fields.maxSize', variant: 'numeric' },
+  openPrice: { key: 'journal.fields.openPrice', variant: 'numeric' },
+  exitPrice: { key: 'journal.fields.exitPrice', variant: 'numeric' },
+  durationMinutes: { key: 'journal.fields.cumulatedDuration', variant: 'numeric' },
+  retainedProfitDollars: { key: 'journal.fields.retainedProfitDollars', variant: 'numeric' },
+  retainedGainPercent: { key: 'journal.fields.gainPercent', variant: 'numeric' },
+  actions: { variant: 'actions' },
+};
+
 /**
  * Trading journal landing page — one row per ticker and day (#500), its trades read by opening it,
  * plus :
@@ -132,24 +150,6 @@ function dayKey(day: JournalDay): string {
  * One effect watches (`searchTerm`, `appliedFilter`, `sort`, `pageIndex`, `pageSize`) and
  * refetches when any of them changes.
  */
-/** The listing's columns as its skeleton shows them (#539). */
-const SKELETON_COLUMNS: SkeletonColumnDefs = {
-  // The chevron of a day with several trades.
-  expand: { variant: 'blank', width: '24px' },
-  tradeDate: { key: 'journal.fields.tradeDate' },
-  ticker: { key: 'journal.fields.ticker', variant: 'ticker' },
-  patterns: { key: 'journal.fields.pattern' },
-  directions: { key: 'journal.fields.direction' },
-  tradeCount: { key: 'journal.fields.tradeCount', variant: 'numeric' },
-  maxSize: { key: 'journal.fields.maxSize', variant: 'numeric' },
-  openPrice: { key: 'journal.fields.openPrice', variant: 'numeric' },
-  exitPrice: { key: 'journal.fields.exitPrice', variant: 'numeric' },
-  durationMinutes: { key: 'journal.fields.cumulatedDuration', variant: 'numeric' },
-  retainedProfitDollars: { key: 'journal.fields.retainedProfitDollars', variant: 'numeric' },
-  retainedGainPercent: { key: 'journal.fields.gainPercent', variant: 'numeric' },
-  actions: { variant: 'actions' },
-};
-
 @Component({
   selector: 'app-journal-page',
 

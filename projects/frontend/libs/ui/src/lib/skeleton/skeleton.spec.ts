@@ -20,7 +20,7 @@ import { StbSkeleton } from './skeleton.component';
  *  - **The KPI row and the card take their count** — tiles, lines, and a bare card for a card that
  *    is already on screen.
  */
-type Shown = 'block' | 'table' | 'kpi' | 'card' | 'bare';
+type Shown = 'block' | 'table' | 'kpi' | 'card' | 'bare' | 'decor';
 
 @Component({
   imports: [StbSkeleton, StbSkeletonTable, StbSkeletonKpiRow, StbSkeletonCard],
@@ -40,6 +40,9 @@ type Shown = 'block' | 'table' | 'kpi' | 'card' | 'bare';
       }
       @case ('bare') {
         <ui-skeleton-card label="Loading" bare />
+      }
+      @case ('decor') {
+        <ui-skeleton-card [lines]="2" />
       }
     }
   `,
@@ -121,6 +124,16 @@ describe('skeletons', () => {
 
     expect(el.querySelectorAll('.kpi').length).toBe(5);
     expect(el.querySelector('.kpi-row')?.classList).toContain('kpi-row--five');
+  });
+
+  // A page announces « loading » once : its repeats stay silent instead of nameless busy regions.
+  it('hides a card without a label from assistive tech, as decoration', () => {
+    show('decor');
+
+    const card = el.querySelector('ui-skeleton-card');
+    expect(card?.getAttribute('aria-hidden')).toBe('true');
+    expect(card?.hasAttribute('aria-busy')).toBe(false);
+    expect(card?.querySelector('.cdk-visually-hidden')).toBeNull();
   });
 
   it('draws a card with a title and its lines, and the lines alone when bare', () => {

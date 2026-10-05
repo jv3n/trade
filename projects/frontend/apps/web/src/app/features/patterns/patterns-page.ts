@@ -5,8 +5,10 @@ import { TranslatePipe } from '@ngx-translate/core';
 import {
   StbExpansionModule,
   StbIconModule,
-  StbProgressSpinnerModule,
+  StbSkeleton,
+  StbSkeletonCard,
   StbTabsModule,
+  stbLoadGate,
 } from '@portfolioai/ui';
 import { catchError, forkJoin, map, of } from 'rxjs';
 
@@ -29,9 +31,10 @@ const TABS: readonly Shelf[] = ['pattern', 'notes'];
     DatePipe,
     StbExpansionModule,
     StbIconModule,
-    StbProgressSpinnerModule,
     StbTabsModule,
     TranslatePipe,
+    StbSkeleton,
+    StbSkeletonCard,
   ],
   templateUrl: './patterns-page.html',
   styleUrl: './patterns-page.scss',
@@ -46,6 +49,10 @@ export class PatternsPage {
 
   readonly tabs = TABS;
   readonly loading = signal(true);
+
+  /** First load only (#539) : a refetch keeps the content on screen. */
+  readonly gate = stbLoadGate(this.loading);
+  readonly skeletonSheets = [0, 1, 2, 3];
   readonly sheets = signal<Record<Shelf, Sheet[]>>({ pattern: [], notes: [] });
   readonly tab = signal(0);
   /** Anchors of the open panels ; GUS open on arrival, the sheet the day starts with. */

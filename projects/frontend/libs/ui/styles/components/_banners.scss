@@ -111,15 +111,6 @@
   }
 }
 
-.loading-state {
-  display: flex;
-  align-items: center;
-  gap: s.$space-lg;
-  padding: s.$space-2xl 0;
-  color: var(--color-text-dim);
-  font-size: s.$font-md;
-}
-
 .empty-state {
   display: flex;
   flex-direction: column;
