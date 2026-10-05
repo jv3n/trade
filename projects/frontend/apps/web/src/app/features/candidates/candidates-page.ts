@@ -1,4 +1,4 @@
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe, formatNumber } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
@@ -16,6 +16,7 @@ import { FormField, form, maxLength, required } from '@angular/forms/signals';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
+  MatDialog,
   StbButtonModule,
   StbChipsModule,
   StbDatePickerModule,
@@ -48,6 +49,8 @@ import {
   PROMOTION_PATTERNS,
 } from '../../core/api/candidates/candidates.model';
 import { CandidatesRepository } from '../../core/api/candidates/candidates.repository';
+import { Locate } from '../../core/api/locates/locates.model';
+import { LocatesRepository } from '../../core/api/locates/locates.repository';
 import { Pattern } from '../../core/api/shared/pattern.model';
 import { StatsRepository } from '../../core/api/stats/stats.repository';
 import { ConfirmService } from '../../core/app-state/confirm.service';
@@ -62,9 +65,12 @@ import {
 import {
   EXPENSIVE_LOCATE_PERCENT,
   gapPercent,
+  locateCost,
   locatePercent,
   pushPercent,
+  sumCents,
 } from './candidates.math';
+import { LocatesDialog, LocatesDialogData } from './locates-dialog/locates-dialog';
 import { AtOpenChange, NoPushRate, OpenCard, PushReferences } from './open-card/open-card';
 
 /** The capture form — numbers are `null` until typed. Float and volume in millions. */
@@ -76,6 +82,8 @@ interface CaptureModel {
   floatMillions: number | null;
   volumeMillions: number | null;
   locatePerShare: number | null;
+  /** Shares located at once, at the candidate's quote — saved as a locate with the candidate. */
+  sharesLocated: number | null;
   note: string;
 }
 
@@ -84,6 +92,11 @@ export interface CandidateRow extends Candidate {
   gap: number | null;
   push: number | null;
   locatePct: number | null;
+  /** The day's locates on its ticker, the ones typed on the Account page included. */
+  locates: Locate[];
+  /** Their total shares and cost — `null` with no locate, or when they could not be read. */
+  sharesLocated: number | null;
+  locateCost: number | null;
   /** The patterns it can still be promoted to — one button each, gone once its stat exists. */
   promotableTo: Pattern[];
 }
@@ -99,6 +112,7 @@ function blankCapture(): CaptureModel {
     floatMillions: null,
     volumeMillions: null,
     locatePerShare: null,
+    sharesLocated: null,
     note: '',
   };
 }
@@ -115,6 +129,8 @@ const SKELETON_COLUMNS: SkeletonColumnDefs = {
   volume: { key: 'candidates.fields.volumeShort', variant: 'numeric' },
   locate: { key: 'candidates.fields.locateShort', variant: 'numeric' },
   locatePct: { key: 'candidates.fields.locatePercent', variant: 'numeric' },
+  located: { key: 'candidates.fields.located', variant: 'numeric' },
+  locateCost: { key: 'candidates.fields.locateCost', variant: 'numeric' },
   note: { key: 'candidates.fields.note' },
   actions: { variant: 'actions' },
 };
@@ -134,6 +150,9 @@ const SKELETON_COLUMNS: SkeletonColumnDefs = {
  *   a candidate whose only stat is a DT is left out — the push aimed at is a GUS notion.
  * - **Promotion** — « → GUS » and « → DT » per row, one stat per pattern ; « Tout passer en GUS »
  *   promotes the candidates without any stat, never to DT.
+ * - **Locates (#607)** — « Actions louées » at capture saves a locate at the candidate's quote ; the
+ *   list shows the day's shares located and their cost per ticker, the day header their total, and
+ *   a row's key opens [LocatesDialog] to add or delete one.
  * - **Day navigation** — past days are read-only history : no form, no row actions.
  *
  * One candidate per (day, ticker) : the backend answers 409 on a duplicate, surfaced as a dedicated
@@ -166,6 +185,8 @@ const SKELETON_COLUMNS: SkeletonColumnDefs = {
 })
 export class CandidatesPage {
   private readonly repo = inject(CandidatesRepository);
+  private readonly locatesRepo = inject(LocatesRepository);
+  private readonly dialog = inject(MatDialog);
   private readonly stats = inject(StatsRepository);
   private readonly confirm = inject(ConfirmService);
   private readonly toasts = inject(StbToast);
@@ -187,6 +208,8 @@ export class CandidatesPage {
     'volume',
     'locate',
     'locatePct',
+    'located',
+    'locateCost',
     'note',
     'actions',
   ] as const;
@@ -216,7 +239,16 @@ export class CandidatesPage {
   );
   // A superseded day is dropped, or a slow answer for yesterday lands on today's page (#370).
   private listing?: Subscription;
+  private locatesListing?: Subscription;
   readonly candidates = signal<Candidate[]>([]);
+  /** The day's locates — `null` when they could not be read : the columns show « — ». */
+  readonly dayLocates = signal<Locate[] | null>([]);
+  /** What the day's locates cost, all tickers — `null` when there is none to show. */
+  readonly dayLocateCost = computed(() => {
+    const locates = this.dayLocates();
+    if (!locates?.length) return null;
+    return sumCents(locates.map((l) => l.cost));
+  });
   /**
    * Push at the open of the completed GUS stats — the references of the « À l'open » card. Fetched
    * once : they only move when a stat is completed.
@@ -245,6 +277,7 @@ export class CandidatesPage {
         gap: gapPercent(c.previousClose, c.pmOpen),
         push: pushPercent(c.pmOpen, c.pmHigh),
         locatePct: locatePercent(c.locatePerShare, c.pmOpen),
+        ...this.locatesOf(c.ticker),
         promotableTo: PROMOTION_PATTERNS.filter((p) => !c.stats.some((s) => s.pattern === p)),
       }))
       .sort((a, b) => (b.gap ?? -Infinity) - (a.gap ?? -Infinity)),
@@ -267,6 +300,14 @@ export class CandidatesPage {
 
   readonly gapPreview = computed(() => gapPercent(this.model().previousClose, this.model().pmOpen));
   readonly pushPreview = computed(() => pushPercent(this.model().pmOpen, this.model().pmHigh));
+  readonly locateCostPreview = computed(() =>
+    locateCost(this.model().sharesLocated, this.model().locatePerShare),
+  );
+  /** Shares located with no quote typed : the locate would have no price — blocks the save. */
+  readonly sharesWithoutQuote = computed(() => {
+    const { sharesLocated, locatePerShare } = this.model();
+    return sharesLocated !== null && sharesLocated > 0 && locatePerShare === null;
+  });
   /** PM high typed below the PM open — flagged on the field, blocks the save. */
   readonly pmHighBelowOpen = computed(() => {
     const { pmOpen, pmHigh } = this.model();
@@ -291,12 +332,16 @@ export class CandidatesPage {
       isPositive(m.previousClose) &&
       isPositive(m.pmOpen) &&
       isPositive(m.pmHigh) &&
-      !this.pmHighBelowOpen()
+      !this.pmHighBelowOpen() &&
+      !this.sharesWithoutQuote()
     );
   });
 
   constructor() {
-    inject(DestroyRef).onDestroy(() => this.listing?.unsubscribe());
+    inject(DestroyRef).onDestroy(() => {
+      this.listing?.unsubscribe();
+      this.locatesListing?.unsubscribe();
+    });
     this.load();
   }
 
@@ -317,6 +362,7 @@ export class CandidatesPage {
   goTo(date: Date | null): void {
     if (!date) return;
     this.day.set(startOfDay(date));
+    this.dayLocates.set([]);
     this.resetForm();
     this.load();
   }
@@ -331,6 +377,8 @@ export class CandidatesPage {
     if (!this.canSave() || this.saving()) return;
     const input = this.toInput();
     const id = this.editingId();
+    // The form only offers it on a new capture : an edit's locates live behind the row's key.
+    const shares = id ? null : this.model().sharesLocated;
     const request$: Observable<Candidate> = id
       ? this.repo.update(id, input)
       : this.repo.create(input);
@@ -346,7 +394,8 @@ export class CandidatesPage {
             ),
           );
           this.resetForm();
-          this.load();
+          if (shares) this.takeLocate(saved, shares);
+          else this.load();
         }),
         catchError((err: unknown) => {
           const duplicate = err instanceof HttpErrorResponse && err.status === 409;
@@ -373,6 +422,7 @@ export class CandidatesPage {
       floatMillions: candidate.floatMillions,
       volumeMillions: candidate.volumeMillions,
       locatePerShare: candidate.locatePerShare,
+      sharesLocated: null,
       note: candidate.note ?? '',
     });
     this.focusTicker();
@@ -380,6 +430,79 @@ export class CandidatesPage {
 
   cancelEdit(): void {
     this.resetForm();
+  }
+
+  // ---- Locates (#607) ----
+
+  /** The row's key : its day's locates, and the form that adds one. */
+  openLocates(candidate: Candidate): void {
+    const data: LocatesDialogData = {
+      candidateId: candidate.id,
+      ticker: candidate.ticker,
+      tradingDate: candidate.tradingDate,
+      locatePerShare: candidate.locatePerShare,
+    };
+    this.dialog
+      .open<LocatesDialog, LocatesDialogData, boolean>(LocatesDialog, {
+        data,
+        width: '520px',
+        maxWidth: '95vw',
+        autoFocus: '.locate-add input',
+      })
+      .afterClosed()
+      .pipe(filter(Boolean))
+      .subscribe(() => this.loadLocates());
+  }
+
+  /**
+   * Saves the shares typed at capture as a locate at the candidate's quote. The candidate is already
+   * saved : a failure here says so, and the row's key is where to try again.
+   */
+  private takeLocate(candidate: Candidate, shares: number): void {
+    this.locatesRepo
+      .create({
+        shares,
+        pricePerShare: null,
+        candidateId: candidate.id,
+        tradingDate: null,
+        ticker: null,
+        note: null,
+      })
+      .pipe(
+        catchError(() => {
+          this.toasts.error(
+            this.translate.instant('candidates.snackbar.locateError', {
+              ticker: candidate.ticker,
+            }),
+          );
+          return EMPTY;
+        }),
+        finalize(() => this.load()),
+      )
+      .subscribe();
+  }
+
+  /** A ticker's share of the day's locates. */
+  private locatesOf(
+    ticker: string,
+  ): Pick<CandidateRow, 'locates' | 'sharesLocated' | 'locateCost'> {
+    const locates = (this.dayLocates() ?? []).filter((l) => l.ticker === ticker);
+    if (locates.length === 0) return { locates, sharesLocated: null, locateCost: null };
+    return {
+      locates,
+      sharesLocated: locates.reduce((sum, l) => sum + l.shares, 0),
+      locateCost: sumCents(locates.map((l) => l.cost)),
+    };
+  }
+
+  /** « 2 000 × 0.12 · 1 000 × 0.15 » — what the « Louées » cell adds up. */
+  locatesDetail(row: CandidateRow): string {
+    return row.locates
+      .map(
+        (l) =>
+          `${formatNumber(l.shares, this.locale)} × ${formatNumber(l.pricePerShare, this.locale, '1.2-4')}`,
+      )
+      .join(' · ');
   }
 
   // ---- At the open (#261) ----
@@ -525,6 +648,7 @@ export class CandidatesPage {
   private load(): void {
     // Before `loading.set(true)` : the dropped request's `finalize` resets the flag.
     this.listing?.unsubscribe();
+    this.locatesListing?.unsubscribe();
     this.loading.set(true);
     this.loadError.set(false);
     this.listing = this.repo
@@ -534,12 +658,22 @@ export class CandidatesPage {
         next: (list) => {
           this.candidates.set(list);
           this.loadPushReferences();
+          this.loadLocates();
         },
         error: () => {
           this.candidates.set([]);
           this.loadError.set(true);
         },
       });
+  }
+
+  /** The day's locates — read after the candidates, so a superseded day is dropped with them. */
+  private loadLocates(): void {
+    this.locatesListing?.unsubscribe();
+    this.locatesListing = this.locatesRepo.listForDate(this.day()).subscribe({
+      next: (locates) => this.dayLocates.set(locates),
+      error: () => this.dayLocates.set(null),
+    });
   }
 
   /** Reads the GUS references — the request is shared, so it only goes out once. */

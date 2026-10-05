@@ -148,7 +148,9 @@
       "add": "Ajouter",
       "save": "Enregistrer",
       "pmHighBelowOpen": "Sous l'open PM",
-      "duplicateTicker": "Déjà saisi ce jour-là"
+      "duplicateTicker": "Déjà saisi ce jour-là",
+      "optional": "facultatif",
+      "sharesWithoutQuote": "Saisis d'abord le prix du locate"
     },
     "fields": {
       "pattern": "Pattern",
@@ -166,6 +168,9 @@
       "locate": "Locate ($ / action)",
       "locateShort": "Locate",
       "locatePercent": "Locate / prix",
+      "sharesLocated": "Actions louées",
+      "located": "Louées",
+      "locateCost": "Coût locate",
       "gap": "Gap",
       "push": "Push",
       "note": "Note"
@@ -197,9 +202,12 @@
       "count": "{{count}} candidats · triés par gap",
       "countOne": "{{count}} candidat · trié par gap",
       "empty": "Aucun candidat ce jour-là.",
-      "weekend": "Week-end, pas de séance."
+      "weekend": "Week-end, pas de séance.",
+      "dayLocates": "locates du jour {{amount}}",
+      "locatedHint": "Le total des locates pris sur ce ticker ce jour-là"
     },
     "actions": {
+      "locates": "Locates",
       "edit": "Modifier",
       "delete": "Supprimer",
       "promoteAll": "Tout passer en GUS",
@@ -251,7 +259,31 @@
       "deleteError": "Impossible de supprimer le candidat. Réessaie.",
       "atOpenSaveError": "Impossible d'enregistrer {{ticker}} à l'open. Réessaie.",
       "promoteAllSkipped": "{{tickers}} avaient déjà une stat, laissés de côté.",
-      "promoteAllSkippedOne": "{{tickers}} avait déjà une stat, laissé de côté."
+      "promoteAllSkippedOne": "{{tickers}} avait déjà une stat, laissé de côté.",
+      "locateError": "{{ticker}} ajouté, mais son locate n'a pas été enregistré — ajoute-le depuis la clé de la ligne."
+    },
+    "locates": {
+      "title": "Locates",
+      "lead": "Payés que le trade soit pris ou non : le montant sort du compte à l'enregistrement.",
+      "shares": "Actions",
+      "price": "$ / action",
+      "cost": "Coût ($ US)",
+      "priceHint": "Le prix part de la cote du candidat ; corrige-le si le locate s'est loué à un autre prix.",
+      "add": "Louer",
+      "close": "Fermer",
+      "delete": "Supprimer",
+      "loadError": "Impossible de charger les locates. Réessaie.",
+      "confirmDelete": {
+        "title": "Supprimer ce locate {{ticker}} ?",
+        "message": "Le locate et sa ligne de compte sont supprimés : le montant revient au solde.",
+        "confirm": "Supprimer"
+      },
+      "snackbar": {
+        "createSuccess": "Locate {{ticker}} enregistré.",
+        "deleteSuccess": "Locate supprimé.",
+        "saveError": "Impossible d'enregistrer le locate. Réessaie.",
+        "deleteError": "Impossible de supprimer le locate. Réessaie."
+      }
     }
   },
   "account": {

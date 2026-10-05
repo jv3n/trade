@@ -1,0 +1,95 @@
+<h2 mat-dialog-title>
+  {{ 'candidates.locates.title' | translate }}
+  <mat-chip-set class="title-ticker">
+    <mat-chip stbChip="ticker" disableRipple>{{ data.ticker }}</mat-chip>
+  </mat-chip-set>
+</h2>
+
+<form (submit)="$event.preventDefault(); add()">
+  <mat-dialog-content>
+    <p class="lead">{{ 'candidates.locates.lead' | translate }}</p>
+
+    @if (loadError()) {
+      <div class="error-banner">
+        <mat-icon>error</mat-icon>
+        <span>{{ 'candidates.locates.loadError' | translate }}</span>
+      </div>
+    } @else if (locates().length > 0) {
+      <table class="locate-list">
+        <thead>
+          <tr>
+            <th>{{ 'candidates.locates.shares' | translate }}</th>
+            <th>{{ 'candidates.locates.price' | translate }}</th>
+            <th>{{ 'candidates.locates.cost' | translate }}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (l of locates(); track l.id) {
+            <tr>
+              <td>{{ l.shares | number }}</td>
+              <td>{{ l.pricePerShare | price }}</td>
+              <td>{{ l.cost | number: '1.2-2' }}</td>
+              <td>
+                <button
+                  mat-icon-button
+                  type="button"
+                  stbSize="sm"
+                  (click)="delete(l)"
+                  [matTooltip]="'candidates.locates.delete' | translate"
+                  [attr.aria-label]="'candidates.locates.delete' | translate"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+
+    <div class="locate-add">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'candidates.fields.sharesLocated' | translate }}</mat-label>
+        <input
+          matInput
+          appNumberMask
+          [decimals]="0"
+          [min]="0"
+          [number]="shares()"
+          (numberChange)="shares.set($event)"
+          inputmode="numeric"
+        />
+      </mat-form-field>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'candidates.locates.price' | translate }}</mat-label>
+        <input
+          matInput
+          appNumberMask
+          [decimals]="4"
+          [min]="0"
+          [number]="price()"
+          (numberChange)="price.set($event)"
+          inputmode="decimal"
+        />
+      </mat-form-field>
+      <div class="derived">
+        <span class="derived__label">{{ 'candidates.locates.cost' | translate }}</span>
+        <span class="derived__value" [class.muted]="cost() === null">
+          {{ cost() !== null ? (cost()! | number: '1.2-2') : '—' }}
+        </span>
+      </div>
+    </div>
+    <p class="hint">{{ 'candidates.locates.priceHint' | translate }}</p>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-stroked-button type="button" (click)="close()">
+      {{ 'candidates.locates.close' | translate }}
+    </button>
+    <button mat-flat-button type="submit" [disabled]="!canAdd()">
+      <mat-icon>key</mat-icon>
+      <span>{{ 'candidates.locates.add' | translate }}</span>
+    </button>
+  </mat-dialog-actions>
+</form>

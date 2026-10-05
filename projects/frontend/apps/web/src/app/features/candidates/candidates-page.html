@@ -171,7 +171,39 @@
           <ui-form-field-reset matIconSuffix [for]="locateField" />
         </mat-form-field>
 
-        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="field--note">
+        @if (!editingId()) {
+          <mat-form-field
+            appearance="outline"
+            subscriptSizing="dynamic"
+            [class.field--invalid]="sharesWithoutQuote()"
+          >
+            <mat-label>{{ 'candidates.fields.sharesLocated' | translate }}</mat-label>
+            <input
+              #sharesField
+              matInput
+              appNumberMask
+              [decimals]="0"
+              [min]="0"
+              [placeholder]="'candidates.form.optional' | translate"
+              [number]="model().sharesLocated"
+              (numberChange)="setNumber('sharesLocated', $event)"
+              inputmode="numeric"
+            />
+            <ui-form-field-reset matIconSuffix [for]="sharesField" />
+            @if (sharesWithoutQuote()) {
+              <mat-hint class="warn-hint">{{
+                'candidates.form.sharesWithoutQuote' | translate
+              }}</mat-hint>
+            }
+          </mat-form-field>
+        }
+
+        <mat-form-field
+          appearance="outline"
+          subscriptSizing="dynamic"
+          class="field--note"
+          [class.field--note-wide]="editingId()"
+        >
           <mat-label>{{ 'candidates.fields.note' | translate }}</mat-label>
           <input #noteField matInput autocomplete="off" [formField]="captureForm.note" />
           <ui-form-field-reset matIconSuffix [for]="noteField" />
@@ -190,6 +222,18 @@
               {{ pushPreview() !== null ? (pushPreview()! | number: '1.1-1') + ' %' : '—' }}
             </span>
           </div>
+          @if (!editingId()) {
+            <div class="derived">
+              <span class="derived__label">{{ 'candidates.fields.locateCost' | translate }}</span>
+              <span class="derived__value" [class.muted]="locateCostPreview() === null">
+                {{
+                  locateCostPreview() !== null
+                    ? (locateCostPreview()! | number: '1.2-2') + ('account.usdSuffix' | translate)
+                    : '—'
+                }}
+              </span>
+            </div>
+          }
           @if (editingId()) {
             <button mat-stroked-button type="button" (click)="cancelEdit()">
               {{ 'common.cancel' | translate }}
@@ -225,6 +269,12 @@
       <span class="hint">{{
         'candidates.list.count' | plural: rows().length | translate: { count: rows().length }
       }}</span>
+      @if (dayLocateCost(); as total) {
+        <span class="hint">{{
+          'candidates.list.dayLocates'
+            | translate: { amount: (total | number: '1.2-2') + ('account.usdSuffix' | translate) }
+        }}</span>
+      }
       @if (!readOnly() && promotable().length > 0) {
         <button mat-stroked-button stbSize="sm" type="button" (click)="promoteAll()">
           <mat-icon>keyboard_double_arrow_right</mat-icon>
@@ -349,6 +399,34 @@
             </td>
           </ng-container>
 
+          <ng-container matColumnDef="located">
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              stbCol="numeric"
+              [matTooltip]="'candidates.list.locatedHint' | translate"
+            >
+              {{ 'candidates.fields.located' | translate }}
+            </th>
+            <td
+              mat-cell
+              *matCellDef="let c"
+              stbCol="numeric"
+              [matTooltip]="c.sharesLocated !== null ? locatesDetail(c) : ''"
+            >
+              {{ c.sharesLocated !== null ? (c.sharesLocated | number) : '—' }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="locateCost">
+            <th mat-header-cell *matHeaderCellDef stbCol="numeric">
+              {{ 'candidates.fields.locateCost' | translate }} ({{ 'account.usdUnit' | translate }})
+            </th>
+            <td mat-cell *matCellDef="let c" stbCol="numeric">
+              {{ c.locateCost !== null ? (c.locateCost | number: '1.2-2') : '—' }}
+            </td>
+          </ng-container>
+
           <ng-container matColumnDef="note">
             <th mat-header-cell *matHeaderCellDef>{{ 'candidates.fields.note' | translate }}</th>
             <td mat-cell *matCellDef="let c" class="note-cell" [attr.title]="c.note">
@@ -386,6 +464,16 @@
                 }
               }
               @if (!readOnly()) {
+                <button
+                  mat-icon-button
+                  type="button"
+                  stbSize="sm"
+                  (click)="openLocates(c)"
+                  [matTooltip]="'candidates.actions.locates' | translate"
+                  [attr.aria-label]="'candidates.actions.locates' | translate"
+                >
+                  <mat-icon>key</mat-icon>
+                </button>
                 <button
                   mat-icon-button
                   type="button"
