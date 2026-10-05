@@ -189,6 +189,25 @@ toggle to see the page at two moments of the day, and on a day with nothing to d
 - Locate / price turns amber above 5 % (heavy borrowing cost).
 - Past days are read-only (history).
 
+### Locates (#602)
+
+A locate is paid **before** the trade, and **whether or not the trade happens** — on TradeZero per
+share located, not per share shorted. So it is recorded on its own, and reaches the account as an
+expense, never as a trade.
+
+- **On the candidate** : I type the **shares located** — in the capture form when the locate is
+  taken at once, or later through the **key** of the row, which lists the day's locates on that
+  ticker and adds one. The **cost = shares × locate per share** : the price starts from the
+  candidate's own locate quote, and is corrected when the locate went at another price. Nothing
+  else is typed — no total, no direction (a locate is short by construction).
+- **Several locates per ticker and per day** (a top-up, often at another price) : the row shows
+  their total shares and cost, the day header the **day's total**.
+- A locate is **never cancelled** by the app : once taken it is spent. Deleting one is fixing a
+  typo — its account line goes with it.
+- **A locate with no candidate** (a ticker off the radar) is typed from the **Account** page.
+- **Not on the Stats page** : it measures trades, and a locate with no trade has nothing to attach
+  to there.
+
 ### At the open (9:30)
 
 Once the market opens, an **« À l'open »** card lists the day's candidates — except one whose only
@@ -887,6 +906,7 @@ The balance is **derived from the movements** :
 | Movement | Origin |
 |----------|--------|
 | Trade | **Automatic** — every journal trade shows up with its retained P&L (not editable from the account) |
+| Locate | **Automatic** — every locate shows up as an expense, − shares × price (#602) ; edited on its candidate, not here |
 | Deposit / withdrawal | Typed by hand |
 | Correction | Created by the **morning reconciliation** |
 
@@ -947,6 +967,14 @@ schedule is in [`docs/notes/tradezero-fees.md`](../docs/notes/tradezero-fees.md)
 **The movements table opens on « Trades »** (#473) — the rows the page is opened for ; « Tous les
 types » is one click away, and the period keeps its own default (« Ce mois »). Corrections are
 hidden by default, so the gap tile above is what keeps them in sight.
+
+**Locates** (#602) : a **« Locate »** button types a locate with no candidate — date, ticker,
+shares, price per share, the cost shown live. Each locate is its own **read-only line**, like a
+trade's. The **retained P&L of a trade stays gross of locates** — the locate is never inside it,
+or it would be counted twice. A fifth KPI tile, **« Locates » of the period**, shows underneath
+the part **paid for nothing** — on a ticker with no trade that day (today's counts once the session
+is over), in amber : what the discipline costs. The **trade sheet** shows the day's locates on its
+ticker, read-only, with a link to the candidate.
 
 **A figure on the page is current or visibly absent** (#493) : the page loads in three calls — the
 period's figures (the KPI tiles), the balance curve, the movements. When one fails, what it feeds

@@ -1113,3 +1113,21 @@ td.num .sk-num {
     transform: rotate(360deg);
   }
 }
+
+/* #602 : la boîte des locates d'un candidat — la liste du jour, puis l'ajout. */
+dialog.locate-dialog {
+  width: min(520px, calc(100vw - 32px));
+}
+
+.locate-list {
+  width: 100%;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.locate-add {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  align-items: end;
+}

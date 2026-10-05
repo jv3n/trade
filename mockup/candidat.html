@@ -503,11 +503,14 @@
             <div class="field"><label>High PM ($)</label><input class="input" id="pm-high" placeholder="4,62" /></div>
             <div class="field"><label>Float (M)</label><input class="input" placeholder="8,2" /></div>
             <div class="field"><label>Volume (M)</label><input class="input" placeholder="3,1" /></div>
-            <div class="field"><label>Locate ($ / action)</label><input class="input" placeholder="0,03" /></div>
+            <div class="field"><label>Locate ($ / action)</label><input class="input" id="cap-locate" placeholder="0,03" /></div>
+            <!-- #602 : le locate pris tout de suite, à la saisie — facultatif, il peut venir plus tard depuis la ligne. -->
+            <div class="field"><label>Actions louées</label><input class="input" id="cap-shares" placeholder="facultatif" /></div>
             <div class="field wide"><label>Note</label><input class="input" placeholder="Résistance 4,65 — high PM, pas de news" /></div>
             <div class="derived-box">
               <div class="field"><label>Gap</label><span class="derived muted" id="gap-preview">—</span></div>
               <div class="field"><label>Push</label><span class="derived muted" id="push-preview">—</span></div>
+              <div class="field"><label>Coût locate</label><span class="derived muted" id="cost-preview">—</span></div>
               <button class="btn btn-primary">Ajouter</button>
             </div>
           </form>
@@ -617,7 +620,7 @@
 
         <section class="card">
           <h2>
-            Vendredi 18 septembre <span class="hint">6 candidats · 2 déjà en stats · triés par gap</span>
+            Vendredi 18 septembre <span class="hint">6 candidats · 2 déjà en stats · triés par gap · locates du jour 520,00 $ US</span>
             <button class="btn btn-sm" data-confirm-title="Passer 4 candidats en GUS ?" data-confirm-body="BNRG, MLGO, ATXG et VERB deviennent des stats GUS, à compléter au fil de la séance. SGBX et NXTT ont déjà leur stat. Un DT reste un choix à la main (« → DT »), quand il se forme." data-confirm-ok="Tout passer en GUS"><span class="icon">keyboard_double_arrow_right</span> Tout passer en GUS</button>
           </h2>
           <div class="table-wrap">
@@ -634,6 +637,8 @@
                   <th class="num">Volume</th>
                   <th class="num">Locate</th>
                   <th class="num">Locate / prix</th>
+                  <th class="num" title="Le total des locates pris sur ce ticker aujourd'hui">Louées</th>
+                  <th class="num">Coût ($ US)</th>
                   <th>Note</th>
                   <th></th>
                 </tr>
@@ -650,11 +655,13 @@
                   <td class="num">9,7 M</td>
                   <td class="num">0,12</td>
                   <td class="num" style="color: var(--warn)">6,5 %</td>
+                  <td class="num" title="2 locates : 2 000 × 0,12 puis 1 000 × 0,12">3 000</td>
+                  <td class="num">360,00</td>
                   <td class="note-cell" title="Locate cher, float serré — attention au squeeze">Locate cher, float serré — attention au squeeze</td>
                   <td class="num" style="white-space: nowrap">
                     <a class="tag tag-accent" href="stats.html#session-panel" title="Ouvrir sa stat GUS"><span class="icon icon-sm">check</span> GUS</a>
                     <a class="tag tag-accent" href="stats.html#dt-panel" title="Ouvrir sa stat DT"><span class="icon icon-sm">check</span> DT</a>
-                    <button class="btn btn-sm btn-icon" title="Modifier"><span class="icon">edit</span></button> <button class="btn btn-sm btn-icon" title="Supprimer" data-confirm-title="Supprimer le candidat {ticker} ?" data-confirm-body="Le candidat est supprimé définitivement. S\x27il est déjà passé en stat, la stat est conservée." data-confirm-ok="Supprimer" data-confirm-danger><span class="icon">delete</span></button>
+                    <button class="btn btn-sm btn-icon" title="Locates" data-open-locate><span class="icon">key</span></button> <button class="btn btn-sm btn-icon" title="Modifier"><span class="icon">edit</span></button> <button class="btn btn-sm btn-icon" title="Supprimer" data-confirm-title="Supprimer le candidat {ticker} ?" data-confirm-body="Le candidat est supprimé définitivement. S\x27il est déjà passé en stat, la stat est conservée." data-confirm-ok="Supprimer" data-confirm-danger><span class="icon">delete</span></button>
                   </td>
                 </tr>
                 <tr>
@@ -668,11 +675,13 @@
                   <td class="num">2,1 M</td>
                   <td class="num">0,08</td>
                   <td class="num">1,5 %</td>
+                  <td class="num muted">—</td>
+                  <td class="num muted">—</td>
                   <td class="note-cell" title="Offering possible, surveiller les filings">Offering possible, surveiller les filings</td>
                   <td class="num" style="white-space: nowrap">
                     <button class="btn btn-sm" data-confirm-title="Passer {ticker} en stat GUS ?" data-confirm-body="La stat GUS reprend toutes les données du candidat (gap, push, float, volume, locate, note, open de 9h30). Tu la compléteras au fil de la séance." data-confirm-ok="Passer en GUS"><span class="icon">arrow_forward</span> GUS</button>
                     <button class="btn btn-sm" title="Quand le double top se forme, en fin de matinée" data-confirm-title="Passer {ticker} en stat DT ?" data-confirm-body="La stat DT reprend le premarket du candidat ; tu y noteras le départ, le top, le bas du rejet et le retest." data-confirm-ok="Passer en DT"><span class="icon">arrow_forward</span> DT</button>
-                    <button class="btn btn-sm btn-icon" title="Modifier"><span class="icon">edit</span></button> <button class="btn btn-sm btn-icon" title="Supprimer" data-confirm-title="Supprimer le candidat {ticker} ?" data-confirm-body="Le candidat est supprimé définitivement. S\x27il est déjà passé en stat, la stat est conservée." data-confirm-ok="Supprimer" data-confirm-danger><span class="icon">delete</span></button>
+                    <button class="btn btn-sm btn-icon" title="Locates" data-open-locate><span class="icon">key</span></button> <button class="btn btn-sm btn-icon" title="Modifier"><span class="icon">edit</span></button> <button class="btn btn-sm btn-icon" title="Supprimer" data-confirm-title="Supprimer le candidat {ticker} ?" data-confirm-body="Le candidat est supprimé définitivement. S\x27il est déjà passé en stat, la stat est conservée." data-confirm-ok="Supprimer" data-confirm-danger><span class="icon">delete</span></button>
                   </td>
                 </tr>
                 <tr>
@@ -686,11 +695,13 @@
                   <td class="num">4,8 M</td>
                   <td class="num">0,04</td>
                   <td class="num">1,3 %</td>
+                  <td class="num" >2 000</td>
+                  <td class="num">160,00</td>
                   <td class="note-cell" title="Résistance 3,75">Résistance 3,75</td>
                   <td class="num" style="white-space: nowrap">
                     <button class="btn btn-sm" data-confirm-title="Passer {ticker} en stat GUS ?" data-confirm-body="La stat GUS reprend toutes les données du candidat (gap, push, float, volume, locate, note, open de 9h30). Tu la compléteras au fil de la séance." data-confirm-ok="Passer en GUS"><span class="icon">arrow_forward</span> GUS</button>
                     <button class="btn btn-sm" title="Quand le double top se forme, en fin de matinée" data-confirm-title="Passer {ticker} en stat DT ?" data-confirm-body="La stat DT reprend le premarket du candidat ; tu y noteras le départ, le top, le bas du rejet et le retest." data-confirm-ok="Passer en DT"><span class="icon">arrow_forward</span> DT</button>
-                    <button class="btn btn-sm btn-icon" title="Modifier"><span class="icon">edit</span></button> <button class="btn btn-sm btn-icon" title="Supprimer" data-confirm-title="Supprimer le candidat {ticker} ?" data-confirm-body="Le candidat est supprimé définitivement. S\x27il est déjà passé en stat, la stat est conservée." data-confirm-ok="Supprimer" data-confirm-danger><span class="icon">delete</span></button>
+                    <button class="btn btn-sm btn-icon" title="Locates" data-open-locate><span class="icon">key</span></button> <button class="btn btn-sm btn-icon" title="Modifier"><span class="icon">edit</span></button> <button class="btn btn-sm btn-icon" title="Supprimer" data-confirm-title="Supprimer le candidat {ticker} ?" data-confirm-body="Le candidat est supprimé définitivement. S\x27il est déjà passé en stat, la stat est conservée." data-confirm-ok="Supprimer" data-confirm-danger><span class="icon">delete</span></button>
                   </td>
                 </tr>
                 <tr>
@@ -704,11 +715,13 @@
                   <td class="num">1,3 M</td>
                   <td class="num">0,01</td>
                   <td class="num">1,1 %</td>
+                  <td class="num muted">—</td>
+                  <td class="num muted">—</td>
                   <td class="note-cell"></td>
                   <td class="num" style="white-space: nowrap">
                     <button class="btn btn-sm" data-confirm-title="Passer {ticker} en stat GUS ?" data-confirm-body="La stat GUS reprend toutes les données du candidat (gap, push, float, volume, locate, note, open de 9h30). Tu la compléteras au fil de la séance." data-confirm-ok="Passer en GUS"><span class="icon">arrow_forward</span> GUS</button>
                     <button class="btn btn-sm" title="Quand le double top se forme, en fin de matinée" data-confirm-title="Passer {ticker} en stat DT ?" data-confirm-body="La stat DT reprend le premarket du candidat ; tu y noteras le départ, le top, le bas du rejet et le retest." data-confirm-ok="Passer en DT"><span class="icon">arrow_forward</span> DT</button>
-                    <button class="btn btn-sm btn-icon" title="Modifier"><span class="icon">edit</span></button> <button class="btn btn-sm btn-icon" title="Supprimer" data-confirm-title="Supprimer le candidat {ticker} ?" data-confirm-body="Le candidat est supprimé définitivement. S\x27il est déjà passé en stat, la stat est conservée." data-confirm-ok="Supprimer" data-confirm-danger><span class="icon">delete</span></button>
+                    <button class="btn btn-sm btn-icon" title="Locates" data-open-locate><span class="icon">key</span></button> <button class="btn btn-sm btn-icon" title="Modifier"><span class="icon">edit</span></button> <button class="btn btn-sm btn-icon" title="Supprimer" data-confirm-title="Supprimer le candidat {ticker} ?" data-confirm-body="Le candidat est supprimé définitivement. S\x27il est déjà passé en stat, la stat est conservée." data-confirm-ok="Supprimer" data-confirm-danger><span class="icon">delete</span></button>
                   </td>
                 </tr>
                 <tr>
@@ -722,11 +735,13 @@
                   <td class="num">0,9 M</td>
                   <td class="num">0,05</td>
                   <td class="num">0,6 %</td>
+                  <td class="num muted">—</td>
+                  <td class="num muted">—</td>
                   <td class="note-cell" title="Gros float, sans doute à écarter">Gros float, sans doute à écarter</td>
                   <td class="num" style="white-space: nowrap">
                     <button class="btn btn-sm" data-confirm-title="Passer {ticker} en stat GUS ?" data-confirm-body="La stat GUS reprend toutes les données du candidat (gap, push, float, volume, locate, note, open de 9h30). Tu la compléteras au fil de la séance." data-confirm-ok="Passer en GUS"><span class="icon">arrow_forward</span> GUS</button>
                     <button class="btn btn-sm" title="Quand le double top se forme, en fin de matinée" data-confirm-title="Passer {ticker} en stat DT ?" data-confirm-body="La stat DT reprend le premarket du candidat ; tu y noteras le départ, le top, le bas du rejet et le retest." data-confirm-ok="Passer en DT"><span class="icon">arrow_forward</span> DT</button>
-                    <button class="btn btn-sm btn-icon" title="Modifier"><span class="icon">edit</span></button> <button class="btn btn-sm btn-icon" title="Supprimer" data-confirm-title="Supprimer le candidat {ticker} ?" data-confirm-body="Le candidat est supprimé définitivement. S\x27il est déjà passé en stat, la stat est conservée." data-confirm-ok="Supprimer" data-confirm-danger><span class="icon">delete</span></button>
+                    <button class="btn btn-sm btn-icon" title="Locates" data-open-locate><span class="icon">key</span></button> <button class="btn btn-sm btn-icon" title="Modifier"><span class="icon">edit</span></button> <button class="btn btn-sm btn-icon" title="Supprimer" data-confirm-title="Supprimer le candidat {ticker} ?" data-confirm-body="Le candidat est supprimé définitivement. S\x27il est déjà passé en stat, la stat est conservée." data-confirm-ok="Supprimer" data-confirm-danger><span class="icon">delete</span></button>
                   </td>
                 </tr>
                 <tr>
@@ -740,11 +755,13 @@
                   <td class="num">2,2 M</td>
                   <td class="num">0,02</td>
                   <td class="num">1,2 %</td>
+                  <td class="num muted">—</td>
+                  <td class="num muted">—</td>
                   <td class="note-cell" title="Capturé à 11h20, passé en DT — top à 2,64, rejet en cours">Capturé à 11h20, passé en DT — top à 2,64, rejet en cours</td>
                   <td class="num" style="white-space: nowrap">
                     <a class="tag tag-accent" href="stats.html#dt-panel" title="Ouvrir sa stat DT"><span class="icon icon-sm">check</span> DT</a>
                     <button class="btn btn-sm" data-confirm-title="Passer {ticker} en stat GUS ?" data-confirm-body="La stat GUS reprend toutes les données du candidat (gap, push, float, volume, locate, note, open de 9h30). Tu la compléteras au fil de la séance." data-confirm-ok="Passer en GUS"><span class="icon">arrow_forward</span> GUS</button>
-                    <button class="btn btn-sm btn-icon" title="Modifier"><span class="icon">edit</span></button> <button class="btn btn-sm btn-icon" title="Supprimer" data-confirm-title="Supprimer le candidat {ticker} ?" data-confirm-body="Le candidat est supprimé définitivement. S\x27il est déjà passé en stat, la stat est conservée." data-confirm-ok="Supprimer" data-confirm-danger><span class="icon">delete</span></button>
+                    <button class="btn btn-sm btn-icon" title="Locates" data-open-locate><span class="icon">key</span></button> <button class="btn btn-sm btn-icon" title="Modifier"><span class="icon">edit</span></button> <button class="btn btn-sm btn-icon" title="Supprimer" data-confirm-title="Supprimer le candidat {ticker} ?" data-confirm-body="Le candidat est supprimé définitivement. S\x27il est déjà passé en stat, la stat est conservée." data-confirm-ok="Supprimer" data-confirm-danger><span class="icon">delete</span></button>
                   </td>
                 </tr>
               </tbody>
@@ -752,10 +769,50 @@
           </div>
         </section>
 
+
+        <!-- #602 : les locates d'un candidat — ceux du jour, et l'ajout d'un nouveau (un complément se loue souvent à un autre prix). -->
+        <dialog class="confirm locate-dialog" id="locate-dialog">
+          <form method="dialog">
+            <div class="confirm-body">
+              <span class="confirm-icon"><span class="icon">key</span></span>
+              <div>
+                <h3>Locates <span class="ticker" id="locate-ticker">SGBX</span></h3>
+                <p class="muted" style="margin: 0 0 12px">Payés que le trade soit pris ou non : le montant sort du compte à l'enregistrement.</p>
+                <table class="locate-list" id="locate-list">
+                  <thead>
+                    <tr><th class="num">Actions</th><th class="num">$ / action</th><th class="num">Coût ($ US)</th><th></th></tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td class="num">2 000</td><td class="num">0,12</td><td class="num">240,00</td>
+                      <td class="num"><button type="button" class="btn btn-sm btn-icon" title="Supprimer" data-confirm-title="Supprimer ce locate ?" data-confirm-body="Le locate et sa ligne de compte sont supprimés : le montant revient au solde." data-confirm-ok="Supprimer" data-confirm-danger><span class="icon">delete</span></button></td>
+                    </tr>
+                    <tr>
+                      <td class="num">1 000</td><td class="num">0,12</td><td class="num">120,00</td>
+                      <td class="num"><button type="button" class="btn btn-sm btn-icon" title="Supprimer" data-confirm-title="Supprimer ce locate ?" data-confirm-body="Le locate et sa ligne de compte sont supprimés : le montant revient au solde." data-confirm-ok="Supprimer" data-confirm-danger><span class="icon">delete</span></button></td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div class="locate-add">
+                  <div class="field"><label>Actions louées</label><input class="input" id="locate-shares" placeholder="1 000" /></div>
+                  <div class="field"><label>$ / action</label><input class="input" id="locate-price" value="0,12" /></div>
+                  <div class="field"><label>Coût</label><span class="derived muted" id="locate-cost">—</span></div>
+                </div>
+                <p class="muted" style="margin: 8px 0 0; font-size: 12px">Le prix part de la cote du candidat ; corrige-le si le locate s'est loué à un autre prix.</p>
+              </div>
+            </div>
+            <div class="confirm-actions">
+              <button class="btn" value="cancel">Fermer</button>
+              <button class="btn btn-primary" value="ok">Louer</button>
+            </div>
+          </form>
+        </dialog>
         <p class="mockup-note">
           Maquette statique — saisis : ticker, clôture veille (bougie daily), open PM à 4h00, high PM, float, volume (TradeZero, au
           moment de la saisie), locate, note. Calculés : gap = (open PM − clôture veille) ÷ clôture veille, push = (high PM − open PM) ÷
-          open PM, locate / prix = locate ÷ open PM. « → GUS » / « → DT » crée la ligne de stats à partir du candidat, dans ce pattern (action manuelle).
+          open PM, locate / prix = locate ÷ open PM. Locates (#602) : « Actions louées » à la saisie ou, plus tard, la clé
+          de la ligne ; coût = actions × locate par action, le prix partant de la cote du candidat. Plusieurs locates par ticker
+          et par jour (un complément) : la ligne montre leur total. Chaque locate sort du compte, trade pris ou non. « → GUS » / « → DT » crée la ligne de stats à partir du candidat, dans ce pattern (action manuelle).
           À l'open : l'open et le push visé sont saisis à 9h30 et enregistrés sur le candidat (à la sortie du champ, pas de
           modale : c'est une édition). Prix visé = open × (1 + push visé). Le push visé suit le repère choisi (médiane, moyenne,
           3ᵉ quartile, max du push à l'open des stats complétées du même pattern) tant qu'il n'est pas modifié à la main ; une valeur
@@ -974,8 +1031,49 @@
           const high = parse($('pm-high').value);
           show($('gap-preview'), close, open);
           show($('push-preview'), open, high);
+          // #602 : coût du locate = actions louées × locate par action.
+          const shares = parse($('cap-shares').value);
+          const locate = parse($('cap-locate').value);
+          const cost = $('cost-preview');
+          if (shares > 0 && locate >= 0) {
+            cost.textContent = (shares * locate).toFixed(2).replace('.', ',') + ' $ US';
+            cost.className = 'derived';
+          } else {
+            cost.textContent = '—';
+            cost.className = 'derived muted';
+          }
         }
-        ['prev-close', 'pm-open', 'pm-high'].forEach((id) => $(id).addEventListener('input', update));
+        ['prev-close', 'pm-open', 'pm-high', 'cap-locate', 'cap-shares'].forEach((id) => $(id).addEventListener('input', update));
+      })();
+
+      // #602 : la boîte des locates d'une ligne — ticker de la ligne, prix repris de sa cote, coût en direct.
+      (function () {
+        const dialog = document.getElementById('locate-dialog');
+        const parse = (v) => parseFloat(String(v).replace(/\s/g, '').replace(',', '.'));
+        const shares = document.getElementById('locate-shares');
+        const price = document.getElementById('locate-price');
+        const cost = document.getElementById('locate-cost');
+        function preview() {
+          const n = parse(shares.value);
+          const p = parse(price.value);
+          const ok = n > 0 && p >= 0;
+          cost.textContent = ok ? (n * p).toFixed(2).replace('.', ',') + ' $ US' : '—';
+          cost.className = ok ? 'derived' : 'derived muted';
+        }
+        [shares, price].forEach((el) => el.addEventListener('input', preview));
+        document.addEventListener('click', (event) => {
+          const btn = event.target.closest('[data-open-locate]');
+          if (!btn) return;
+          const row = btn.closest('tr');
+          const ticker = row.querySelector('.ticker').textContent;
+          document.getElementById('locate-ticker').textContent = ticker;
+          // La cote du candidat : la colonne « Locate » de la ligne.
+          price.value = row.children[8].textContent.trim();
+          document.getElementById('locate-list').hidden = ticker !== 'SGBX';
+          shares.value = '';
+          preview();
+          dialog.showModal();
+        });
       })();
 
       // À l'open : prix visé = open × (1 + push visé), recalculé à la frappe, « enregistré » à la sortie du champ.
