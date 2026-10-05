@@ -76,7 +76,7 @@
             <div class="sub">1,6 % du P&amp;L</div>
           </div>
           <!-- #602 : ce que la discipline coûte — les locates de la période, et la part prise sur un ticker jamais tradé ce jour-là. -->
-          <div class="card kpi" title="Les locates pris sur la période. « Payés pour rien » : sur un ticker sans trade ce jour-là — la séance du jour compte une fois finie.">
+          <div class="card kpi" title="Les locates pris sur la période. « Payés pour rien » : sur un ticker sans trade ce jour-là — ceux du jour comptent une fois New York fermé (16h). Un maximum : un locate relisté et remboursé en partie compte en entier, son remboursement étant un ajustement.">
             <div class="label">Locates septembre</div>
             <div class="value">812,40 $</div>
             <div class="sub">dont <span style="color: var(--warn)">186,00 $ payés pour rien</span></div>
@@ -377,7 +377,8 @@
         <p class="mockup-note">
           Maquette statique — les lignes « Trade » remontent du journal avec le P&amp;L retenu (non éditables ici) ; dépôts et retraits sont saisis à la main ; les corrections naissent du rapprochement du matin — une correction qui a absorbé depuis la correction d'une ligne antérieure porte l'étiquette « ajustée » et le montant que son matin avait mesuré — et leur total de la période devient la tuile « Écarts de rapprochement » (montant et part du P&amp;L, tiret sur un mois perdant ou nul). Les lignes « Locate » (#602) remontent des locates comme les trades du journal : montant = actions × prix, en négatif ;
           on les modifie sur le candidat (ou ici pour un locate sans candidat, bouton « Locate »), jamais comme mouvement. La
-          tuile « Locates » sépare la part prise sur un ticker non tradé ce jour-là. La bascule USD / CAD est fonctionnelle.
+          tuile « Locates » sépare la part prise sur un ticker non tradé ce jour-là (le jour même, une fois New York fermé) — un
+          maximum : le remboursement d'un locate relisté est un ajustement, pas une modification du locate. La bascule USD / CAD est fonctionnelle.
           La bascule « Chargé / Appels en échec » n'existe que dans la maquette (#493) : un chiffre de la page est toujours à jour ou
           visiblement absent — une tuile, la courbe ou la table dont l'appel a échoué montre « — » / « indisponible », jamais l'ancien
           chiffre. Le bandeau reste tant qu'un appel est en échec ; « Réessayer » ne relance que ceux-là. Sans le solde calculé, le rapprochement du matin est désactivé.
