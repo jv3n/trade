@@ -2,7 +2,14 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, LOCALE_ID, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { StbButtonModule, StbChipsModule, StbIconModule, StbToast } from '@portfolioai/ui';
+import {
+  StbButtonModule,
+  StbChipsModule,
+  StbIconModule,
+  StbSkeleton,
+  StbToast,
+  stbLoadGate,
+} from '@portfolioai/ui';
 import {
   differenceInCalendarDays,
   endOfWeek,
@@ -10,7 +17,7 @@ import {
   subBusinessDays,
   subDays,
 } from 'date-fns';
-import { EMPTY, catchError, filter, switchMap, tap } from 'rxjs';
+import { EMPTY, catchError, filter, finalize, switchMap, tap } from 'rxjs';
 import { AccountSummary } from '../../core/api/account/account.model';
 import { AccountRepository } from '../../core/api/account/account.repository';
 import { Candidate } from '../../core/api/candidates/candidates.model';
@@ -43,6 +50,16 @@ const STEPS: readonly StepKey[] = ['stats', 'reconciliation', 'candidates', 'ses
  * what to do now, `todo` = not yet.
  */
 export type StepState = 'done' | 'none' | 'current' | 'todo';
+
+/** The calls a step's state is read from — the side column's figures are not among them. */
+type StepSource = 'reconciliations' | 'candidates' | 'stats' | 'trades' | 'tradingDay';
+const STEP_SOURCES: readonly StepSource[] = [
+  'reconciliations',
+  'candidates',
+  'stats',
+  'trades',
+  'tradingDay',
+];
 
 /** Minutes since midnight, New York time — the session boundaries are wall-clock over there. */
 const PREMARKET_OPEN = 4 * 60;
@@ -116,6 +133,7 @@ export function marketStatusAt(now: Date): MarketStatus {
     MorningReconciliation,
     PluralPipe,
     TranslatePipe,
+    StbSkeleton,
   ],
 })
 export class TodayPage {
@@ -150,6 +168,15 @@ export class TodayPage {
   /** The day's « nothing today » marks, as stored — `null` until read, or when the read fails. */
   readonly tradingDay = signal<TradingDay | null>(null);
   readonly savingMarks = signal(false);
+
+  /** Step sources still unanswered — a failed one counts as answered, it won't come back. */
+  private readonly pendingSources = signal<ReadonlySet<StepSource>>(new Set(STEP_SOURCES));
+  /**
+   * Every source a step reads has answered (#544) : before that the steps would read « to do » or
+   * « nothing today » off empty data, so they show as a skeleton.
+   */
+  readonly stepsLoaded = computed(() => this.pendingSources().size === 0);
+  readonly gate = stbLoadGate(() => !this.stepsLoaded());
 
   /**
    * Candidates of the day without any stat — step 2's « Passer les N en GUS » action. A candidate
@@ -352,15 +379,19 @@ export class TodayPage {
     const month = computeMonthRange(this.today);
 
     this.fetchAccount();
-    this.candidatesRepo.listForDate(this.today).subscribe({
-      next: (rows) => this.candidates.set(rows),
-      error: () => this.candidates.set([]),
-    });
+    this.candidatesRepo
+      .listForDate(this.today)
+      .pipe(finalize(() => this.answered('candidates')))
+      .subscribe({
+        next: (rows) => this.candidates.set(rows),
+        error: () => this.candidates.set([]),
+      });
     this.statsRepo
       .findAll(
         { status: 'TO_COMPLETE', dateTo: subDays(this.today, 1) },
         { pageIndex: 0, pageSize: 50, sortField: 'tradeDate', sortDirection: 'desc' },
       )
+      .pipe(finalize(() => this.answered('stats')))
       .subscribe({
         next: (page) => {
           this.statsToComplete.set(page.content);
@@ -371,21 +402,35 @@ export class TodayPage {
           this.statsToCompleteTotal.set(null);
         },
       });
-    this.journalRepo.findAll(day, { pageIndex: 0, pageSize: 20 }).subscribe({
-      next: (page) => this.todayTrades.set(page.content),
-      error: () => this.todayTrades.set([]),
-    });
+    this.journalRepo
+      .findAll(day, { pageIndex: 0, pageSize: 20 })
+      .pipe(finalize(() => this.answered('trades')))
+      .subscribe({
+        next: (page) => this.todayTrades.set(page.content),
+        error: () => this.todayTrades.set([]),
+      });
     this.journalRepo.findAll(week, { pageIndex: 0, pageSize: 20 }).subscribe({
       next: (page) => this.weekTrades.set(page.content),
       error: () => this.weekTrades.set([]),
     });
-    this.tradingDayRepo.get(this.today).subscribe({
-      next: (d) => this.tradingDay.set(d),
-      error: () => this.tradingDay.set(null),
-    });
+    this.tradingDayRepo
+      .get(this.today)
+      .pipe(finalize(() => this.answered('tradingDay')))
+      .subscribe({
+        next: (d) => this.tradingDay.set(d),
+        error: () => this.tradingDay.set(null),
+      });
     this.journalRepo.summary(day).subscribe({ next: (s) => this.dayPnl.set(s) });
     this.journalRepo.summary(week).subscribe({ next: (s) => this.weekPnl.set(s) });
     this.journalRepo.summary(month).subscribe({ next: (s) => this.monthPnl.set(s) });
+  }
+
+  private answered(source: StepSource): void {
+    this.pendingSources.update((pending) => {
+      const next = new Set(pending);
+      next.delete(source);
+      return next;
+    });
   }
 
   private fetchAccount(): void {
@@ -395,11 +440,14 @@ export class TodayPage {
     });
     // Step 1's own block loads the history too ; the page reads it for the side column and for the
     // step state, which it needs even before the block is rendered.
-    this.accountRepo.reconciliations(1).subscribe({
-      next: (rows) =>
-        this.reconciledToday.set(rows.some((r) => isSameDay(r.valueDate, this.today))),
-      error: () => this.reconciledToday.set(false),
-    });
+    this.accountRepo
+      .reconciliations(1)
+      .pipe(finalize(() => this.answered('reconciliations')))
+      .subscribe({
+        next: (rows) =>
+          this.reconciledToday.set(rows.some((r) => isSameDay(r.valueDate, this.today))),
+        error: () => this.reconciledToday.set(false),
+      });
   }
 }
 
