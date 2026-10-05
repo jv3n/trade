@@ -5,18 +5,20 @@
   </header>
 
   @if (gate.skeleton()) {
-    <!-- The tab bar too : the sheets land under it, and nothing moves when it appears. -->
-    <div class="tabs-skeleton" aria-hidden="true">
-      <ui-skeleton [width]="96" />
-      <ui-skeleton [width]="72" />
-    </div>
-    <div class="sheets">
-      @for (i of skeletonSheets; track i) {
-        <ui-skeleton-card
-          [label]="i === 0 ? ('patternSheets.loading' | translate) : ''"
-          [lines]="1"
-        />
-      }
+    <!-- The tab bar too, in one block with the sheets as the tab group is : nothing moves when it lands. -->
+    <div>
+      <div class="tabs-skeleton" aria-hidden="true">
+        <ui-skeleton [width]="96" />
+        <ui-skeleton [width]="72" />
+      </div>
+      <div class="sheets">
+        @for (i of skeletonSheets; track i) {
+          <ui-skeleton-card
+            [label]="i === 0 ? ('patternSheets.loading' | translate) : ''"
+            [lines]="1"
+          />
+        }
+      </div>
     </div>
   } @else if (!gate.content()) {
     <!-- The first load, inside its show delay : nothing yet, so a fast answer never flashes. -->
