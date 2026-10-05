@@ -39,7 +39,7 @@
       }
     </section>
   } @else if (summary(); as s) {
-    <section class="kpi-row">
+    <section class="stb-fade-in kpi-row">
       <mat-card class="kpi" appearance="outlined" data-testid="account-balance">
         <div class="kpi__label">
           <span>{{ 'account.currentBalance' | translate }}</span>
@@ -210,12 +210,12 @@
     } @else if (!gate.content()) {
       <!-- The first load, inside its show delay : nothing yet, so a fast answer never flashes. -->
     } @else if (movementsFailed()) {
-      <div class="empty-state" data-testid="movements-unavailable">
+      <div class="stb-fade-in empty-state" data-testid="movements-unavailable">
         <mat-icon>cloud_off</mat-icon>
         <p>{{ 'account.movementsUnavailable' | translate }}</p>
       </div>
     } @else if (movements().length === 0) {
-      <div class="empty-state">
+      <div class="stb-fade-in empty-state">
         <mat-icon>account_balance_wallet</mat-icon>
         <p>{{ 'account.empty' | translate }}</p>
       </div>

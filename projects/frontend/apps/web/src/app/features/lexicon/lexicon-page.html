@@ -37,12 +37,12 @@
   } @else if (!gate.content()) {
     <!-- The first load, inside its show delay : nothing yet, so a fast answer never flashes. -->
   } @else if (entries().length === 0) {
-    <div class="empty-state">
+    <div class="stb-fade-in empty-state">
       <mat-icon>menu_book</mat-icon>
       <p>{{ 'lexicon.empty' | translate }}</p>
     </div>
   } @else {
-    <div class="toolbar">
+    <div class="stb-fade-in toolbar">
       <mat-form-field appearance="outline" class="search-field" subscriptSizing="dynamic">
         <mat-icon matIconPrefix>search</mat-icon>
         <input
@@ -67,7 +67,7 @@
     </div>
 
     @if (visible().length === 0) {
-      <div class="empty-state">
+      <div class="stb-fade-in empty-state">
         <mat-icon>search_off</mat-icon>
         <p>
           @if (search().trim()) {
@@ -80,7 +80,7 @@
         </p>
       </div>
     } @else {
-      <section class="terms">
+      <section class="stb-fade-in terms">
         @for (card of visible(); track card.id) {
           <article class="term">
             <h3>

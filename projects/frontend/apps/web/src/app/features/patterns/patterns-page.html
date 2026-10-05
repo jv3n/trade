@@ -22,6 +22,7 @@
     <!-- The first load, inside its show delay : nothing yet, so a fast answer never flashes. -->
   } @else {
     <mat-tab-group
+      class="stb-fade-in"
       [selectedIndex]="tab()"
       (selectedIndexChange)="tab.set($event)"
       (animationDone)="settled('tab')"

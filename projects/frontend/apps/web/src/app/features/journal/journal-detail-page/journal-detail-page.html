@@ -14,13 +14,13 @@
   } @else if (!gate.content()) {
     <!-- The first load, inside its show delay : nothing yet, so a fast answer never flashes. -->
   } @else if (error() || entry() === null) {
-    <div class="error-banner">
+    <div class="stb-fade-in error-banner">
       <mat-icon>error</mat-icon>
       <span>{{ 'journal.detail.loadError' | translate }}</span>
     </div>
   } @else if (entry(); as e) {
     <!-- Identity — everything here is inherited from the stat and read-only on the trade. -->
-    <header class="content-header">
+    <header class="stb-fade-in content-header">
       <div class="header-row">
         <div class="title-block">
           <h2>
@@ -83,7 +83,7 @@
     </header>
 
     <!-- KPIs — all derived from the draft, so they follow the executions as they are typed. -->
-    <section class="kpi-row">
+    <section class="stb-fade-in kpi-row">
       <div class="card kpi">
         <div class="kpi__label">{{ 'journal.detail.kpi.retained' | translate }}</div>
         <div
@@ -163,7 +163,7 @@
     </section>
 
     @if (draft(); as d) {
-      <div class="trade-columns">
+      <div class="stb-fade-in trade-columns">
         <!-- Executions + P&L — the two blocks the user actually types in. -->
         <div class="card">
           <h3>
@@ -497,7 +497,7 @@
     }
 
     <!-- Screenshot — single optional image, saved on its own endpoint (issue #110). -->
-    <section class="card">
+    <section class="stb-fade-in card">
       <h3>{{ 'journal.detail.screenshot.title' | translate }}</h3>
       @if (e.hasScreenshot) {
         <div class="screenshot-view">
