@@ -91,6 +91,12 @@ $save-bar-room: 72px;
   color: var(--color-text-muted);
 }
 
+// The header skeleton's tag (#612) : a real tag, so its line takes the real height, text hidden.
+.header-skeleton__tag {
+  color: transparent;
+  background: var(--color-skeleton);
+}
+
 .tag-accent {
   background: color-mix(in srgb, var(--color-accent) 16%, transparent);
   color: var(--color-accent);

@@ -5,7 +5,26 @@
   </a>
 
   @if (gate.skeleton()) {
-    <ui-skeleton-card bare [lines]="1" [label]="'journal.detail.loading' | translate" />
+    <!-- The real header's own frame, so the page below starts where it will once the trade lands. -->
+    <header class="content-header" aria-busy="true">
+      <span class="cdk-visually-hidden">{{ 'journal.detail.loading' | translate }}</span>
+      <div class="header-row" aria-hidden="true">
+        <div class="title-block">
+          <h2>
+            <ui-skeleton variant="chip" />
+            <ui-skeleton [width]="48" />
+            <ui-skeleton [width]="200" />
+          </h2>
+          <p class="subtitle">
+            <span class="tag header-skeleton__tag">{{ 'patterns.short.GUS' | translate }}</span>
+            <ui-skeleton [width]="160" />
+          </p>
+        </div>
+        <div class="header-actions">
+          <ui-skeleton variant="chip" [width]="112" />
+        </div>
+      </div>
+    </header>
     <ui-skeleton-kpi-row />
     <div class="trade-columns">
       <ui-skeleton-card [lines]="5" />
