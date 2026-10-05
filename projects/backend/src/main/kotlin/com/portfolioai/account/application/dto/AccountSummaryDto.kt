@@ -17,6 +17,11 @@ import java.math.BigDecimal
  * earlier row is absorbed by a correction (#476), never by a recorded gap (#480). Null when no
  * morning was reconciled in the period — nothing was measured, and a plausible 0 would lie. It
  * follows the dates only : the type filter does not apply to mornings.
+ *
+ * [periodLocates] sums the period's locates, signed (≤ 0) ; [periodUnusedLocates] is its part
+ * **paid for nothing** — on a (day, ticker) with no trade in the journal, today's counted once New
+ * York has closed. An upper bound : a locate listed back keeps its full cost, its refund being an
+ * adjustment. Both follow the dates only, like the gap.
  */
 data class AccountSummaryDto(
   val balance: BigDecimal,
@@ -29,4 +34,6 @@ data class AccountSummaryDto(
   val periodAdjustments: BigDecimal,
   val periodReconciliationGap: BigDecimal?,
   val periodMovementCount: Long,
+  val periodLocates: BigDecimal,
+  val periodUnusedLocates: BigDecimal,
 )

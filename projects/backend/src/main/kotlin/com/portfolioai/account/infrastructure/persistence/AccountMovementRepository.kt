@@ -24,6 +24,9 @@ interface AccountMovementRepository : JpaRepository<AccountMovement, UUID> {
   /** The single TRADE movement linked to a journal trade, if any (DB partial unique index). */
   fun findByTradeEntryId(tradeEntryId: UUID): AccountMovement?
 
+  /** The single LOCATE movement linked to a locate, if any (DB partial unique index). */
+  fun findByLocateId(locateId: UUID): AccountMovement?
+
   /**
    * Current balance = sum of signed amounts for the user. `COALESCE` so an empty account returns 0
    * rather than null.
