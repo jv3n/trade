@@ -19,6 +19,7 @@ import com.portfolioai.journal.infrastructure.persistence.TradeEntrySpecificatio
 import com.portfolioai.shared.Pattern
 import java.math.BigDecimal
 import java.time.Instant
+import java.time.LocalDate
 import java.util.UUID
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.Page
@@ -149,6 +150,19 @@ class TradeEntryService(
       .findByUserIdAndStatEntryIdIn(userId, statEntryIds)
       .groupBy { it.statEntryId }
       .mapValues { (_, trades) -> trades.sortedWith(TradeEntry.DAY_ORDER).map { it.toLinkDto() } }
+  }
+
+  /**
+   * The tickers the caller traded, keyed by day, between [from] and [to] inclusive — any trade
+   * counts, open or closed. Read by the `account` context to tell a locate paid for nothing (#606).
+   */
+  @Transactional(readOnly = true)
+  fun tradedTickers(from: LocalDate, to: LocalDate): Map<LocalDate, Set<String>> {
+    val userId = authService.getCurrentUser().id
+    return repo
+      .findByUserIdAndTradeDateBetween(userId, from, to)
+      .groupBy({ it.tradeDate }, { it.ticker })
+      .mapValues { (_, tickers) -> tickers.toSet() }
   }
 
   /**
