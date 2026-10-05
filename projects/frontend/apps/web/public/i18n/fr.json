@@ -589,6 +589,9 @@
         "premarket": "Clôture veille · open PM · high PM",
         "gapPush": "Gap · push PM",
         "floatVolumeLocate": "Float · volume · locate",
+        "dayLocates": "Locates du jour",
+        "onCandidate": "sur le candidat",
+        "locatesUnavailable": "Indisponibles",
         "unavailable": "Contexte du jour indisponible."
       },
       "screenshot": {

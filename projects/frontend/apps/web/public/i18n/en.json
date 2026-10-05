@@ -589,6 +589,9 @@
         "premarket": "Previous close · PM open · PM high",
         "gapPush": "Gap · PM push",
         "floatVolumeLocate": "Float · volume · locate",
+        "dayLocates": "Day's locates",
+        "onCandidate": "on the candidate",
+        "locatesUnavailable": "Unavailable",
         "unavailable": "Day context unavailable."
       },
       "screenshot": {

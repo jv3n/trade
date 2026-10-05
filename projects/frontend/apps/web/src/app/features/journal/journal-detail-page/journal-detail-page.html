@@ -419,6 +419,35 @@
                 ·
                 {{ ctx.stat.locatePerShare !== null ? (ctx.stat.locatePerShare | price) : '—' }}
               </dd>
+              <!-- Read-only : changed on the candidate. Outside the trade's P&L, each one has its
+                   own account line. -->
+              <dt>{{ 'journal.detail.context.dayLocates' | translate }}</dt>
+              <dd data-testid="day-locates">
+                @if (locatesFailed()) {
+                  <span class="muted">{{
+                    'journal.detail.context.locatesUnavailable' | translate
+                  }}</span>
+                } @else if (dayLocates(); as locates) {
+                  @if (locates.length === 0) {
+                    —
+                  } @else {
+                    @for (l of locates; track l.id; let last = $last) {
+                      {{ l.shares | number }} × {{ l.pricePerShare | price }}{{ last ? '' : ' + ' }}
+                    }
+                    =
+                    <strong
+                      >{{ locatesTotal() | number: '1.2-2'
+                      }}{{ 'account.usdSuffix' | translate }}</strong
+                    >
+                    @if (locatesCandidateDay(); as day) {
+                      <a class="hint" routerLink="/candidates" [queryParams]="day">
+                        {{ 'journal.detail.context.onCandidate' | translate }}
+                        <mat-icon>arrow_forward</mat-icon>
+                      </a>
+                    }
+                  }
+                }
+              </dd>
               <dt>{{ 'stats.fields.openPrice' | translate }}</dt>
               <dd>
                 {{

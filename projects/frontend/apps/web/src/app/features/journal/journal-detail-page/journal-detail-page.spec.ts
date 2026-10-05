@@ -3,11 +3,13 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
 import { StbToast } from '@portfolioai/ui';
-import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { JournalRepository } from '../../../core/api/journal/journal.repository';
 import { TradeEntry, TradeEntryInput } from '../../../core/api/journal/trade-entry.model';
+import { Locate } from '../../../core/api/locates/locates.model';
+import { LocatesRepository } from '../../../core/api/locates/locates.repository';
 import { StatEntry } from '../../../core/api/stats/stat-entry.model';
 import { StatsRepository } from '../../../core/api/stats/stats.repository';
 import { ConfirmService } from '../../../core/app-state/confirm.service';
@@ -26,11 +28,14 @@ import { JournalDetailPage } from './journal-detail-page';
  * - **Save sends the whole trade** : the stat-borne identity is carried through untouched,
  *   half-typed execution rows are dropped, and an inconsistent set blocks the call entirely.
  * - **Delete (confirmed)** navigates back to the journal.
+ * - **The day's locates (#609)** on the trade's ticker sit in the day context, read-only, summed to
+ *   the cent, linked to the candidates of that day when one was taken on a candidate.
  */
 describe('JournalDetailPage', () => {
   let findById: ReturnType<typeof vi.fn>;
   let update: ReturnType<typeof vi.fn>;
   let statFindById: ReturnType<typeof vi.fn>;
+  let listLocates: ReturnType<typeof vi.fn>;
   let deleteSubject: Subject<void>;
   /** What the (stubbed) confirmation modal answers — confirmed unless a test says otherwise. */
   let confirmed: boolean;
@@ -43,6 +48,7 @@ describe('JournalDetailPage', () => {
     findById = vi.fn(() => of(makeTrade()));
     update = vi.fn((_id: string, _input: TradeEntryInput) => of(makeTrade()));
     statFindById = vi.fn(() => of(makeStat()));
+    listLocates = vi.fn((): Observable<Locate[]> => of([]));
   });
 
   function setup() {
@@ -71,6 +77,10 @@ describe('JournalDetailPage', () => {
           provide: StatsRepository,
           useValue: { findById: statFindById } as unknown as StatsRepository,
         },
+        {
+          provide: LocatesRepository,
+          useValue: { listForDate: listLocates } as unknown as LocatesRepository,
+        },
         { provide: StbToast, useValue: { success: vi.fn(), error: vi.fn() } },
         { provide: ConfirmService, useValue: { ask: () => of(confirmed) } },
         {
@@ -85,6 +95,54 @@ describe('JournalDetailPage', () => {
   afterEach(() => {
     vi.restoreAllMocks();
     TestBed.resetTestingModule();
+  });
+
+  describe("the day's locates", () => {
+    function dayLocates(fixture: ReturnType<typeof setup>): HTMLElement {
+      return fixture.nativeElement.querySelector('[data-testid="day-locates"]');
+    }
+
+    it("reads the locates of the trade's day and ticker, linked to that day's candidates", () => {
+      listLocates.mockReturnValue(of([makeLocate()]));
+      const fixture = setup();
+      fixture.detectChanges();
+
+      expect(listLocates).toHaveBeenCalledWith(new Date(2026, 8, 17), 'KTTA');
+      expect(dayLocates(fixture).textContent).toContain('2,000 × 0.04');
+      expect(dayLocates(fixture).textContent).toContain('80.00');
+      expect(dayLocates(fixture).querySelector('a')?.getAttribute('href')).toBe(
+        '/candidates?date=2026-09-17',
+      );
+    });
+
+    it('adds a top-up to the cent', () => {
+      listLocates.mockReturnValue(
+        of([makeLocate({ cost: 0.1 }), makeLocate({ id: 'l-2', cost: 0.2 })]),
+      );
+      const fixture = setup();
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.locatesTotal()).toBe(0.3);
+    });
+
+    // Typed on the Account page : no candidate row to point to.
+    it('links nowhere when no locate was taken on a candidate', () => {
+      listLocates.mockReturnValue(of([makeLocate({ candidateId: null })]));
+      const fixture = setup();
+      fixture.detectChanges();
+
+      expect(dayLocates(fixture).querySelector('a')).toBeNull();
+    });
+
+    it('says the locates are unavailable rather than showing none', () => {
+      listLocates.mockReturnValue(throwError(() => new Error('503')));
+      const fixture = setup();
+      fixture.detectChanges();
+
+      expect(dayLocates(fixture).textContent).toContain(
+        'journal.detail.context.locatesUnavailable',
+      );
+    });
   });
 
   it('loads the trade by route id and the stat behind it for the day context', () => {
@@ -532,6 +590,23 @@ function makeTrade(overrides: Partial<TradeEntry> = {}): TradeEntry {
 }
 
 /** The completed stat of the same day — the day context the trade page reads. */
+/** KTTA's locate of the day — 2 000 shares at 0.04, the mockup's. */
+function makeLocate(overrides: Partial<Locate> = {}): Locate {
+  return {
+    id: 'l-1',
+    tradingDate: new Date(2026, 8, 17),
+    ticker: 'KTTA',
+    shares: 2000,
+    pricePerShare: 0.04,
+    cost: 80,
+    note: null,
+    candidateId: 'c-ktta',
+    createdAt: new Date(2026, 8, 17),
+    updatedAt: new Date(2026, 8, 17),
+    ...overrides,
+  };
+}
+
 function makeStat(overrides: Partial<StatEntry> = {}): StatEntry {
   return {
     id: 'stat-1',

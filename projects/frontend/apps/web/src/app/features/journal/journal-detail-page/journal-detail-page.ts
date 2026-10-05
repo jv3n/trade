@@ -19,6 +19,7 @@ import {
   StbTooltipModule,
   stbLoadGate,
 } from '@portfolioai/ui';
+import { format } from 'date-fns';
 import { EMPTY, catchError, filter, finalize, from, of, switchMap, tap } from 'rxjs';
 import { JournalRepository } from '../../../core/api/journal/journal.repository';
 import {
@@ -34,6 +35,8 @@ import {
   TradeEntryInput,
   TradeExecutionInput,
 } from '../../../core/api/journal/trade-entry.model';
+import { Locate } from '../../../core/api/locates/locates.model';
+import { LocatesRepository } from '../../../core/api/locates/locates.repository';
 import { StatEntry } from '../../../core/api/stats/stat-entry.model';
 import { StatsRepository } from '../../../core/api/stats/stats.repository';
 import { ConfirmService } from '../../../core/app-state/confirm.service';
@@ -42,6 +45,7 @@ import { compressImage } from '../../../shared/image/compress-image';
 import { NumberMaskDirective } from '../../../shared/number-mask/number-mask.directive';
 import { PluralPipe } from '../../../shared/plural/plural';
 import { PricePipe } from '../../../shared/price/price.pipe';
+import { sumCents } from '../../candidates/candidates.math';
 import { gapPercent, percentVsOpen, pmPushPercent } from '../../stats/stats.math';
 
 /**
@@ -136,7 +140,9 @@ function spanMinutes(executions: ExecRow[]): number | null {
  * - **P&L block** — computed (from the executions), real (typed off the broker statement) and the
  *   live gap between them (fees, rounding). Empty real ⇒ the computed one is retained, and the
  *   retained one is what reaches the account.
- * - **Day context** — the stat's premarket + session values, read-only, fetched by `statEntryId`.
+ * - **Day context** — the stat's premarket + session values, read-only, fetched by `statEntryId`,
+ *   and the day's locates on the ticker (#609) : read-only, changed on the candidate, outside the
+ *   trade's P&L — each one has its own account line.
  * - **Post-mortem** — « what happened » + « mistake / to improve », and the chart screenshot.
  *
  * Everything is edited **in the page** (no dialog — `MatDialog` is kept for confirmations) : the
@@ -176,6 +182,7 @@ function spanMinutes(executions: ExecRow[]): number | null {
 export class JournalDetailPage implements HasUnsavedChanges {
   private readonly repo = inject(JournalRepository);
   private readonly statsRepo = inject(StatsRepository);
+  private readonly locatesRepo = inject(LocatesRepository);
   private readonly confirm = inject(ConfirmService);
   private readonly locale = inject(LOCALE_ID);
   private readonly translate = inject(TranslateService);
@@ -323,6 +330,17 @@ export class JournalDetailPage implements HasUnsavedChanges {
     percentVsOpen(this.context()?.stat.openPrice ?? null, this.preview().avgExit),
   );
 
+  /** The day's locates on the ticker — `null` until read ; [locatesFailed] when they could not be. */
+  readonly dayLocates = signal<Locate[] | null>(null);
+  readonly locatesFailed = signal(false);
+  readonly locatesTotal = computed(() => sumCents((this.dayLocates() ?? []).map((l) => l.cost)));
+  /** Where they are changed : the Candidates page on that day, when one was taken on a candidate. */
+  readonly locatesCandidateDay = computed(() => {
+    const locates = this.dayLocates() ?? [];
+    const onCandidate = locates.find((l) => l.candidateId !== null);
+    return onCandidate ? { date: format(onCandidate.tradingDate, 'yyyy-MM-dd') } : null;
+  });
+
   // ---- Screenshot (issue #110) ----
   readonly screenshotUrl = signal<SafeUrl | null>(null);
   readonly screenshotUploading = signal(false);
@@ -341,6 +359,7 @@ export class JournalDetailPage implements HasUnsavedChanges {
       this.id = params.get('id') ?? '';
       this.clearObjectUrl();
       this.context.set(null);
+      this.dayLocates.set(null);
       this.load();
     });
   }
@@ -354,6 +373,7 @@ export class JournalDetailPage implements HasUnsavedChanges {
         this.loading.set(false);
         if (e.hasScreenshot) this.loadScreenshot(e.id);
         this.loadContext(e.statEntryId);
+        this.loadLocates(e.tradeDate, e.ticker);
       },
       error: () => {
         this.error.set(true);
@@ -387,6 +407,17 @@ export class JournalDetailPage implements HasUnsavedChanges {
           eodPercent: percentVsOpen(stat.openPrice, stat.eodPrice),
         }),
       error: () => this.context.set(null),
+    });
+  }
+
+  private loadLocates(day: Date, ticker: string): void {
+    this.locatesFailed.set(false);
+    this.locatesRepo.listForDate(day, ticker).subscribe({
+      next: (locates) => this.dayLocates.set(locates),
+      error: () => {
+        this.dayLocates.set(null);
+        this.locatesFailed.set(true);
+      },
     });
   }
 
