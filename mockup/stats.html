@@ -489,8 +489,7 @@
             <div class="field"><label>High PM ($)</label><input class="input" id="p-high" data-pm value="2,46" /><span class="pct muted" id="p-push">—</span><span class="pct muted" id="p-cumul">—</span></div>
             <div class="field"><label>Float (M)</label><input class="input" data-pm-opt value="3,9" /></div>
             <div class="field"><label>Volume (M)</label><input class="input" data-pm-opt value="9,7" /></div>
-            <div class="field"><label>Locate ($ / action)</label><input class="input" data-pm-opt value="0,12" /></div>
-            <div class="field wide"><label>Note</label><input class="input" data-pm-opt value="Locate cher, float serré — attention au squeeze" /></div>
+            <div class="field wide"><label>Note</label><input class="input" data-pm-opt value="Float serré — attention au squeeze" /></div>
           </form>
           <div class="panel-actions" data-mode="new" hidden>
             <span class="progress" id="new-missing"></span>
@@ -629,7 +628,7 @@
               <thead>
                 <tr class="group-head">
                   <th colspan="3"></th>
-                  <th colspan="5" class="sep">Premarket — repris du candidat</th>
+                  <th colspan="4" class="sep">Premarket — repris du candidat</th>
                   <th colspan="4" class="sep">Double top — A extension · B rejet · C retest</th>
                   <th colspan="3" class="sep"></th>
                 </tr>
@@ -641,7 +640,6 @@
                   <th class="num">Push PM</th>
                   <th class="num">Float</th>
                   <th class="num">Volume</th>
-                  <th class="num">Locate</th>
                   <th class="num sep">Départ</th>
                   <th class="num" title="Du départ au top ; en dessous, avec le gap (depuis la clôture de la veille)">A — top</th>
                   <th class="num" title="Du top au bas du rejet">B — bas</th>
@@ -655,7 +653,7 @@
               <tbody>
                 <tr class="pending">
                   <td>18/09</td><td><span class="ticker">SGBX</span></td><td><span class="tag tag-accent">DT</span></td>
-                  <td class="num sep">+65,2 %</td><td class="num">+33,0 %</td><td class="num">3,9 M</td><td class="num">9,7 M</td><td class="num">0,12</td>
+                  <td class="num sep">+65,2 %</td><td class="num">+33,0 %</td><td class="num">3,9 M</td><td class="num">9,7 M</td>
                   <td class="num sep">1,90</td>
                   <td class="num">2,95<small class="muted">+55,3 % · gap +163 %</small></td>
                   <td class="num">2,36<small class="muted">−20,0 %</small></td>
@@ -667,7 +665,7 @@
                 </tr>
                 <tr>
                   <td>16/09</td><td><span class="ticker">PRSO</span></td><td><span class="tag tag-accent">DT</span></td>
-                  <td class="num sep">+8,6 %</td><td class="num">+4,2 %</td><td class="num">6,1 M</td><td class="num">1,4 M</td><td class="num">0,03</td>
+                  <td class="num sep">+8,6 %</td><td class="num">+4,2 %</td><td class="num">6,1 M</td><td class="num">1,4 M</td>
                   <td class="num sep">2,40</td>
                   <td class="num">3,80<small class="muted">+58,3 % · gap +72,7 %</small></td>
                   <td class="num">3,02<small class="muted">−20,5 %</small></td>
@@ -679,7 +677,7 @@
                 </tr>
                 <tr>
                   <td>11/09</td><td><span class="ticker">IMNN</span></td><td><span class="tag tag-accent">DT</span></td>
-                  <td class="num sep">+12,3 %</td><td class="num">+3,1 %</td><td class="num">7,5 M</td><td class="num">0,8 M</td><td class="num">0,02</td>
+                  <td class="num sep">+12,3 %</td><td class="num">+3,1 %</td><td class="num">7,5 M</td><td class="num">0,8 M</td>
                   <td class="num sep">2,10</td>
                   <td class="num">3,40<small class="muted">+61,9 % · gap +74,4 %</small></td>
                   <td class="num">2,70<small class="muted">−20,6 %</small></td>
@@ -691,7 +689,7 @@
                 </tr>
                 <tr>
                   <td>08/09</td><td><span class="ticker">GRI</span></td><td><span class="tag tag-accent">DT</span></td>
-                  <td class="num sep">+21,9 %</td><td class="num">+6,4 %</td><td class="num">2,8 M</td><td class="num">3,3 M</td><td class="num">0,08</td>
+                  <td class="num sep">+21,9 %</td><td class="num">+6,4 %</td><td class="num">2,8 M</td><td class="num">3,3 M</td>
                   <td class="num sep">4,10</td>
                   <td class="num">6,45<small class="muted">+57,3 % · gap +101,6 %</small></td>
                   <td class="num">5,45<small class="below" title="Sous les 17 % de la fiche : une respiration plutôt qu'un rejet">−15,5 %</small></td>
@@ -704,7 +702,7 @@
               </tbody>
               <tfoot>
                 <tr>
-                  <td colspan="9">Moyennes — 3 stats DT complétées</td>
+                  <td colspan="8">Moyennes — 3 stats DT complétées</td>
                   <td class="num">+59,2 %<small class="muted">gap +82,9 %</small></td>
                   <td class="num">−18,9 %<small class="muted">2 / 3 ≥ 17 %</small></td>
                   <td class="num">+21,9 %<small class="muted">top −1,2 %</small></td>
@@ -721,7 +719,7 @@
               <thead>
                 <tr class="group-head">
                   <th colspan="3"></th>
-                  <th colspan="5" class="sep">Premarket — repris du candidat</th>
+                  <th colspan="4" class="sep">Premarket — repris du candidat</th>
                   <th class="sep">Séance</th>
                   <th colspan="3" class="sep"></th>
                 </tr>
@@ -733,7 +731,6 @@
                   <th class="num">Push PM</th>
                   <th class="num">Float</th>
                   <th class="num">Volume</th>
-                  <th class="num">Locate</th>
                   <th class="sep" title="Les chiffres qui résument la stat dans son pattern">En bref</th>
                   <th class="sep">Flags</th>
                   <th title="Complétée">✓</th>
@@ -743,7 +740,7 @@
               <tbody>
                 <tr>
                   <td>21/09</td><td><span class="ticker">GLND</span></td><td><span class="tag tag-accent">GUS</span></td>
-                  <td class="num sep">+58,4 %</td><td class="num">+12,1 %</td><td class="num">5,2 M</td><td class="num">6,1 M</td><td class="num">0,05</td>
+                  <td class="num sep">+58,4 %</td><td class="num">+12,1 %</td><td class="num">5,2 M</td><td class="num">6,1 M</td>
                   <td class="sep"><span class="tag">pas de push</span> · LOD −22,3 %</td>
                   <td class="sep"></td>
                   <td><button class="check done"><span class="icon">check_circle</span></button></td>
@@ -751,7 +748,7 @@
                 </tr>
                 <tr class="pending">
                   <td>18/09</td><td><span class="ticker">SGBX</span></td><td><span class="tag tag-accent">DT</span></td>
-                  <td class="num sep">+65,2 %</td><td class="num">+33,0 %</td><td class="num">3,9 M</td><td class="num">9,7 M</td><td class="num">0,12</td>
+                  <td class="num sep">+65,2 %</td><td class="num">+33,0 %</td><td class="num">3,9 M</td><td class="num">9,7 M</td>
                   <td class="sep"><span class="leg">A</span>+55,3 % · <span class="leg">B</span>−20,0 % · <span class="leg">C</span>—</td>
                   <td class="sep"><span class="tag">après 11h</span></td>
                   <td><button class="check" disabled><span class="icon">radio_button_unchecked</span></button></td>
@@ -759,7 +756,7 @@
                 </tr>
                 <tr class="pending">
                   <td>18/09</td><td><span class="ticker">SGBX</span></td><td><span class="tag tag-accent">GUS</span></td>
-                  <td class="num sep">+65,2 %</td><td class="num">+33,0 %</td><td class="num">3,9 M</td><td class="num">9,7 M</td><td class="num">0,12</td>
+                  <td class="num sep">+65,2 %</td><td class="num">+33,0 %</td><td class="num">3,9 M</td><td class="num">9,7 M</td>
                   <td class="sep">push +15,8 % · LOD —</td>
                   <td class="sep"><span class="tag">après 11h</span></td>
                   <td><button class="check" disabled><span class="icon">radio_button_unchecked</span></button></td>
@@ -767,7 +764,7 @@
                 </tr>
                 <tr>
                   <td>17/09</td><td><span class="ticker">KTTA</span></td><td><span class="tag tag-accent">GUS</span></td>
-                  <td class="num sep">+52,8 %</td><td class="num">+14,8 %</td><td class="num">8,2 M</td><td class="num">3,1 M</td><td class="num">0,03</td>
+                  <td class="num sep">+52,8 %</td><td class="num">+14,8 %</td><td class="num">8,2 M</td><td class="num">3,1 M</td>
                   <td class="sep">push +10,0 % · LOD −18,8 %</td>
                   <td class="sep"></td>
                   <td><button class="check done"><span class="icon">check_circle</span></button></td>
@@ -775,7 +772,7 @@
                 </tr>
                 <tr>
                   <td>17/09</td><td><span class="ticker">KTTA</span></td><td><span class="tag tag-accent">Discrétionnaire</span></td>
-                  <td class="num sep">+52,8 %</td><td class="num">+14,8 %</td><td class="num">8,2 M</td><td class="num">3,1 M</td><td class="num">0,03</td>
+                  <td class="num sep">+52,8 %</td><td class="num">+14,8 %</td><td class="num">8,2 M</td><td class="num">3,1 M</td>
                   <td class="sep" title="Née de la stat GUS du jour (#507) : les prix de la journée sont repris">push +10,0 % · LOD −18,8 %</td>
                   <td class="sep"></td>
                   <td><button class="check done"><span class="icon">check_circle</span></button></td>
@@ -783,7 +780,7 @@
                 </tr>
                 <tr>
                   <td>16/09</td><td><span class="ticker">PRSO</span></td><td><span class="tag tag-accent">DT</span></td>
-                  <td class="num sep">+8,6 %</td><td class="num">+4,2 %</td><td class="num">6,1 M</td><td class="num">1,4 M</td><td class="num">0,03</td>
+                  <td class="num sep">+8,6 %</td><td class="num">+4,2 %</td><td class="num">6,1 M</td><td class="num">1,4 M</td>
                   <td class="sep"><span class="leg">A</span>+58,3 % · <span class="leg">B</span>−20,5 % · <span class="leg">C</span>top −3,2 %</td>
                   <td class="sep"><span class="tag">après 11h</span></td>
                   <td><button class="check done"><span class="icon">check_circle</span></button></td>
@@ -791,7 +788,7 @@
                 </tr>
                 <tr>
                   <td>16/09</td><td><span class="ticker">BNZI</span></td><td><span class="tag tag-accent">GUS</span></td>
-                  <td class="num sep">+61,8 %</td><td class="num">+12,7 %</td><td class="num">4,5 M</td><td class="num">6,2 M</td><td class="num">0,06</td>
+                  <td class="num sep">+61,8 %</td><td class="num">+12,7 %</td><td class="num">4,5 M</td><td class="num">6,2 M</td>
                   <td class="sep">push +5,2 % · LOD −15,9 %</td>
                   <td class="sep"><span class="tag tag-warn">SSR</span></td>
                   <td><button class="check done"><span class="icon">check_circle</span></button></td>
@@ -799,7 +796,7 @@
                 </tr>
                 <tr>
                   <td>11/09</td><td><span class="ticker">IMNN</span></td><td><span class="tag tag-accent">DT</span></td>
-                  <td class="num sep">+12,3 %</td><td class="num">+3,1 %</td><td class="num">7,5 M</td><td class="num">0,8 M</td><td class="num">0,02</td>
+                  <td class="num sep">+12,3 %</td><td class="num">+3,1 %</td><td class="num">7,5 M</td><td class="num">0,8 M</td>
                   <td class="sep"><span class="leg">A</span>+61,9 % · <span class="leg">B</span>−20,6 % · <span class="leg">C</span>top repris +1,8 %</td>
                   <td class="sep"></td>
                   <td><button class="check done"><span class="icon">check_circle</span></button></td>
@@ -816,7 +813,7 @@
               <thead>
                 <tr>
                   <th>Date ↓</th><th>Ticker</th><th>Pattern</th>
-                  <th class="num sep">Gap</th><th class="num">Push PM</th><th class="num">Float</th><th class="num">Volume</th><th class="num">Locate</th>
+                  <th class="num sep">Gap</th><th class="num">Push PM</th><th class="num">Float</th><th class="num">Volume</th>
                   <th class="num sep">Open</th><th class="num">Push open</th><th class="num">HOD</th><th class="num">LOD</th><th class="num">EOD</th>
                   <th class="sep">Flags</th><th title="Complétée">✓</th><th>Trade</th>
                 </tr>
@@ -824,7 +821,7 @@
               <tbody>
                 <tr>
                   <td>17/09</td><td><span class="ticker">KTTA</span></td><td><span class="tag tag-accent">Discrétionnaire</span></td>
-                  <td class="num sep">+52,8 %</td><td class="num">+14,8 %</td><td class="num">8,2 M</td><td class="num">3,1 M</td><td class="num">0,03</td>
+                  <td class="num sep">+52,8 %</td><td class="num">+14,8 %</td><td class="num">8,2 M</td><td class="num">3,1 M</td>
                   <td class="num sep">4,20</td>
                   <td class="num">4,62<small class="muted">+10,0 %</small></td>
                   <td class="num">4,62<small class="muted">+10,0 %</small></td>
@@ -844,7 +841,7 @@
               <thead>
                 <tr class="group-head">
                   <th colspan="3"></th>
-                  <th colspan="5" class="sep">Premarket — repris du candidat</th>
+                  <th colspan="4" class="sep">Premarket — repris du candidat</th>
                   <th colspan="6" class="sep">Séance — saisie en journée (% vs open)</th>
                   <th colspan="3" class="sep"></th>
                 </tr>
@@ -856,7 +853,6 @@
                   <th class="num">Push PM</th>
                   <th class="num">Float</th>
                   <th class="num">Volume</th>
-                  <th class="num">Locate</th>
                   <th class="num sep" title="En dessous, le cumul depuis la clôture de la veille — ce que le scanner montrait à la cloche">Open</th>
                   <th class="num" title="High PM → open : ce qui reste du premarket à 9h30">Tenue</th>
                   <th class="num">Push open</th>
@@ -871,7 +867,7 @@
               <tbody>
                 <tr>
                   <td>29/09</td><td><span class="ticker">SDEV</span></td><td><span class="tag tag-accent">GUS</span></td>
-                  <td class="num sep">+41,9 %<small class="muted">cumul +60,8 % au high PM</small></td><td class="num">+13,3 %</td><td class="num">6,4 M</td><td class="num">5,8 M</td><td class="num">0,04</td>
+                  <td class="num sep">+41,9 %<small class="muted">cumul +60,8 % au high PM</small></td><td class="num">+13,3 %</td><td class="num">6,4 M</td><td class="num">5,8 M</td>
                   <td class="num sep">2,30<small class="muted">cumul +40,7 %</small></td>
                   <td class="num">−12,5 %</td>
                   <td class="num">2,95<small class="muted">+28,3 %</small></td>
@@ -884,7 +880,7 @@
                 </tr>
                 <tr>
                   <td>21/09</td><td><span class="ticker">GLND</span></td><td><span class="tag tag-accent">GUS</span></td>
-                  <td class="num sep">+58,4 %<small class="muted">cumul +77,6 % au high PM</small></td><td class="num">+12,1 %</td><td class="num">5,2 M</td><td class="num">6,1 M</td><td class="num">0,05</td>
+                  <td class="num sep">+58,4 %<small class="muted">cumul +77,6 % au high PM</small></td><td class="num">+12,1 %</td><td class="num">5,2 M</td><td class="num">6,1 M</td>
                   <td class="num sep">3,10<small class="muted">cumul +63,0 %</small></td>
                   <td class="num">−8,2 %</td>
                   <td class="num"><span class="tag">pas de push</span></td>
@@ -897,7 +893,7 @@
                 </tr>
                 <tr class="pending">
                   <td>18/09</td><td><span class="ticker">SGBX</span></td><td><span class="tag tag-accent">GUS</span></td>
-                  <td class="num sep">+65,2 %<small class="muted">cumul +119,7 % au high PM</small></td><td class="num">+33,0 %</td><td class="num">3,9 M</td><td class="num">9,7 M</td><td class="num">0,12</td>
+                  <td class="num sep">+65,2 %<small class="muted">cumul +119,7 % au high PM</small></td><td class="num">+33,0 %</td><td class="num">3,9 M</td><td class="num">9,7 M</td>
                   <td class="num sep">1,90<small class="muted">cumul +69,6 %</small></td>
                   <td class="num">−22,8 %</td>
                   <td class="num">2,20<small class="muted">+15,8 %</small></td>
@@ -910,7 +906,7 @@
                 </tr>
                 <tr class="pending">
                   <td>18/09</td><td><span class="ticker">BNRG</span></td><td><span class="tag tag-accent">GUS</span></td>
-                  <td class="num sep">+63,6 %<small class="muted">cumul +80,0 % au high PM</small></td><td class="num">+10,0 %</td><td class="num">11,2 M</td><td class="num">2,1 M</td><td class="num">0,08</td>
+                  <td class="num sep">+63,6 %<small class="muted">cumul +80,0 % au high PM</small></td><td class="num">+10,0 %</td><td class="num">11,2 M</td><td class="num">2,1 M</td>
                   <td class="num sep">5,50<small class="muted">cumul +56,0 %</small></td>
                   <td class="num">−13,3 %</td>
                   <td class="num">5,88<small class="muted">+6,9 %</small></td>
@@ -923,7 +919,7 @@
                 </tr>
                 <tr>
                   <td>17/09</td><td><span class="ticker">KTTA</span></td><td><span class="tag tag-accent">GUS</span></td>
-                  <td class="num sep">+52,8 %<small class="muted">cumul +75,4 % au high PM</small></td><td class="num">+14,8 %</td><td class="num">8,2 M</td><td class="num">3,1 M</td><td class="num">0,03</td>
+                  <td class="num sep">+52,8 %<small class="muted">cumul +75,4 % au high PM</small></td><td class="num">+14,8 %</td><td class="num">8,2 M</td><td class="num">3,1 M</td>
                   <td class="num sep">4,20<small class="muted">cumul +43,7 %</small></td>
                   <td class="num">−18,1 %</td>
                   <td class="num">4,62<small class="muted">+10,0 %</small></td>
@@ -936,7 +932,7 @@
                 </tr>
                 <tr>
                   <td>16/09</td><td><span class="ticker">BNZI</span></td><td><span class="tag tag-accent">GUS</span></td>
-                  <td class="num sep">+61,8 %<small class="muted">cumul +82,3 % au high PM</small></td><td class="num">+12,7 %</td><td class="num">4,5 M</td><td class="num">6,2 M</td><td class="num">0,06</td>
+                  <td class="num sep">+61,8 %<small class="muted">cumul +82,3 % au high PM</small></td><td class="num">+12,7 %</td><td class="num">4,5 M</td><td class="num">6,2 M</td>
                   <td class="num sep">2,90<small class="muted">cumul +45,7 %</small></td>
                   <td class="num">−20,1 %</td>
                   <td class="num">3,05<small class="muted">+5,2 %</small></td>
@@ -949,7 +945,7 @@
                 </tr>
                 <tr>
                   <td>15/09</td><td><span class="ticker">SNTG</span></td><td><span class="tag tag-accent">GUS</span></td>
-                  <td class="num sep">+54,4 %<small class="muted">cumul +67,1 % au high PM</small></td><td class="num">+8,2 %</td><td class="num">12,0 M</td><td class="num">2,4 M</td><td class="num">0,05</td>
+                  <td class="num sep">+54,4 %<small class="muted">cumul +67,1 % au high PM</small></td><td class="num">+8,2 %</td><td class="num">12,0 M</td><td class="num">2,4 M</td>
                   <td class="num sep">6,00<small class="muted">cumul +51,0 %</small></td>
                   <td class="num">−9,6 %</td>
                   <td class="num">6,55<small class="muted">+9,2 %</small></td>
@@ -962,7 +958,7 @@
                 </tr>
                 <tr>
                   <td>12/09</td><td><span class="ticker">NUWE</span></td><td><span class="tag tag-accent">GUS</span></td>
-                  <td class="num sep">+56,4 %<small class="muted">cumul +74,4 % au high PM</small></td><td class="num">+11,5 %</td><td class="num">6,7 M</td><td class="num">3,8 M</td><td class="num">0,04</td>
+                  <td class="num sep">+56,4 %<small class="muted">cumul +74,4 % au high PM</small></td><td class="num">+11,5 %</td><td class="num">6,7 M</td><td class="num">3,8 M</td>
                   <td class="num sep">3,20<small class="muted">cumul +42,8 %</small></td>
                   <td class="num">−18,1 %</td>
                   <td class="num">3,38<small class="muted">+5,6 %</small></td>
@@ -975,7 +971,7 @@
                 </tr>
                 <tr>
                   <td>11/09</td><td><span class="ticker">HOTH</span></td><td><span class="tag tag-accent">GUS</span></td>
-                  <td class="num sep">+54,3 %<small class="muted">cumul +68,2 % au high PM</small></td><td class="num">+9,0 %</td><td class="num">18,3 M</td><td class="num">1,9 M</td><td class="num">0,07</td>
+                  <td class="num sep">+54,3 %<small class="muted">cumul +68,2 % au high PM</small></td><td class="num">+9,0 %</td><td class="num">18,3 M</td><td class="num">1,9 M</td>
                   <td class="num sep">7,30<small class="muted">cumul +43,0 %</small></td>
                   <td class="num">−15,0 %</td>
                   <td class="num">7,60<small class="muted">+4,1 %</small></td>
@@ -988,7 +984,7 @@
                 </tr>
                 <tr>
                   <td>11/09</td><td><span class="ticker">ZVSA</span></td><td><span class="tag tag-accent">GUS</span></td>
-                  <td class="num sep">+54,5 %<small class="muted">cumul +79,5 % au high PM</small></td><td class="num">+16,2 %</td><td class="num">5,1 M</td><td class="num">7,0 M</td><td class="num">0,10</td>
+                  <td class="num sep">+54,5 %<small class="muted">cumul +79,5 % au high PM</small></td><td class="num">+16,2 %</td><td class="num">5,1 M</td><td class="num">7,0 M</td>
                   <td class="num sep">3,55<small class="muted">cumul +38,1 %</small></td>
                   <td class="num">−23,1 %</td>
                   <td class="num">4,10<small class="muted">+15,5 %</small></td>
@@ -1001,7 +997,7 @@
                 </tr>
                 <tr>
                   <td>10/09</td><td><span class="ticker">AEHL</span></td><td><span class="tag tag-accent">GUS</span></td>
-                  <td class="num sep">+78,2 %<small class="muted">cumul +103,0 % au high PM</small></td><td class="num">+13,9 %</td><td class="num">3,4 M</td><td class="num">11,5 M</td><td class="num">0,09</td>
+                  <td class="num sep">+78,2 %<small class="muted">cumul +103,0 % au high PM</small></td><td class="num">+13,9 %</td><td class="num">3,4 M</td><td class="num">11,5 M</td>
                   <td class="num sep">1,90<small class="muted">cumul +0,7 %</small></td>
                   <td class="num">−50,4 %</td>
                   <td class="num">2,48<small class="muted">+30,5 %</small></td>
@@ -1014,7 +1010,7 @@
                 </tr>
                 <tr>
                   <td>10/09</td><td><span class="ticker">MULN</span></td><td><span class="tag tag-accent">GUS</span></td>
-                  <td class="num sep">+63,5 %<small class="muted">cumul +86,6 % au high PM</small></td><td class="num">+14,1 %</td><td class="num">22,0 M</td><td class="num">15,3 M</td><td class="num">0,01</td>
+                  <td class="num sep">+63,5 %<small class="muted">cumul +86,6 % au high PM</small></td><td class="num">+14,1 %</td><td class="num">22,0 M</td><td class="num">15,3 M</td>
                   <td class="num sep">0,88<small class="muted">cumul +56,0 %</small></td>
                   <td class="num">−16,4 %</td>
                   <td class="num">0,95<small class="muted">+8,0 %</small></td>
@@ -1027,7 +1023,7 @@
                 </tr>
                 <tr>
                   <td>09/09</td><td><span class="ticker">CRKN</span></td><td><span class="tag tag-accent">GUS</span></td>
-                  <td class="num sep">+58,1 %<small class="muted">cumul +71,1 % au high PM</small></td><td class="num">+8,2 %</td><td class="num">9,9 M</td><td class="num">4,4 M</td><td class="num">0,03</td>
+                  <td class="num sep">+58,1 %<small class="muted">cumul +71,1 % au high PM</small></td><td class="num">+8,2 %</td><td class="num">9,9 M</td><td class="num">4,4 M</td>
                   <td class="num sep">5,00<small class="muted">cumul +37,4 %</small></td>
                   <td class="num">−19,7 %</td>
                   <td class="num">5,21<small class="muted">+4,2 %</small></td>
@@ -1040,7 +1036,7 @@
                 </tr>
                 <tr>
                   <td>08/09</td><td><span class="ticker">TOP</span></td><td><span class="tag tag-accent">GUS</span></td>
-                  <td class="num sep">+48,7 %<small class="muted">cumul +61,0 % au high PM</small></td><td class="num">+8,3 %</td><td class="num">32,0 M</td><td class="num">1,2 M</td><td class="num">0,02</td>
+                  <td class="num sep">+48,7 %<small class="muted">cumul +61,0 % au high PM</small></td><td class="num">+8,3 %</td><td class="num">32,0 M</td><td class="num">1,2 M</td>
                   <td class="num sep">8,50<small class="muted">cumul +41,9 %</small></td>
                   <td class="num">−11,9 %</td>
                   <td class="num">8,80<small class="muted">+3,5 %</small></td>
@@ -1054,7 +1050,7 @@
               </tbody>
               <tfoot>
                 <tr>
-                  <td colspan="9" title="Médianes, pas moyennes : un ou deux gros mouvements ne déplacent pas le chiffre typique">Médianes — 12 stats complétées</td>
+                  <td colspan="8" title="Médianes, pas moyennes : un ou deux gros mouvements ne déplacent pas le chiffre typique">Médianes — 12 stats complétées</td>
                   <td class="num">−17,3 %<small class="muted">cumul +42,9 %</small></td>
                   <td class="num">+8,0 %<small class="muted">11 avec push</small></td>
                   <td class="num"></td>
