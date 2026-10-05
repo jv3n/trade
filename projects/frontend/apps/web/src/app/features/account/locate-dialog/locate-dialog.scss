@@ -1,0 +1,31 @@
+@use 'sizes' as s;
+
+.lead {
+  margin: 0 0 s.$space-md;
+  color: var(--color-text-muted);
+}
+
+.locate-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: s.$space-md;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+}
+
+.cost {
+  margin: s.$space-md 0;
+  font-variant-numeric: tabular-nums;
+
+  .muted {
+    color: var(--color-text-faint);
+    font-weight: 400;
+  }
+}
+
+.full-width {
+  width: 100%;
+}

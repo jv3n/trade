@@ -13,6 +13,8 @@ import {
 } from '../../core/api/account/account.model';
 import { AccountRepository, PagedResult } from '../../core/api/account/account.repository';
 import { ForexRepository } from '../../core/api/forex/forex.repository';
+import { LocateInput } from '../../core/api/locates/locates.model';
+import { LocatesRepository } from '../../core/api/locates/locates.repository';
 import { BalanceCurrencyService } from '../../core/app-state/balance-currency.service';
 import { ConfirmService } from '../../core/app-state/confirm.service';
 import { computePeriodRange } from '../../shared/period-preset/period-preset';
@@ -33,19 +35,31 @@ import { AccountPage } from './account-page';
  *  - **The balance column is the server's** — `balanceAfter` is rendered as received, never
  *    recomputed from the visible rows, or filtering to trades would renumber it.
  *
- * Creation and edition go through `MovementDialog` and are its concern, not the page's.
+ *  - **Locates (#608)** — « Locates » narrows the table to them ; a LOCATE line is read-only, links
+ *    to its candidate's day, and one typed here with no candidate deletes its locate ; the tile reads
+ *    the period's locates and their part paid for nothing, amber when there is one.
+ *
+ * Creation and edition go through `MovementDialog` / `LocateDialog` and are their concern, not the
+ * page's.
  */
 describe('AccountPage', () => {
   let findMovements: ReturnType<typeof vi.fn>;
   let getSummary: ReturnType<typeof vi.fn>;
   let getBalanceSeries: ReturnType<typeof vi.fn>;
   let page: PagedResult<AccountMovement>;
+  let locates: { create: ReturnType<typeof vi.fn>; delete: ReturnType<typeof vi.fn> };
+  let dialogOpen: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
     page = makePage([]);
     findMovements = vi.fn((_filter?: AccountMovementFilter) => of(page));
     getSummary = vi.fn((_filter?: AccountMovementFilter) => of(makeSummary()));
     getBalanceSeries = vi.fn(() => of([]));
+    locates = {
+      create: vi.fn((input: LocateInput) => of({ ticker: input.ticker })),
+      delete: vi.fn(() => of(undefined)),
+    };
+    dialogOpen = vi.fn();
 
     await TestBed.configureTestingModule({
       imports: [AccountPage],
@@ -71,7 +85,8 @@ describe('AccountPage', () => {
         },
         { provide: ForexRepository, useValue: { latestRate: () => of(null) } },
         { provide: StbToast, useValue: { success: vi.fn(), error: vi.fn() } },
-        { provide: MatDialog, useValue: { open: vi.fn() } },
+        { provide: MatDialog, useValue: { open: dialogOpen } },
+        { provide: LocatesRepository, useValue: locates },
         // Stubbed rather than provided for real : it reaches the user preferences through
         // AuthService → AuthRepository, and the display currency is not what these tests pin.
         {
@@ -315,8 +330,10 @@ describe('AccountPage', () => {
       const fixture = TestBed.createComponent(AccountPage);
       fixture.detectChanges();
 
+      // Balance, P&L, net injected and locates — the gap tile is left out : whether the period
+      // had a reconciled morning is not known.
       const tiles = fixture.nativeElement.querySelector('[data-testid="kpi-unavailable"]');
-      expect(tiles?.querySelectorAll('.kpi').length).toBe(3);
+      expect(tiles?.querySelectorAll('.kpi').length).toBe(4);
       expect(tiles?.textContent).toContain('—');
     });
 
@@ -587,6 +604,118 @@ describe('AccountPage', () => {
     });
   });
 
+  describe('locates', () => {
+    function render(movements: AccountMovement[]) {
+      page = makePage(movements);
+      const fixture = TestBed.createComponent(AccountPage);
+      fixture.componentInstance.onTypeChange('all');
+      fixture.detectChanges();
+      return fixture;
+    }
+
+    function locateLine(overrides: Partial<AccountMovement> = {}): AccountMovement {
+      return makeMovement({
+        id: 'l',
+        type: 'LOCATE',
+        amount: -240,
+        valueDate: new Date(2026, 8, 18),
+        note: 'SGBX',
+        locateId: 'loc-1',
+        locateTicker: 'SGBX',
+        locateShares: 2000,
+        locateCandidateId: 'c-sgbx',
+        ...overrides,
+      });
+    }
+
+    it('narrows the table to the locates', () => {
+      const fixture = TestBed.createComponent(AccountPage);
+      fixture.detectChanges();
+      findMovements.mockClear();
+
+      fixture.componentInstance.onTypeChange('locates');
+
+      expect((findMovements.mock.calls[0][0] as AccountMovementFilter).types).toEqual(['LOCATE']);
+    });
+
+    it("links a candidate's locate line to the candidates of its day, with no edit or delete", () => {
+      const el: HTMLElement = render([locateLine()]).nativeElement;
+
+      const link = el.querySelector('a[href^="/candidates"]');
+      expect(link?.getAttribute('href')).toBe('/candidates?date=2026-09-18');
+      expect(el.textContent).toContain('SGBX');
+      expect(el.querySelector('button[aria-label="account.actions.delete"]')).toBeNull();
+      expect(el.querySelector('button[aria-label="account.actions.edit"]')).toBeNull();
+    });
+
+    // Typed here, it has no candidate row to be fixed on.
+    it('deletes the locate itself from the line of one typed with no candidate', () => {
+      const fixture = render([locateLine({ locateCandidateId: null })]);
+      const el: HTMLElement = fixture.nativeElement;
+      const button = el.querySelector<HTMLButtonElement>(
+        'button[aria-label="account.actions.deleteLocate"]',
+      );
+
+      button!.click();
+
+      expect(locates.delete).toHaveBeenCalledWith('loc-1');
+    });
+
+    it('saves the locate typed in the « Locate » dialog, then reloads the page', () => {
+      const input: LocateInput = {
+        shares: 1000,
+        pricePerShare: 0.05,
+        candidateId: null,
+        tradingDate: new Date(2026, 8, 18),
+        ticker: 'ATXG',
+        note: null,
+      };
+      dialogOpen.mockReturnValue({ afterClosed: () => of(input) });
+      const fixture = TestBed.createComponent(AccountPage);
+      fixture.detectChanges();
+      getSummary.mockClear();
+
+      fixture.componentInstance.openLocate();
+
+      expect(locates.create).toHaveBeenCalledWith(input);
+      expect(getSummary).toHaveBeenCalled();
+    });
+
+    it("reads the period's locates and their part paid for nothing, amber", () => {
+      const fixture = TestBed.createComponent(AccountPage);
+      fixture.detectChanges();
+      const tile: HTMLElement = fixture.nativeElement.querySelector(
+        '[data-testid="period-locates"]',
+      );
+
+      expect(fixture.componentInstance.locatesOf(makeSummary())).toEqual({
+        total: 812.4,
+        paidForNothing: 186,
+      });
+      expect(tile.querySelector('[data-testid="paid-for-nothing"]')?.classList).toContain('warn');
+    });
+
+    // Unlike the gap tile (#480) : nothing located is a measured 0, not a missing measure.
+    it('keeps the tile on a period with nothing located', () => {
+      getSummary.mockReturnValue(of(makeSummary({ periodLocates: 0, periodUnusedLocates: 0 })));
+      const fixture = TestBed.createComponent(AccountPage);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('[data-testid="period-locates"]')).not.toBeNull();
+    });
+
+    it('leaves the part paid for nothing neutral when there is none', () => {
+      getSummary.mockReturnValue(of(makeSummary({ periodUnusedLocates: 0 })));
+      const fixture = TestBed.createComponent(AccountPage);
+      fixture.detectChanges();
+
+      const part: HTMLElement = fixture.nativeElement.querySelector(
+        '[data-testid="paid-for-nothing"]',
+      );
+      expect(part.classList).not.toContain('warn');
+    });
+  });
+
   function makeMovement(overrides: Partial<AccountMovement> = {}): AccountMovement {
     return {
       id: 'm1',
@@ -598,6 +727,10 @@ describe('AccountPage', () => {
       tradeEntryId: null,
       tradeDirection: null,
       tradeSize: null,
+      locateId: null,
+      locateTicker: null,
+      locateShares: null,
+      locateCandidateId: null,
       measuredGap: null,
       createdAt: new Date(2026, 8, 15),
       updatedAt: new Date(2026, 8, 15),
@@ -627,6 +760,8 @@ describe('AccountPage', () => {
       periodAdjustments: 0,
       periodReconciliationGap: 0,
       periodMovementCount: 10,
+      periodLocates: -812.4,
+      periodUnusedLocates: -186,
       ...overrides,
     };
   }

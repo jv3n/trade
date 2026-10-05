@@ -8,9 +8,12 @@ import { TradeDirection } from '../journal/trade-entry.model';
  * adjustments ±. `balance = Σ amount`.
  */
 
-export type AccountMovementType = 'DEPOSIT' | 'WITHDRAWAL' | 'TRADE' | 'ADJUSTMENT';
+export type AccountMovementType = 'DEPOSIT' | 'WITHDRAWAL' | 'TRADE' | 'ADJUSTMENT' | 'LOCATE';
 
-/** Types the user can create/edit by hand. TRADE comes from the journal, ADJUSTMENT from a correction. */
+/**
+ * Types the user can create/edit by hand. TRADE comes from the journal, ADJUSTMENT from a
+ * correction, LOCATE from a locate.
+ */
 export const MANUAL_MOVEMENT_TYPES: readonly AccountMovementType[] = ['DEPOSIT', 'WITHDRAWAL'];
 
 export interface AccountMovement {
@@ -33,6 +36,15 @@ export interface AccountMovement {
    */
   tradeDirection: TradeDirection | null;
   tradeSize: number | null;
+  /**
+   * Set only on LOCATE movements (#602) — the locate the line follows, read-only like a trade's :
+   * its ticker and shares label it (« SGBX 2 000 »), its candidate is where it is changed.
+   * [locateCandidateId] is null for a locate typed on its own.
+   */
+  locateId: string | null;
+  locateTicker: string | null;
+  locateShares: number | null;
+  locateCandidateId: string | null;
   /**
    * Set only on a morning's correction : the gap that morning recorded. An [amount] that differs
    * from it means a later fix to an earlier row was absorbed there (#476).
@@ -81,6 +93,12 @@ export interface AccountSummary {
    */
   periodReconciliationGap: number | null;
   periodMovementCount: number;
+  /**
+   * The period's locates, signed (≤ 0), and their part **paid for nothing** — on a ticker with no
+   * trade that day, today's counted once New York has closed. Both follow the dates only.
+   */
+  periodLocates: number;
+  periodUnusedLocates: number;
 }
 
 /**

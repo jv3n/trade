@@ -333,6 +333,7 @@
     "fxUnavailable": "Taux de change indisponible pour le moment.",
     "unavailable": "Indisponible",
     "addMovement": "Ajouter un mouvement",
+    "addLocate": "Locate",
     "chartEmpty": "Pas assez de mouvements pour tracer la courbe du solde.",
     "chartUnavailable": "Courbe indisponible",
     "loading": "Chargement du compte…",
@@ -344,6 +345,8 @@
     },
     "movements": "Mouvements",
     "viewTrade": "Voir le trade",
+    "viewCandidate": "Voir le candidat",
+    "locateShares": "{{shares}} actions louées",
     "morningCorrection": "Rapprochement du {{date}}",
     "adjusted": {
       "tag": "ajustée",
@@ -354,11 +357,27 @@
       "DEPOSIT": "Dépôt",
       "WITHDRAWAL": "Retrait",
       "TRADE": "Trade",
-      "ADJUSTMENT": "Correction"
+      "ADJUSTMENT": "Correction",
+      "LOCATE": "Locate"
     },
     "actions": {
       "edit": "Modifier",
-      "delete": "Supprimer"
+      "delete": "Supprimer",
+      "deleteLocate": "Supprimer le locate"
+    },
+    "confirmDeleteLocate": {
+      "title": "Supprimer ce locate {{ticker}} ?",
+      "message": "Le locate et sa ligne de compte sont supprimés : le montant revient au solde.",
+      "confirm": "Supprimer"
+    },
+    "locateDialog": {
+      "title": "Nouveau locate",
+      "lead": "Pour un ticker hors candidats. Payé que le trade soit pris ou non : le montant sort du compte.",
+      "ticker": "Ticker",
+      "shares": "Actions louées",
+      "price": "$ / action",
+      "cost": "Coût :",
+      "save": "Louer"
     },
     "confirmDelete": {
       "title": "Supprimer ce mouvement ?",
@@ -391,7 +410,10 @@
       "reconcileSuccess": "Matin rapproché.",
       "reconcileError": "Impossible de rapprocher ce matin. Réessaie.",
       "cancelReconciliationSuccess": "Rapprochement annulé.",
-      "cancelReconciliationError": "Impossible d'annuler le rapprochement."
+      "cancelReconciliationError": "Impossible d'annuler le rapprochement.",
+      "locateSuccess": "Locate {{ticker}} enregistré.",
+      "locateError": "Impossible d'enregistrer le locate. Réessaie.",
+      "locateDeleteSuccess": "Locate supprimé."
     },
     "chartTitle": "Évolution du solde",
     "kpi": {
@@ -406,7 +428,10 @@
       "reconciliationGapShare": "{{share}} % du P&L",
       "reconciliationGapCredit": "crédit net",
       "reconciliationGapNoShare": "— · P&L nul ou en perte",
-      "reconciliationGapHint": "Ce que le courtier a pris hors trades — locates, abonnement, arrondis. Lu aux matins rapprochés de la période : une ligne corrigée depuis ne le change pas. Suit les dates, pas le filtre de type."
+      "reconciliationGapHint": "Ce que le courtier a pris hors trades — locates, abonnement, arrondis. Lu aux matins rapprochés de la période : une ligne corrigée depuis ne le change pas. Suit les dates, pas le filtre de type.",
+      "locates": "Locates de la période",
+      "locatesPaidForNothing": "dont {{amount}} payés pour rien",
+      "locatesHint": "Les locates pris sur la période. « Payés pour rien » : sur un ticker sans trade ce jour-là — ceux du jour comptent une fois New York fermé (16h). Un maximum : un locate relisté et remboursé en partie compte en entier, son remboursement étant un ajustement. Suit les dates, pas le filtre de type."
     },
     "filter": {
       "type": "Type de mouvement",
@@ -414,7 +439,8 @@
         "all": "Tous les types",
         "trades": "Trades",
         "cash": "Dépôts / retraits",
-        "corrections": "Corrections"
+        "corrections": "Corrections",
+        "locates": "Locates"
       }
     },
     "direction": {

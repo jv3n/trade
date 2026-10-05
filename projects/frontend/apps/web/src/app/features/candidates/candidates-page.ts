@@ -11,9 +11,9 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormField, form, maxLength, required } from '@angular/forms/signals';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   MatDialog,
@@ -29,7 +29,7 @@ import {
   StbTooltipModule,
   stbLoadGate,
 } from '@portfolioai/ui';
-import { addDays, isBefore, isSameDay, isWeekend, startOfDay } from 'date-fns';
+import { addDays, isBefore, isSameDay, isValid, isWeekend, parseISO, startOfDay } from 'date-fns';
 import {
   EMPTY,
   Observable,
@@ -187,6 +187,7 @@ export class CandidatesPage {
   private readonly repo = inject(CandidatesRepository);
   private readonly locatesRepo = inject(LocatesRepository);
   private readonly dialog = inject(MatDialog);
+  private readonly route = inject(ActivatedRoute);
   private readonly stats = inject(StatsRepository);
   private readonly confirm = inject(ConfirmService);
   private readonly toasts = inject(StbToast);
@@ -342,7 +343,11 @@ export class CandidatesPage {
       this.listing?.unsubscribe();
       this.locatesListing?.unsubscribe();
     });
-    this.load();
+    // `?date=YYYY-MM-DD` picks the day — a LOCATE line of the account links here (#608). Followed,
+    // not read once : a plain `/candidates` link reuses this instance and must bring back today.
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed())
+      .subscribe((params) => this.goTo(dayFromQuery(params.get('date'))));
   }
 
   // ---- Day navigation ----
@@ -769,6 +774,11 @@ function toCandidateInput(c: Candidate): CandidateInput {
     openPrice: c.openPrice,
     targetPushPercent: c.targetPushPercent,
   };
+}
+
+function dayFromQuery(date: string | null): Date {
+  const parsed = date ? parseISO(date) : null;
+  return parsed && isValid(parsed) ? parsed : new Date();
 }
 
 function isPositive(n: number | null): boolean {

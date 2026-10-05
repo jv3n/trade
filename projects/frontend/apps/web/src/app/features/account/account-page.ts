@@ -38,6 +38,8 @@ import {
 import { AccountRepository } from '../../core/api/account/account.repository';
 import { ForexRate } from '../../core/api/forex/forex.model';
 import { ForexRepository } from '../../core/api/forex/forex.repository';
+import { LocateInput } from '../../core/api/locates/locates.model';
+import { LocatesRepository } from '../../core/api/locates/locates.repository';
 import {
   BalanceCurrency,
   BalanceCurrencyService,
@@ -55,6 +57,7 @@ import {
   toSkeletonColumns,
   type SkeletonColumnDefs,
 } from '../../shared/skeleton-columns/skeleton-columns';
+import { LocateDialog } from './locate-dialog/locate-dialog';
 import { MorningReconciliation } from './morning-reconciliation/morning-reconciliation';
 import { MovementDialog, MovementDialogData } from './movement-dialog/movement-dialog';
 
@@ -63,13 +66,14 @@ import { MovementDialog, MovementDialogData } from './movement-dialog/movement-d
  * point of view they are the same question — money I put in or took out — and the mockup offers
  * them as one choice.
  */
-export type MovementTypeFilter = 'all' | 'trades' | 'cash' | 'corrections';
+export type MovementTypeFilter = 'all' | 'trades' | 'cash' | 'corrections' | 'locates';
 
 export const MOVEMENT_TYPE_FILTERS: readonly MovementTypeFilter[] = [
   'all',
   'trades',
   'cash',
   'corrections',
+  'locates',
 ];
 
 const TYPES_BY_FILTER: Record<MovementTypeFilter, readonly AccountMovementType[] | null> = {
@@ -77,7 +81,15 @@ const TYPES_BY_FILTER: Record<MovementTypeFilter, readonly AccountMovementType[]
   trades: ['TRADE'],
   cash: ['DEPOSIT', 'WITHDRAWAL'],
   corrections: ['ADJUSTMENT'],
+  locates: ['LOCATE'],
 };
+
+/** The period's locates as the tile reads them, unsigned — the label carries the direction. */
+export interface PeriodLocates {
+  total: number;
+  /** On a ticker with no trade that day — what the discipline costs. */
+  paidForNothing: number;
+}
 
 /**
  * The gaps the period's reconciled mornings recorded, as the tile reads them. [amount] is unsigned
@@ -119,7 +131,9 @@ const SKELETON_COLUMNS: SkeletonColumnDefs = {
 /**
  * Broker cash-account page, laid out after `mockup/compte.html` (#229) : a KPI row (balance with
  * its USD / CAD switch, P&L of the period, net injected), the balance curve in its own card, and
- * the movements as a filterable table carrying the running balance.
+ * the movements as a filterable table carrying the running balance. Locates (#608) : a « Locate »
+ * button for one off the candidates, read-only LOCATE lines, and a tile for the period's locates
+ * with their part paid for nothing.
  *
  * **The period drives the page, the type only the table.** The period feeds `/summary`, the chart
  * window and `/movements` ; the type filter narrows the movements table and nothing else. The KPI
@@ -165,6 +179,7 @@ const SKELETON_COLUMNS: SkeletonColumnDefs = {
 })
 export class AccountPage {
   private readonly repo = inject(AccountRepository);
+  private readonly locates = inject(LocatesRepository);
   private readonly forex = inject(ForexRepository);
   private readonly dialog = inject(MatDialog);
   private readonly confirm = inject(ConfirmService);
@@ -208,6 +223,7 @@ export class AccountPage {
     'account.currentBalance',
     'account.kpi.periodPnl',
     'account.kpi.netInjected',
+    'account.kpi.locates',
   ] as const;
   /** The period's figures, over its dates only — never narrowed by the table's type filter. */
   readonly summary = signal<AccountSummary | null>(null);
@@ -284,6 +300,14 @@ export class AccountPage {
   });
 
   /**
+   * Always a tile, unlike the gap's : a period with nothing located measured 0, it did not miss a
+   * measure.
+   */
+  locatesOf(s: AccountSummary): PeriodLocates {
+    return { total: Math.abs(s.periodLocates), paidForNothing: Math.abs(s.periodUnusedLocates) };
+  }
+
+  /**
    * The suffix key of the displayed currency — tells the two dollars apart, since both use the same
    * sign. Through i18n like every other amount (#395) : the locale's own form, and a no-break space
    * so the currency never wraps away from the balance.
@@ -313,6 +337,67 @@ export class AccountPage {
     return m.tradeEntryId ? ['/journal', m.tradeEntryId] : ['/journal'];
   }
 
+  /**
+   * Where a LOCATE row points : the Candidates page on the locate's day — its row's key is where it
+   * is changed.
+   */
+  candidateDay(m: AccountMovement): { date: string } {
+    return { date: format(m.valueDate, 'yyyy-MM-dd') };
+  }
+
+  /** « Locate » : a locate on a ticker off the candidates (#608). */
+  openLocate(): void {
+    this.dialog
+      .open<LocateDialog, void, LocateInput | undefined>(LocateDialog, {
+        width: '480px',
+        maxWidth: '95vw',
+        autoFocus: 'first-tabbable',
+      })
+      .afterClosed()
+      .pipe(
+        filter((input): input is LocateInput => !!input),
+        switchMap((input) =>
+          this.locates.create(input).pipe(
+            tap((saved) => {
+              this.toasts.success(
+                this.translate.instant('account.snackbar.locateSuccess', { ticker: saved.ticker }),
+              );
+              this.fetch();
+            }),
+            catchError(() => {
+              this.toasts.error(this.translate.instant('account.snackbar.locateError'));
+              return EMPTY;
+            }),
+          ),
+        ),
+      )
+      .subscribe();
+  }
+
+  /**
+   * A locate typed here, with no candidate, has no row to be fixed on : its line deletes the locate
+   * itself — the account line goes with it.
+   */
+  deleteLocate(m: AccountMovement): void {
+    const locateId = m.locateId;
+    if (!locateId) return;
+    this.confirm
+      .ask('account.confirmDeleteLocate', { params: { ticker: m.locateTicker }, variant: 'danger' })
+      .pipe(
+        filter(Boolean),
+        switchMap(() => this.locates.delete(locateId)),
+        tap(() => {
+          this.toasts.success(this.translate.instant('account.snackbar.locateDeleteSuccess'));
+          this.fetch();
+        }),
+        catchError(() => {
+          this.toasts.error(this.translate.instant('account.snackbar.deleteError'));
+          return EMPTY;
+        }),
+      )
+      .subscribe();
+  }
+
   /** A correction settled by a morning reconciliation — the only rows that carry a measured gap. */
   isMorningCorrection(m: AccountMovement): boolean {
     return m.measuredGap !== null && m.measuredGap !== undefined;
@@ -334,7 +419,7 @@ export class AccountPage {
   }
 
   canDelete(m: AccountMovement): boolean {
-    return m.type !== 'TRADE';
+    return m.type !== 'TRADE' && m.type !== 'LOCATE';
   }
 
   delete(movement: AccountMovement): void {
