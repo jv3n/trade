@@ -31,6 +31,10 @@ interface AccountMovementWireDto {
   tradeEntryId: string | null;
   tradeDirection: TradeDirection | null;
   tradeSize: number | null;
+  locateId: string | null;
+  locateTicker: string | null;
+  locateShares: number | null;
+  locateCandidateId: string | null;
   measuredGap: number | null;
   createdAt: string;
   updatedAt: string;
@@ -77,6 +81,10 @@ function fromWire(w: AccountMovementWireDto): AccountMovement {
     tradeEntryId: w.tradeEntryId,
     tradeDirection: w.tradeDirection,
     tradeSize: w.tradeSize,
+    locateId: w.locateId,
+    locateTicker: w.locateTicker,
+    locateShares: w.locateShares,
+    locateCandidateId: w.locateCandidateId,
     measuredGap: w.measuredGap,
     createdAt: parseISO(w.createdAt),
     updatedAt: parseISO(w.updatedAt),

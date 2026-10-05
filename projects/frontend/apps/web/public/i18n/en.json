@@ -333,6 +333,7 @@
     "fxUnavailable": "Exchange rate unavailable right now.",
     "unavailable": "Unavailable",
     "addMovement": "Add movement",
+    "addLocate": "Locate",
     "chartEmpty": "Not enough movements to draw the balance curve.",
     "chartUnavailable": "Balance curve unavailable",
     "loading": "Loading account…",
@@ -344,6 +345,8 @@
     },
     "movements": "Movements",
     "viewTrade": "View the trade",
+    "viewCandidate": "View the candidate",
+    "locateShares": "{{shares}} shares located",
     "morningCorrection": "Morning of {{date}}",
     "adjusted": {
       "tag": "adjusted",
@@ -354,11 +357,27 @@
       "DEPOSIT": "Deposit",
       "WITHDRAWAL": "Withdrawal",
       "TRADE": "Trade",
-      "ADJUSTMENT": "Correction"
+      "ADJUSTMENT": "Correction",
+      "LOCATE": "Locate"
     },
     "actions": {
       "edit": "Edit",
-      "delete": "Delete"
+      "delete": "Delete",
+      "deleteLocate": "Delete the locate"
+    },
+    "confirmDeleteLocate": {
+      "title": "Delete this {{ticker}} locate?",
+      "message": "The locate and its account line are deleted: the amount goes back to the balance.",
+      "confirm": "Delete"
+    },
+    "locateDialog": {
+      "title": "New locate",
+      "lead": "For a ticker off the candidates. Paid whether or not the trade is taken: the amount leaves the account.",
+      "ticker": "Ticker",
+      "shares": "Shares located",
+      "price": "$ / share",
+      "cost": "Cost:",
+      "save": "Locate"
     },
     "confirmDelete": {
       "title": "Delete this movement?",
@@ -391,7 +410,10 @@
       "reconcileSuccess": "Morning reconciled.",
       "reconcileError": "Couldn't reconcile this morning. Please retry.",
       "cancelReconciliationSuccess": "Reconciliation cancelled.",
-      "cancelReconciliationError": "Could not cancel the reconciliation."
+      "cancelReconciliationError": "Could not cancel the reconciliation.",
+      "locateSuccess": "{{ticker}} locate saved.",
+      "locateError": "Couldn't save the locate. Please retry.",
+      "locateDeleteSuccess": "Locate deleted."
     },
     "chartTitle": "Balance over time",
     "kpi": {
@@ -406,7 +428,10 @@
       "reconciliationGapShare": "{{share}} % of the P&L",
       "reconciliationGapCredit": "net credit",
       "reconciliationGapNoShare": "— · flat or losing P&L",
-      "reconciliationGapHint": "What the broker took outside the trades — locates, subscription, rounding. Read at the period's reconciled mornings : a row fixed since does not change it. Follows the dates, not the type filter."
+      "reconciliationGapHint": "What the broker took outside the trades — locates, subscription, rounding. Read at the period's reconciled mornings : a row fixed since does not change it. Follows the dates, not the type filter.",
+      "locates": "Locates for the period",
+      "locatesPaidForNothing": "including {{amount}} paid for nothing",
+      "locatesHint": "The locates taken over the period. « Paid for nothing »: on a ticker with no trade that day — today's count once New York has closed (4 pm). An upper bound: a locate listed back and partly refunded counts in full, its refund being an adjustment. Follows the dates, not the type filter."
     },
     "filter": {
       "type": "Movement type",
@@ -414,7 +439,8 @@
         "all": "All types",
         "trades": "Trades",
         "cash": "Deposits / withdrawals",
-        "corrections": "Corrections"
+        "corrections": "Corrections",
+        "locates": "Locates"
       }
     },
     "direction": {

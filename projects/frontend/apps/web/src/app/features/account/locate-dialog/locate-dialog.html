@@ -1,0 +1,83 @@
+<h2 mat-dialog-title>{{ 'account.locateDialog.title' | translate }}</h2>
+
+<form (submit)="$event.preventDefault(); submit()">
+  <mat-dialog-content>
+    <p class="lead">{{ 'account.locateDialog.lead' | translate }}</p>
+
+    <div class="locate-grid">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" (click)="picker.open()">
+        <mat-label>{{ 'account.fields.valueDate' | translate }}</mat-label>
+        <input
+          matInput
+          readonly
+          [matDatepicker]="picker"
+          [value]="tradingDate()"
+          (dateChange)="setDate($event.value)"
+        />
+        <mat-datepicker-toggle matIconSuffix [for]="picker" />
+        <mat-datepicker #picker />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'account.locateDialog.ticker' | translate }}</mat-label>
+        <input
+          matInput
+          class="mono"
+          autocomplete="off"
+          placeholder="ATXG"
+          [formField]="textForm.ticker"
+        />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'account.locateDialog.shares' | translate }}</mat-label>
+        <input
+          matInput
+          appNumberMask
+          [decimals]="0"
+          [min]="0"
+          [number]="shares()"
+          (numberChange)="shares.set($event)"
+          inputmode="numeric"
+        />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'account.locateDialog.price' | translate }}</mat-label>
+        <input
+          matInput
+          appNumberMask
+          [decimals]="4"
+          [min]="0"
+          [number]="price()"
+          (numberChange)="price.set($event)"
+          inputmode="decimal"
+        />
+      </mat-form-field>
+    </div>
+
+    <p class="cost">
+      {{ 'account.locateDialog.cost' | translate }}
+      <strong [class.muted]="cost() === null">
+        {{
+          cost() !== null ? (cost()! | number: '1.2-2') + ('account.usdSuffix' | translate) : '—'
+        }}
+      </strong>
+    </p>
+
+    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="full-width">
+      <mat-label>{{ 'account.fields.note' | translate }}</mat-label>
+      <input matInput autocomplete="off" [formField]="textForm.note" />
+    </mat-form-field>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-stroked-button type="button" (click)="cancel()">
+      {{ 'account.dialog.cancel' | translate }}
+    </button>
+    <button mat-flat-button type="submit" [disabled]="!canSave()">
+      <mat-icon>key</mat-icon>
+      <span>{{ 'account.locateDialog.save' | translate }}</span>
+    </button>
+  </mat-dialog-actions>
+</form>

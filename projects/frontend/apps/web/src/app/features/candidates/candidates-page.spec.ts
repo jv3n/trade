@@ -1,11 +1,11 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, ParamMap, provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
 import { provideNativeDateAdapter, StbToast } from '@portfolioai/ui';
 import { addDays, startOfDay } from 'date-fns';
-import { Observable, of, Subject, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, of, Subject, throwError } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
 import {
   BulkPromotion,
@@ -54,7 +54,8 @@ import { CandidatesPage } from './candidates-page';
  * - **Locates (#607)** — the day's locates are summed per ticker and for the day ; shares typed at
  *   capture become a locate on the new candidate, at its quote, and need a quote to be saved. The
  *   dialog itself is pinned in `locates-dialog.spec`.
- * - **Day navigation** — past days are read-only.
+ * - **Day navigation** — past days are read-only ; `?date=` opens on that day (an account's LOCATE
+ *   line links there).
  *
  * The repositories, the confirmation modal and the snackbar are stubbed so nothing touches HTTP.
  */
@@ -196,6 +197,8 @@ function setup(
     /** The day's answer, held back — a first load still running. */
     answer?: Observable<Candidate[]>;
     locates?: Locate[];
+    /** The query params the page follows — `?date=` picks the day. */
+    query?: BehaviorSubject<ParamMap>;
   } = {},
 ): {
   fixture: ComponentFixture<CandidatesPage>;
@@ -224,6 +227,9 @@ function setup(
         },
       },
       { provide: ConfirmService, useValue: { ask: () => of(options.confirmed ?? true) } },
+      ...(options.query
+        ? [{ provide: ActivatedRoute, useValue: { queryParamMap: options.query } }]
+        : []),
     ],
   });
   const repo = TestBed.inject(CandidatesRepository) as MockCandidatesRepository;
@@ -307,6 +313,31 @@ describe('CandidatesPage', () => {
     expect(ktta.gap).toBeCloseTo(52.83, 2);
     expect(ktta.push).toBeCloseTo(14.81, 2);
     expect(ktta.locatePct).toBeCloseTo(0.74, 2);
+  });
+
+  it('opens on the day given in the URL, the one a LOCATE line of the account links to', () => {
+    const query = new BehaviorSubject(convertToParamMap({ date: '2026-09-18' }));
+    const { page, repo } = setup({ query });
+
+    expect(page.day()).toEqual(new Date(2026, 8, 18));
+    expect(repo.listForDate).toHaveBeenCalledWith(new Date(2026, 8, 18));
+  });
+
+  it('falls back to today on a date it cannot read', () => {
+    const query = new BehaviorSubject(convertToParamMap({ date: 'not-a-date' }));
+    const { page } = setup({ query });
+
+    expect(page.day()).toEqual(startOfDay(new Date()));
+  });
+
+  // The sidenav's plain `/candidates` reuses the page : it must not stay on the linked day.
+  it('comes back to today when the URL drops its date', () => {
+    const query = new BehaviorSubject(convertToParamMap({ date: '2026-09-18' }));
+    const { page } = setup({ query });
+
+    query.next(convertToParamMap({}));
+
+    expect(page.day()).toEqual(startOfDay(new Date()));
   });
 
   // ---- Locates (#607) ----
