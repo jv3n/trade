@@ -8,12 +8,15 @@ import com.portfolioai.account.application.dto.toDto
 import com.portfolioai.account.domain.AccountMovement
 import com.portfolioai.account.domain.AccountMovementFilter
 import com.portfolioai.account.domain.AccountMovementType
+import com.portfolioai.account.domain.MarketSession
 import com.portfolioai.account.infrastructure.persistence.AccountMovementRepository
 import com.portfolioai.account.infrastructure.persistence.AccountReconciliationRepository
 import com.portfolioai.auth.application.AuthService
+import com.portfolioai.journal.application.TradeEntryService
 import com.portfolioai.shared.badRequest
 import com.portfolioai.shared.requirePositive
 import java.math.BigDecimal
+import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
@@ -37,6 +40,7 @@ import org.springframework.web.server.ResponseStatusException
  *   and editable only when no morning owns it (legacy rows).
  * - `TRADE` — pushed from the journal (journal-integration slice), **read-only** here : create /
  *   update / delete via the manual endpoints are rejected with 400.
+ * - `LOCATE` — pushed from the `locate` context, read-only the same way.
  *
  * Validation is done in-service (like `LexiconEntryService`) — non-positive / wrong-type / no-op
  * inputs return a clean 400 rather than reaching the DB CHECK constraints.
@@ -47,6 +51,8 @@ class AccountService(
   private val authService: AuthService,
   private val reconciler: AccountReconciler,
   private val reconciliations: AccountReconciliationRepository,
+  private val trades: TradeEntryService,
+  private val clock: Clock,
 ) {
 
   /**
@@ -106,6 +112,10 @@ class AccountService(
     val deposits = sumOf(AccountMovementType.DEPOSIT)
     val withdrawals = sumOf(AccountMovementType.WITHDRAWAL)
     val trades = period.filter { it.type == AccountMovementType.TRADE }
+    // Dates only, like the gap : under « Trades » the tile would read a plausible 0.
+    val locates = all.filter {
+      it.type == AccountMovementType.LOCATE && filter.covers(it.valueDate)
+    }
     return AccountSummaryDto(
       balance = all.fold(BigDecimal.ZERO) { acc, m -> acc + m.amount },
       periodPnl = sumOf(AccountMovementType.TRADE),
@@ -119,8 +129,29 @@ class AccountService(
       periodReconciliationGap =
         mornings.takeIf { it.isNotEmpty() }?.fold(BigDecimal.ZERO) { acc, r -> acc + r.gap },
       periodMovementCount = period.size.toLong(),
+      periodLocates = locates.sumOfAmounts(),
+      periodUnusedLocates = paidForNothing(locates).sumOfAmounts(),
     )
   }
+
+  /**
+   * The [locates] on a (day, ticker) with no trade in the journal — a day counted once its New York
+   * session is over, before that the trade may still come. Tickers are matched ignoring case : each
+   * context normalises its own on write, and no shared helper holds them to the same rule.
+   */
+  private fun paidForNothing(locates: List<AccountMovement>): List<AccountMovement> {
+    val now = clock.instant()
+    val settled = locates.filter { MarketSession.isOver(it.valueDate, now) }
+    if (settled.isEmpty()) return emptyList()
+    val traded =
+      trades.tradedTickers(settled.minOf { it.valueDate }, settled.maxOf { it.valueDate })
+    return settled.filter { locate ->
+      traded[locate.valueDate].orEmpty().none { it.equals(locate.locateTicker, ignoreCase = true) }
+    }
+  }
+
+  private fun List<AccountMovement>.sumOfAmounts(): BigDecimal =
+    fold(BigDecimal.ZERO) { acc, m -> acc + m.amount }
 
   /**
    * Balance left behind by each movement, keyed by id — the running sum over the whole history in
@@ -166,7 +197,7 @@ class AccountService(
       request.type != AccountMovementType.DEPOSIT && request.type != AccountMovementType.WITHDRAWAL
     ) {
       throw badRequest(
-        "Only DEPOSIT or WITHDRAWAL can be added here — TRADE comes from the journal, ADJUSTMENT from the correction endpoint"
+        "Only DEPOSIT or WITHDRAWAL can be added here — TRADE comes from the journal, LOCATE from the locates, ADJUSTMENT from the correction endpoint"
       )
     }
     val movement =
@@ -183,14 +214,17 @@ class AccountService(
   }
 
   /**
-   * Edits a manual movement. TRADE → 400 ; type change → 400 ; a morning's correction → 400 ;
-   * foreign / missing id → 404.
+   * Edits a manual movement. TRADE / LOCATE → 400 ; type change → 400 ; a morning's correction →
+   * 400 ; foreign / missing id → 404.
    */
   @Transactional
   fun update(id: UUID, request: MovementRequest): AccountMovementDto {
     val movement = loadOwned(id)
     if (movement.type == AccountMovementType.TRADE) {
       throw badRequest("TRADE movements are managed from the journal and can't be edited here")
+    }
+    if (movement.type == AccountMovementType.LOCATE) {
+      throw badRequest("LOCATE movements are managed from their locate and can't be edited here")
     }
     if (request.type != movement.type) {
       throw badRequest("A movement's type can't be changed — delete it and create a new one")
@@ -212,13 +246,17 @@ class AccountService(
   }
 
   /**
-   * Deletes a manual movement. TRADE → 400 (managed from the journal) ; foreign / missing → 404.
+   * Deletes a manual movement. TRADE / LOCATE → 400 (managed from their own context) ; foreign /
+   * missing → 404.
    */
   @Transactional
   fun delete(id: UUID) {
     val movement = loadOwned(id)
     if (movement.type == AccountMovementType.TRADE) {
       throw badRequest("TRADE movements are removed by deleting their trade in the journal")
+    }
+    if (movement.type == AccountMovementType.LOCATE) {
+      throw badRequest("LOCATE movements are removed by deleting their locate")
     }
     // A correction born of a morning reconciliation takes that morning with it (#249) : the DB's
     // `ON DELETE SET NULL` would otherwise leave a row describing a correction that is gone, and
@@ -245,7 +283,8 @@ class AccountService(
       AccountMovementType.WITHDRAWAL -> amount.requirePositive("Amount").negate()
       AccountMovementType.ADJUSTMENT ->
         amount.also { if (it.signum() == 0) throw badRequest("Adjustment amount must not be zero") }
-      AccountMovementType.TRADE -> throw badRequest("TRADE movements can't be created manually")
+      AccountMovementType.TRADE,
+      AccountMovementType.LOCATE -> throw badRequest("$type movements can't be created manually")
     }
 
   private fun String?.cleanNote(): String? = this?.trim()?.ifEmpty { null }
