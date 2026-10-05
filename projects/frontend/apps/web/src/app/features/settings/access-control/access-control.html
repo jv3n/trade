@@ -4,11 +4,10 @@
     <p>{{ 'settings.accessControlPage.intro' | translate }}</p>
   </div>
 
-  @if (loading()) {
-    <div class="loading-state">
-      <mat-spinner diameter="24"></mat-spinner>
-      <span>{{ 'settings.accessControlPage.loading' | translate }}</span>
-    </div>
+  @if (gate.skeleton()) {
+    <ui-skeleton-card [label]="'settings.accessControlPage.loading' | translate" [lines]="2" />
+  } @else if (!gate.content()) {
+    <!-- The first load, inside its show delay : nothing yet, so a fast answer never flashes. -->
   } @else if (loadError()) {
     <div class="error-banner">
       <mat-icon aria-hidden="true">error</mat-icon>

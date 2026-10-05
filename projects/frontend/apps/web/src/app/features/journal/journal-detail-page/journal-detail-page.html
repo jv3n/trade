@@ -4,11 +4,15 @@
     <span>{{ 'journal.detail.back' | translate }}</span>
   </a>
 
-  @if (loading()) {
-    <div class="loading-state">
-      <mat-spinner diameter="20" />
-      <span>{{ 'journal.detail.loading' | translate }}</span>
+  @if (gate.skeleton()) {
+    <ui-skeleton-card bare [lines]="1" [label]="'journal.detail.loading' | translate" />
+    <ui-skeleton-kpi-row />
+    <div class="trade-columns">
+      <ui-skeleton-card [lines]="5" />
+      <ui-skeleton-card [lines]="5" />
     </div>
+  } @else if (!gate.content()) {
+    <!-- The first load, inside its show delay : nothing yet, so a fast answer never flashes. -->
   } @else if (error() || entry() === null) {
     <div class="error-banner">
       <mat-icon>error</mat-icon>

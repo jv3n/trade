@@ -103,6 +103,22 @@ function blankCapture(): CaptureModel {
   };
 }
 
+/** The listing's columns as its skeleton shows them (#539). */
+const SKELETON_COLUMNS: SkeletonColumnDefs = {
+  ticker: { key: 'candidates.fields.ticker', variant: 'ticker' },
+  previousClose: { key: 'candidates.fields.previousCloseShort', variant: 'numeric' },
+  pmOpen: { key: 'candidates.fields.pmOpenShort', variant: 'numeric' },
+  pmHigh: { key: 'candidates.fields.pmHighShort', variant: 'numeric' },
+  gap: { key: 'candidates.fields.gap', variant: 'numeric' },
+  push: { key: 'candidates.fields.push', variant: 'numeric' },
+  float: { key: 'candidates.fields.floatShort', variant: 'numeric' },
+  volume: { key: 'candidates.fields.volumeShort', variant: 'numeric' },
+  locate: { key: 'candidates.fields.locateShort', variant: 'numeric' },
+  locatePct: { key: 'candidates.fields.locatePercent', variant: 'numeric' },
+  note: { key: 'candidates.fields.note' },
+  actions: { variant: 'actions' },
+};
+
 /**
  * Candidates page — the **morning capture** (cf. `mockup/PARCOURS.md › Étape 1` and
  * `mockup/candidat.html`) : a quick-entry form on top, the day's list below, browsed day by day.
@@ -123,22 +139,6 @@ function blankCapture(): CaptureModel {
  * One candidate per (day, ticker) : the backend answers 409 on a duplicate, surfaced as a dedicated
  * toast. The derived figures come from the pure `candidates.math` helpers.
  */
-/** The listing's columns as its skeleton shows them (#539). */
-const SKELETON_COLUMNS: SkeletonColumnDefs = {
-  ticker: { key: 'candidates.fields.ticker', variant: 'ticker' },
-  previousClose: { key: 'candidates.fields.previousCloseShort', variant: 'numeric' },
-  pmOpen: { key: 'candidates.fields.pmOpenShort', variant: 'numeric' },
-  pmHigh: { key: 'candidates.fields.pmHighShort', variant: 'numeric' },
-  gap: { key: 'candidates.fields.gap', variant: 'numeric' },
-  push: { key: 'candidates.fields.push', variant: 'numeric' },
-  float: { key: 'candidates.fields.floatShort', variant: 'numeric' },
-  volume: { key: 'candidates.fields.volumeShort', variant: 'numeric' },
-  locate: { key: 'candidates.fields.locateShort', variant: 'numeric' },
-  locatePct: { key: 'candidates.fields.locatePercent', variant: 'numeric' },
-  note: { key: 'candidates.fields.note' },
-  actions: { variant: 'actions' },
-};
-
 @Component({
   selector: 'app-candidates-page',
   imports: [

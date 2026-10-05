@@ -7,6 +7,16 @@
   margin-top: s.$space-lg;
 }
 
+// The skeleton of the tab header : Material's 48 px bar, its labels as ghosts.
+.tabs-skeleton {
+  display: flex;
+  align-items: center;
+  gap: s.$space-xl;
+  height: s.$space-3xl;
+  padding: 0 s.$space-lg;
+  border-bottom: s.$border-width solid var(--color-border-soft);
+}
+
 .tab-count {
   margin-left: s.$space-xs;
   font-size: s.$font-2xs;

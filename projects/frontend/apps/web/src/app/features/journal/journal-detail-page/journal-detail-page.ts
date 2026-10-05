@@ -12,8 +12,11 @@ import {
   StbInputModule,
   StbProgressSpinnerModule,
   StbSelectModule,
+  StbSkeletonCard,
+  StbSkeletonKpiRow,
   StbToast,
   StbTooltipModule,
+  stbLoadGate,
 } from '@portfolioai/ui';
 import { EMPTY, catchError, filter, finalize, from, of, switchMap, tap } from 'rxjs';
 import { JournalRepository } from '../../../core/api/journal/journal.repository';
@@ -162,6 +165,8 @@ function spanMinutes(executions: ExecRow[]): number | null {
     NumberMaskDirective,
     PluralPipe,
     TranslatePipe,
+    StbSkeletonCard,
+    StbSkeletonKpiRow,
   ],
   templateUrl: './journal-detail-page.html',
   styleUrl: './journal-detail-page.scss',
@@ -182,6 +187,9 @@ export class JournalDetailPage implements HasUnsavedChanges {
 
   readonly entry = signal<TradeEntry | null>(null);
   readonly loading = signal(true);
+
+  /** First load only (#539) : a refetch keeps the content on screen. */
+  readonly gate = stbLoadGate(this.loading);
   readonly error = signal(false);
   readonly saving = signal(false);
 

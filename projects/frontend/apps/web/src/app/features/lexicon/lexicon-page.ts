@@ -5,7 +5,8 @@ import {
   StbFormFieldModule,
   StbIconModule,
   StbInputModule,
-  StbProgressSpinnerModule,
+  StbSkeletonCard,
+  stbLoadGate,
 } from '@portfolioai/ui';
 
 import { LexiconEntry } from '../../core/api/lexicon/lexicon.model';
@@ -36,8 +37,8 @@ export const ALL_LETTERS = '';
     StbFormFieldModule,
     StbIconModule,
     StbInputModule,
-    StbProgressSpinnerModule,
     TranslatePipe,
+    StbSkeletonCard,
   ],
   templateUrl: './lexicon-page.html',
   styleUrl: './lexicon-page.scss',
@@ -48,6 +49,10 @@ export class LexiconPage {
   private readonly language = inject(LanguageService);
 
   readonly loading = signal(true);
+
+  /** First load only (#539) : a refetch keeps the content on screen. */
+  readonly gate = stbLoadGate(this.loading);
+  readonly skeletonCards = [0, 1, 2, 3, 4, 5];
   readonly error = signal<string | null>(null);
   readonly entries = signal<LexiconEntry[]>([]);
 

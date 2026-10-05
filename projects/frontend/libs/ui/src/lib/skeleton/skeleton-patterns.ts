@@ -83,12 +83,17 @@ export class StbSkeletonTable {
   }
 }
 
-/** The first load of a KPI row (#539) : per tile a label bar, a value block and a sub-line. */
+/**
+ * The first load of a KPI row (#539) : per tile a label bar, a value block and a sub-line. Without
+ * a label it is decoration — hidden from assistive tech, the page's main skeleton speaks for it.
+ */
 @Component({
   selector: 'ui-skeleton-kpi-row',
   imports: [MatCardModule, StbSkeleton],
   template: `
-    <span class="cdk-visually-hidden">{{ label() }}</span>
+    @if (label()) {
+      <span class="cdk-visually-hidden">{{ label() }}</span>
+    }
     <section class="kpi-row" [class.kpi-row--five]="count() === 5">
       @for (i of tiles(); track i) {
         <mat-card class="kpi" appearance="outlined">
@@ -104,10 +109,14 @@ export class StbSkeletonTable {
       display: block;
     }
   `,
-  host: { 'aria-busy': 'true' },
+  host: {
+    '[attr.aria-busy]': 'label() ? "true" : null',
+    '[attr.aria-hidden]': 'label() ? null : "true"',
+  },
 })
 export class StbSkeletonKpiRow {
-  readonly label = input.required<string>();
+  /** Spoken in place of the blocks ; omit it on a repeat of a region already announced. */
+  readonly label = input('');
   readonly count = input(4, { transform: numberAttribute });
 
   protected readonly tiles = computed(() => Array.from({ length: this.count() }, (_, i) => i));
@@ -119,13 +128,16 @@ export class StbSkeletonKpiRow {
 
 /**
  * The first load of a card (#539) : a title and a few lines. `bare` drops the card itself, for a
- * page whose card is already on screen and only its content is loading.
+ * page whose card is already on screen and only its content is loading. Without a label it is
+ * decoration, hidden from assistive tech, like the KPI row.
  */
 @Component({
   selector: 'ui-skeleton-card',
   imports: [NgTemplateOutlet, MatCardModule, StbSkeleton],
   template: `
-    <span class="cdk-visually-hidden">{{ label() }}</span>
+    @if (label()) {
+      <span class="cdk-visually-hidden">{{ label() }}</span>
+    }
     @if (bare()) {
       <ng-container *ngTemplateOutlet="body" />
     } @else {
@@ -145,10 +157,14 @@ export class StbSkeletonKpiRow {
       display: block;
     }
   `,
-  host: { 'aria-busy': 'true' },
+  host: {
+    '[attr.aria-busy]': 'label() ? "true" : null',
+    '[attr.aria-hidden]': 'label() ? null : "true"',
+  },
 })
 export class StbSkeletonCard {
-  readonly label = input.required<string>();
+  /** Spoken in place of the blocks ; omit it on a repeat of a region already announced. */
+  readonly label = input('');
   readonly lines = input(3, { transform: numberAttribute });
   readonly bare = input(false, { transform: booleanAttribute });
 
