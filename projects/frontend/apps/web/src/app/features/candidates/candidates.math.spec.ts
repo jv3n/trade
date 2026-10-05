@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { gapPercent, locatePercent, pushPercent, targetPrice } from './candidates.math';
+import {
+  gapPercent,
+  locateCost,
+  locatePercent,
+  pushPercent,
+  sumCents,
+  targetPrice,
+} from './candidates.math';
 
 /**
  * Pure-function spec for the candidates' derived figures. Pins the formulas of
@@ -48,6 +55,39 @@ describe('locatePercent', () => {
     expect(locatePercent(null, 4.05)).toBeNull();
     expect(locatePercent(0.03, null)).toBeNull();
     expect(locatePercent(0.03, 0)).toBeNull();
+  });
+});
+
+describe('locateCost', () => {
+  it('is the shares located times the price per share, to the cent', () => {
+    // SGBX : 2 000 shares at 0.12 — the float product is 240.00000000000003.
+    expect(locateCost(2000, 0.12)).toBe(240);
+    expect(locateCost(1000, 0.0333)).toBe(33.3);
+  });
+
+  // The float product sits just under these half-cents : the backend's HALF_UP rounds them up.
+  it('rounds an exact half-cent up, like the backend', () => {
+    expect(locateCost(150, 0.0069)).toBe(1.04);
+    expect(locateCost(150, 0.0081)).toBe(1.22);
+    expect(locateCost(150, 0.0113)).toBe(1.7);
+  });
+
+  it('is zero for a locate charged nothing', () => {
+    expect(locateCost(1000, 0)).toBe(0);
+  });
+
+  it('returns null until shares above zero and a price are typed', () => {
+    expect(locateCost(null, 0.12)).toBeNull();
+    expect(locateCost(0, 0.12)).toBeNull();
+    expect(locateCost(2000, null)).toBeNull();
+  });
+});
+
+describe('sumCents', () => {
+  it('adds amounts to the cent without float drift', () => {
+    expect(sumCents([0.1, 0.2])).toBe(0.3);
+    expect(sumCents([240, 150, 30])).toBe(420);
+    expect(sumCents([])).toBe(0);
   });
 });
 

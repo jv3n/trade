@@ -31,6 +31,24 @@ export function locatePercent(locatePerShare: number | null, pmOpen: number | nu
 }
 
 /**
+ * Locate cost = shares × price per share, rounded half-up to the cent like the backend's — `null`
+ * until shares above zero and a price are typed. A price of 0 is a locate charged nothing.
+ *
+ * In integers : the float product lands just under an exact half-cent and would round it down
+ * (150 × 0.0069 → 1.03, saved 1.04). The price has at most four decimals.
+ */
+export function locateCost(shares: number | null, pricePerShare: number | null): number | null {
+  if (shares === null || !(shares > 0) || pricePerShare === null || pricePerShare < 0) return null;
+  const tenThousandths = Math.round(pricePerShare * 10_000);
+  return Math.round((shares * tenThousandths) / 100) / 100;
+}
+
+/** Sums amounts already to the cent, without the float drift of a running sum (0.1 + 0.2). */
+export function sumCents(amounts: readonly number[]): number {
+  return amounts.reduce((sum, a) => sum + Math.round(a * 100), 0) / 100;
+}
+
+/**
  * Target price = open × (1 + push %) — where the push that follows the open usually tops out, with
  * [pushPercent] the average push at the open of the completed stats.
  */

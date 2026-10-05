@@ -148,7 +148,9 @@
       "add": "Add",
       "save": "Save",
       "pmHighBelowOpen": "Below the PM open",
-      "duplicateTicker": "Already captured that day"
+      "duplicateTicker": "Already captured that day",
+      "optional": "optional",
+      "sharesWithoutQuote": "Type the locate price first"
     },
     "fields": {
       "pattern": "Pattern",
@@ -166,6 +168,9 @@
       "locate": "Locate ($ / share)",
       "locateShort": "Locate",
       "locatePercent": "Locate / price",
+      "sharesLocated": "Shares located",
+      "located": "Located",
+      "locateCost": "Locate cost",
       "gap": "Gap",
       "push": "Push",
       "note": "Note"
@@ -197,9 +202,12 @@
       "count": "{{count}} candidates · sorted by gap",
       "countOne": "{{count}} candidate · sorted by gap",
       "empty": "No candidate on this day.",
-      "weekend": "Weekend, no session."
+      "weekend": "Weekend, no session.",
+      "dayLocates": "day's locates {{amount}}",
+      "locatedHint": "The total of the locates taken on this ticker that day"
     },
     "actions": {
+      "locates": "Locates",
       "edit": "Edit",
       "delete": "Delete",
       "promoteAll": "Promote all to GUS",
@@ -251,7 +259,31 @@
       "deleteError": "Couldn't delete the candidate. Please retry.",
       "atOpenSaveError": "Couldn't save {{ticker}} at the open. Please retry.",
       "promoteAllSkipped": "{{tickers}} already had a stat, left alone.",
-      "promoteAllSkippedOne": "{{tickers}} already had a stat, left alone."
+      "promoteAllSkippedOne": "{{tickers}} already had a stat, left alone.",
+      "locateError": "{{ticker}} added, but its locate wasn't saved — add it from the row's key."
+    },
+    "locates": {
+      "title": "Locates",
+      "lead": "Paid whether or not the trade is taken: the amount leaves the account as soon as it is saved.",
+      "shares": "Shares",
+      "price": "$ / share",
+      "cost": "Cost (USD)",
+      "priceHint": "The price starts from the candidate's quote; correct it when the locate went at another price.",
+      "add": "Locate",
+      "close": "Close",
+      "delete": "Delete",
+      "loadError": "Couldn't load the locates. Please retry.",
+      "confirmDelete": {
+        "title": "Delete this {{ticker}} locate?",
+        "message": "The locate and its account line are deleted: the amount goes back to the balance.",
+        "confirm": "Delete"
+      },
+      "snackbar": {
+        "createSuccess": "{{ticker}} locate saved.",
+        "deleteSuccess": "Locate deleted.",
+        "saveError": "Couldn't save the locate. Please retry.",
+        "deleteError": "Couldn't delete the locate. Please retry."
+      }
     }
   },
   "account": {

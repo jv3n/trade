@@ -21,8 +21,13 @@
   gap: s.$space-md;
   align-items: start;
 
+  // Next to « Actions louées » on a new capture ; alone on its row when editing.
   .field--note {
-    grid-column: span 4;
+    grid-column: span 3;
+
+    &.field--note-wide {
+      grid-column: span 4;
+    }
   }
 
   .mono {
@@ -70,6 +75,7 @@
     grid-template-columns: repeat(4, minmax(0, 1fr));
 
     .field--note,
+    .field--note.field--note-wide,
     .derived-box {
       grid-column: span 4;
     }

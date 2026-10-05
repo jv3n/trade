@@ -14,6 +14,8 @@ import {
 } from '../../core/api/candidates/candidates.model';
 import { CandidatesRepository } from '../../core/api/candidates/candidates.repository';
 import { TradeEntry } from '../../core/api/journal/trade-entry.model';
+import { Locate, LocateInput, LocateUpdate } from '../../core/api/locates/locates.model';
+import { LocatesRepository } from '../../core/api/locates/locates.repository';
 import { Pattern } from '../../core/api/shared/pattern.model';
 import {
   PagedResult,
@@ -49,6 +51,9 @@ import { CandidatesPage } from './candidates-page';
  *   the field that held the focus, and a ticker already captured that day is flagged while typing.
  *   That first one rides on blur / focus ordering and on Signal Forms' `reset()` : if an Angular
  *   migration ever changes either, this is where it shows.
+ * - **Locates (#607)** — the day's locates are summed per ticker and for the day ; shares typed at
+ *   capture become a locate on the new candidate, at its quote, and need a quote to be saved. The
+ *   dialog itself is pinned in `locates-dialog.spec`.
  * - **Day navigation** — past days are read-only.
  *
  * The repositories, the confirmation modal and the snackbar are stubbed so nothing touches HTTP.
@@ -93,6 +98,33 @@ class MockCandidatesRepository extends CandidatesRepository {
   promoteDay = vi.fn((_date: Date): Observable<BulkPromotion> =>
     of({ promoted: ['KTTA'], skipped: [] }),
   );
+}
+
+/** SGBX's first locate of the day — 2 000 shares at 0.12, the mockup's. */
+function makeLocate(overrides: Partial<Locate> = {}): Locate {
+  return {
+    id: 'l-1',
+    tradingDate: startOfDay(new Date()),
+    ticker: 'SGBX',
+    shares: 2000,
+    pricePerShare: 0.12,
+    cost: 240,
+    note: null,
+    candidateId: 'sgbx',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    ...overrides,
+  };
+}
+
+class MockLocatesRepository extends LocatesRepository {
+  listForDate = vi.fn((_date: Date, _ticker?: string): Observable<Locate[]> => of([]));
+  listForCandidate = vi.fn((_id: string): Observable<Locate[]> => of([]));
+  create = vi.fn((input: LocateInput): Observable<Locate> =>
+    of(makeLocate({ shares: input.shares, candidateId: input.candidateId })),
+  );
+  update = vi.fn((_id: string, _update: LocateUpdate): Observable<Locate> => of(makeLocate()));
+  delete = vi.fn((_id: string): Observable<void> => of(undefined));
 }
 
 /**
@@ -163,12 +195,14 @@ function setup(
     referencesFail?: boolean;
     /** The day's answer, held back — a first load still running. */
     answer?: Observable<Candidate[]>;
+    locates?: Locate[];
   } = {},
 ): {
   fixture: ComponentFixture<CandidatesPage>;
   page: CandidatesPage;
   repo: MockCandidatesRepository;
   stats: MockStatsRepository;
+  locates: MockLocatesRepository;
   toastShown: ReturnType<typeof vi.fn>;
 } {
   const toastShown = vi.fn();
@@ -181,6 +215,7 @@ function setup(
       provideNativeDateAdapter(),
       { provide: CandidatesRepository, useClass: MockCandidatesRepository },
       { provide: StatsRepository, useClass: MockStatsRepository },
+      { provide: LocatesRepository, useClass: MockLocatesRepository },
       {
         provide: StbToast,
         useValue: {
@@ -193,13 +228,15 @@ function setup(
   });
   const repo = TestBed.inject(CandidatesRepository) as MockCandidatesRepository;
   const stats = TestBed.inject(StatsRepository) as MockStatsRepository;
+  const locates = TestBed.inject(LocatesRepository) as MockLocatesRepository;
   repo.listForDate.mockReturnValue(options.answer ?? of(options.list ?? []));
+  locates.listForDate.mockReturnValue(of(options.locates ?? []));
   if (options.referencesFail) {
     stats.summary.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
   }
   const fixture = TestBed.createComponent(CandidatesPage);
   fixture.detectChanges();
-  return { fixture, page: fixture.componentInstance, repo, stats, toastShown };
+  return { fixture, page: fixture.componentInstance, repo, stats, locates, toastShown };
 }
 
 /** Types a valid KTTA capture into the form. */
@@ -270,6 +307,76 @@ describe('CandidatesPage', () => {
     expect(ktta.gap).toBeCloseTo(52.83, 2);
     expect(ktta.push).toBeCloseTo(14.81, 2);
     expect(ktta.locatePct).toBeCloseTo(0.74, 2);
+  });
+
+  // ---- Locates (#607) ----
+
+  it("sums the day's locates per ticker, and for the whole day", () => {
+    const { page } = setup({
+      list: [makeCandidate({ id: 'sgbx', ticker: 'SGBX' }), makeCandidate()],
+      locates: [
+        makeLocate(),
+        makeLocate({ id: 'l-2', shares: 1000, pricePerShare: 0.15, cost: 150 }),
+        // Typed on the Account page with no candidate : still the day's, on no row here.
+        makeLocate({ id: 'l-3', ticker: 'MLGO', shares: 1000, cost: 30, candidateId: null }),
+      ],
+    });
+
+    const sgbx = page.rows().find((r) => r.ticker === 'SGBX')!;
+    expect(sgbx.sharesLocated).toBe(3000);
+    expect(sgbx.locateCost).toBe(390);
+    expect(page.locatesDetail(sgbx)).toBe('2,000 × 0.12 · 1,000 × 0.15');
+    expect(page.rows().find((r) => r.ticker === 'KTTA')!.sharesLocated).toBeNull();
+    expect(page.dayLocateCost()).toBe(420);
+  });
+
+  it('saves the shares typed at capture as a locate on the new candidate, at its quote', () => {
+    const { page, locates } = setup();
+    fillKtta(page);
+    page.setNumber('locatePerShare', 0.03);
+    page.setNumber('sharesLocated', 2000);
+    expect(page.locateCostPreview()).toBe(60);
+
+    page.submit();
+
+    expect(locates.create).toHaveBeenCalledWith(
+      expect.objectContaining({ shares: 2000, candidateId: 'new', pricePerShare: null }),
+    );
+    expect(page.model().sharesLocated).toBeNull();
+  });
+
+  it('blocks the save while shares are typed without a locate price', () => {
+    const { page } = setup();
+    fillKtta(page);
+
+    page.setNumber('sharesLocated', 2000);
+
+    expect(page.sharesWithoutQuote()).toBe(true);
+    expect(page.canSave()).toBe(false);
+  });
+
+  it('a capture with no shares takes no locate', () => {
+    const { page, locates } = setup();
+    fillKtta(page);
+    page.setNumber('locatePerShare', 0.03);
+
+    page.submit();
+
+    expect(locates.create).not.toHaveBeenCalled();
+  });
+
+  // The candidate is saved by then : the toast must not read as if nothing was.
+  it('says the candidate is saved when only its locate failed', () => {
+    const { page, locates, toastShown } = setup();
+    locates.create.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+    fillKtta(page);
+    page.setNumber('locatePerShare', 0.03);
+    page.setNumber('sharesLocated', 2000);
+
+    page.submit();
+
+    expect(toastShown).toHaveBeenCalledWith('success', 'candidates.snackbar.createSuccess');
+    expect(toastShown).toHaveBeenLastCalledWith('error', 'candidates.snackbar.locateError');
   });
 
   // ---- Quick entry ----
