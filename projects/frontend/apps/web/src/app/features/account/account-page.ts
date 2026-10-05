@@ -1,5 +1,6 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
@@ -17,12 +18,15 @@ import {
   StbPaginatorModule,
   StbProgressSpinnerModule,
   StbSelectModule,
+  StbSkeletonKpiRow,
+  StbSkeletonTable,
   StbTableModule,
   StbToast,
   StbTooltipModule,
+  stbLoadGate,
 } from '@portfolioai/ui';
 import { format } from 'date-fns';
-import { EMPTY, Subscription, catchError, filter, switchMap, tap } from 'rxjs';
+import { EMPTY, Observable, Subscription, catchError, filter, switchMap, tap } from 'rxjs';
 import {
   AccountMovement,
   AccountMovementFilter,
@@ -46,6 +50,11 @@ import {
   computePeriodRange,
 } from '../../shared/period-preset/period-preset';
 import { PluralPipe } from '../../shared/plural/plural';
+import {
+  skeletonHeaderKeys,
+  toSkeletonColumns,
+  type SkeletonColumnDefs,
+} from '../../shared/skeleton-columns/skeleton-columns';
 import { MorningReconciliation } from './morning-reconciliation/morning-reconciliation';
 import { MovementDialog, MovementDialogData } from './movement-dialog/movement-dialog';
 
@@ -93,6 +102,20 @@ interface AccountFilter {
 /** The calls behind the page, each able to fail on its own. */
 type LoadCall = 'summary' | 'series' | 'movements';
 
+/** The movements table as its skeleton shows it (#539). */
+const SKELETON_COLUMNS: SkeletonColumnDefs = {
+  valueDate: { key: 'account.fields.valueDate' },
+  type: { key: 'account.fields.type' },
+  label: { key: 'account.fields.label' },
+  amount: { key: 'account.fields.amount', unitKey: 'account.usdUnit', variant: 'numeric' },
+  balanceAfter: {
+    key: 'account.fields.balanceAfter',
+    unitKey: 'account.usdUnit',
+    variant: 'numeric',
+  },
+  actions: { variant: 'actions' },
+};
+
 /**
  * Broker cash-account page, laid out after `mockup/compte.html` (#229) : a KPI row (balance with
  * its USD / CAD switch, P&L of the period, net injected), the balance curve in its own card, and
@@ -134,6 +157,8 @@ type LoadCall = 'summary' | 'series' | 'movements';
     PeriodFilter,
     PluralPipe,
     TranslatePipe,
+    StbSkeletonTable,
+    StbSkeletonKpiRow,
   ],
   templateUrl: './account-page.html',
   styleUrl: './account-page.scss',
@@ -147,6 +172,18 @@ export class AccountPage {
   private readonly toasts = inject(StbToast);
 
   readonly loading = signal(true);
+
+  /** First load only (#539) : a refetch keeps the content on screen. */
+  readonly gate = stbLoadGate(this.loading);
+  private readonly headerLabels = toSignal(
+    this.translate.stream(skeletonHeaderKeys(SKELETON_COLUMNS)) as Observable<
+      Record<string, string>
+    >,
+    { initialValue: {} },
+  );
+  readonly skeletonColumns = computed(() =>
+    toSkeletonColumns(this.displayedColumns, SKELETON_COLUMNS, this.headerLabels()),
+  );
   /**
    * The calls whose last attempt failed. Each clears itself on its next success, so the banner
    * stays while anything is still missing and goes once everything loaded again (#493). What a

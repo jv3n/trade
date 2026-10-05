@@ -19,11 +19,10 @@
     </div>
   }
 
-  @if (loading()) {
-    <div class="loading-state">
-      <mat-spinner diameter="20" />
-      <span>{{ 'lexicon.loading' | translate }}</span>
-    </div>
+  @if (gate.skeleton()) {
+    <ui-skeleton-table [columns]="skeletonColumns()" [label]="'lexicon.loading' | translate" />
+  } @else if (!gate.content()) {
+    <!-- The first load, inside its show delay : nothing yet, so a fast answer never flashes. -->
   } @else if (entries().length === 0) {
     <div class="empty-state">
       <mat-icon>menu_book</mat-icon>

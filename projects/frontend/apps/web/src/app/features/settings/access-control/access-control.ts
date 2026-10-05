@@ -6,7 +6,8 @@ import {
   StbFormFieldModule,
   StbIconModule,
   StbInputModule,
-  StbProgressSpinnerModule,
+  StbSkeletonCard,
+  stbLoadGate,
 } from '@portfolioai/ui';
 import { ConfigRepository } from '../../../core/api/config/config.repository';
 
@@ -43,8 +44,8 @@ const ALLOWED_EMAILS_KEY = 'app.allowed.emails';
     StbFormFieldModule,
     StbIconModule,
     StbInputModule,
-    StbProgressSpinnerModule,
     TranslatePipe,
+    StbSkeletonCard,
   ],
   templateUrl: './access-control.html',
   styleUrl: './access-control.scss',
@@ -55,6 +56,9 @@ export class AccessControlPage implements OnInit {
 
   readonly emails = signal<string[]>([]);
   readonly loading = signal(true);
+
+  /** First load only (#539) : a refetch keeps the content on screen. */
+  readonly gate = stbLoadGate(this.loading);
   readonly saving = signal(false);
   readonly loadError = signal(false);
   readonly saveError = signal(false);

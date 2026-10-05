@@ -87,10 +87,12 @@ describe('PatternsPage', () => {
         },
       ],
     });
+    const scrolled = recordScrolls();
     const fixture = await setup();
 
     expect(fixture.componentInstance.tab()).toBe(1);
     expect(fixture.componentInstance.open().has('sheet-notes-tradezero-margin')).toBe(true);
+    expect(scrolled).toContain('sheet-notes-tradezero-margin');
   });
 
   it('dates each sheet, and calls one without a revision line never revised', async () => {

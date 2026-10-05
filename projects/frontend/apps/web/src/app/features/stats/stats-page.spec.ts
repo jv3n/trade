@@ -929,7 +929,7 @@ describe('StatsPage', () => {
 
     const table: HTMLElement | null = fixture.nativeElement.querySelector('.stb-table');
     expect(table?.classList).toContain('stb-table--busy');
-    expect(fixture.nativeElement.querySelector('.loading-state')).toBeNull();
+    expect(fixture.nativeElement.querySelector('ui-skeleton-table')).toBeNull();
     expect(page.rows().map((r) => r.ticker)).toEqual(['KTTA']);
   });
 

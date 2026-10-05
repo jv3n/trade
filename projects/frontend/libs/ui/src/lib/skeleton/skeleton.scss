@@ -36,7 +36,7 @@
 }
 
 .stb-skeleton--line {
-  height: 10px;
+  height: s.$font-2xs;
 }
 
 .stb-skeleton--block {
@@ -49,16 +49,17 @@
   border-radius: 50%;
 }
 
+// The ticker chip's own height and shape (`chips.scss`), so the ghost and the chip match.
 .stb-skeleton--chip {
-  width: 58px;
-  height: 22px;
-  border-radius: var(--radius-pill);
+  width: s.$space-4xl;
+  height: s.$button-height;
+  border-radius: var(--radius-sm);
 }
 
 // Holds a narrow icon column at the width of what its real cell shows.
 .stb-skeleton-spacer {
   display: inline-block;
-  height: 1px;
+  height: s.$border-width;
 }
 
 // Ghost cells take the alignment of the column they stand for.
@@ -68,7 +69,7 @@
 
 .stb-skeleton-kpi-value .stb-skeleton {
   width: 70%;
-  height: 26px;
+  height: s.$font-2xl;
   margin: s.$space-xs 0;
 }
 
