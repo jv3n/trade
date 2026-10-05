@@ -29,7 +29,7 @@
   <!-- KPIs — computed by the backend over the filtered set, not the current page. -->
   @if (summary(); as kpi) {
     @if (view() === 'DT') {
-      <section class="kpi-row kpi-row--five">
+      <section class="stb-fade-in kpi-row kpi-row--five">
         <div class="card kpi">
           <div class="kpi__label">{{ 'stats.kpi.completedDt' | translate }}</div>
           <div class="kpi__value">{{ kpi.completedDoubleTops }}</div>
@@ -133,7 +133,7 @@
         </div>
       </section>
     } @else if (view() === 'ALL') {
-      <section class="kpi-row">
+      <section class="stb-fade-in kpi-row">
         <div class="card kpi">
           <div class="kpi__label">{{ 'stats.kpi.completed' | translate }}</div>
           <div class="kpi__value">{{ kpi.completed }}</div>
@@ -160,7 +160,7 @@
         </div>
       </section>
     } @else {
-      <section class="kpi-row kpi-row--five">
+      <section class="stb-fade-in kpi-row kpi-row--five">
         <div class="card kpi">
           <div class="kpi__label">
             {{
@@ -1034,7 +1034,7 @@
     } @else if (!gate.content()) {
       <!-- The first load, inside its show delay : nothing yet, so a fast answer never flashes. -->
     } @else if (rows().length === 0) {
-      <div class="empty-state">
+      <div class="stb-fade-in empty-state">
         <mat-icon>query_stats</mat-icon>
         <p>{{ 'stats.empty' | translate }}</p>
       </div>

@@ -12,7 +12,7 @@
   @if (gate.skeleton()) {
     <ui-skeleton-kpi-row [label]="'journal.loading' | translate" [count]="5" />
   } @else {
-    <section class="kpi-row kpi-row--five">
+    <section class="stb-fade-in kpi-row kpi-row--five">
       <div class="card kpi">
         <div class="kpi__label">{{ 'journal.kpi.pnl' | translate }}</div>
         @if (summary(); as s) {
@@ -184,7 +184,7 @@
     } @else if (!gate.content()) {
       <!-- The first load, inside its show delay : nothing yet, so a fast answer never flashes. -->
     } @else if (days().length === 0) {
-      <div class="empty-state">
+      <div class="stb-fade-in empty-state">
         <mat-icon>menu_book</mat-icon>
         <p>{{ 'journal.empty' | translate }}</p>
       </div>

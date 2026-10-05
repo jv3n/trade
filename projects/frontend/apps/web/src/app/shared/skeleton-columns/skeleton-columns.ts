@@ -15,9 +15,8 @@ export type SkeletonColumnDefs = Readonly<Record<string, SkeletonColumnDef>>;
 
 /** The header keys to translate — through `TranslateService.stream` : the files load late (#539). */
 export function skeletonHeaderKeys(defs: SkeletonColumnDefs): string[] {
-  return Object.values(defs).flatMap(
-    (def) => [def.key, def.unitKey].filter((k) => !!k) as string[],
-  );
+  const keys = Object.values(defs).flatMap((def) => [def.key, def.unitKey]);
+  return [...new Set(keys.filter((key): key is string => !!key))];
 }
 
 /** The skeleton's columns, in the order the table shows them. */

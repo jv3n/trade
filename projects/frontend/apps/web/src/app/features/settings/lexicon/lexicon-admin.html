@@ -24,12 +24,13 @@
   } @else if (!gate.content()) {
     <!-- The first load, inside its show delay : nothing yet, so a fast answer never flashes. -->
   } @else if (entries().length === 0) {
-    <div class="empty-state">
+    <div class="stb-fade-in empty-state">
       <mat-icon>menu_book</mat-icon>
       <p>{{ 'lexicon.emptyAdmin' | translate }}</p>
     </div>
   } @else {
     <app-lexicon-table
+      class="stb-fade-in"
       [entries]="entries()"
       [editable]="true"
       (editEntry)="openEdit($event)"

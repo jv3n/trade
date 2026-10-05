@@ -1,0 +1,103 @@
+import { Canvas, Markdown, Meta, Source } from '@storybook/addon-docs/blocks';
+import * as Stories from './skeleton.stories';
+
+<Meta of={Stories} />
+
+# Skeleton
+
+The first load of a page (#539) : a placeholder shaped like the content about to land, instead of a spinner followed by a jump. Neutral (`--color-skeleton`, a veil of the text colour, readable on a page, a card or a table row in both themes), with a slow 1.6 s shimmer — a still fill under reduced motion.
+
+Everything ships from `@portfolioai/ui` : the `<ui-skeleton>` block, three patterns built on it, and `stbLoadGate`, which times them.
+
+## The rule
+
+<Markdown>
+  {`
+| | |
+| --- | --- |
+| **First load only** | A refetch (filter, page, sort) keeps the content on screen, dimmed with \`stbTable [busy]\` — never the skeleton again. |
+| **~180 ms show delay** | Nothing renders before : an answer faster than that never flashes the skeleton. |
+| **~300 ms minimum** | Once shown, the skeleton stays at least that long, so it never blinks. |
+| **150 ms fade-in** | Put \`stb-fade-in\` on everything the gate reveals — the content, the KPI row, the empty state, a banner : what appears together fades together. |
+| **Spinners for actions** | An inline spinner still says « working on your click » (saving, uploading, exporting). |
+`}
+</Markdown>
+
+The target is `mockup/chargement.html` and `PARCOURS.md > Interface principles > Loading`.
+
+## `stbLoadGate` — the timing
+
+<Source
+  language="ts"
+  code={`readonly loading = signal(true);               // true from the start
+readonly gate = stbLoadGate(this.loading);      // a field initialiser : needs an injection context`}
+/>
+
+<Source
+  language="html"
+  code={`@if (gate.skeleton()) {
+  <ui-skeleton-table [columns]="skeletonColumns()" [label]="'journal.loading' | translate" />
+} @else if (!gate.content()) {
+  <!-- Inside the show delay : nothing yet. -->
+} @else if (rows().length === 0) {
+  <div class="stb-fade-in empty-state">…</div>
+} @else {
+  <div stbTable class="stb-fade-in" [busy]="loading()">…</div>
+}`}
+/>
+
+`loading` must already be **true when the gate is created** — a gate that first sees `false` reads the load as over, and warns in dev mode. A load that comes back on within the minimum is waited for. Once `content` is true it stays.
+
+## `<ui-skeleton>` — the block
+
+<Canvas of={Stories.Variants} />
+
+<Markdown>
+  {`
+| Input | |
+| --- | --- |
+| \`variant\` | \`text\` (a line of text) · \`line\` (thinner) · \`block\` · \`circle\` (a 32 px dot) · \`chip\` (the ticker chip's own height and radius) |
+| \`width\` / \`height\` | A number is pixels, a string goes through as written (\`60%\`, \`8rem\`). |
+| \`count\` | Stacked blocks, for paragraph lines. |
+`}
+</Markdown>
+
+Every block is `aria-hidden`.
+
+## The patterns
+
+<Canvas of={Stories.Table} />
+
+**`<ui-skeleton-table [columns] [label] [rows]>`** — the real header over ghost rows, inside the same `stbTable` container. Each column is `{ label, variant?, width? }` :
+
+<Markdown>
+  {`
+| \`variant\` | Ghost cell |
+| --- | --- |
+| *(none)* | a text bar |
+| \`numeric\` | a bar aligned right, like the real column |
+| \`ticker\` | a chip-shaped block |
+| \`actions\` | empty, the actions column's width |
+| \`blank\` | empty, held at \`width\` by an invisible spacer — a narrow icon column sized by its content (a chevron, a tick button) |
+`}
+</Markdown>
+
+Headers come translated from the app — through `TranslateService.stream`, since the translation files land after the first render, which is exactly when the skeleton shows.
+
+<Canvas of={Stories.KpiRow} />
+
+**`<ui-skeleton-kpi-row [count] [label]>`** — the `.kpi-row` of label / value / sub-line tiles ; `count` 5 takes the five-column row.
+
+<Canvas of={Stories.Card} />
+
+**`<ui-skeleton-card [lines] [bare] [label]>`** — a title and lines ; `bare` drops the card, for a card already on screen whose content is loading.
+
+## `label` and screen readers
+
+A page's **main skeleton** carries a translated `label` : the region is `aria-busy` and the label is read in place of the blocks. Its **repeats** — the other cards of a grid, a KPI row next to the main table — take none : without a label a card or KPI row is decoration, `aria-hidden`, so « loading » is heard once. `label` is required on `ui-skeleton-table`, always a page's main skeleton.
+
+## Reduced motion
+
+<Canvas of={Stories.ReducedMotion} />
+
+Under `prefers-reduced-motion` the sweep and the fade go and a still fill remains. `_base.scss` stops animations on elements, not on the `::after` that carries the sweep — `skeleton.scss` has its own rule for it.
