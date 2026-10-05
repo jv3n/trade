@@ -35,7 +35,6 @@ data class StatEntryDto(
   val pmHigh: BigDecimal,
   val floatMillions: BigDecimal?,
   val volumeMillions: BigDecimal?,
-  val locatePerShare: BigDecimal?,
   val note: String?,
   // ---- Session (typed as the day goes — any of them may still be null) ----
   val openPrice: BigDecimal?,
@@ -80,7 +79,6 @@ fun StatEntry.toDto(trades: List<TradeLinkDto> = emptyList()) =
     pmHigh = pmHigh,
     floatMillions = floatMillions,
     volumeMillions = volumeMillions,
-    locatePerShare = locatePerShare,
     note = note,
     openPrice = openPrice,
     pushOpenPrice = pushOpenPrice,

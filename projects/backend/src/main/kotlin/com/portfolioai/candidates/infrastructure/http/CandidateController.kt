@@ -25,8 +25,8 @@ import org.springframework.web.bind.annotation.RestController
 @Tag(
   name = "Candidates",
   description =
-    "Morning capture of the tickers spotted on the radar — premarket prices, float, volume, locate " +
-      "and a note, scoped to the current user. Browsed day by day ; one candidate per day and ticker.",
+    "Morning capture of the tickers spotted on the radar — premarket prices, float, volume and a " +
+      "note, scoped to the current user. Browsed day by day ; one candidate per day and ticker.",
 )
 @RestController
 @RequestMapping("/api/candidates")

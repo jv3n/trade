@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { gapPercent, locatePercent, pushPercent, targetPrice } from './candidates.math';
+import { gapPercent, pushPercent, targetPrice } from './candidates.math';
 
 /**
  * Pure-function spec for the candidates' derived figures. Pins the formulas of
  * `mockup/PARCOURS.md › Étape 1` on its KTTA example (previous close 2.65, PM open 4.05, PM high
- * 4.65, locate 0.03, open 4.20) and the **null-on-bad-input** contract : a missing field or a
+ * 4.65, open 4.20) and the **null-on-bad-input** contract : a missing field or a
  * non-positive base yields `null`, never `NaN` / `Infinity`.
  */
 describe('gapPercent', () => {
@@ -36,18 +36,6 @@ describe('pushPercent', () => {
     expect(pushPercent(null, 4.65)).toBeNull();
     expect(pushPercent(4.05, null)).toBeNull();
     expect(pushPercent(0, 4.65)).toBeNull();
-  });
-});
-
-describe('locatePercent', () => {
-  it('weighs the locate against the PM open', () => {
-    expect(locatePercent(0.03, 4.05)).toBeCloseTo(0.74, 2);
-  });
-
-  it('returns null without a locate or a positive PM open', () => {
-    expect(locatePercent(null, 4.05)).toBeNull();
-    expect(locatePercent(0.03, null)).toBeNull();
-    expect(locatePercent(0.03, 0)).toBeNull();
   });
 });
 

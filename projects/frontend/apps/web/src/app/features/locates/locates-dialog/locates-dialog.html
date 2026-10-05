@@ -1,0 +1,214 @@
+<h2 mat-dialog-title>
+  {{ 'locates.title' | translate }}
+  <mat-chip-set class="title-ticker">
+    <mat-chip stbChip="ticker" disableRipple>{{ data.ticker }}</mat-chip>
+  </mat-chip-set>
+</h2>
+
+<form (submit)="$event.preventDefault(); add()">
+  <mat-dialog-content>
+    <p class="lead">{{ 'locates.lead' | translate }}</p>
+
+    @if (loadError()) {
+      <div class="error-banner">
+        <mat-icon>error</mat-icon>
+        <span>{{ 'locates.loadError' | translate }}</span>
+      </div>
+    } @else if (locates().length > 0) {
+      <table class="locate-list">
+        <thead>
+          <tr>
+            <th>{{ 'locates.shares' | translate }}</th>
+            <th>{{ 'locates.price' | translate }}</th>
+            <th>{{ 'locates.percent' | translate }}</th>
+            <th>{{ 'locates.cost' | translate }}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (l of locates(); track l.id) {
+            @let e = editing();
+            @if (e?.id === l.id) {
+              <tr class="editing">
+                <td>
+                  <input
+                    class="cell-input"
+                    appNumberMask
+                    [decimals]="0"
+                    [min]="0"
+                    [number]="e!.shares"
+                    (numberChange)="setEditShares($event)"
+                    inputmode="numeric"
+                    [attr.aria-label]="'locates.shares' | translate"
+                  />
+                </td>
+                <td>
+                  <input
+                    class="cell-input"
+                    appNumberMask
+                    [decimals]="4"
+                    [min]="0"
+                    [number]="e!.price"
+                    (numberChange)="setEditPrice($event)"
+                    inputmode="decimal"
+                    [attr.aria-label]="'locates.price' | translate"
+                  />
+                </td>
+                <td>
+                  <input
+                    class="cell-input"
+                    appNumberMask
+                    [decimals]="4"
+                    [min]="0"
+                    [number]="e!.stockPrice"
+                    (numberChange)="setEditStockPrice($event)"
+                    inputmode="decimal"
+                    [placeholder]="'locates.stockPrice' | translate"
+                    [attr.aria-label]="'locates.stockPrice' | translate"
+                  />
+                </td>
+                <td>{{ editCost() !== null ? (editCost()! | number: '1.2-2') : '—' }}</td>
+                <td class="row-actions">
+                  <button
+                    mat-icon-button
+                    type="button"
+                    stbSize="sm"
+                    [disabled]="editCost() === null || saving()"
+                    (click)="saveEdit(l)"
+                    [matTooltip]="'locates.save' | translate"
+                    [attr.aria-label]="'locates.save' | translate"
+                  >
+                    <mat-icon>check</mat-icon>
+                  </button>
+                  <button
+                    mat-icon-button
+                    type="button"
+                    stbSize="sm"
+                    (click)="cancelEdit()"
+                    [matTooltip]="'common.cancel' | translate"
+                    [attr.aria-label]="'common.cancel' | translate"
+                  >
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </td>
+              </tr>
+            } @else {
+              <tr>
+                <td>{{ l.shares | number }}</td>
+                <td>{{ l.pricePerShare | price }}</td>
+                <td
+                  [attr.title]="l.stockPrice !== null ? (l.stockPrice | price) : null"
+                  [class.warn]="breach(percentOf(l))"
+                >
+                  {{ percentOf(l) !== null ? (percentOf(l)! | number: '1.2-2') + ' %' : '—' }}
+                </td>
+                <td>{{ l.cost | number: '1.2-2' }}</td>
+                <td class="row-actions">
+                  <button
+                    mat-icon-button
+                    type="button"
+                    stbSize="sm"
+                    [disabled]="saving()"
+                    (click)="startEdit(l)"
+                    [matTooltip]="'locates.edit' | translate"
+                    [attr.aria-label]="'locates.edit' | translate"
+                  >
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button
+                    mat-icon-button
+                    type="button"
+                    stbSize="sm"
+                    [disabled]="saving()"
+                    (click)="delete(l)"
+                    [matTooltip]="'locates.delete' | translate"
+                    [attr.aria-label]="'locates.delete' | translate"
+                  >
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+        @if (locates().length > 1) {
+          <tfoot>
+            <tr data-testid="locates-total">
+              <td>{{ totalShares() | number }}</td>
+              <td></td>
+              <td [class.warn]="breach(totalPercent())">
+                {{ totalPercent() !== null ? (totalPercent()! | number: '1.2-2') + ' %' : '' }}
+              </td>
+              <td>{{ totalCost() | number: '1.2-2' }}</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        }
+      </table>
+    }
+
+    <div class="locate-add">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'locates.sharesLocated' | translate }}</mat-label>
+        <input
+          matInput
+          appNumberMask
+          [decimals]="0"
+          [min]="0"
+          [number]="shares()"
+          (numberChange)="shares.set($event)"
+          inputmode="numeric"
+        />
+      </mat-form-field>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'locates.price' | translate }}</mat-label>
+        <input
+          matInput
+          appNumberMask
+          [decimals]="4"
+          [min]="0"
+          [number]="price()"
+          (numberChange)="price.set($event)"
+          inputmode="decimal"
+        />
+      </mat-form-field>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'locates.stockPrice' | translate }}</mat-label>
+        <input
+          matInput
+          appNumberMask
+          [decimals]="4"
+          [min]="0"
+          [placeholder]="'locates.optional' | translate"
+          [number]="stockPrice()"
+          (numberChange)="setStockPrice($event)"
+          inputmode="decimal"
+        />
+      </mat-form-field>
+      <div class="derived">
+        <span class="derived__label">{{ 'locates.cost' | translate }}</span>
+        <span class="derived__value" [class.muted]="cost() === null">
+          {{ cost() !== null ? (cost()! | number: '1.2-2') : '—' }}
+        </span>
+        @if (percent() !== null) {
+          <span class="derived__sub" [class.warn]="breach(percent())">{{
+            'locates.percentOfPrice' | translate: { percent: (percent()! | number: '1.2-2') }
+          }}</span>
+        }
+      </div>
+    </div>
+    @if (data.lastPrice !== null) {
+      <p class="hint price-hint">{{ 'locates.priceHint' | translate }}</p>
+    }
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-stroked-button type="button" (click)="close()">
+      {{ 'locates.close' | translate }}
+    </button>
+    <button mat-flat-button type="submit" [disabled]="!canAdd()">
+      <mat-icon>key</mat-icon>
+      <span>{{ 'locates.add' | translate }}</span>
+    </button>
+  </mat-dialog-actions>
+</form>

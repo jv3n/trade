@@ -403,7 +403,7 @@
                 {{ ctx.gap !== null ? (ctx.gap | number: '1.1-1') + ' %' : '—' }} ·
                 {{ ctx.pmPush !== null ? (ctx.pmPush | number: '1.1-1') + ' %' : '—' }}
               </dd>
-              <dt>{{ 'journal.detail.context.floatVolumeLocate' | translate }}</dt>
+              <dt>{{ 'journal.detail.context.floatVolume' | translate }}</dt>
               <dd>
                 {{
                   ctx.stat.floatMillions !== null
@@ -416,8 +416,60 @@
                     ? (ctx.stat.volumeMillions | number: '1.1-2') + ' M'
                     : '—'
                 }}
-                ·
-                {{ ctx.stat.locatePerShare !== null ? (ctx.stat.locatePerShare | price) : '—' }}
+              </dd>
+              <!-- Outside the trade's P&L : each one has its own account line. -->
+              <dt class="kv__centred">{{ 'journal.detail.context.dayLocates' | translate }}</dt>
+              <dd data-testid="day-locates" class="kv__with-action">
+                @if (locatesFailed()) {
+                  <span class="muted">{{
+                    'journal.detail.context.locatesUnavailable' | translate
+                  }}</span>
+                } @else if (dayLocates(); as locates) {
+                  <span>
+                    @if (locates.length === 0) {
+                      —
+                    } @else {
+                      @for (l of locates; track l.id; let last = $last) {
+                        {{ l.shares | number }} × {{ l.pricePerShare | price }}
+                        @if (percentOf(l) !== null) {
+                          <span class="muted" [class.warn]="breach(percentOf(l))"
+                            >({{ percentOf(l)! | number: '1.2-2' }} %)</span
+                          >
+                        }
+                        {{ last ? '' : ' + ' }}
+                      }
+                      =
+                      <strong
+                        >{{ locatesTotal() | number: '1.2-2'
+                        }}{{ 'account.usdSuffix' | translate }}</strong
+                      >
+                      @if (locates.length > 1) {
+                        <span class="muted">
+                          ·
+                          {{
+                            'locates.sharesCount'
+                              | translate: { shares: (locatesShares() | number) }
+                          }}
+                        </span>
+                        @if (locatesPercent() !== null) {
+                          <span class="muted" [class.warn]="breach(locatesPercent())">
+                            · {{ locatesPercent()! | number: '1.2-2' }} %
+                          </span>
+                        }
+                      }
+                    }
+                  </span>
+                  <button
+                    mat-icon-button
+                    type="button"
+                    stbSize="sm"
+                    (click)="editLocates()"
+                    [matTooltip]="'journal.detail.context.editLocates' | translate"
+                    [attr.aria-label]="'journal.detail.context.editLocates' | translate"
+                  >
+                    <mat-icon>key</mat-icon>
+                  </button>
+                }
               </dd>
               <dt>{{ 'stats.fields.openPrice' | translate }}</dt>
               <dd>

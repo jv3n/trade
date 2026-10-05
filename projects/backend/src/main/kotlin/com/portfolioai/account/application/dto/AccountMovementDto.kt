@@ -20,6 +20,9 @@ import java.util.UUID
  * [tradeDirection] / [tradeSize] complete the TRADE label ("KTTA short 350"). Structured, not
  * pre-formatted : the direction word is translated by the front.
  *
+ * [locateId] / [locateTicker] / [locateShares] are set only on [AccountMovementType.LOCATE] rows,
+ * read-only like a trade's : the label "SGBX 2000".
+ *
  * [measuredGap] is set only on a morning's correction : the gap that morning recorded. An [amount]
  * that differs from it means a later fix to an earlier row was absorbed there (#476, #477). Only
  * the listing fills it : the add / edit / bare-correction responses can never be a morning's
@@ -35,6 +38,9 @@ data class AccountMovementDto(
   val tradeEntryId: UUID?,
   val tradeDirection: TradeDirection?,
   val tradeSize: Int?,
+  val locateId: UUID?,
+  val locateTicker: String?,
+  val locateShares: Int?,
   val measuredGap: BigDecimal?,
   val createdAt: Instant,
   val updatedAt: Instant,
@@ -54,6 +60,9 @@ fun AccountMovement.toDto(
     tradeEntryId = tradeEntryId,
     tradeDirection = tradeDirection,
     tradeSize = tradeSize,
+    locateId = locateId,
+    locateTicker = locateTicker,
+    locateShares = locateShares,
     measuredGap = measuredGap,
     createdAt = createdAt,
     updatedAt = updatedAt,

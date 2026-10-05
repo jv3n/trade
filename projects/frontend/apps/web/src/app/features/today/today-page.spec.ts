@@ -2,7 +2,7 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { TranslateService, provideTranslateService } from '@ngx-translate/core';
-import { StbToast } from '@portfolioai/ui';
+import { MatDialog, StbToast } from '@portfolioai/ui';
 import { Subject, of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -11,6 +11,8 @@ import { Candidate } from '../../core/api/candidates/candidates.model';
 import { CandidatesRepository } from '../../core/api/candidates/candidates.repository';
 import { JournalRepository } from '../../core/api/journal/journal.repository';
 import { TradeEntry } from '../../core/api/journal/trade-entry.model';
+import { Locate, LocateInput } from '../../core/api/locates/locates.model';
+import { LocatesRepository } from '../../core/api/locates/locates.repository';
 import { StatEntry, StatEntryFilter } from '../../core/api/stats/stat-entry.model';
 import { StatsRepository } from '../../core/api/stats/stats.repository';
 import { TradingDay, TradingDayMarks } from '../../core/api/trading-day/trading-day.model';
@@ -26,10 +28,12 @@ import { TodayPage, marketStatusAt } from './today-page';
  * - the **current step** is the first one that isn't behind us, whatever the day looks like ;
  * - a step is done from the **data** : a reconciled morning, every captured candidate with at least
  *   one stat (#436), no stat left to complete whatever its day, a trade entered (#337) ;
- * - step 4 splits the stats to complete between the day's and the **overdue** ones, which carry
+ * - step 1 splits the stats to complete between yesterday's and the **overdue** ones, which carry
  *   their date ;
- * - a quiet day can be **settled** (#407) : « no candidate » empties steps 2 and 4, « no trade »
- *   step 5, and a candidate or a trade entered afterwards beats the mark ;
+ * - a quiet day can be **settled** (#407) : « no candidate » empties step 3, « no trade » step 5,
+ *   and a candidate or a trade entered afterwards beats the mark ;
+ * - the **locates** step (#625) is optional : done with a locate, never the current step nor
+ *   counted in the progress ; « Louer » saves a new one and a ticker opens its locates ;
  * - « Passer les N en GUS » **confirms** before creating stats ;
  * - a failing call leaves the page standing — it is the home page, it can't go blank.
  *
@@ -47,12 +51,18 @@ describe('TodayPage', () => {
   let promoteDay: ReturnType<typeof vi.fn>;
   let tradingDay: TradingDay;
   let putTradingDay: ReturnType<typeof vi.fn>;
+  let dayLocates: Locate[];
+  let createLocate: ReturnType<typeof vi.fn>;
+  let dialogOpen: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(FRIDAY_PREMARKET);
 
     candidates = [];
+    dayLocates = [];
+    createLocate = vi.fn((input: LocateInput) => of(makeLocate({ ticker: input.ticker })));
+    dialogOpen = vi.fn(() => ({ afterClosed: () => of(undefined) }));
     statsToComplete = [];
     todayTrades = [];
     reconciledToday = false;
@@ -106,6 +116,11 @@ describe('TodayPage', () => {
           provide: TradingDayRepository,
           useValue: { get: () => of(tradingDay), put: putTradingDay } as TradingDayRepository,
         },
+        {
+          provide: LocatesRepository,
+          useValue: { listForDate: () => of(dayLocates), create: createLocate },
+        },
+        { provide: MatDialog, useValue: { open: dialogOpen } },
         { provide: StbToast, useValue: { success: vi.fn(), error: vi.fn() } },
         { provide: ConfirmService, useValue: { ask: () => of(confirmed) } },
       ],
@@ -147,10 +162,17 @@ describe('TodayPage', () => {
   // ---------------------------------------------------------------------------
 
   // #531 : the app is opened in the morning, so the stats of a session are completed the next day.
-  it("opens the morning on yesterday's stats, the four other steps in their order", () => {
+  it("opens the morning on yesterday's stats, the five other steps in their order", () => {
     const page = setup();
 
-    expect(page.steps).toEqual(['stats', 'reconciliation', 'candidates', 'session', 'trades']);
+    expect(page.steps).toEqual([
+      'stats',
+      'reconciliation',
+      'candidates',
+      'locates',
+      'session',
+      'trades',
+    ]);
   });
 
   it('a morning with nothing left from before today is done, and the reconciliation comes next', () => {
@@ -204,6 +226,104 @@ describe('TodayPage', () => {
     expect(page.stepStates().candidates).toBe('done');
     expect(page.stepStates().session).toBe('current');
     expect(page.doneCount()).toBe(3);
+  });
+
+  // ---------------------------------------------------------------------------
+  // Locates (#625)
+  // ---------------------------------------------------------------------------
+
+  it('a locate taken ticks the locates step', () => {
+    reconciledToday = true;
+    candidates = [makeCandidate({ stats: IN_STATS })];
+    dayLocates = [makeLocate()];
+    const page = setup();
+
+    expect(page.stepStates().locates).toBe('done');
+  });
+
+  // A locate is a cost recorded when it happens, not something owed every day.
+  it('the locates step is never the current one, nor counted in the progress', () => {
+    reconciledToday = true;
+    candidates = [makeCandidate({ stats: IN_STATS })];
+    const page = setup();
+
+    expect(page.stepStates().locates).toBe('todo');
+    expect(page.stepStates().session).toBe('current');
+    expect(page.requiredStepCount).toBe(5);
+  });
+
+  it('a locate taken does not move the progress', () => {
+    reconciledToday = true;
+    candidates = [makeCandidate({ stats: IN_STATS })];
+    dayLocates = [makeLocate()];
+    const page = setup();
+
+    // Yesterday's stats, the reconciliation and the candidates — not the locates.
+    expect(page.doneCount()).toBe(3);
+  });
+
+  it("adds the day's locates up per ticker, a top-up on the same row", () => {
+    dayLocates = [
+      makeLocate(),
+      makeLocate({ id: 'l-2', shares: 1000, pricePerShare: 0.15, cost: 150 }),
+      makeLocate({ id: 'l-3', ticker: 'MLGO', shares: 2000, pricePerShare: 0.08, cost: 160 }),
+    ];
+    const page = setup();
+
+    expect(page.locatesByTicker()).toEqual([
+      { ticker: 'SGBX', shares: 3000, lastPrice: 0.15 },
+      { ticker: 'MLGO', shares: 2000, lastPrice: 0.08 },
+    ]);
+    expect(page.locatesTotal()).toBe(550);
+  });
+
+  it('says nothing was located on a day with no candidate', () => {
+    tradingDay = { ...tradingDay, noCandidateAt: new Date() };
+    const page = setup();
+
+    expect(page.nothingLocated()).toBe(true);
+  });
+
+  it('says nothing was located once the session closed without a locate', () => {
+    candidates = [makeCandidate({ stats: IN_STATS })];
+    vi.setSystemTime(new Date('2026-09-18T21:00:00Z')); // 17:00 NY
+    const page = setup();
+
+    expect(page.nothingLocated()).toBe(true);
+    expect(page.stepStates().locates).toBe('todo');
+  });
+
+  it('« Louer » saves the locate typed, then reads the day again', () => {
+    const input: LocateInput = {
+      tradingDate: new Date(),
+      ticker: 'ATXG',
+      shares: 1000,
+      pricePerShare: 0.05,
+      stockPrice: null,
+      note: null,
+    };
+    dialogOpen.mockReturnValue({ afterClosed: () => of(input) });
+    const page = setup();
+    dayLocates = [makeLocate({ ticker: 'ATXG' })];
+
+    page.addLocate();
+
+    expect(createLocate).toHaveBeenCalledWith(input);
+    expect(page.dayLocates().map((l) => l.ticker)).toEqual(['ATXG']);
+  });
+
+  it("a ticker of the step opens its locates at the last price paid, on the day's PM open", () => {
+    candidates = [makeCandidate({ ticker: 'SGBX', pmOpen: 1.85 })];
+    const page = setup();
+
+    page.openLocates({ ticker: 'SGBX', shares: 3000, lastPrice: 0.15 });
+
+    expect(dialogOpen).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        data: { tradingDate: page.today, ticker: 'SGBX', lastPrice: 0.15, stockPrice: 1.85 },
+      }),
+    );
   });
 
   // #337 : capturing one candidate was enough, and the promotion hid under step 4.
@@ -649,6 +769,22 @@ const IN_STATS: Candidate['stats'] = [{ pattern: 'GUS', statId: 's-gus' }];
 /** The trading day before FRIDAY_PREMARKET — « la veille » (#531). */
 const YESTERDAY = new Date(2026, 8, 17);
 
+function makeLocate(overrides: Partial<Locate> = {}): Locate {
+  return {
+    id: 'l-1',
+    tradingDate: new Date(),
+    ticker: 'SGBX',
+    shares: 2000,
+    pricePerShare: 0.12,
+    stockPrice: null,
+    cost: 240,
+    note: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    ...overrides,
+  };
+}
+
 function makeCandidate(overrides: Partial<Candidate> = {}): Candidate {
   return {
     id: 'c1',
@@ -659,7 +795,6 @@ function makeCandidate(overrides: Partial<Candidate> = {}): Candidate {
     pmHigh: 4.65,
     floatMillions: 8.2,
     volumeMillions: 3.1,
-    locatePerShare: 0.03,
     note: null,
     openPrice: null,
     targetPushPercent: null,
@@ -682,7 +817,6 @@ function makeStat(overrides: Partial<StatEntry> = {}): StatEntry {
     pmHigh: 4.65,
     floatMillions: 8.2,
     volumeMillions: 3.1,
-    locatePerShare: 0.03,
     note: null,
     openPrice: null,
     pushOpenPrice: null,

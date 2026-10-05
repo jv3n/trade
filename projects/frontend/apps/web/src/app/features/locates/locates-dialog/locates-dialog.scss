@@ -1,0 +1,92 @@
+@use 'sizes' as s;
+@use '../locates';
+
+.title-ticker {
+  display: inline-flex;
+  margin-left: s.$space-sm;
+  vertical-align: middle;
+}
+
+.locate-list {
+  width: 100%;
+  margin-bottom: s.$space-md;
+  border-collapse: collapse;
+  font-size: s.$font-sm;
+  font-variant-numeric: tabular-nums;
+
+  th,
+  td {
+    padding: s.$space-xs s.$space-sm;
+    text-align: right;
+  }
+
+  th {
+    color: var(--color-text-muted);
+    font-weight: 550;
+  }
+
+  tbody tr,
+  tfoot tr {
+    border-top: s.$border-width solid var(--color-border);
+  }
+
+  tfoot td {
+    font-weight: 600;
+  }
+
+  .row-actions {
+    white-space: nowrap;
+  }
+
+  .cell-input {
+    width: 100%;
+    padding: s.$space-xs;
+    border: s.$border-width solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    color: inherit;
+    font: inherit;
+    text-align: right;
+  }
+}
+
+.locate-add {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: s.$space-md;
+  align-items: center;
+}
+
+.derived {
+  display: flex;
+  flex-direction: column;
+  gap: s.$space-hairline;
+
+  &__label {
+    font-size: s.$font-xs;
+    color: var(--color-text-muted);
+  }
+
+  &__value {
+    font-size: s.$font-lg;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+
+    &.muted {
+      color: var(--color-text-faint);
+      font-weight: 400;
+    }
+  }
+
+  &__sub {
+    font-size: s.$font-xs;
+    color: var(--color-text-muted);
+  }
+}
+
+// The lib's `.hint`, set under the form.
+.price-hint {
+  margin: s.$space-sm 0 0;
+}
+
+@include locates.shared;

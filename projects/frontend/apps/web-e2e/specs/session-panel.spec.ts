@@ -143,6 +143,8 @@ test('closing, a new stat or another stat ask before dropping a held edit', asyn
     const dialog = page.getByRole('dialog', { name: 'Quitter sans enregistrer ?' });
     await expect(dialog, label).toBeVisible();
     await dialog.getByRole('button', { name: 'Annuler' }).click();
+    // Gone before the next one opens : a dialog still on its way out is a second match.
+    await expect(dialog, label).toHaveCount(0);
     await expect(premarket(page).getByText(TICKER, { exact: true }), label).toBeVisible();
   }
 

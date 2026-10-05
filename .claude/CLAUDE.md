@@ -39,7 +39,7 @@ trade/
 │   │       │              # router/ (guards), providers.ts
 │   │       ├── shared/    # cross-cutting helpers (no state, no DI)
 │   │       └── features/  # today, account, journal, stats, candidates, lexicon,
-│   │                      # settings, login, error
+│   │                      # settings, login, error, locates
 │   ├── libs/ui/                                    # @portfolioai/ui design-system lib
 │   │   ├── src/lib/<component>/                    # Stb*Module wrappers + scss overrides
 │   │   ├── styles/                                 # global tokens, base, shell, scrollbars
@@ -50,7 +50,8 @@ trade/
 ├── projects/backend/src/main/kotlin/com/portfolioai/
 │   ├── auth/        # OAuth2/OIDC + ADMIN/USER roles
 │   ├── journal/     # Trade journal (CRUD + CSV export + Pageable + executions + attachments)
-│   ├── account/     # Broker cash account — movements + derived balance, fed by journal P&L (event)
+│   ├── account/     # Broker cash account — movements + derived balance, fed by journal P&L and locates (events)
+│   ├── locate/      # Locates — a cost on a (day, ticker), matched to the day's trades by ticker
 │   ├── stats/       # Stats sheet (CSV export + per-user rows)
 │   ├── candidates/  # Candidate sheets
 │   ├── lexicon/     # Bilingual trading lexicon

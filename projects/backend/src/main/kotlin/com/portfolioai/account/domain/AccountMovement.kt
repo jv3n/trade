@@ -29,6 +29,7 @@ import org.hibernate.type.SqlTypes
  * pushed from the journal, linked back to its `trade_entry.id` with a DB `ON DELETE CASCADE`.
  * Stored as a plain UUID (not a `@ManyToOne`) so the `account` context doesn't import the `journal`
  * domain entity ; the DB enforces the TRADE ⟺ tradeEntryId-present invariant via a CHECK.
+ * [locateId] does the same for [AccountMovementType.LOCATE] movements and the `locate` context.
  */
 @Entity
 @Table(name = "account_movement")
@@ -57,6 +58,17 @@ class AccountMovement(
   @Column(name = "trade_direction")
   var tradeDirection: TradeDirection? = null,
   @Column(name = "trade_size") var tradeSize: Int? = null,
+
+  /** Set only for LOCATE movements (`locate` link). */
+  @Column(name = "locate_id") val locateId: UUID? = null,
+
+  /**
+   * Ticker and shares located, copied from `LocateChangedEvent` and set on every LOCATE movement —
+   * the account page labels the line "SGBX 2000" without reading the locate's table, and the « paid
+   * for nothing » figure matches on the ticker.
+   */
+  @Column(name = "locate_ticker", length = 20) var locateTicker: String? = null,
+  @Column(name = "locate_shares") var locateShares: Int? = null,
 
   // ---- Audit ----
   @Column(name = "created_at", nullable = false, updatable = false)

@@ -37,9 +37,8 @@ private val PROMOTABLE = setOf(Pattern.GUS, Pattern.DT)
  * **One candidate per (day, ticker)** : creating — or renaming onto — a ticker already captured
  * that day is a 409. The check runs in-service for a precise message ; the DB unique constraint
  * `ux_candidate_user_day_ticker` stays the safety net. Validation is in-service too : a blank
- * ticker, a non-positive price, a PM high below the PM open or a negative float / volume / locate
- * return a clean 400 rather than reaching the DB CHECK constraints, and so does a target push above
- * 1000 %.
+ * ticker, a non-positive price, a PM high below the PM open or a negative float / volume return a
+ * clean 400 rather than reaching the DB CHECK constraints, and so does a target push above 1000 %.
  *
  * **A candidate has no pattern** (#434) : it is chosen when promoting, and a candidate gives one
  * stat per pattern — a GUS in the morning, a DT late in the morning.
@@ -193,7 +192,6 @@ class CandidateService(
     this.pmHigh = pmHigh
     floatMillions = request.floatMillions?.requireNonNegative("Float")
     volumeMillions = request.volumeMillions?.requireNonNegative("Volume")
-    locatePerShare = request.locatePerShare?.requireNonNegative("Locate")
     note = request.note?.trim()?.ifEmpty { null }
     openPrice = request.openPrice?.requirePositive("Open")
     targetPushPercent =
@@ -219,7 +217,6 @@ class CandidateService(
       pmHigh = pmHigh,
       floatMillions = floatMillions,
       volumeMillions = volumeMillions,
-      locatePerShare = locatePerShare,
       note = note,
       openPrice = openPrice,
     )
@@ -234,7 +231,6 @@ class CandidateService(
       pmHigh = pmHigh,
       floatMillions = floatMillions,
       volumeMillions = volumeMillions,
-      locatePerShare = locatePerShare,
       note = note,
       openPrice = openPrice,
       targetPushPercent = targetPushPercent,

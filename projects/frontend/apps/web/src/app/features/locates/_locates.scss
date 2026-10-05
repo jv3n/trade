@@ -1,0 +1,16 @@
+// What the two locate dialogs share — their lead line and the 2 % warning. A mixin, included last,
+// so `.warn` comes after the dialog's own muted text and wins over it.
+
+@use 'sizes' as s;
+
+@mixin shared {
+  .lead {
+    margin: 0 0 s.$space-md;
+    color: var(--color-text-muted);
+  }
+
+  // At or above the 2 % rule — a warning on the discipline (colour rule).
+  .warn {
+    color: var(--color-warning);
+  }
+}

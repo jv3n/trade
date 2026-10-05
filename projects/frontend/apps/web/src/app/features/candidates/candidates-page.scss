@@ -17,12 +17,12 @@
 
 .capture {
   display: grid;
-  grid-template-columns: 1.4fr repeat(6, 1fr);
+  grid-template-columns: 1.4fr repeat(5, 1fr);
   gap: s.$space-md;
   align-items: start;
 
   .field--note {
-    grid-column: span 4;
+    grid-column: span 3;
   }
 
   .mono {
@@ -77,11 +77,6 @@
 }
 
 // ---- List ----
-
-// Expensive locate → warning (amber).
-td.warn {
-  color: var(--color-warning);
-}
 
 td.note-cell {
   max-width: 220px;

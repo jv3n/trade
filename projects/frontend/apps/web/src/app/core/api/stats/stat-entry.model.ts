@@ -28,7 +28,6 @@ export interface StatEntry {
   pmHigh: number;
   floatMillions: number | null;
   volumeMillions: number | null;
-  locatePerShare: number | null;
   note: string | null;
 
   // ---- Session (null while the stat is to complete) ----

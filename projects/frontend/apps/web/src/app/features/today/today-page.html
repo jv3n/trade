@@ -24,7 +24,7 @@
             {{
               'today.steps.progress'
                 | plural: doneCount()
-                | translate: { done: doneCount(), total: steps.length }
+                | translate: { done: doneCount(), total: requiredStepCount }
             }}
           </span>
         }
@@ -215,6 +215,58 @@
                   {{ 'today.actions.noCandidate' | translate }}
                 </button>
               }
+            </div>
+          </li>
+
+          <!-- Shares located : a cost, typed on the day — optional, so a key rather than a number, never the
+               current step nor counted (#625). -->
+          <li class="step" [class]="'step--' + states.locates">
+            <span class="step-dot">
+              @if (states.locates === 'done') {
+                <mat-icon>check</mat-icon>
+              } @else {
+                <mat-icon>key</mat-icon>
+              }
+            </span>
+            <div class="step-main">
+              <div class="step-title">
+                {{ 'today.steps.locates.title' | translate }}
+                @if (locatesTotal() > 0) {
+                  <span class="step-time"
+                    >{{ locatesTotal() | number: '1.2-2'
+                    }}{{ 'account.usdSuffix' | translate }}</span
+                  >
+                }
+              </div>
+              <div class="step-body">
+                @if (locatesByTicker().length > 0) {
+                  <span class="locate-links">
+                    @for (row of locatesByTicker(); track row.ticker) {
+                      <button
+                        type="button"
+                        class="locate-link"
+                        (click)="openLocates(row)"
+                        [matTooltip]="'locates.openTicker' | translate: { ticker: row.ticker }"
+                      >
+                        <mat-chip-set>
+                          <mat-chip stbChip="ticker" disableRipple>{{ row.ticker }}</mat-chip>
+                        </mat-chip-set>
+                        {{ 'locates.sharesCount' | translate: { shares: (row.shares | number) } }}
+                      </button>
+                    }
+                  </span>
+                } @else if (nothingLocated()) {
+                  {{ 'today.steps.locates.none' | translate }}
+                } @else {
+                  {{ 'today.steps.locates.body' | translate }}
+                }
+              </div>
+            </div>
+            <div class="step-action actions">
+              <button mat-stroked-button type="button" (click)="addLocate()">
+                <mat-icon>key</mat-icon>
+                <span>{{ 'today.actions.locate' | translate }}</span>
+              </button>
             </div>
           </li>
 

@@ -136,7 +136,6 @@ class LocalDataSeeder(
       pmHigh = price(pmHigh),
       floatMillions = amount(rnd(1.5, 45.0)),
       volumeMillions = amount(rnd(3.0, 90.0)),
-      locatePerShare = price(rnd(0.005, 0.25)),
       openPrice = price(open),
       pushOpenPrice = price(pushOpen),
       hodPrice = price(hod),

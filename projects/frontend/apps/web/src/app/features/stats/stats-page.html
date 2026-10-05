@@ -508,21 +508,6 @@
           />
           <ui-form-field-reset matIconSuffix [for]="volumeField" />
         </mat-form-field>
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>{{ 'stats.fields.locate' | translate }}</mat-label>
-          <input
-            #locateField
-            matInput
-            appNumberMask
-            [decimals]="4"
-            [min]="0"
-            [number]="premarket().locatePerShare"
-            (numberChange)="setPremarketPrice('locatePerShare', $event)"
-            (blur)="saveSession('premarket')"
-            (keydown.enter)="$any($event.target).blur()"
-          />
-          <ui-form-field-reset matIconSuffix [for]="locateField" />
-        </mat-form-field>
         <mat-form-field appearance="outline" subscriptSizing="dynamic" class="premarket-form__note">
           <mat-label>{{ 'stats.fields.note' | translate }}</mat-label>
           <input
@@ -1124,15 +1109,6 @@
             </td>
           </ng-container>
 
-          <ng-container matColumnDef="locate">
-            <th mat-header-cell *matHeaderCellDef stbCol="numeric">
-              {{ 'stats.fields.locate' | translate }}
-            </th>
-            <td mat-cell *matCellDef="let s" stbCol="numeric">
-              {{ s.locatePerShare !== null ? (s.locatePerShare | price) : '—' }}
-            </td>
-          </ng-container>
-
           <ng-container matColumnDef="openPrice">
             <th
               mat-header-cell
@@ -1409,7 +1385,7 @@
 
           <!-- The averages row of the DT view : a label over the columns before the legs. -->
           <ng-container matColumnDef="dtAveragesLabel">
-            <td mat-footer-cell *matFooterCellDef colspan="9" class="averages-label">
+            <td mat-footer-cell *matFooterCellDef colspan="8" class="averages-label">
               {{
                 'stats.doubleTop.averages'
                   | plural: summary()?.completedDoubleTops ?? 0
@@ -1462,7 +1438,7 @@
 
           <!-- The medians row of a session view (#499) : medians, not means, like the cards. -->
           <ng-container matColumnDef="sessionMediansLabel">
-            <td mat-footer-cell *matFooterCellDef colspan="9" class="averages-label">
+            <td mat-footer-cell *matFooterCellDef colspan="8" class="averages-label">
               {{
                 'stats.complete.medians'
                   | plural: summary()?.completed ?? 0

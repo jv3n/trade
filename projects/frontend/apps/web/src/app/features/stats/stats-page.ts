@@ -130,7 +130,6 @@ interface PremarketModel {
   pmHigh: number | null;
   floatMillions: number | null;
   volumeMillions: number | null;
-  locatePerShare: number | null;
   note: string;
 }
 
@@ -154,8 +153,7 @@ export interface SaveState {
   reason: string | null;
 }
 
-type PremarketPrice =
-  'previousClose' | 'pmOpen' | 'pmHigh' | 'floatMillions' | 'volumeMillions' | 'locatePerShare';
+type PremarketPrice = 'previousClose' | 'pmOpen' | 'pmHigh' | 'floatMillions' | 'volumeMillions';
 
 /** A listed stat with its derived percentages (never stored — recomputed from the prices). */
 export interface StatRow extends StatEntry {
@@ -222,7 +220,6 @@ const LEADING_COLUMNS = [
   'pmPush',
   'float',
   'volume',
-  'locate',
 ] as const;
 const TRAILING_COLUMNS = ['flags', 'completed', 'trade', 'actions'] as const;
 const DOUBLE_TOP_FOOTER_COLUMNS: readonly string[] = [
@@ -313,7 +310,6 @@ const BLANK_PREMARKET: PremarketModel = {
   pmHigh: null,
   floatMillions: null,
   volumeMillions: null,
-  locatePerShare: null,
   note: '',
 };
 
@@ -399,7 +395,6 @@ function premarketOf(entry: StatEntry): PremarketModel {
     pmHigh: entry.pmHigh,
     floatMillions: entry.floatMillions,
     volumeMillions: entry.volumeMillions,
-    locatePerShare: entry.locatePerShare,
     note: entry.note ?? '',
   };
 }
@@ -510,7 +505,6 @@ const SKELETON_COLUMNS: SkeletonColumnDefs = {
   pmPush: { key: 'stats.fields.pmPush', variant: 'numeric' },
   float: { key: 'stats.fields.float', variant: 'numeric' },
   volume: { key: 'stats.fields.volume', variant: 'numeric' },
-  locate: { key: 'stats.fields.locate', variant: 'numeric' },
   openPrice: { key: 'stats.fields.openPriceShort', variant: 'numeric' },
   hold: { key: 'stats.fields.hold', variant: 'numeric' },
   pushOpen: { key: 'stats.fields.pushOpen', variant: 'numeric' },
@@ -1556,7 +1550,6 @@ export class StatsPage {
       pmHigh: m.pmHigh as number,
       floatMillions: m.floatMillions,
       volumeMillions: m.volumeMillions,
-      locatePerShare: m.locatePerShare,
       note: m.note.trim() || null,
     };
   }
