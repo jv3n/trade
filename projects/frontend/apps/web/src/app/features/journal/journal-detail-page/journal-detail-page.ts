@@ -146,8 +146,8 @@ function spanMinutes(executions: ExecRow[]): number | null {
  * - **P&L block** — computed (from the executions), real (typed off the broker statement) and the
  *   live gap between them (fees, rounding). Empty real ⇒ the computed one is retained, and the
  *   retained one is what reaches the account.
- * - **Day context** — the stat's premarket + session values, read-only, fetched by `statEntryId`,
- *   and the day's locates on the ticker (#609) : edited here (#625) — the page open when the figures
+ * - **Day context** — the stat's premarket + session values, read-only, fetched by `statEntryId`
+ *   (none for a trade on its own, #634), and the day's locates on the ticker (#609) : edited here (#625) — the page open when the figures
  *   are checked against the broker — and outside the trade's P&L : each one has its own account
  *   line.
  * - **Post-mortem** — « what happened » + « mistake / to improve », and the chart screenshot.
@@ -356,6 +356,17 @@ export class JournalDetailPage implements HasUnsavedChanges {
     (this.dayLocates() ?? []).reduce((sum, l) => sum + l.shares, 0),
   );
 
+  /**
+   * The share's price a locate is weighed against : the stat's PM open, else — a trade on its own
+   * (#634) — the price of its first entry, so the 2 % rule still shows.
+   */
+  private readonly locateStockPrice = computed(
+    () =>
+      this.context()?.stat.pmOpen ??
+      this.draft()?.executions.find((e) => e.kind === 'ENTRY' && e.price !== null)?.price ??
+      null,
+  );
+
   /** The trade's day and ticker locates, to top up or fix — a top-up starts from the last price paid. */
   editLocates(): void {
     const entry = this.entry();
@@ -364,7 +375,7 @@ export class JournalDetailPage implements HasUnsavedChanges {
       tradingDate: entry.tradeDate,
       ticker: entry.ticker,
       lastPrice: this.dayLocates()?.at(-1)?.pricePerShare ?? null,
-      stockPrice: this.context()?.stat.pmOpen ?? null,
+      stockPrice: this.locateStockPrice(),
     };
     this.dialog
       .open<LocatesDialog, LocatesDialogData, boolean>(LocatesDialog, {
@@ -428,10 +439,12 @@ export class JournalDetailPage implements HasUnsavedChanges {
   }
 
   /**
-   * Day context. A trade always has a stat (`statEntryId` is mandatory since #192), so a failure
-   * here is a transient one : the context card stays empty rather than breaking the whole page.
+   * Day context, read off the trade's stat. A trade on its own (#634) has none : nothing is asked,
+   * and the card says so. With a stat, a failure is a transient one : the card stays empty rather
+   * than breaking the whole page.
    */
-  private loadContext(statEntryId: string): void {
+  private loadContext(statEntryId: string | null): void {
+    if (!statEntryId) return;
     this.statsRepo.findById(statEntryId).subscribe({
       next: (stat) =>
         this.context.set({
@@ -550,8 +563,9 @@ export class JournalDetailPage implements HasUnsavedChanges {
       tradeDate: entry.tradeDate,
       ticker: entry.ticker,
       pattern: entry.pattern,
-      // No position yet ⇒ no direction, matching the nullable backend column.
-      direction: executions.length > 0 ? draft.direction : null,
+      // No position yet ⇒ no direction, matching the nullable backend column — unless one was
+      // chosen at creation (a trade on its own, #634), which a save before any fill must keep.
+      direction: executions.length > 0 || entry.direction ? draft.direction : null,
       executions,
       realProfitDollars: this.realAllowed() ? draft.realProfitDollars : null,
       note: draft.note.trim() || null,

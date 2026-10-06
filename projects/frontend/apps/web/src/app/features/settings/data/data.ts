@@ -20,9 +20,9 @@ type Dataset = 'journal' | 'stats';
  * `/settings/data` — the back-office corner where the journal and the stats sheet are downloaded as
  * CSV (`mockup/parametres.html` › Données).
  *
- * **Export only** (#196) : neither sheet can be fed from a file. A trade is born from a stat and a
- * stat from a candidate, so an importer would be a second way in, competing with the daily flow
- * the whole app is built around. The files are spreadsheet-friendly copies — a backup and a place
+ * **Export only** (#196) : neither sheet can be fed from a file. A trade is typed, from its stat or
+ * on its own, and a stat is born from a candidate, so an importer would be a second way in,
+ * competing with the daily flow the whole app is built around. The files are spreadsheet-friendly copies — a backup and a place
  * to run the odd pivot table, not an exchange format.
  *
  * Both downloads share the blob trick : ask the repository for a `Blob`, wrap it in an object URL,

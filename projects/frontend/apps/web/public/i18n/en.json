@@ -443,7 +443,7 @@
   },
   "journal": {
     "title": "Trading journal",
-    "subtitle": "One row per ticker and day, its trades when opened. A trade is born from a stat.",
+    "subtitle": "One row per ticker and day, its trades when opened. A trade usually comes from a stat, and can stand alone.",
     "kpi": {
       "pnl": "P&L over the period",
       "trades": "{{count}} closed trades",
@@ -532,7 +532,17 @@
     },
     "actions": {
       "edit": "Edit",
-      "delete": "Delete"
+      "delete": "Delete",
+      "newTrade": "Trade"
+    },
+    "newTrade": {
+      "title": "New trade",
+      "lead": "No stat : for a trade the sheet never studied — an import, a session typed after the fact. It counts in the journal and the account, not in the stats. A trade studied first is created from its stat (« → Trade »).",
+      "date": "Date",
+      "ticker": "Ticker",
+      "pattern": "Pattern",
+      "direction": "Direction",
+      "create": "Create the trade"
     },
     "detail": {
       "back": "Back to journal",
@@ -540,6 +550,7 @@
       "loadError": "Couldn't load the trade. Try again.",
       "fromStat": "created from the",
       "statOf": "stat of {{date}}",
+      "noStat": "no stat",
       "unsaved": "Unsaved changes",
       "save": "Save",
       "cancel": "Cancel",
@@ -585,7 +596,8 @@
         "dayLocates": "Day's locates",
         "locatesUnavailable": "Unavailable",
         "editLocates": "Top up or fix the day's locates",
-        "unavailable": "Day context unavailable."
+        "unavailable": "Day context unavailable.",
+        "noStat": "No stat for this trade : the day's context (gap, push, open, HOD, LOD) comes from a stat, and this one has none."
       },
       "screenshot": {
         "title": "Screenshot",
@@ -1168,7 +1180,7 @@
     },
     "dataPage": {
       "title": "Data",
-      "description": "Download the journal and the stats sheet as CSV. Export only : a trade is born from a stat, a stat from a candidate — there is no way in through a file.",
+      "description": "Download the journal and the stats sheet as CSV. Export only : a trade is typed, from its stat or on its own, a stat is born from a candidate — there is no way in through a file.",
       "button": "Export CSV",
       "exporting": "Exporting…",
       "journal": {

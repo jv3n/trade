@@ -2,6 +2,7 @@ import { Observable } from 'rxjs';
 import {
   JournalDay,
   JournalSummary,
+  NewTradeInput,
   TradeEntry,
   TradeEntryFilter,
   TradeEntryInput,
@@ -44,14 +45,15 @@ export abstract class JournalRepository {
   abstract summary(filter?: TradeEntryFilter): Observable<JournalSummary>;
 
   /**
-   * No `create` on purpose (#193) : a trade is born from a stat, through
-   * `StatsRepository.promoteToTrade`. The backend has no create endpoint either.
+   * A trade on its own (#634), never linked to a stat. A trade studied first is born from its stat,
+   * through `StatsRepository.promoteToTrade`.
    */
+  abstract create(input: NewTradeInput): Observable<TradeEntry>;
   abstract update(id: string, input: TradeEntryInput): Observable<TradeEntry>;
   abstract delete(id: string): Observable<void>;
   /**
    * Downloads every trade as a CSV blob (UTF-8 with BOM, RFC 4180). Export only (#196) : there is
-   * no import leg — a trade is born from a stat and its executions are typed on its page.
+   * no import leg — a trade is typed, from its stat or on its own, and its executions on its page.
    */
   abstract exportCsv(): Observable<Blob>;
 
