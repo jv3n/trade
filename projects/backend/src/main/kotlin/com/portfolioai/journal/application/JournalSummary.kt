@@ -8,7 +8,8 @@ import java.math.RoundingMode
 
 /**
  * The KPIs of [TradeEntryService.summarise] over the filtered [rows] ; [outOfPatternStats] tells
- * which of their stats are out of pattern (#499).
+ * which of their stats are out of pattern (#499). A trade without a stat is in the rules : nothing
+ * was measured to say otherwise (#633), and in-rules + out-of-pattern must still make the total.
  */
 internal fun journalSummaryOf(
   rows: List<TradeEntry>,
@@ -20,8 +21,9 @@ internal fun journalSummaryOf(
   val winSum = wins.fold(BigDecimal.ZERO, BigDecimal::add)
   val lossSum = losses.fold(BigDecimal.ZERO, BigDecimal::add)
   val closed = rows.mapNotNull { trade -> trade.retainedProfit?.let { trade.statEntryId to it } }
-  val outIds = outOfPatternStats.among(closed.map { (statId, _) -> statId }.toSet())
-  val (outOfPattern, inRules) = closed.partition { (statId, _) -> statId in outIds }
+  val outIds = outOfPatternStats.among(closed.mapNotNull { (statId, _) -> statId }.toSet())
+  val (outOfPattern, inRules) =
+    closed.partition { (statId, _) -> statId != null && statId in outIds }
   return JournalSummaryDto(
     tradeCount = realized.size,
     retainedPnl = realized.fold(BigDecimal.ZERO, BigDecimal::add),

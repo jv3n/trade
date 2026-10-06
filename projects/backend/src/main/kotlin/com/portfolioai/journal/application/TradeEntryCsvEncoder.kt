@@ -8,10 +8,10 @@ import java.math.BigDecimal
 /**
  * Encodes a list of [TradeEntry] into a RFC 4180 CSV string.
  *
- * **Export only** (#196) — there is no CSV import for the journal : a trade is born from a stat and
- * its executions are typed on its page, so this file is a spreadsheet-friendly copy, not an
- * exchange format. That frees the layout from the roundtrip constraint : it can carry the derived
- * figures (retained P&L, duration) the importer would have had to ignore.
+ * **Export only** (#196) — there is no CSV import for the journal : a trade is typed, from its stat
+ * or on its own, and its executions on its page, so this file is a spreadsheet-friendly copy, not
+ * an exchange format. That frees the layout from the roundtrip constraint : it can carry the
+ * derived figures (retained P&L, duration) the importer would have had to ignore.
  *
  * Format choices : • UTF-8 with BOM (`﻿`) — Excel needs it to recognise the encoding when opening a
  * file. • CRLF line endings — same Excel reason. • Quoting — values are wrapped in `"` and inner
@@ -23,8 +23,8 @@ import java.math.BigDecimal
  * broker filled), so they travel packed in a single `executions` cell — one
  * `time|kind|shares|price` group per fill, separated by ` ; `, in `seq` order. The three P&L
  * figures are all there : computed, real and the retained one that reaches the account. `id` /
- * `createdAt` / `updatedAt` are server-side and excluded ; `statEntryId` is not, because a trade
- * without its stat is meaningless since #192.
+ * `createdAt` / `updatedAt` are server-side and excluded ; `statEntryId` is kept, empty for a trade
+ * without a stat (#633).
  */
 object TradeEntryCsvEncoder {
 
@@ -70,7 +70,7 @@ object TradeEntryCsvEncoder {
         e.tradeDate.toString(),
         e.ticker,
         e.pattern.name,
-        e.statEntryId.toString(),
+        e.statEntryId?.toString().orEmpty(),
         e.direction?.name.orEmpty(),
         e.size?.toString().orEmpty(),
         e.openPrice?.toPlainString().orEmpty(),
