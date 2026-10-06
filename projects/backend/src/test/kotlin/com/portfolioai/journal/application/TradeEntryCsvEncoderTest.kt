@@ -16,8 +16,8 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 /**
- * Pins the journal CSV export (#196) — the only CSV leg the journal has left, since a trade is born
- * from a stat and can no longer be imported.
+ * Pins the journal CSV export (#196) — the only CSV leg the journal has left, since a trade is
+ * typed, from its stat or on its own, and can no longer be imported.
  *
  * What matters in a file that lands in Excel :
  *
@@ -59,6 +59,13 @@ class TradeEntryCsvEncoderTest {
       packed.startsWith("|ENTRY|200|4.4100"),
       "an empty time, not a missing field : $packed",
     )
+  }
+
+  @Test
+  fun `a trade without a stat leaves its stat cell empty, not « null »`() {
+    val row = TradeEntryCsvEncoder.encode(listOf(ktta().apply { statEntryId = null })).dataRow()
+
+    assertEquals("", row[columnOf("statEntryId")])
   }
 
   @Test

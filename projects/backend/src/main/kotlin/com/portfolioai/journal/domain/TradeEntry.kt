@@ -26,11 +26,11 @@ import org.hibernate.type.SqlTypes
 /**
  * One trade in the journal. Multi-tenant via [user] (`@ManyToOne` on the FK, `ON DELETE CASCADE`).
  *
- * Since the model rework (issue #192) a trade is **born from a stat** : [statEntryId] is mandatory,
- * and [tradeDate], [ticker] and [pattern] are copied from that stat at creation — the trade itself
- * only carries what the user types afterwards (executions, post-mortem, screenshot, real P&L). The
- * copy is deliberate denormalization : the listing sorts and filters on those three columns without
- * ever joining `stat_entry`.
+ * A trade is usually **born from a stat** (#192) : [tradeDate], [ticker] and [pattern] are then
+ * copied from it at creation. It can also stand alone (#633) — an import, a session typed after the
+ * fact — with a null [statEntryId] and its identity typed by hand. Either way the trade carries
+ * those three columns itself : the listing sorts and filters on them without ever joining
+ * `stat_entry`.
  *
  * Categorical fields ([direction], [pattern]) map to Postgres ENUM types via
  * `@JdbcTypeCode(SqlTypes.NAMED_ENUM)` — Hibernate 6 reads the Postgres enum cast directly without
@@ -57,10 +57,10 @@ class TradeEntry(
   /** Owner. Multi-tenant scope key — every read path filters on `user.id`. */
   @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "user_id", nullable = false) val user: User,
 
-  /** Source stat. Mandatory : there is no way to create a trade out of thin air (#192). */
-  @Column(name = "stat_entry_id", nullable = false) var statEntryId: UUID,
+  /** Source stat — null for a trade created on its own (#633). */
+  @Column(name = "stat_entry_id") var statEntryId: UUID? = null,
 
-  // ---- Identity, copied from the source stat ----
+  // ---- Identity, copied from the source stat when there is one ----
   @Column(name = "trade_date", nullable = false) var tradeDate: LocalDate,
   @Column(nullable = false, length = 20) var ticker: String,
   @JdbcTypeCode(SqlTypes.NAMED_ENUM) @Column(nullable = false) var pattern: Pattern = Pattern.GUS,

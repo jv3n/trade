@@ -50,8 +50,9 @@ import org.springframework.web.server.ResponseStatusException
  *   regressions in the JPA mapping (Postgres ENUM types, `@JdbcTypeCode(SqlTypes.NAMED_ENUM)`), the
  *   updated_at trigger, ticker normalisation (`trim().uppercase()` in the service).
  *
- * - **The stat link** — since #192 a trade is born from a stat : the FK is mandatory and the stat
- *   can no longer be deleted out from under its trades (ON DELETE RESTRICT).
+ * - **The stat link** — a trade is usually born from a stat (#192), and can stand alone (#633) :
+ *   created on its own it is never linked, and no update can link or unlink it. A stat still
+ *   holding trades can't be deleted out from under them (ON DELETE RESTRICT).
  *
  * - **The three P&L figures** — computed from the executions, real (broker statement) and retained
  *   (real if set, else computed). The retained one is what the status filter and the account event
@@ -84,7 +85,7 @@ class JournalIntegrationTest {
   private lateinit var testUser: User
   private lateinit var otherUser: User
 
-  /** The stat every sample trade hangs off — one per user, since the FK is now mandatory. */
+  /** The stat every sample trade hangs off — one per user. */
   private lateinit var stat: StatEntry
   private lateinit var otherStat: StatEntry
 
@@ -225,14 +226,75 @@ class JournalIntegrationTest {
 
   @Test
   fun `deleting a stat that still carries a trade is rejected (ON DELETE RESTRICT)`() {
-    // A trade without its stat has no context and no pattern — the DB refuses to create one
-    // rather than silently re-orphaning the trade the way it used to (ON DELETE SET NULL).
+    // The FK is the safety net behind the service : a raw delete never orphans a trade silently.
     service.create(sampleRequest(ticker = "AAPL"))
 
     assertThrows(DataIntegrityViolationException::class.java) {
       statRepo.delete(stat)
       statRepo.flush()
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // A trade on its own (#633)
+  // ---------------------------------------------------------------------------
+
+  @Test
+  fun `a trade can stand on its own — no stat, its identity typed by hand`() {
+    // 55 sessions imported from a broker statement, none analysed at the time : no stat to invent.
+    val dto =
+      service.createStandalone(
+        TradeEntryRequest(
+          tradeDate = LocalDate.of(2026, 6, 12),
+          ticker = " sgbx ",
+          pattern = Pattern.DISCRETIONARY,
+          direction = TradeDirection.SHORT,
+        )
+      )
+
+    assertNull(dto.statEntryId)
+    assertEquals("SGBX", dto.ticker)
+    assertEquals(Pattern.DISCRETIONARY, dto.pattern)
+    assertEquals(TradeDirection.SHORT, dto.direction, "the direction is set before any fill")
+    assertEquals(listOf(dto.id), service.findAll().filter { it.ticker == "SGBX" }.map { it.id })
+  }
+
+  @Test
+  fun `a trade created on its own is never linked, whatever the request carries`() {
+    val dto = service.createStandalone(sampleRequest(statEntryId = stat.id))
+
+    assertNull(dto.statEntryId)
+    assertNull(service.tradeLinksByStat(listOf(stat.id))[stat.id], "the stat counts no trade")
+  }
+
+  @Test
+  fun `a trade on its own needs a ticker`() {
+    assertThrows(IllegalArgumentException::class.java) {
+      service.createStandalone(
+        TradeEntryRequest(tradeDate = LocalDate.of(2026, 6, 12), ticker = " ")
+      )
+    }
+  }
+
+  @Test
+  fun `a trade on its own can't be dated in the future`() {
+    val tomorrow = LocalDate.now().plusDays(1)
+
+    assertThrows(IllegalArgumentException::class.java) {
+      service.createStandalone(TradeEntryRequest(tradeDate = tomorrow, ticker = "SGBX"))
+    }
+  }
+
+  @Test
+  fun `an update neither unlinks a trade from its stat nor links a trade on its own`() {
+    val fromStat = service.create(sampleRequest())
+    val alone = service.createStandalone(sampleRequest(ticker = "SGBX"))
+
+    service.update(fromStat.id, sampleRequest().copy(statEntryId = null))
+    service.update(alone.id, sampleRequest(ticker = "SGBX"))
+
+    assertEquals(stat.id, service.findById(fromStat.id).statEntryId)
+    assertNull(service.findById(alone.id).statEntryId)
   }
 
   @Test
@@ -488,6 +550,16 @@ class JournalIntegrationTest {
     assertEquals(0, BigDecimal("-233.55").compareTo(summary.outOfPatternPnl))
     assertEquals(0, BigDecimal("292.00").compareTo(summary.inRulesPnl))
     assertEquals(0, BigDecimal("58.45").compareTo(summary.retainedPnl))
+  }
+
+  @Test
+  fun `a trade without a stat counts in the rules — nothing measured it out of pattern`() {
+    service.createStandalone(sampleRequest(ticker = "SGBX", exitPrice = BigDecimal("3.0000")))
+
+    val summary = service.summarise(TradeEntryFilter())
+
+    assertEquals(0, summary.outOfPatternCount)
+    assertEquals(0, summary.retainedPnl.compareTo(summary.inRulesPnl), "in rules + out = total")
   }
 
   @Test
@@ -902,7 +974,7 @@ class JournalIntegrationTest {
   /**
    * A trade persisted straight through the repository — used by the filter tests, which need to pin
    * the derived aggregates by hand rather than go through the calculator. Every trade points at its
-   * owner's stat : the FK is mandatory and user-scoped in practice.
+   * owner's stat, user-scoped in practice.
    */
   /**
    * A stat of its own for the next trade, so each filter-test row stands on its own stat rather

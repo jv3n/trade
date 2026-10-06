@@ -148,7 +148,7 @@ class TradeEntryService(
     val userId = authService.getCurrentUser().id
     return repo
       .findByUserIdAndStatEntryIdIn(userId, statEntryIds)
-      .groupBy { it.statEntryId }
+      .groupBy { checkNotNull(it.statEntryId) }
       .mapValues { (_, trades) -> trades.sortedWith(TradeEntry.DAY_ORDER).map { it.toLinkDto() } }
   }
 
@@ -193,9 +193,9 @@ class TradeEntryService(
   }
 
   /**
-   * Creates a trade for the caller. Its only callers are the stat promotion (#193 — `stats` hands
-   * over the stat's identity) and the CSV import : the journal has no create endpoint of its own, a
-   * trade is always born from a stat.
+   * Creates a trade for the caller, linked to [TradeEntryRequest.statEntryId] as given — the stat
+   * promotion's path (#193), `stats` handing over the stat's identity. A trade on its own goes
+   * through [createStandalone].
    */
   @Transactional
   fun create(request: TradeEntryRequest): TradeEntryDto {
@@ -206,10 +206,23 @@ class TradeEntryService(
     return saved.toDto()
   }
 
+  /**
+   * A trade with no stat behind it (#633) — an import, a session typed after the fact. Never linked
+   * to a stat, whatever the request carries ; a blank ticker or a future day is a 400.
+   */
+  @Transactional
+  fun createStandalone(request: TradeEntryRequest): TradeEntryDto {
+    require(request.ticker.isNotBlank()) { "A trade needs a ticker" }
+    require(!request.tradeDate.isAfter(LocalDate.now())) {
+      "A trade can't be dated in the future (${request.tradeDate})"
+    }
+    return create(request.copy(statEntryId = null))
+  }
+
+  /** The stat link is not the client's to change : [TradeEntryRequest.statEntryId] is ignored. */
   @Transactional
   fun update(id: UUID, request: TradeEntryRequest): TradeEntryDto {
     val entry = loadOwned(id)
-    entry.statEntryId = request.statEntryId
     entry.tradeDate = request.tradeDate
     entry.ticker = request.ticker.trim().uppercase()
     entry.pattern = request.pattern ?: Pattern.GUS
@@ -278,8 +291,8 @@ class TradeEntryService(
   }
 
   /**
-   * A brand-new trade from its [request] — the stat-borne identity (stat link, date, ticker,
-   * pattern) plus the post-mortem and the real P&L. The executions are applied separately by
+   * A brand-new trade from its [request] — its identity (stat link if any, date, ticker, pattern)
+   * plus the post-mortem and the real P&L. The executions are applied separately by
    * [applyExecutions], which also derives the flat aggregates.
    */
   private fun newEntry(user: User, request: TradeEntryRequest) =
