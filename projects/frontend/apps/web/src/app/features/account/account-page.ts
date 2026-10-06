@@ -78,8 +78,7 @@ export const MOVEMENT_TYPE_FILTERS: readonly MovementTypeFilter[] = [
 
 const TYPES_BY_FILTER: Record<MovementTypeFilter, readonly AccountMovementType[] | null> = {
   all: null,
-  // The automatic lines of the day's work (#624) : a locate just typed must not hide under the default.
-  trades: ['TRADE', 'LOCATE'],
+  trades: ['TRADE'],
   cash: ['DEPOSIT', 'WITHDRAWAL'],
   corrections: ['ADJUSTMENT'],
   locates: ['LOCATE'],
@@ -245,8 +244,8 @@ export class AccountPage {
   readonly typeFilters = MOVEMENT_TYPE_FILTERS;
 
   /**
-   * Defaults to the running month's trades and locates — what the page is opened for (#473, #624) ;
-   * deposits and corrections are rare, and the KPI tiles keep counting them.
+   * Defaults to the running month's trades — what the page is opened for (#473, #629) ; locates,
+   * deposits and corrections have their own filters, and the KPI tiles keep counting them.
    */
   readonly appliedFilter = signal<AccountFilter>({
     period: 'thisMonth',
@@ -338,7 +337,10 @@ export class AccountPage {
     return m.tradeEntryId ? ['/journal', m.tradeEntryId] : ['/journal'];
   }
 
-  /** « Locate » : a new locate, on any ticker (#625). */
+  /**
+   * « Locate » : a new locate, on any ticker (#625). A filter that would hide it switches to
+   * « Locates », so what was just typed is on screen (#629).
+   */
   openLocate(): void {
     this.dialog
       .open<NewLocateDialog, void, LocateInput | undefined>(NewLocateDialog, {
@@ -355,7 +357,12 @@ export class AccountPage {
               this.toasts.success(
                 this.translate.instant('locates.snackbar.createSuccess', { ticker: saved.ticker }),
               );
-              this.fetch();
+              const types = TYPES_BY_FILTER[this.appliedFilter().type];
+              if (types && !types.includes('LOCATE')) {
+                this.applyFilter({ ...this.appliedFilter(), type: 'locates' });
+              } else {
+                this.fetch();
+              }
             }),
             catchError(() => {
               this.toasts.error(this.translate.instant('locates.snackbar.saveError'));

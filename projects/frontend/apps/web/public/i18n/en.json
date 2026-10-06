@@ -430,7 +430,7 @@
       "type": "Movement type",
       "types": {
         "all": "All types",
-        "trades": "Trades and locates",
+        "trades": "Trades",
         "cash": "Deposits / withdrawals",
         "corrections": "Corrections",
         "locates": "Locates"

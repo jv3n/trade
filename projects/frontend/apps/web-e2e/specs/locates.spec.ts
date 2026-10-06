@@ -77,7 +77,7 @@ test("a locate typed on Today costs the account what the screen says, and the tr
   expect(parseFrAmount(await locatesStep(page).locator('.step-time').innerText())).toBe(60);
 
   // The account : one line, −cost, labelled with its ticker and shares, and the balance.
-  await page.goto('/account');
+  await openAccountLocates(page);
   const line = locateLines(page);
   await expect(line).toHaveCount(1);
   await expect(line).toContainText('SGBX');
@@ -106,6 +106,7 @@ test('the preview and the saved line agree on an exact half-cent', async ({ api,
   expect(parseFrAmount(await dialog.locator('.cost strong').innerText())).toBe(3.75);
   await dialog.getByRole('button', { name: 'Louer' }).click();
 
+  // Typed under the default « Trades » filter : the page switches to « Locates » to show it (#629).
   await expect(locateLines(page)).toHaveCount(1);
   expect(parseFrAmount(await amountOf(locateLines(page)))).toBe(-3.75);
   expect((await locateMovements(api))[0].amount).toBe(-3.75);
@@ -141,7 +142,7 @@ test('top-ups add up per ticker and for the day, while the account keeps one lin
   await expect(dayLocates(page)).toContainText('1,77 %');
 
   // The account : one line per locate, not per ticker.
-  await page.goto('/account');
+  await openAccountLocates(page);
   await expect(locateLines(page)).toHaveCount(3);
 });
 
@@ -164,7 +165,7 @@ test('deleting a locate gives the money back, and a locate charged nothing write
 }) => {
   await seedLocate(api, 'ATXG', 1000, 0.05, 2.5);
 
-  await page.goto('/account');
+  await openAccountLocates(page);
   const line = locateLines(page);
   await expect(line).toHaveCount(1);
   await expect
@@ -207,7 +208,7 @@ test('a correction in place moves the account line, with no confirmation', async
   await expect(page.getByRole('dialog')).toHaveCount(1);
   await dialog.getByRole('button', { name: 'Fermer' }).click();
 
-  await page.goto('/account');
+  await openAccountLocates(page);
   expect(parseFrAmount(await amountOf(locateLines(page)))).toBe(-60);
   await expect
     .poll(async () => parseFrAmount(await heroBalance(page).innerText()))
@@ -319,7 +320,14 @@ function locatesStep(page: Page): Locator {
   return page.locator('ol.steps > li.step').nth(3);
 }
 
-/** The account's LOCATE lines — under the default « Trades et locates » filter. */
+/** The account, its table narrowed to the locates — the default « Trades » filter hides them. */
+async function openAccountLocates(page: Page): Promise<void> {
+  await page.goto('/account');
+  await page.getByRole('combobox', { name: 'Type de mouvement' }).click();
+  await page.getByRole('option', { name: 'Locates', exact: true }).click();
+}
+
+/** The account's LOCATE lines. */
 function locateLines(page: Page): Locator {
   return page.getByRole('row').filter({ hasText: 'actions louées' });
 }
