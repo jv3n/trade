@@ -477,6 +477,11 @@
       "message": "Permanent: executions, post-mortem and chart capture are deleted, and the trade's movement disappears from the account. The stat of the day is kept.",
       "confirm": "Delete the trade"
     },
+    "confirmDeleteAlone": {
+      "title": "Delete the {{ticker}} trade?",
+      "message": "Permanent: executions, post-mortem and chart capture are deleted, and the trade's movement disappears from the account.",
+      "confirm": "Delete the trade"
+    },
     "errors": {
       "load": "Couldn't load the journal. Please retry.",
       "save": "Couldn't save the trade. Please retry.",
@@ -630,7 +635,7 @@
     },
     "confirmDeleteOne": {
       "title": "Delete this {{ticker}} trade?",
-      "message": "Permanent: its executions, post-mortem and chart capture are deleted, and its movement disappears from the account — the balance moves by this trade alone. The other {{ticker}} trades of the day ({{others}}), their account lines and the stat are kept.",
+      "message": "Permanent: its executions, post-mortem and chart capture are deleted, and its movement disappears from the account — the balance moves by this trade alone. The other {{ticker}} trades of the day ({{others}}) and their account lines are kept.",
       "confirm": "Delete the trade"
     },
     "duration": {
