@@ -39,6 +39,9 @@ test('a traded stat is deleted, its trade stays in the journal and on the accoun
   const dialog = page.getByRole('dialog', { name: `Supprimer la stat ${TICKER} ?` });
   await expect(dialog).toContainText('il reste au journal, sans stat');
   await dialog.getByRole('button', { name: 'Supprimer la stat' }).click();
+  // The toast, not the row : while the dialog is open Material hides the table (aria-hidden), so
+  // « no row » holds before the DELETE is even sent.
+  await expect(page.getByText(`Stat ${TICKER} supprimée.`)).toBeVisible();
   await expect(row).toHaveCount(0);
 
   const kept = await api.get<Trade>(`/api/journal/trades/${trade.id}`);
