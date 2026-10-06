@@ -54,12 +54,16 @@
           </h2>
           <p class="subtitle">
             <span class="tag tag-accent">{{ 'patterns.short.' + e.pattern | translate }}</span>
-            <span>
-              {{ 'journal.detail.fromStat' | translate }}
-              <a routerLink="/stats">{{
-                'journal.detail.statOf' | translate: { date: (e.tradeDate | date: 'shortDate') }
-              }}</a>
-            </span>
+            @if (e.statEntryId) {
+              <span>
+                {{ 'journal.detail.fromStat' | translate }}
+                <a routerLink="/stats">{{
+                  'journal.detail.statOf' | translate: { date: (e.tradeDate | date: 'shortDate') }
+                }}</a>
+              </span>
+            } @else {
+              <span data-testid="no-stat">{{ 'journal.detail.noStat' | translate }}</span>
+            }
             <span class="status">{{
               'journal.enums.positionStatus.' + preview().status | translate
             }}</span>
@@ -381,17 +385,26 @@
           <p class="hint pnl-note">{{ 'journal.detail.pnl.note' | translate }}</p>
         </div>
 
-        <!-- Day context — the stat block, strictly read-only here. -->
+        <!-- Day context — the stat block, strictly read-only here ; the locates stand without one. -->
         <div class="card">
           <h3>
             <span>{{ 'journal.detail.context.title' | translate }}</span>
-            <a class="hint" routerLink="/stats">
-              {{ 'journal.detail.context.link' | translate }}
-              <mat-icon>arrow_forward</mat-icon>
-            </a>
+            @if (e.statEntryId) {
+              <a class="hint" routerLink="/stats">
+                {{ 'journal.detail.context.link' | translate }}
+                <mat-icon>arrow_forward</mat-icon>
+              </a>
+            }
           </h3>
-          @if (context(); as ctx) {
-            <dl class="kv">
+          @if (!e.statEntryId) {
+            <p class="muted" data-testid="context-no-stat">
+              {{ 'journal.detail.context.noStat' | translate }}
+            </p>
+          } @else if (!context()) {
+            <p class="muted">{{ 'journal.detail.context.unavailable' | translate }}</p>
+          }
+          <dl class="kv">
+            @if (context(); as ctx) {
               <dt>{{ 'journal.detail.context.premarket' | translate }}</dt>
               <dd>
                 {{ ctx.stat.previousClose | price }} ·
@@ -417,60 +430,61 @@
                     : '—'
                 }}
               </dd>
-              <!-- Outside the trade's P&L : each one has its own account line. -->
-              <dt class="kv__centred">{{ 'journal.detail.context.dayLocates' | translate }}</dt>
-              <dd data-testid="day-locates" class="kv__with-action">
-                @if (locatesFailed()) {
-                  <span class="muted">{{
-                    'journal.detail.context.locatesUnavailable' | translate
-                  }}</span>
-                } @else if (dayLocates(); as locates) {
-                  <span>
-                    @if (locates.length === 0) {
-                      —
-                    } @else {
-                      @for (l of locates; track l.id; let last = $last) {
-                        {{ l.shares | number }} × {{ l.pricePerShare | price }}
-                        @if (percentOf(l) !== null) {
-                          <span class="muted" [class.warn]="breach(percentOf(l))"
-                            >({{ percentOf(l)! | number: '1.2-2' }} %)</span
-                          >
-                        }
-                        {{ last ? '' : ' + ' }}
+            }
+            <!-- Outside the trade's P&L : each one has its own account line. -->
+            <dt class="kv__centred">{{ 'journal.detail.context.dayLocates' | translate }}</dt>
+            <dd data-testid="day-locates" class="kv__with-action">
+              @if (locatesFailed()) {
+                <span class="muted">{{
+                  'journal.detail.context.locatesUnavailable' | translate
+                }}</span>
+              } @else if (dayLocates(); as locates) {
+                <span>
+                  @if (locates.length === 0) {
+                    —
+                  } @else {
+                    @for (l of locates; track l.id; let last = $last) {
+                      {{ l.shares | number }} × {{ l.pricePerShare | price }}
+                      @if (percentOf(l) !== null) {
+                        <span class="muted" [class.warn]="breach(percentOf(l))"
+                          >({{ percentOf(l)! | number: '1.2-2' }} %)</span
+                        >
                       }
-                      =
-                      <strong
-                        >{{ locatesTotal() | number: '1.2-2'
-                        }}{{ 'account.usdSuffix' | translate }}</strong
-                      >
-                      @if (locates.length > 1) {
-                        <span class="muted">
-                          ·
-                          {{
-                            'locates.sharesCount'
-                              | translate: { shares: (locatesShares() | number) }
-                          }}
+                      {{ last ? '' : ' + ' }}
+                    }
+                    =
+                    <strong
+                      >{{ locatesTotal() | number: '1.2-2'
+                      }}{{ 'account.usdSuffix' | translate }}</strong
+                    >
+                    @if (locates.length > 1) {
+                      <span class="muted">
+                        ·
+                        {{
+                          'locates.sharesCount' | translate: { shares: (locatesShares() | number) }
+                        }}
+                      </span>
+                      @if (locatesPercent() !== null) {
+                        <span class="muted" [class.warn]="breach(locatesPercent())">
+                          · {{ locatesPercent()! | number: '1.2-2' }} %
                         </span>
-                        @if (locatesPercent() !== null) {
-                          <span class="muted" [class.warn]="breach(locatesPercent())">
-                            · {{ locatesPercent()! | number: '1.2-2' }} %
-                          </span>
-                        }
                       }
                     }
-                  </span>
-                  <button
-                    mat-icon-button
-                    type="button"
-                    stbSize="sm"
-                    (click)="editLocates()"
-                    [matTooltip]="'journal.detail.context.editLocates' | translate"
-                    [attr.aria-label]="'journal.detail.context.editLocates' | translate"
-                  >
-                    <mat-icon>key</mat-icon>
-                  </button>
-                }
-              </dd>
+                  }
+                </span>
+                <button
+                  mat-icon-button
+                  type="button"
+                  stbSize="sm"
+                  (click)="editLocates()"
+                  [matTooltip]="'journal.detail.context.editLocates' | translate"
+                  [attr.aria-label]="'journal.detail.context.editLocates' | translate"
+                >
+                  <mat-icon>key</mat-icon>
+                </button>
+              }
+            </dd>
+            @if (context(); as ctx) {
               <dt>{{ 'stats.fields.openPrice' | translate }}</dt>
               <dd>
                 {{
@@ -531,10 +545,8 @@
                 <dt>{{ 'stats.fields.note' | translate }}</dt>
                 <dd>{{ ctx.stat.note }}</dd>
               }
-            </dl>
-          } @else {
-            <p class="muted">{{ 'journal.detail.context.unavailable' | translate }}</p>
-          }
+            }
+          </dl>
         </div>
       </div>
 

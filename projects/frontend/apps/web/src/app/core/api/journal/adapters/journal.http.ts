@@ -8,6 +8,7 @@ import {
   ExecutionKind,
   JournalDay,
   JournalSummary,
+  NewTradeInput,
   TradeDirection,
   TradeEntry,
   TradeEntryFilter,
@@ -44,7 +45,7 @@ interface ExecutionWireRequest {
  */
 export interface TradeEntryWireDto {
   id: string;
-  statEntryId: string;
+  statEntryId: string | null;
   tradeDate: string;
   ticker: string;
   pattern: Pattern;
@@ -67,7 +68,7 @@ export interface TradeEntryWireDto {
 }
 
 interface TradeEntryWireRequest {
-  statEntryId: string;
+  statEntryId: string | null;
   tradeDate: string;
   ticker: string;
   pattern: Pattern | null;
@@ -280,7 +281,21 @@ export class HttpJournalRepository extends JournalRepository {
     });
   }
 
-  // No create : a trade is born from a stat, through `StatsRepository.promoteToTrade` (#193).
+  create(input: NewTradeInput): Observable<TradeEntry> {
+    return this.http
+      .post<TradeEntryWireDto>(
+        this.base,
+        toWire({
+          ...input,
+          statEntryId: null,
+          executions: [],
+          realProfitDollars: null,
+          note: null,
+          errorNote: null,
+        }),
+      )
+      .pipe(map(tradeEntryFromWire));
+  }
 
   update(id: string, input: TradeEntryInput): Observable<TradeEntry> {
     return this.http

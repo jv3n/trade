@@ -5,6 +5,12 @@
         <h2>{{ 'journal.title' | translate }}</h2>
         <p>{{ 'journal.subtitle' | translate }}</p>
       </div>
+      <div class="header-actions">
+        <button mat-flat-button type="button" (click)="openNewTrade()">
+          <mat-icon>add</mat-icon>
+          <span>{{ 'journal.actions.newTrade' | translate }}</span>
+        </button>
+      </div>
     </div>
   </header>
 

@@ -62,8 +62,8 @@ export interface TradeEntryFilter {
  * One trade (a *position*) in the journal. Dates / instants are native `Date` — adapters parse from
  * wire.
  *
- * A trade is born from a stat : `statEntryId` is mandatory, and `tradeDate` / `ticker` / `pattern`
- * are inherited from that stat (read-only on the trade page). The position itself is built from
+ * A trade usually comes from a stat, whose `tradeDate` / `ticker` / `pattern` it inherits (read-only
+ * on the trade page) ; created on its own (#634), it has a null `statEntryId` and no day context. The position itself is built from
  * `direction` + `executions` ; the flat `size` / `openPrice` / `exitPrice` / `profitDollars` /
  * `gainPercent` are **derived aggregates** (read-only — recomputed server-side from the
  * executions), and `durationMinutes` is derived from the fill times.
@@ -74,7 +74,7 @@ export interface TradeEntryFilter {
  */
 export interface TradeEntry {
   id: string;
-  statEntryId: string;
+  statEntryId: string | null;
   tradeDate: Date;
   ticker: string;
   pattern: Pattern;
@@ -144,13 +144,13 @@ export interface JournalSummary {
 }
 
 /**
- * Input shape — what callers (forms, business code) hand to the repository for create / update.
- * Carries the stat-borne identity, `direction` + `executions` and the real P&L ; the computed
- * aggregates are **not** sent (the backend derives them). Dates stay as native `Date` — the adapter
- * serialises to wire format.
+ * Input shape — what the trade page hands to the repository on update. Carries the identity,
+ * `direction` + `executions` and the real P&L ; the computed aggregates are **not** sent (the
+ * backend derives them), and the backend ignores `statEntryId` — no update links or unlinks a stat.
+ * Dates stay as native `Date` — the adapter serialises to wire format.
  */
 export interface TradeEntryInput {
-  statEntryId: string;
+  statEntryId: string | null;
   tradeDate: Date;
   ticker: string;
   pattern: Pattern | null;
@@ -159,4 +159,12 @@ export interface TradeEntryInput {
   realProfitDollars: number | null;
   note: string | null;
   errorNote: string | null;
+}
+
+/** A trade created on its own from the journal (#634) — never linked to a stat, no fill yet. */
+export interface NewTradeInput {
+  tradeDate: Date;
+  ticker: string;
+  pattern: Pattern;
+  direction: TradeDirection;
 }

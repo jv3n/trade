@@ -5,11 +5,12 @@ import { provideTranslateService } from '@ngx-translate/core';
 import { Observable, of, Subject, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 
-import { provideNativeDateAdapter, StbToast } from '@portfolioai/ui';
+import { MatDialog, provideNativeDateAdapter, StbToast } from '@portfolioai/ui';
 import { JournalRepository, PagedResult } from '../../core/api/journal/journal.repository';
 import {
   JournalDay,
   JournalSummary,
+  NewTradeInput,
   TradeEntry,
   TradeEntryFilter,
 } from '../../core/api/journal/trade-entry.model';
@@ -36,8 +37,10 @@ import { JournalPage } from './journal-page';
  *    on click and rewind to page 0, the two summaries follow the same period as the listing, and a
  *    failing summary never takes the table down with it.
  *
- * Creation and edition are not journal-page concerns : a trade is born on the stats sheet (#193)
- * and is edited on its own page (#194). What is left here is the listing, the filters and delete.
+ *  - **A trade on its own** (#634) — « + Trade » saves what its dialog closes with and opens the
+ *    new trade's sheet ; a dismissed dialog saves nothing.
+ *
+ * Edition is not a journal-page concern : a trade is edited on its own page (#194).
  */
 describe('JournalPage', () => {
   let nextPage: PagedResult<JournalDay>;
@@ -49,6 +52,8 @@ describe('JournalPage', () => {
   let toastShown: Mock<(variant: 'success' | 'error', message: string) => void>;
   let summary: ReturnType<typeof vi.fn>;
   let statSummary: ReturnType<typeof vi.fn>;
+  let create: ReturnType<typeof vi.fn>;
+  let dialogOpen: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
     nextPage = makePage([], 0);
@@ -59,6 +64,8 @@ describe('JournalPage', () => {
     toastShown = vi.fn();
     summary = vi.fn((_filter?: TradeEntryFilter) => of(makeSummary()));
     statSummary = vi.fn(() => of(makeStatSummary()));
+    create = vi.fn((input: NewTradeInput) => of(makeTrade({ id: 'new-1', ticker: input.ticker })));
+    dialogOpen = vi.fn();
 
     await TestBed.configureTestingModule({
       imports: [JournalPage],
@@ -77,7 +84,7 @@ describe('JournalPage', () => {
             findDays,
             summary,
             findById: () => of({} as unknown),
-            create: () => of({} as unknown),
+            create,
             update: () => of({} as unknown),
             delete: () => deleteSubject.asObservable(),
             exportCsv: () => of(new Blob()),
@@ -98,6 +105,7 @@ describe('JournalPage', () => {
           provide: ConfirmService,
           useValue: { ask: (key: string, options?: unknown) => ask(key, options) },
         },
+        { provide: MatDialog, useValue: { open: dialogOpen } },
       ],
     }).compileComponents();
   });
@@ -386,6 +394,55 @@ describe('JournalPage', () => {
 
     expect(deleteSpy).not.toHaveBeenCalled();
     expect(toastShown).not.toHaveBeenCalled();
+  });
+
+  // ---------------------------------------------------------------------------
+  // « + Trade » — a trade on its own (#634)
+  // ---------------------------------------------------------------------------
+
+  it('saves the trade typed in the « new trade » dialog, then opens its sheet', () => {
+    const input: NewTradeInput = {
+      tradeDate: new Date(2026, 5, 12),
+      ticker: 'SGBX',
+      pattern: 'GUS',
+      direction: 'SHORT',
+    };
+    dialogOpen.mockReturnValue({ afterClosed: () => of(input) });
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    const fixture = TestBed.createComponent(JournalPage);
+    fixture.detectChanges();
+
+    fixture.componentInstance.openNewTrade();
+
+    expect(create).toHaveBeenCalledWith(input);
+    expect(toastShown).toHaveBeenCalledWith('success', 'journal.snackbar.createSuccess');
+    expect(navigate).toHaveBeenCalledWith(['/journal', 'new-1']);
+  });
+
+  it('saves nothing when the dialog is dismissed', () => {
+    dialogOpen.mockReturnValue({ afterClosed: () => of(undefined) });
+    const fixture = TestBed.createComponent(JournalPage);
+    fixture.detectChanges();
+
+    fixture.componentInstance.openNewTrade();
+
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it('says so when the trade cannot be saved, and stays on the journal', () => {
+    dialogOpen.mockReturnValue({
+      afterClosed: () =>
+        of({ tradeDate: new Date(), ticker: 'SGBX', pattern: 'GUS', direction: 'SHORT' }),
+    });
+    create.mockReturnValue(throwError(() => new Error('400')));
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate');
+    const fixture = TestBed.createComponent(JournalPage);
+    fixture.detectChanges();
+
+    fixture.componentInstance.openNewTrade();
+
+    expect(toastShown).toHaveBeenCalledWith('error', 'journal.snackbar.createError');
+    expect(navigate).not.toHaveBeenCalled();
   });
 });
 
