@@ -477,6 +477,11 @@
       "message": "Définitif : les exécutions, le post-mortem et la capture sont supprimés, et le mouvement du trade disparaît du compte. La stat du jour est conservée.",
       "confirm": "Supprimer le trade"
     },
+    "confirmDeleteAlone": {
+      "title": "Supprimer le trade {{ticker}} ?",
+      "message": "Définitif : les exécutions, le post-mortem et la capture sont supprimés, et le mouvement du trade disparaît du compte.",
+      "confirm": "Supprimer le trade"
+    },
     "errors": {
       "load": "Impossible de charger le journal. Réessaye.",
       "save": "Impossible d'enregistrer le trade. Réessaye.",
@@ -630,7 +635,7 @@
     },
     "confirmDeleteOne": {
       "title": "Supprimer ce trade {{ticker}} ?",
-      "message": "Définitif : ses exécutions, son post-mortem et sa capture sont supprimés, et son mouvement disparaît du compte — le solde ne bouge que de ce trade. Les autres trades {{ticker}} du jour ({{others}}), leurs lignes au compte et la stat sont conservés.",
+      "message": "Définitif : ses exécutions, son post-mortem et sa capture sont supprimés, et son mouvement disparaît du compte — le solde ne bouge que de ce trade. Les autres trades {{ticker}} du jour ({{others}}) et leurs lignes au compte sont conservés.",
       "confirm": "Supprimer le trade"
     },
     "duration": {

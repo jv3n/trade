@@ -444,7 +444,12 @@ export class JournalPage {
     // Decided BEFORE the request : deleting the last trade of the **last row** of a non-zero page
     // should backstep one page afterwards.
     let willEmptyPage = false;
-    const key = day.tradeCount > 1 ? 'journal.confirmDeleteOne' : 'journal.confirmDelete';
+    const key =
+      day.tradeCount > 1
+        ? 'journal.confirmDeleteOne'
+        : entry.statEntryId
+          ? 'journal.confirmDelete'
+          : 'journal.confirmDeleteAlone';
 
     this.confirm
       .ask(key, {

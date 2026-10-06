@@ -612,9 +612,15 @@ export class JournalDetailPage implements HasUnsavedChanges {
   delete(): void {
     const entry = this.entry();
     if (!entry) return;
+    // A trade on its own has no stat to keep — the confirmation must not promise one (#642).
+    const key = !entry.statEntryId
+      ? 'journal.confirmDeleteAlone'
+      : this.statTrades().length > 1
+        ? 'journal.confirmDeleteOne'
+        : 'journal.confirmDelete';
     this.confirm
-      .ask(this.statTrades().length > 1 ? 'journal.confirmDeleteOne' : 'journal.confirmDelete', {
-        params: { ticker: entry.ticker, others: this.statTrades().length - 1 },
+      .ask(key, {
+        params: { ticker: entry.ticker, others: Math.max(this.statTrades().length - 1, 0) },
         variant: 'danger',
       })
       .pipe(

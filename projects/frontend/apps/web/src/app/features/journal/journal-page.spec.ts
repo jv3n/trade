@@ -256,6 +256,20 @@ describe('JournalPage', () => {
     });
   });
 
+  // #642 : « La stat du jour est conservée » on a trade that never had one.
+  it('deleting a trade on its own promises no stat', () => {
+    const alone = makeTrade({ id: 't1', statEntryId: null });
+    const fixture = TestBed.createComponent(JournalPage);
+    fixture.detectChanges();
+
+    fixture.componentInstance.delete(alone, makeDay([alone]));
+
+    expect(ask).toHaveBeenCalledWith('journal.confirmDeleteAlone', {
+      params: { ticker: 'BAC', others: 0 },
+      variant: 'danger',
+    });
+  });
+
   it('a row whose sums leave trades out says how many, and a complete row says nothing', () => {
     // ZEO-like day (#515) : one trade still open, one with no fill times — the sums stay.
     const partial = makeDay([

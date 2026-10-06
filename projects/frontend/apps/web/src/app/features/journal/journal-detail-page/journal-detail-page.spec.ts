@@ -260,6 +260,21 @@ describe('JournalDetailPage', () => {
       expect(input.statEntryId).toBeNull();
       expect(statFindById).not.toHaveBeenCalled();
     });
+
+    // #642 : « La stat du jour est conservée » under a header that says « sans stat ».
+    it('asks to delete it without promising a stat', () => {
+      findById = vi.fn(() => of(alone()));
+      const fixture = setup();
+      fixture.detectChanges();
+      const ask = vi.spyOn(TestBed.inject(ConfirmService), 'ask');
+
+      fixture.componentInstance.delete();
+
+      expect(ask).toHaveBeenCalledWith('journal.confirmDeleteAlone', {
+        params: { ticker: 'KTTA', others: 0 },
+        variant: 'danger',
+      });
+    });
   });
 
   // #320 : « Position closed · computed P&L — » stood under the empty message of a new trade.
