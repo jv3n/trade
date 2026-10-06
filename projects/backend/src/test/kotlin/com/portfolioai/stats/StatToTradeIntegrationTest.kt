@@ -36,8 +36,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.web.server.ResponseStatusException
 
 /**
- * Pins the stat → trade flow (#193) : the « → Trade » action of the stats sheet, which is the only
- * way a trade comes into existence.
+ * Pins the stat → trade flow (#193) : the « → Trade » action of the stats sheet, the way a studied
+ * trade comes into existence — a trade can also stand alone (#633).
  *
  * What is protected here :
  *
@@ -48,8 +48,8 @@ import org.springframework.web.server.ResponseStatusException
  * - the stats listing carries the links back (one per trade, in the day's order, with direction and
  *   retained P&L) so the UI can swap the button for them, and they survive an edit of the stat ;
  *   the « traded » KPI still counts stats, not trades ;
- * - a stat that still carries **any** trade **can't be deleted** — 409 rather than the 500 the ON
- *   DELETE RESTRICT would otherwise produce ;
+ * - deleting a stat **keeps its trades** (#635) : unlinked, with their executions, P&L, pattern and
+ *   account line — the only way the stats invented for an import go away without the trades ;
  * - a stat **re-filed under another pattern** takes its trade along (#393).
  *
  * `AuthService` is mocked so the user scope is deterministic ; a second user is seeded to check the
@@ -259,31 +259,44 @@ class StatToTradeIntegrationTest {
   }
 
   @Test
-  fun `deleting a stat that has a trade is a 409 — the trade goes first`() {
-    statService.promoteToTrade(stat.id)
+  fun `deleting a stat keeps its trades, unlinked — fills, P&L, pattern and account line kept`() {
+    // The import of #628 : a stat invented to hold a real trade goes, the trade stays.
+    val short = statService.promoteToTrade(stat.id)
+    fill(short.id, TradeDirection.SHORT, 350, "4.50", "3.66", LocalTime.of(9, 41))
+    val long = statService.promoteToTrade(stat.id)
+    // Re-filed after the fills (#393) — `fill` sends GUS, so the trades only take SIR from the
+    // stat.
+    statService.update(stat.id, completionRequest().copy(pattern = Pattern.SIR))
 
-    val ex = assertThrows(ResponseStatusException::class.java) { statService.delete(stat.id) }
+    statService.delete(stat.id)
 
-    assertEquals(409, ex.statusCode.value())
-    assertNotNull(statRepo.findByIdAndUserId(stat.id, testUser.id), "the stat is still there")
+    assertNull(statRepo.findByIdAndUserId(stat.id, testUser.id), "the stat is gone")
+    val kept = tradeService.findById(short.id)
+    assertNull(kept.statEntryId)
+    assertEquals(Pattern.SIR, kept.pattern, "the trade keeps the pattern it was filed under")
+    assertEquals(2, kept.executions.size, "one entry and one exit, as typed")
+    assertEquals(0, kept.retainedProfitDollars!!.compareTo(BigDecimal("294.00")))
+    assertNull(tradeService.findById(long.id).statEntryId, "every trade of the stat, not only one")
+    assertEquals(
+      0,
+      movementRepo.findByTradeEntryId(short.id)!!.amount.compareTo(BigDecimal("294.00")),
+      "the account line stays : the balance does not move",
+    )
   }
 
   @Test
-  fun `deleting a stat stays a 409 while any of its trades is left`() {
-    val first = statService.promoteToTrade(stat.id)
+  fun `deleting a stat leaves the trades of another stat linked`() {
+    val other = statRepo.save(sampleStat(user = testUser, ticker = "BNZI"))
+    val otherTrade = statService.promoteToTrade(other.id)
     statService.promoteToTrade(stat.id)
-    tradeService.delete(first.id)
 
-    val ex = assertThrows(ResponseStatusException::class.java) { statService.delete(stat.id) }
+    statService.delete(stat.id)
 
-    assertEquals(409, ex.statusCode.value())
+    assertEquals(other.id, tradeService.findById(otherTrade.id).statEntryId)
   }
 
   @Test
-  fun `deleting all its trades frees the stat — it can be deleted`() {
-    val trade = statService.promoteToTrade(stat.id)
-    tradeService.delete(trade.id)
-
+  fun `a stat without a trade is deleted as before`() {
     statService.delete(stat.id)
 
     assertNull(statRepo.findByIdAndUserId(stat.id, testUser.id))

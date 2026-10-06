@@ -296,20 +296,15 @@ class StatEntryService(
   }
 
   /**
-   * Deletes a stat. A stat that still carries **any** trade is a **409** : the FK is ON DELETE
-   * RESTRICT (#192), so letting it reach the DB would surface as a 500 — and deleting the trades
-   * silently would throw away the P&L the account is built on. The trades go first, from the
-   * journal.
+   * Deletes a stat, **keeping its trades** (#635) : the journal unlinks them first, through
+   * [StatDeletedEvent], and they stay with their P&L and account line — trades on their own.
+   * Deleting them would throw away the P&L the account is built on ; it is how the stats invented
+   * for an import go away.
    */
   @Transactional
   fun delete(id: UUID) {
     val entry = loadOwned(id)
-    if (tradeEntryService.tradeLinksByStat(listOf(entry.id)).isNotEmpty()) {
-      throw ResponseStatusException(
-        HttpStatus.CONFLICT,
-        "Stat ${entry.ticker} has a trade in the journal — delete the trade first",
-      )
-    }
+    events.publishEvent(StatDeletedEvent(entry.id, entry.user.id))
     repo.delete(entry)
   }
 

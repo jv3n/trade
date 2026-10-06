@@ -782,8 +782,18 @@
     },
     "confirmDelete": {
       "title": "Delete the {{ticker}} stat?",
-      "message": "The stat is permanently deleted. A trade created from it must be deleted first.",
+      "message": "The stat is permanently deleted.",
       "confirm": "Delete"
+    },
+    "confirmDeleteWithTrade": {
+      "title": "Delete the {{ticker}} stat?",
+      "message": "Permanent. A trade is attached to it : it stays in the journal, without a stat — executions, P&L, post-mortem and account line kept, pattern unchanged. Its sheet will have no day context any more.",
+      "confirm": "Delete the stat"
+    },
+    "confirmDeleteWithTrades": {
+      "title": "Delete the {{ticker}} stat?",
+      "message": "Permanent. {{count}} trades are attached to it : they stay in the journal, without a stat — executions, P&L, post-mortem and account lines kept, pattern unchanged. Their sheets will have no day context any more.",
+      "confirm": "Delete the stat"
     },
     "snackbar": {
       "deleteSuccess": "Stat {{ticker}} deleted.",

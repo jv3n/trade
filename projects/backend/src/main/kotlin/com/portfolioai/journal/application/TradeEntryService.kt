@@ -139,8 +139,7 @@ class TradeEntryService(
    * The caller's trades born from these stats, keyed by stat id, each stat's in the day's order —
    * several per stat since #500 ; a stat without a trade has no key. Read exposed to the `stats`
    * context through this application service, the way cross-context reads are done here : the stats
-   * listing shows a link per trade, counts the traded stats, and refuses to delete a stat while any
-   * of its trades exists.
+   * listing shows a link per trade and counts the traded stats.
    */
   @Transactional(readOnly = true)
   fun tradeLinksByStat(statEntryIds: Collection<UUID>): Map<UUID, List<TradeLinkDto>> {
@@ -175,6 +174,22 @@ class TradeEntryService(
       it.pattern = pattern
       it.updatedAt = Instant.now()
     }
+  }
+
+  /**
+   * Unlinks the trades born from [statEntryId] (#635) — the stat is being deleted, its trades stay
+   * as trades on their own : executions, P&L, pattern and account line untouched. No trade is a
+   * no-op. Driven by `StatDeletedEvent`.
+   */
+  @Transactional
+  fun detachFromStat(statEntryId: UUID, userId: UUID) {
+    repo.findByUserIdAndStatEntryIdIn(userId, listOf(statEntryId)).forEach {
+      it.statEntryId = null
+      it.updatedAt = Instant.now()
+    }
+    // The stat's delete follows in the same transaction : the ON DELETE RESTRICT FK must already
+    // see the trades unlinked, whatever the flush order.
+    repo.flush()
   }
 
   /**
