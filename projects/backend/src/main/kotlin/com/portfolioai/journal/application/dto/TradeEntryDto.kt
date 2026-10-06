@@ -24,7 +24,7 @@ import java.util.UUID
  */
 data class TradeEntryDto(
   val id: UUID,
-  val statEntryId: UUID,
+  val statEntryId: UUID?,
   val tradeDate: LocalDate,
   val ticker: String,
   val pattern: Pattern,

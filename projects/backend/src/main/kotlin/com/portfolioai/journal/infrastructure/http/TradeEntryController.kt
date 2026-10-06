@@ -159,8 +159,14 @@ class TradeEntryController(
       .body(csv)
   }
 
-  // No CSV import (#196) and no create endpoint (#193) : a trade is born from a stat, through
-  // `POST /api/stats/{id}/trade`, and everything else is typed on its page.
+  /**
+   * A trade on its own (#633), never linked to a stat — the promotion from a stat stays `POST
+   * /api/stats/{id}/trade`. No CSV import (#196).
+   */
+  @PostMapping
+  @ResponseStatus(HttpStatus.CREATED)
+  fun create(@RequestBody request: TradeEntryRequest): TradeEntryDto =
+    service.createStandalone(request)
 
   @PutMapping("/{id}")
   fun update(@PathVariable id: UUID, @RequestBody request: TradeEntryRequest): TradeEntryDto =
