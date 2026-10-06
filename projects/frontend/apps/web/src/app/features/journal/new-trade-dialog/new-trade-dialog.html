@@ -1,0 +1,62 @@
+<h2 mat-dialog-title>{{ 'journal.newTrade.title' | translate }}</h2>
+
+<form (submit)="$event.preventDefault(); submit()">
+  <mat-dialog-content>
+    <p class="lead">{{ 'journal.newTrade.lead' | translate }}</p>
+
+    <div class="trade-grid">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" (click)="picker.open()">
+        <mat-label>{{ 'journal.newTrade.date' | translate }}</mat-label>
+        <input
+          matInput
+          readonly
+          [matDatepicker]="picker"
+          [max]="today"
+          [value]="tradeDate()"
+          (dateChange)="setDate($event.value)"
+        />
+        <mat-datepicker-toggle matIconSuffix [for]="picker" />
+        <mat-datepicker #picker />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'journal.newTrade.ticker' | translate }}</mat-label>
+        <input
+          matInput
+          class="mono"
+          autocomplete="off"
+          placeholder="ATXG"
+          [formField]="textForm.ticker"
+        />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'journal.newTrade.pattern' | translate }}</mat-label>
+        <mat-select [value]="pattern()" (selectionChange)="pattern.set($event.value)">
+          @for (p of patterns; track p) {
+            <mat-option [value]="p">{{ 'patterns.short.' + p | translate }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'journal.newTrade.direction' | translate }}</mat-label>
+        <mat-select [value]="direction()" (selectionChange)="direction.set($event.value)">
+          @for (d of directions; track d) {
+            <mat-option [value]="d">{{ 'journal.enums.direction.' + d | translate }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-stroked-button type="button" (click)="cancel()">
+      {{ 'common.cancel' | translate }}
+    </button>
+    <button mat-flat-button type="submit" [disabled]="!canSave()">
+      <mat-icon>add</mat-icon>
+      <span>{{ 'journal.newTrade.create' | translate }}</span>
+    </button>
+  </mat-dialog-actions>
+</form>

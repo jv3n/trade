@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { TradeEntryInput } from '../trade-entry.model';
+import { TradeEntry, TradeEntryInput } from '../trade-entry.model';
 import { HttpJournalRepository } from './journal.http';
 
 /**
@@ -239,8 +239,33 @@ describe('HttpJournalRepository', () => {
   });
 
   // ---------------------------------------------------------------------------
-  // update — domain → wire mapping. There is no create : a trade is born from a stat (#193).
+  // create (#634) and update — domain → wire mapping
   // ---------------------------------------------------------------------------
+
+  it('create POSTs a trade with no stat and no fill, its identity normalised', () => {
+    let created: TradeEntry | undefined;
+    repo
+      .create({
+        tradeDate: new Date(2026, 5, 12),
+        ticker: ' sgbx ',
+        pattern: 'DISCRETIONARY',
+        direction: 'SHORT',
+      })
+      .subscribe((t) => (created = t));
+    const req = http.expectOne('/api/journal/trades');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toMatchObject({
+      statEntryId: null,
+      tradeDate: '2026-06-12',
+      ticker: 'SGBX',
+      pattern: 'DISCRETIONARY',
+      direction: 'SHORT',
+      executions: [],
+      realProfitDollars: null,
+    });
+    req.flush(wireFixture({ statEntryId: null }));
+    expect(created?.statEntryId).toBeNull();
+  });
 
   it('update PUTs with uppercased trimmed ticker and yyyy-MM-dd date', () => {
     repo

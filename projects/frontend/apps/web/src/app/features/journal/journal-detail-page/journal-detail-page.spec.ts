@@ -30,6 +30,8 @@ import { JournalDetailPage } from './journal-detail-page';
  * - **Delete (confirmed)** navigates back to the journal.
  * - **The day's locates (#609)** on the trade's ticker sit in the day context, summed to the cent ;
  *   the key opens them to top up or fix (#625), a top-up starting from the last price paid.
+ * - **A trade on its own (#634)** has no stat : nothing is asked of the stats, the header and the
+ *   context card say so, and the locates, the fills and the direction chosen at creation still work.
  */
 describe('JournalDetailPage', () => {
   let findById: ReturnType<typeof vi.fn>;
@@ -186,6 +188,78 @@ describe('JournalDetailPage', () => {
 
     expect(fixture.componentInstance.context()).toBeNull();
     expect(fixture.componentInstance.entry()).not.toBeNull();
+  });
+
+  describe('a trade on its own (#634)', () => {
+    const alone = () => makeTrade({ statEntryId: null, direction: 'BUY', executions: [] });
+
+    it('asks no stat, and says so in the header and the day context', () => {
+      findById = vi.fn(() => of(alone()));
+      const fixture = setup();
+      fixture.detectChanges();
+      const el: HTMLElement = fixture.nativeElement;
+
+      expect(statFindById).not.toHaveBeenCalled();
+      expect(el.querySelector('[data-testid="no-stat"]')).not.toBeNull();
+      expect(el.querySelector('[data-testid="context-no-stat"]')).not.toBeNull();
+      expect(el.textContent).not.toContain('journal.detail.context.unavailable');
+      expect(el.querySelector('a[href="/stats"]')).toBeNull();
+    });
+
+    it('keeps its locates, weighed against the price of its first entry', () => {
+      findById = vi.fn(() =>
+        of(
+          makeTrade({
+            statEntryId: null,
+            executions: [
+              { seq: 0, kind: 'ENTRY', shares: 1000, price: 2.5, executedAt: '09:41' },
+              { seq: 1, kind: 'ENTRY', shares: 500, price: 2.7, executedAt: '09:52' },
+            ],
+          }),
+        ),
+      );
+      listLocates.mockReturnValue(of([makeLocate()]));
+      const fixture = setup();
+      fixture.detectChanges();
+
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="day-locates"]').textContent,
+      ).toContain('80.00');
+      fixture.componentInstance.editLocates();
+      expect(dialogOpen).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ data: expect.objectContaining({ stockPrice: 2.5 }) }),
+      );
+    });
+
+    it('has no share price to offer before any fill', () => {
+      findById = vi.fn(() => of(alone()));
+      const fixture = setup();
+      fixture.detectChanges();
+
+      fixture.componentInstance.editLocates();
+
+      expect(dialogOpen).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ data: expect.objectContaining({ stockPrice: null }) }),
+      );
+    });
+
+    // A long typed at creation must not fall back to a short on the first save before any fill.
+    it('keeps the direction chosen at creation through a save before any fill', () => {
+      findById = vi.fn(() => of(alone()));
+      update = vi.fn((_id: string, _input: TradeEntryInput) => of(alone()));
+      const fixture = setup();
+      fixture.detectChanges();
+
+      fixture.componentInstance.setNote('Bounce off the LOD, typed from the statement.');
+      fixture.componentInstance.save();
+
+      const [, input] = update.mock.calls[0] as [string, TradeEntryInput];
+      expect(input.direction).toBe('BUY');
+      expect(input.statEntryId).toBeNull();
+      expect(statFindById).not.toHaveBeenCalled();
+    });
   });
 
   // #320 : « Position closed · computed P&L — » stood under the empty message of a new trade.

@@ -19,6 +19,7 @@ import {
 } from 'rxjs';
 
 import {
+  MatDialog,
   PageEvent,
   Sort,
   StbButtonModule,
@@ -40,6 +41,7 @@ import { JournalRepository, PageRequest } from '../../core/api/journal/journal.r
 import {
   JournalDay,
   JournalSummary,
+  NewTradeInput,
   TradeEntry,
   TradeEntryFilter,
   TradeStatus,
@@ -61,6 +63,7 @@ import {
   toSkeletonColumns,
   type SkeletonColumnDefs,
 } from '../../shared/skeleton-columns/skeleton-columns';
+import { NewTradeDialog } from './new-trade-dialog/new-trade-dialog';
 
 /**
  * Sort state for the journal table — same shape as ic3's `IcSortRequest` :
@@ -143,9 +146,10 @@ const SKELETON_COLUMNS: SkeletonColumnDefs = {
  *     search / sort changes reset the index to 0.
  *   - **Open / delete** : a single-trade row opens the trade page, where everything is edited in
  *     place (#194) ; a row of several opens onto its trades, each opening its page. Delete is per
- *     trade, through the confirmation modal (`ConfirmService`). There is no « add » here since
- *     #193 — a trade is born from a stat, on the stats sheet. A delete refetches the current page
+ *     trade, through the confirmation modal (`ConfirmService`). A delete refetches the current page
  *     rather than splicing locally.
+ *   - **« + Trade »** (#634) : a trade on its own, with no stat behind it — the « Nouveau trade »
+ *     dialog is the confirmation, and the new trade opens on its sheet.
  *
  * One effect watches (`searchTerm`, `appliedFilter`, `sort`, `pageIndex`, `pageSize`) and
  * refetches when any of them changes.
@@ -184,6 +188,7 @@ export class JournalPage {
   private readonly translate = inject(TranslateService);
   private readonly toasts = inject(StbToast);
   private readonly router = inject(Router);
+  private readonly dialog = inject(MatDialog);
 
   // ---- Data state ----
   readonly loading = signal(true);
@@ -344,9 +349,38 @@ export class JournalPage {
   }
 
   // ---- CRUD ----
-  // No create here (#193) : a trade is born from a stat, through the « → Trade » action of the
-  // stats sheet. No edit either (#194) : the trade page owns the edition. The journal only opens
-  // and deletes.
+  // No edit here (#194) : the trade page owns the edition.
+
+  /** « + Trade » : a trade on its own (#634) — a trade studied first is born from its stat. */
+  openNewTrade(): void {
+    this.dialog
+      .open<NewTradeDialog, void, NewTradeInput | undefined>(NewTradeDialog, {
+        width: '480px',
+        maxWidth: '95vw',
+        autoFocus: 'first-tabbable',
+      })
+      .afterClosed()
+      .pipe(
+        filter((input): input is NewTradeInput => !!input),
+        switchMap((input) =>
+          this.repo.create(input).pipe(
+            tap((created) => {
+              this.toasts.success(
+                this.translate.instant('journal.snackbar.createSuccess', {
+                  ticker: created.ticker,
+                }),
+              );
+              this.openDetail(created);
+            }),
+            catchError(() => {
+              this.toasts.error(this.translate.instant('journal.snackbar.createError'));
+              return EMPTY;
+            }),
+          ),
+        ),
+      )
+      .subscribe();
+  }
 
   /**
    * Row click : a single-trade row goes straight to its sheet — the common case stays one click ; a

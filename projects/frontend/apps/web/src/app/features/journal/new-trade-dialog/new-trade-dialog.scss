@@ -1,0 +1,17 @@
+@use 'sizes' as s;
+
+.lead {
+  margin: 0 0 s.$space-md;
+  color: var(--color-text-muted);
+}
+
+.trade-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: s.$space-md;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+}

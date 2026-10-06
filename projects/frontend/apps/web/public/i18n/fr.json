@@ -443,7 +443,7 @@
   },
   "journal": {
     "title": "Journal de trading",
-    "subtitle": "Une ligne par ticker et par jour, ses trades à l'ouverture. Un trade se crée depuis une stat.",
+    "subtitle": "Une ligne par ticker et par jour, ses trades à l'ouverture. Un trade naît en général d'une stat, et peut exister seul.",
     "kpi": {
       "pnl": "P&L de la période",
       "trades": "{{count}} trades clôturés",
@@ -532,7 +532,17 @@
     },
     "actions": {
       "edit": "Modifier",
-      "delete": "Supprimer"
+      "delete": "Supprimer",
+      "newTrade": "Trade"
+    },
+    "newTrade": {
+      "title": "Nouveau trade",
+      "lead": "Sans stat : pour un trade que la feuille n'a pas étudié — un import, une séance saisie après coup. Il compte au journal et au compte, pas dans les stats. Un trade étudié se crée depuis sa stat (« → Trade »).",
+      "date": "Date",
+      "ticker": "Ticker",
+      "pattern": "Pattern",
+      "direction": "Sens",
+      "create": "Créer le trade"
     },
     "detail": {
       "back": "Retour au journal",
@@ -540,6 +550,7 @@
       "loadError": "Impossible de charger le trade. Réessaie.",
       "fromStat": "créé depuis la",
       "statOf": "stat du {{date}}",
+      "noStat": "sans stat",
       "unsaved": "Modifications non enregistrées",
       "save": "Enregistrer",
       "cancel": "Annuler",
@@ -585,7 +596,8 @@
         "dayLocates": "Locates du jour",
         "locatesUnavailable": "Indisponibles",
         "editLocates": "Compléter ou corriger les locates du jour",
-        "unavailable": "Contexte du jour indisponible."
+        "unavailable": "Contexte du jour indisponible.",
+        "noStat": "Pas de stat pour ce trade : le contexte du jour (gap, push, open, HOD, LOD) vient d'une stat, et celui-ci n'en a pas."
       },
       "screenshot": {
         "title": "Capture d'écran",
@@ -1168,7 +1180,7 @@
     },
     "dataPage": {
       "title": "Données",
-      "description": "Télécharge le journal et la feuille de stats en CSV. Export uniquement : un trade naît d'une stat, une stat d'un candidat — rien n'entre par un fichier.",
+      "description": "Télécharge le journal et la feuille de stats en CSV. Export uniquement : un trade se saisit, depuis sa stat ou seul, une stat naît d'un candidat — rien n'entre par un fichier.",
       "button": "Exporter en CSV",
       "exporting": "Export en cours…",
       "journal": {
