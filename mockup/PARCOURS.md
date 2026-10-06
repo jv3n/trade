@@ -66,6 +66,10 @@ Candidate (morning) ──[ action : « → GUS » / « → DT » ]──▶ Sta
 - **Several trades per stat** (#500) : I take the same name more than once in a day, short or long,
   and **I say where a trade ends** — each one is created by hand (« + Trade »), with its own
   direction, executions, P&L, post-mortem, screenshot and account line.
+- **A trade usually comes from a stat, and can stand alone** (#628). A trade exists the moment
+  money moved at the broker ; the stat is how the setup was studied, and some trades have no study
+  — an import, a session typed after the fact, a trade taken on impulse. Forcing a stat on them
+  would invent measurements in the one place every statistic is computed from.
 
 ---
 
@@ -315,8 +319,15 @@ the journal). As a consequence : no real-time screen, no live position tracking.
 
 ## Step 4 — Stat → trade (journal) ✅
 
-- **Only through the « → Trade » action button** on a stat row. No blank trade can be created from
-  the journal.
+- **Usually through the « → Trade » action button** on a stat row.
+- **A trade without a stat** (#628) : « + Trade » on the journal, with a date, a ticker, a pattern
+  (GUS by default) and a direction ; it opens the new trade's sheet. It counts in the journal and the
+  account like any other, never in the stats sheet, and is never « out of pattern » — nothing was
+  measured. Its sheet keeps its executions, P&L, locates, post-mortem and screenshot ; only the
+  day's context (premarket, open, HOD, LOD) is missing, and the sheet says so.
+- **Deleting a stat keeps its trades** (#628) : the confirmation warns when a trade is attached, and
+  the trade stays in the journal without a stat — executions, P&L, account line and pattern
+  untouched. It is how the stats invented for an import go away without taking the trades along.
 - **Several trades per stat** (#500) : the button stays on the stat once it has a trade (« + Trade »)
   and creates the next one, empty — same date, ticker and pattern. Each trade has its **own
   direction** : one stat can hold a short and a long.
@@ -436,7 +447,7 @@ shared between users — a stat always belongs to its user.
 - The KPIs on top (completed, median push at the open, median LOD, fade, median hold) cover **the whole
   filter**, not the displayed page.
 - No CSV import : neither for the stats (a stat is born from a candidate, or typed by hand) nor for
-  the journal (a trade is born from a stat). Both keep a CSV **export** — premarket block, session block and flags
+  the journal (a trade is typed, from its stat or on its own). Both keep a CSV **export** — premarket block, session block and flags
   on the stats side (session prices empty for a stat still to complete) ; identity, position,
   executions and the three P&L figures on the journal side.
 - "Traded / not traded" filter : shipped with the link to the trade (#193).
@@ -858,7 +869,8 @@ Reachable from the bottom of the menu (under Lexicon). A secondary menu on the l
 ## Interface principles ✅
 
 - **Confirmation modal** for anything that creates or deletes : « → Stat », "promote them all",
-  « → Trade », deleting a candidate or a trade. The modal says what is about to happen (what is
+  « → Trade », « + Trade » on the journal (its dialog is the confirmation), deleting a candidate, a
+  stat or a trade. The modal says what is about to happen (what is
   carried over, what disappears — e.g. the account movement when a trade is deleted). Deletions get
   a red button. No modal for editing, and none for data entry.
 - **The morning entry** : validated as is (inline form + live gap / push preview).
