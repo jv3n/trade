@@ -1350,9 +1350,20 @@ export class StatsPage {
       .subscribe();
   }
 
+  /**
+   * A stat with trades is deleted too (#635) : its trades stay in the journal, unlinked — the
+   * confirmation says how many, since their sheet loses its day context.
+   */
   delete(entry: StatEntry): void {
+    const count = entry.trades.length;
+    const key =
+      count === 0
+        ? 'stats.confirmDelete'
+        : count === 1
+          ? 'stats.confirmDeleteWithTrade'
+          : 'stats.confirmDeleteWithTrades';
     this.confirm
-      .ask('stats.confirmDelete', { params: { ticker: entry.ticker }, variant: 'danger' })
+      .ask(key, { params: { ticker: entry.ticker, count }, variant: 'danger' })
       .pipe(
         filter(Boolean),
         switchMap(() => this.repo.delete(entry.id)),

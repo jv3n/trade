@@ -782,8 +782,18 @@
     },
     "confirmDelete": {
       "title": "Supprimer la stat {{ticker}} ?",
-      "message": "La stat est supprimée définitivement. Un trade créé à partir d'elle doit être supprimé avant.",
+      "message": "La stat est supprimée définitivement.",
       "confirm": "Supprimer"
+    },
+    "confirmDeleteWithTrade": {
+      "title": "Supprimer la stat {{ticker}} ?",
+      "message": "Définitif. Un trade y est rattaché : il reste au journal, sans stat — exécutions, P&L, post-mortem et ligne de compte conservés, pattern inchangé. Sa fiche n'aura plus de contexte du jour.",
+      "confirm": "Supprimer la stat"
+    },
+    "confirmDeleteWithTrades": {
+      "title": "Supprimer la stat {{ticker}} ?",
+      "message": "Définitif. {{count}} trades y sont rattachés : ils restent au journal, sans stat — exécutions, P&L, post-mortem et lignes de compte conservés, pattern inchangé. Leur fiche n'aura plus de contexte du jour.",
+      "confirm": "Supprimer la stat"
     },
     "snackbar": {
       "deleteSuccess": "Stat {{ticker}} supprimée.",

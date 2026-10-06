@@ -694,6 +694,38 @@ describe('StatsPage', () => {
     expect(repo.delete).toHaveBeenCalledWith('stat-ktta');
   });
 
+  it('asks the plain confirmation for a stat without a trade', () => {
+    const { page } = setup({ rows: [makeStat()] });
+    const ask = vi.spyOn(TestBed.inject(ConfirmService), 'ask');
+
+    page.delete(makeStat());
+
+    expect(ask).toHaveBeenCalledWith('stats.confirmDelete', {
+      params: { ticker: 'KTTA', count: 0 },
+      variant: 'danger',
+    });
+  });
+
+  // #635 : the trades stay, unlinked — the warning says so before the stat goes.
+  it('warns that the trades of a traded stat stay in the journal, without it', () => {
+    const traded = makeStat({
+      trades: [
+        { tradeId: 'trade-1', direction: 'SHORT', retainedProfitDollars: -339.1 },
+        { tradeId: 'trade-2', direction: 'SHORT', retainedProfitDollars: -444.2 },
+      ],
+    });
+    const { page, repo } = setup({ rows: [traded] });
+    const ask = vi.spyOn(TestBed.inject(ConfirmService), 'ask');
+
+    page.delete(traded);
+
+    expect(ask).toHaveBeenCalledWith('stats.confirmDeleteWithTrades', {
+      params: { ticker: 'KTTA', count: 2 },
+      variant: 'danger',
+    });
+    expect(repo.delete).toHaveBeenCalledWith('stat-ktta');
+  });
+
   it('never reaches the repository when the confirmation modal is cancelled', () => {
     const { page, repo } = setup({ rows: [makeStat()], confirmed: false });
 
