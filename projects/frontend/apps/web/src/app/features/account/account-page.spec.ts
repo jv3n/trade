@@ -29,14 +29,15 @@ import { AccountPage } from './account-page';
  *    tiles, which describe the period rather than the rows picked under them.
  *  - **Presets travel as dates** — `thisMonth` and friends are a UI vocabulary ; only `dateFrom` /
  *    `dateTo` reach the repository, exactly like the journal's filter.
- *  - **The table opens on trades and locates** (#473, #624) — the automatic lines the page is
- *    opened for ; the KPI row is not narrowed by that default, and an empty filter says so.
+ *  - **The table opens on the trades** (#473, #629) — what the page is opened for ; the KPI row is
+ *    not narrowed by that default, and an empty filter says so.
  *  - **A filter change rewinds to page 0** — page 4 of the previous result set means nothing.
  *  - **The balance column is the server's** — `balanceAfter` is rendered as received, never
  *    recomputed from the visible rows, or filtering to trades would renumber it.
  *
- *  - **Locates (#608, #625)** — « Locates » narrows the table to them ; a LOCATE line is never
- *    edited as a movement, it deletes its locate ; the tile reads the period's locates and their
+ *  - **Locates (#608, #625, #629)** — « Locates » narrows the table to them, and a locate typed
+ *    under a filter that would hide it switches to it ; a LOCATE line is never edited as a
+ *    movement, it deletes its locate ; the tile reads the period's locates and their
  *    part paid for nothing, amber when there is one.
  *
  * Creation and edition go through `MovementDialog` / `NewLocateDialog` and are their concern, not the
@@ -135,13 +136,14 @@ describe('AccountPage', () => {
     expect(sent.types).toEqual(['DEPOSIT', 'WITHDRAWAL']);
   });
 
-  it('opens on the trades and the locates, the rows the page is opened for', () => {
+  // #629 : a month of real data holds more locates than trades — they have their own filter.
+  it('opens on the trades alone, the rows the page is opened for', () => {
     const fixture = TestBed.createComponent(AccountPage);
     fixture.detectChanges();
 
     const sent = findMovements.mock.calls[0][0] as AccountMovementFilter;
     expect(fixture.componentInstance.appliedFilter().type).toBe('trades');
-    expect(sent.types).toEqual(['TRADE', 'LOCATE']);
+    expect(sent.types).toEqual(['TRADE']);
   });
 
   // #624 : « add a deposit » under a filter read as an empty account.
@@ -625,6 +627,17 @@ describe('AccountPage', () => {
       return fixture;
     }
 
+    function newLocate(): LocateInput {
+      return {
+        shares: 1000,
+        pricePerShare: 0.05,
+        stockPrice: null,
+        tradingDate: new Date(2026, 8, 18),
+        ticker: 'ATXG',
+        note: null,
+      };
+    }
+
     function locateLine(overrides: Partial<AccountMovement> = {}): AccountMovement {
       return makeMovement({
         id: 'l',
@@ -670,14 +683,7 @@ describe('AccountPage', () => {
     });
 
     it('saves the locate typed in the « Locate » dialog, then reloads the page', () => {
-      const input: LocateInput = {
-        shares: 1000,
-        pricePerShare: 0.05,
-        stockPrice: null,
-        tradingDate: new Date(2026, 8, 18),
-        ticker: 'ATXG',
-        note: null,
-      };
+      const input = newLocate();
       dialogOpen.mockReturnValue({ afterClosed: () => of(input) });
       const fixture = TestBed.createComponent(AccountPage);
       fixture.detectChanges();
@@ -687,6 +693,29 @@ describe('AccountPage', () => {
 
       expect(locates.create).toHaveBeenCalledWith(input);
       expect(getSummary).toHaveBeenCalled();
+    });
+
+    it('switches the default « Trades » filter to the locates, so the one just typed shows', () => {
+      dialogOpen.mockReturnValue({ afterClosed: () => of(newLocate()) });
+      const fixture = TestBed.createComponent(AccountPage);
+      fixture.detectChanges();
+      findMovements.mockClear();
+
+      fixture.componentInstance.openLocate();
+
+      expect(fixture.componentInstance.appliedFilter().type).toBe('locates');
+      expect((findMovements.mock.calls[0][0] as AccountMovementFilter).types).toEqual(['LOCATE']);
+    });
+
+    it('leaves « all types » alone, the locate already shows under it', () => {
+      dialogOpen.mockReturnValue({ afterClosed: () => of(newLocate()) });
+      const fixture = TestBed.createComponent(AccountPage);
+      fixture.componentInstance.onTypeChange('all');
+      fixture.detectChanges();
+
+      fixture.componentInstance.openLocate();
+
+      expect(fixture.componentInstance.appliedFilter().type).toBe('all');
     });
 
     it("reads the period's locates and their part paid for nothing, amber", () => {

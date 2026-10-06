@@ -1001,9 +1001,11 @@ schedule is in [`docs/notes/tradezero-fees.md`](../docs/notes/tradezero-fees.md)
   a percentage.
 - The balance tile takes **one column** instead of two, so the four tiles hold on one row.
 
-**The movements table opens on « Trades et locates »** (#473, #624) — the automatic lines the page
-is opened for, so a locate just typed is never hidden ; « Tous les types » is one click away, and
-the period keeps its own default (« Ce mois »). Corrections are hidden by default, so the gap tile
+**The movements table opens on « Trades »** (#473, #629) — what the page is opened for : with a
+real month loaded the locates outnumber the trades, so they keep their own « Locates » filter and
+the « Locates » tile keeps them in sight. A locate typed from the page's « Locate » button switches
+the filter to « Locates » when the active one would hide it, so what was just typed is on screen ;
+« Tous les types » is one click away, and the period keeps its own default (« Ce mois »). Corrections are hidden by default, so the gap tile
 above is what keeps them in sight. A filter that matches nothing says so — « Aucun mouvement pour
 ce filtre » with a button back to « Tous les types » — rather than the empty account's « ajoute
 un dépôt ».
