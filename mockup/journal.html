@@ -26,10 +26,12 @@
         <header class="page-header">
           <div>
             <h1>Journal</h1>
-            <p>Une ligne par ticker et par jour, ses trades à l'ouverture. Un trade se crée depuis une stat.</p>
+            <p>Une ligne par ticker et par jour, ses trades à l'ouverture. Un trade naît en général d'une stat, et peut exister seul.</p>
           </div>
           <div class="actions">
             <button class="btn"><span class="icon">import_export</span> Import / export CSV</button>
+            <!-- #628 : un trade sans stat — un import, une séance saisie après coup, un trade pris sans analyse du matin. -->
+            <button class="btn btn-primary" type="button" data-open-new-trade><span class="icon">add</span> Trade</button>
           </div>
         </header>
 
@@ -291,6 +293,47 @@
           </div>
         </section>
 
+        <!-- #628 : la boîte « Nouveau trade » — elle vaut confirmation, comme « Nouveau locate » au compte. -->
+        <dialog class="confirm locate-dialog" id="new-trade-dialog">
+          <form method="dialog">
+            <div class="confirm-body">
+              <span class="confirm-icon"><span class="icon">add</span></span>
+              <div>
+                <h3>Nouveau trade</h3>
+                <p class="muted" style="margin: 0 0 12px">
+                  Sans stat : pour un trade que la feuille n'a pas étudié — un import, une séance saisie après coup. Il compte au
+                  journal et au compte, pas dans les stats. Un trade étudié se crée depuis sa stat (« → Trade »).
+                </p>
+                <div class="locate-add" style="grid-template-columns: repeat(2, minmax(0, 1fr))">
+                  <div class="field"><label>Date</label><input class="input" type="date" value="2026-09-18" /></div>
+                  <div class="field"><label>Ticker</label><input class="input mono" placeholder="ATXG" /></div>
+                  <div class="field">
+                    <label>Pattern</label>
+                    <select class="input">
+                      <option selected>GUS</option>
+                      <option>DT</option>
+                      <option>SIR</option>
+                      <option>SIV</option>
+                      <option>Discrétionnaire</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label>Sens</label>
+                    <select class="input">
+                      <option selected>Short</option>
+                      <option>Long</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="confirm-actions">
+              <button class="btn" value="cancel">Annuler</button>
+              <button class="btn btn-primary" value="ok">Créer le trade</button>
+            </div>
+          </form>
+        </dialog>
+
         <p class="mockup-note">
           Maquette statique — une ligne par ticker et par jour (#500) : les trades d'un même nom le même jour, d'une stat ou de deux
           (KTTA : un GUS short le matin, puis un long discrétionnaire sur le rebond, sa stat née de la GUS, #507), avec une puce par pattern et par sens, la position max (le plus gros des trades
@@ -299,6 +342,8 @@
           porte plusieurs. Une ligne à un seul
           trade ouvre sa fiche ; une ligne à plusieurs s'ouvre sur ses trades (SDEV, ouverte), chacun menant à sa fiche. Tri, filtres et
           pagination comptent des lignes ; l'export CSV reste une ligne par trade.
+          « + Trade » (#628) crée un trade sans stat — date, ticker, pattern, sens — et ouvre sa fiche : les exécutions, le P&amp;L et
+          le post-mortem s'y saisissent comme pour les autres. La ligne du jour le montre comme les autres trades.
         </p>
       </main>
     </div>
@@ -309,6 +354,11 @@
         const sync = () => (range.hidden = select.value !== 'custom');
         select.addEventListener('change', sync);
         sync();
+      });
+      const newTrade = document.getElementById('new-trade-dialog');
+      document.querySelector('[data-open-new-trade]').addEventListener('click', () => newTrade.showModal());
+      newTrade.addEventListener('close', () => {
+        if (newTrade.returnValue === 'ok') location.href = 'trade.html?sans-stat';
       });
     </script>
   </body>

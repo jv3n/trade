@@ -27,10 +27,14 @@
         <header class="page-header">
           <div>
             <h1><span class="ticker" style="font-size: 18px">SDEV</span> &nbsp;Short · lundi 29 septembre 2026</h1>
-            <p>
+            <p data-with-stat>
               <span class="tag tag-accent">GUS</span> · créé depuis la <a href="stats.html">stat du 29/09</a>
             </p>
-            <p style="margin-top: 6px">
+            <!-- #628 : un trade sans stat porte son propre pattern ; rien ne le relie à la feuille. -->
+            <p data-without-stat hidden>
+              <span class="tag tag-accent">GUS</span> · sans stat
+            </p>
+            <p style="margin-top: 6px" data-with-stat>
               <span class="muted">Trades SDEV du jour :</span>
               <a href="trade.html" class="tag tag-loss" title="10:33 → 10:48">1 · −339</a>
               <a href="trade.html" class="tag tag-loss" title="11:00 → 11:04">2 · −444</a>
@@ -57,7 +61,7 @@
           <div class="card kpi">
             <div class="label">Entrée / sortie moyennes</div>
             <div class="value">2,71 → 2,90</div>
-            <div class="sub">vs open 2,30 : +17,7 % → +25,9 %</div>
+            <div class="sub" data-with-stat>vs open 2,30 : +17,7 % → +25,9 %</div>
           </div>
           <div class="card kpi">
             <div class="label">Durée</div>
@@ -132,27 +136,30 @@
           </div>
 
           <div class="card">
-            <h2>Contexte du jour <a class="hint" href="stats.html">voir la stat <span class="icon icon-sm">arrow_forward</span></a></h2>
+            <h2>Contexte du jour <a class="hint" href="stats.html" data-with-stat>voir la stat <span class="icon icon-sm">arrow_forward</span></a></h2>
+            <p class="muted" data-without-stat hidden style="margin: 0 0 10px">
+              Pas de stat pour ce trade : le contexte du jour (gap, push, open, HOD, LOD) vient d'une stat, et celui-ci n'en a pas.
+            </p>
             <dl class="kv">
-              <dt>Clôture veille · open PM · high PM</dt>
-              <dd>1,48 · 2,10 · 2,38</dd>
-              <dt>Gap · push PM</dt>
-              <dd>+41,9 % · +13,3 %</dd>
-              <dt>Float · volume</dt>
-              <dd>6,4 M · 5,8 M</dd>
+              <dt data-with-stat>Clôture veille · open PM · high PM</dt>
+              <dd data-with-stat>1,48 · 2,10 · 2,38</dd>
+              <dt data-with-stat>Gap · push PM</dt>
+              <dd data-with-stat>+41,9 % · +13,3 %</dd>
+              <dt data-with-stat>Float · volume</dt>
+              <dd data-with-stat>6,4 M · 5,8 M</dd>
               <!-- #625 : les locates de ce jour et de ce ticker — la clé les ouvre pour compléter ou corriger (un complément part du dernier prix payé ; le prix de l'action part de l'open PM de la stat — au-delà de 2 % du prix, en ambre). Hors P&L du trade, ils ont leur propre ligne de compte. -->
               <dt>Locates du jour</dt>
               <dd>2 000 × 0,04 <span class="muted">(1,60 %)</span> + 500 × 0,06 <span style="color: var(--warn)">(2,50 %)</span> = <strong>110,00 $ US</strong> <span class="muted">· 2 500 actions · 1,77 %</span> <button class="btn btn-sm btn-icon" title="Compléter ou corriger les locates du jour"><span class="icon">key</span></button></dd>
-              <dt>Open</dt>
-              <dd>2,30</dd>
-              <dt>Push à l'open</dt>
-              <dd>2,95 <span class="muted">+28,3 %</span></dd>
-              <dt>HOD</dt>
-              <dd>2,95 <span class="muted">+28,3 %</span></dd>
-              <dt>LOD</dt>
-              <dd>1,96 <span class="muted">−14,8 %</span></dd>
-              <dt>EOD</dt>
-              <dd>2,04 <span class="muted">−11,3 %</span></dd>
+              <dt data-with-stat>Open</dt>
+              <dd data-with-stat>2,30</dd>
+              <dt data-with-stat>Push à l'open</dt>
+              <dd data-with-stat>2,95 <span class="muted">+28,3 %</span></dd>
+              <dt data-with-stat>HOD</dt>
+              <dd data-with-stat>2,95 <span class="muted">+28,3 %</span></dd>
+              <dt data-with-stat>LOD</dt>
+              <dd data-with-stat>1,96 <span class="muted">−14,8 %</span></dd>
+              <dt data-with-stat>EOD</dt>
+              <dd data-with-stat>2,04 <span class="muted">−11,3 %</span></dd>
             </dl>
           </div>
         </section>
@@ -177,7 +184,9 @@
         </section>
 
         <p class="mockup-note">
-          Maquette statique — un trade naît d'une stat (bouton « → Trade ») et hérite de son pattern et de son contexte (lecture seule).
+          Maquette statique — un trade naît en général d'une stat (bouton « → Trade ») et hérite de son pattern et de son contexte (lecture seule).
+          Il peut aussi exister seul (#628, « + Trade » au journal, ou sa stat supprimée) : <a href="trade.html?sans-stat">la variante sans stat</a>
+          garde son pattern, ses exécutions, son P&amp;L, ses locates et son post-mortem — seul le contexte du jour manque.
           Une stat peut porter plusieurs trades, créés un par un (« + Trade » sur la stat, #500), chacun avec son sens, ses
           exécutions, son P&amp;L réel et son post-mortem : l'app ne découpe jamais un trade d'elle-même. L'en-tête liste les trades
           de la stat, et « Position max » est la plus grosse position tenue à un instant, pas la somme des entrées.
@@ -188,6 +197,13 @@
       </main>
     </div>
 
+    <script>
+      // #628 : « ?sans-stat » montre la fiche d'un trade créé sans stat.
+      if (new URLSearchParams(location.search).has('sans-stat')) {
+        document.querySelectorAll('[data-with-stat]').forEach((el) => (el.hidden = true));
+        document.querySelectorAll('[data-without-stat]').forEach((el) => (el.hidden = false));
+      }
+    </script>
     <script>
       // Écart entre P&L réel saisi et P&L calculé (accepte la virgule décimale).
       (function () {
