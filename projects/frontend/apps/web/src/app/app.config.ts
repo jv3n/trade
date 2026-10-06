@@ -13,7 +13,7 @@ import {
   provideZonelessChangeDetection,
 } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withNavigationErrorHandler } from '@angular/router';
 import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 import { MatIconRegistry, StbFormFieldResetIntl, provideStbMaterial } from '@portfolioai/ui';
@@ -24,6 +24,7 @@ import { AuthService } from './core/app-state/auth.service';
 import { LanguageService } from './core/app-state/language.service';
 import { authInterceptor } from './core/http/auth.interceptor';
 import { provideRepositories } from './core/providers';
+import { reloadOnStaleChunk } from './core/router/stale-chunk';
 
 /**
  * Forwards Angular's caught unhandled errors to GlitchTip via the Sentry SDK + keeps the default
@@ -61,7 +62,11 @@ export const appConfig: ApplicationConfig = {
     // captured errors into the Angular DI graph. Skipped in dev so local crashes stay in the
     // browser console.
     ...(isDevMode() ? [] : [{ provide: ErrorHandler, useClass: GlitchtipErrorHandler }]),
-    provideRouter(routes),
+    // A tab open across a deploy asks for a chunk the new build renamed : load the new version.
+    provideRouter(
+      routes,
+      withNavigationErrorHandler((event) => reloadOnStaleChunk(event)),
+    ),
     provideHttpClient(withInterceptors([authInterceptor])),
     // Material defaults of the design system : date adapter, no ripples, dense forms, icon font.
     provideStbMaterial(),
