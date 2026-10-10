@@ -8,6 +8,7 @@ import com.portfolioai.journal.application.TradeAttachmentService
 import com.portfolioai.journal.application.TradeEntryService
 import com.portfolioai.journal.application.dto.ExecutionRequest
 import com.portfolioai.journal.application.dto.TradeEntryRequest
+import com.portfolioai.journal.domain.EntryTiming
 import com.portfolioai.journal.domain.ExecutionKind
 import com.portfolioai.journal.domain.TradeEntry
 import com.portfolioai.journal.domain.TradeEntryFilter
@@ -753,6 +754,109 @@ class JournalIntegrationTest {
       service.findAll(TradeEntryFilter(status = TradeStatus.LOSING)).single().ticker,
     )
   }
+
+  // ---------------------------------------------------------------------------
+  // Entered after 11 am (#651)
+  // ---------------------------------------------------------------------------
+
+  @Test
+  fun `the entry filter reads the earliest timed entry fill, and agrees with the trade's flag`() {
+    enteredAt(ticker = "LATE", at = LocalTime.of(11, 8))
+    enteredAt(ticker = "EARLY", at = LocalTime.of(10, 33))
+    // Scaled in across 11 o'clock : entered at 10:50, so not a late entry.
+    service.create(
+      sampleRequest(ticker = "SCALE")
+        .copy(
+          executions =
+            listOf(
+              ExecutionRequest(
+                ExecutionKind.ENTRY,
+                100,
+                BigDecimal("3.2100"),
+                LocalTime.of(11, 10),
+              ),
+              ExecutionRequest(
+                ExecutionKind.ENTRY,
+                100,
+                BigDecimal("3.1000"),
+                LocalTime.of(10, 50),
+              ),
+            )
+        )
+    )
+    // A cover after 11 does not make a late entry.
+    service.create(
+      sampleRequest(
+        ticker = "EXIT",
+        exitPrice = BigDecimal("3.0000"),
+        entryTime = LocalTime.of(10, 0),
+        exitTime = LocalTime.of(13, 0),
+      )
+    )
+    // No entry time : on neither side.
+    service.create(sampleRequest(ticker = "UNTIMED"))
+
+    val after = service.findAll(TradeEntryFilter(entry = EntryTiming.AFTER_11))
+    val before = service.findAll(TradeEntryFilter(entry = EntryTiming.BEFORE_11))
+
+    assertEquals(setOf("LATE"), after.map { it.ticker }.toSet())
+    assertEquals(setOf("EARLY", "SCALE", "EXIT"), before.map { it.ticker }.toSet())
+    // The SQL predicate and `TradeEntry.enteredLate` are two spellings of one rule.
+    assertTrue(after.all { it.enteredLate == true })
+    assertTrue(before.all { it.enteredLate == false })
+    assertNull(service.findAll().single { it.ticker == "UNTIMED" }.enteredLate)
+  }
+
+  @Test
+  fun `11 sharp is after 11 am`() {
+    enteredAt(ticker = "SHARP", at = LocalTime.of(11, 0))
+
+    assertEquals(
+      "SHARP",
+      service.findAll(TradeEntryFilter(entry = EntryTiming.AFTER_11)).single().ticker,
+    )
+  }
+
+  @Test
+  fun `a day row is late as soon as one of its trades is`() {
+    // SDEV 29/09 of the mockup : shorted at 10:33, then again at 11:08.
+    enteredAt(ticker = "SDEV", at = LocalTime.of(10, 33))
+    enteredAt(ticker = "SDEV", at = LocalTime.of(11, 8))
+
+    val row = service.findDaysPaged(TradeEntryFilter(), PageRequest.of(0, 10)).content.single()
+
+    assertTrue(row.enteredLate)
+    assertEquals(listOf(false, true), row.trades.map { it.enteredLate })
+  }
+
+  @Test
+  fun `the summary compares the late entries with the early ones, untimed trades on neither side`() {
+    // Short at 3.21 : covered at 3.00 wins, at 3.50 loses.
+    enteredAt(ticker = "WIN", at = LocalTime.of(11, 8), exit = "3.0000")
+    enteredAt(ticker = "LOSS", at = LocalTime.of(11, 30), exit = "3.5000")
+    enteredAt(ticker = "EARLY", at = LocalTime.of(9, 41), exit = "3.0000")
+    service.create(sampleRequest(ticker = "UNTIMED", exitPrice = BigDecimal("3.0000")))
+
+    val summary = service.summarise(TradeEntryFilter())
+
+    assertEquals(2, summary.lateEntries.tradeCount)
+    assertEquals(0, BigDecimal("50.00").compareTo(summary.lateEntries.winRatePercent!!))
+    // +21 and −29 on 100 shares : −4 on average.
+    assertEquals(0, BigDecimal("-4.00").compareTo(summary.lateEntries.averagePnl!!))
+    assertEquals(1, summary.earlyEntries.tradeCount)
+    assertEquals(0, BigDecimal("100.00").compareTo(summary.earlyEntries.winRatePercent!!))
+    assertEquals(4, summary.tradeCount, "the untimed trade still counts in the journal's own KPIs")
+  }
+
+  private fun enteredAt(ticker: String, at: LocalTime, exit: String? = null) =
+    service.create(
+      sampleRequest(
+        ticker = ticker,
+        entryTime = at,
+        exitPrice = exit?.let(::BigDecimal),
+        exitTime = exit?.let { at.plusMinutes(5) },
+      )
+    )
 
   @Test
   fun `combining filters — AND semantics across axes`() {

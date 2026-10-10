@@ -190,6 +190,68 @@ describe('JournalPage', () => {
     expect(card?.querySelector('.kpi__value')?.classList).toContain('profit-negative');
   });
 
+  // ---- Entered after 11 am (#651) ----
+
+  it('the entry segment narrows the listing AND the KPIs, and rewinds to page 0', () => {
+    const fixture = TestBed.createComponent(JournalPage);
+    fixture.detectChanges();
+    const page = fixture.componentInstance;
+
+    page.setEntry('AFTER_11');
+    fixture.detectChanges();
+
+    expect((findDays.mock.calls.at(-1)?.[0] as TradeEntryFilter).entry).toBe('AFTER_11');
+    expect((summary.mock.calls.at(-1)?.[0] as TradeEntryFilter).entry).toBe('AFTER_11');
+    expect(page.pageIndex()).toBe(0);
+  });
+
+  it('compares the late entries with the early ones in their own card', async () => {
+    summary.mockReturnValue(
+      of(
+        makeSummary({
+          lateEntries: { tradeCount: 3, winRatePercent: 33.33, averagePnl: -319.61 },
+          earlyEntries: { tradeCount: 9, winRatePercent: 66.67, averagePnl: 34.05 },
+        }),
+      ),
+    );
+    const fixture = TestBed.createComponent(JournalPage);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const card = (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="late-entries"]',
+    );
+    expect(card?.querySelector('.kpi__label')?.textContent).toContain('journal.kpi.lateEntries');
+    expect(card?.querySelector('.kpi__sub')?.textContent).toContain('journal.kpi.lateEntriesSub');
+  });
+
+  // SDEV, 29/09 : shorted at 10:33, then again at 11:08 — the row says it, and so does trade 2.
+  it('tags a row with a late trade, and that trade once the row is open', () => {
+    const day = makeDay([
+      makeTrade({ id: 't1', ticker: 'SDEV', enteredLate: false }),
+      makeTrade({ id: 't2', ticker: 'SDEV', enteredLate: true }),
+    ]);
+    nextPage = makePage([day], 1);
+    const fixture = TestBed.createComponent(JournalPage);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+
+    expect(el.querySelector('[data-testid="day-late-entry"]')).not.toBeNull();
+
+    fixture.componentInstance.openRow(day);
+    fixture.detectChanges();
+    expect(el.querySelectorAll('[data-testid="trade-late-entry"]')).toHaveLength(1);
+  });
+
+  it('a row with no late trade carries no tag', () => {
+    nextPage = makePage([makeDay([makeTrade({ enteredLate: false })])], 1);
+    const fixture = TestBed.createComponent(JournalPage);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="day-late-entry"]')).toBeNull();
+  });
+
   it('a failing summary empties its cards without taking the listing down', () => {
     summary.mockReturnValue(throwError(() => new Error('500')));
     nextPage = makePage([makeDay([makeTrade()])], 1);
@@ -482,6 +544,7 @@ function makeTrade(overrides: Partial<TradeEntry> = {}): TradeEntry {
     retainedProfitDollars: null,
     retainedGainPercent: null,
     durationMinutes: null,
+    enteredLate: null,
     note: null,
     errorNote: null,
     hasScreenshot: false,
@@ -506,6 +569,7 @@ function makeDay(trades: TradeEntry[]): JournalDay {
     retainedGainPercent: single?.retainedGainPercent ?? null,
     durationMinutes: null,
     retainedProfitDollars: null,
+    enteredLate: trades.some((t) => t.enteredLate === true),
     trades,
   };
 }
@@ -523,6 +587,8 @@ function makeSummary(overrides: Partial<JournalSummary> = {}): JournalSummary {
     outOfPatternCount: 0,
     outOfPatternPnl: 0,
     inRulesPnl: 0,
+    lateEntries: { tradeCount: 0, winRatePercent: null, averagePnl: null },
+    earlyEntries: { tradeCount: 0, winRatePercent: null, averagePnl: null },
     ...overrides,
   };
 }

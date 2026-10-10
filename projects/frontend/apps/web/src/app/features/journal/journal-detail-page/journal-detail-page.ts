@@ -120,7 +120,11 @@ function draftOf(entry: TradeEntry): TradeDraft {
   };
 }
 
-/** `HH:mm` compares as text : the API's `LocalTime` and the time input both zero-pad it. */
+/**
+ * The backend's `TradeEntry.LATE_ENTRY`, copied to tag the unsaved draft — the journal's filter and
+ * KPI read the backend one, so move both together. `HH:mm` compares as text : the API's
+ * `LocalTime` and the time input both zero-pad it.
+ */
 const LATE_ENTRY = '11:00';
 
 /** Minutes between the first and the last timed fill — null as soon as one end has no time. */

@@ -193,7 +193,7 @@ describe('HttpJournalRepository', () => {
   it('findDays reads /days with the listing filter, the page and the row sort', () => {
     repo
       .findDays(
-        { query: 'sdev', status: 'LOSING' },
+        { query: 'sdev', status: 'LOSING', entry: 'AFTER_11' },
         { pageIndex: 0, pageSize: 10, sortField: 'retainedProfitDollars', sortDirection: 'asc' },
       )
       .subscribe();
@@ -201,6 +201,7 @@ describe('HttpJournalRepository', () => {
     const req = http.expectOne((r) => r.url === '/api/journal/trades/days');
     expect(req.request.params.get('q')).toBe('sdev');
     expect(req.request.params.get('status')).toBe('LOSING');
+    expect(req.request.params.get('entry')).toBe('AFTER_11');
     expect(req.request.params.getAll('sort')).toEqual(['retainedProfitDollars,asc']);
     req.flush(wirePageFixture([]));
   });
@@ -210,6 +211,7 @@ describe('HttpJournalRepository', () => {
       const day = result.content[0];
       expect(day.tradeDate.getDate()).toBe(29);
       expect(day.tradeCount).toBe(2);
+      expect(day.enteredLate).toBe(true);
       expect(day.trades[1].tradeDate).toBeInstanceOf(Date);
       expect(day.trades[1].id).toBe('t2');
     });
@@ -228,6 +230,7 @@ describe('HttpJournalRepository', () => {
           retainedGainPercent: null,
           durationMinutes: 19,
           retainedProfitDollars: -783.84,
+          enteredLate: true,
           trades: [wireFixture({ id: 't1' }), wireFixture({ id: 't2' })],
         },
       ],
@@ -416,6 +419,8 @@ describe('HttpJournalRepository', () => {
       outOfPatternCount: 0,
       outOfPatternPnl: 0,
       inRulesPnl: 0,
+      lateEntries: { tradeCount: 0, winRatePercent: null, averagePnl: null },
+      earlyEntries: { tradeCount: 0, winRatePercent: null, averagePnl: null },
     });
   });
 });
@@ -442,6 +447,7 @@ function wireFixture(overrides: Partial<Record<string, unknown>> = {}) {
     retainedProfitDollars: null,
     retainedGainPercent: null,
     durationMinutes: null,
+    enteredLate: null,
     note: null,
     errorNote: null,
     hasScreenshot: false,

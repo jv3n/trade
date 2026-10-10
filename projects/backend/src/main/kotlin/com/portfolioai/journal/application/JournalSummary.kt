@@ -1,5 +1,6 @@
 package com.portfolioai.journal.application
 
+import com.portfolioai.journal.application.dto.EntryTimingFigures
 import com.portfolioai.journal.application.dto.JournalSummaryDto
 import com.portfolioai.journal.domain.OutOfPatternStats
 import com.portfolioai.journal.domain.TradeEntry
@@ -38,6 +39,17 @@ internal fun journalSummaryOf(
     outOfPatternCount = outOfPattern.size,
     outOfPatternPnl = outOfPattern.sumOf { (_, profit) -> profit },
     inRulesPnl = inRules.sumOf { (_, profit) -> profit },
+    lateEntries = timingFigures(rows.filter { it.enteredLate == true }),
+    earlyEntries = timingFigures(rows.filter { it.enteredLate == false }),
+  )
+}
+
+private fun timingFigures(rows: List<TradeEntry>): EntryTimingFigures {
+  val realized = rows.mapNotNull { it.retainedProfit }
+  return EntryTimingFigures(
+    tradeCount = realized.size,
+    winRatePercent = percentage(realized.count { it.signum() > 0 }, realized.size),
+    averagePnl = average(realized.fold(BigDecimal.ZERO, BigDecimal::add), realized.size),
   )
 }
 

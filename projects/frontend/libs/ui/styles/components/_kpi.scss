@@ -32,6 +32,19 @@
   }
 }
 
+// Six figures on one row — the journal with its « after 11 am » comparison (#651).
+.kpi-row--six {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+
+  @media (max-width: s.$bp-wide) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: s.$bp-phone) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 // A `mat-card` tile has no padding of its own — give it the page card's.
 .kpi.mat-mdc-card {
   padding: s.$card-padding-y s.$card-padding-x;

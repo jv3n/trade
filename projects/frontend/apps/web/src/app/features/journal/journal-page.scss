@@ -67,7 +67,8 @@
 
 .day-trade {
   display: grid;
-  grid-template-columns: 8rem 6rem 6rem 5rem 10rem 5rem 7rem 5rem auto;
+  // The direction column holds the « after 11 am » tag too (#651).
+  grid-template-columns: 8rem 6rem 10rem 5rem 10rem 5rem 7rem 5rem auto;
   align-items: center;
   gap: s.$space-md;
   padding: s.$space-xs s.$space-lg s.$space-xs s.$space-3xl;

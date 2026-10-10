@@ -462,13 +462,20 @@
       "outOfPattern": "Out of pattern",
       "outOfPatternSub": "{{count}} trades · in the rules {{inRules}}",
       "outOfPatternSubOne": "{{count}} trade · in the rules {{inRules}}",
-      "outOfPatternHint": "Trades taken on a stat the recorded prices say was out of pattern. A discipline number, not a strategy one : with the in-rules one, it makes the period's P&L."
+      "outOfPatternHint": "Trades taken on a stat the recorded prices say was out of pattern. A discipline number, not a strategy one : with the in-rules one, it makes the period's P&L.",
+      "lateEntries": "Entries after 11 am",
+      "lateEntriesValue": "{{late}} vs {{early}}",
+      "lateEntriesSub": "{{count}} trades · avg {{late}} · before 11 am {{early}}",
+      "lateEntriesSubOne": "{{count}} trade · avg {{late}} · before 11 am {{early}}",
+      "lateEntriesHint": "Win rate and average P&L of the trades entered at 11:00 or later, against the ones entered before — read off the first entry fill. A trade with no entry time counts on neither side."
     },
     "searchPlaceholder": "Search ticker…",
     "filterPanel": {
       "period": "Period",
       "statusAll": "Any status",
-      "allPatterns": "All patterns"
+      "allPatterns": "All patterns",
+      "entryAll": "Any entry",
+      "entryHint": "Read off the first entry fill — a trade with no time is in neither"
     },
     "loading": "Loading journal…",
     "empty": "No trade over this period. A trade is born from a stat, on the stats sheet.",
@@ -533,6 +540,10 @@
         "OPEN": "Open",
         "PARTIAL": "Partial",
         "CLOSED": "Closed"
+      },
+      "entry": {
+        "BEFORE_11": "Before 11 am",
+        "AFTER_11": "After 11 am"
       }
     },
     "actions": {
@@ -644,7 +655,8 @@
       "minutes": "{{minutes}} min",
       "hours": "{{hours}} h {{minutes}}"
     },
-    "dayTrade": "Trade {{n}}"
+    "dayTrade": "Trade {{n}}",
+    "dayLateEntryHint": "At least one trade of the day entered at 11:00 or later"
   },
   "stats": {
     "title": "Stats",

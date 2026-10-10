@@ -761,6 +761,8 @@ function makeJournalSummary() {
     outOfPatternCount: 0,
     outOfPatternPnl: 0,
     inRulesPnl: 0,
+    lateEntries: { tradeCount: 0, winRatePercent: null, averagePnl: null },
+    earlyEntries: { tradeCount: 0, winRatePercent: null, averagePnl: null },
   };
 }
 
@@ -862,6 +864,7 @@ function makeTrade(overrides: Partial<TradeEntry> = {}): TradeEntry {
     retainedProfitDollars: 291.85,
     retainedGainPercent: 18.53,
     durationMinutes: 214,
+    enteredLate: false,
     note: null,
     errorNote: null,
     hasScreenshot: false,

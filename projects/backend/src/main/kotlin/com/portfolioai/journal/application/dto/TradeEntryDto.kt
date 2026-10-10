@@ -20,7 +20,8 @@ import java.util.UUID
  * and [retainedGainPercent] that last one as a percentage of the same cost basis.
  *
  * [durationMinutes] is derived on the fly from the execution times — null while the position is
- * open, or as soon as one end has no time.
+ * open, or as soon as one end has no time. [enteredLate] is [TradeEntry.enteredLate] : the earliest
+ * timed entry fill at 11:00 or later, null while no entry fill has a time (#651).
  */
 data class TradeEntryDto(
   val id: UUID,
@@ -39,6 +40,7 @@ data class TradeEntryDto(
   val retainedProfitDollars: BigDecimal?,
   val retainedGainPercent: BigDecimal?,
   val durationMinutes: Long?,
+  val enteredLate: Boolean?,
   val note: String?,
   val errorNote: String?,
   val hasScreenshot: Boolean,
@@ -64,6 +66,7 @@ fun TradeEntry.toDto() =
     retainedProfitDollars = retainedProfit,
     retainedGainPercent = retainedGainPercent,
     durationMinutes = TradePositionCalculator.duration(executions.map { it.toLeg() }),
+    enteredLate = enteredLate,
     note = note,
     errorNote = errorNote,
     hasScreenshot = hasScreenshot,

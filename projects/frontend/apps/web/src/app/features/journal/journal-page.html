@@ -16,9 +16,9 @@
 
   <!-- KPIs — computed by the backend over the filtered set, not the current page (#195). -->
   @if (gate.skeleton()) {
-    <ui-skeleton-kpi-row [count]="5" />
+    <ui-skeleton-kpi-row [count]="6" />
   } @else {
-    <section class="stb-fade-in kpi-row kpi-row--five">
+    <section class="stb-fade-in kpi-row kpi-row--six">
       <div class="card kpi">
         <div class="kpi__label">{{ 'journal.kpi.pnl' | translate }}</div>
         @if (summary(); as s) {
@@ -125,6 +125,53 @@
           <div class="kpi__value">—</div>
         }
       </div>
+
+      <!-- Do my late entries lose money ? (#651) — the same rule as the trade sheet's tag. -->
+      <div
+        class="card kpi"
+        data-testid="late-entries"
+        [matTooltip]="'journal.kpi.lateEntriesHint' | translate"
+      >
+        <div class="kpi__label">{{ 'journal.kpi.lateEntries' | translate }}</div>
+        @if (summary(); as s) {
+          <div class="kpi__value">
+            {{
+              'journal.kpi.lateEntriesValue'
+                | translate
+                  : {
+                      late:
+                        s.lateEntries.winRatePercent !== null
+                          ? (s.lateEntries.winRatePercent | number: '1.0-0') + ' %'
+                          : '—',
+                      early:
+                        s.earlyEntries.winRatePercent !== null
+                          ? (s.earlyEntries.winRatePercent | number: '1.0-0') + ' %'
+                          : '—',
+                    }
+            }}
+          </div>
+          <div class="kpi__sub">
+            {{
+              'journal.kpi.lateEntriesSub'
+                | plural: s.lateEntries.tradeCount
+                | translate
+                  : {
+                      count: s.lateEntries.tradeCount,
+                      late:
+                        s.lateEntries.averagePnl !== null
+                          ? (s.lateEntries.averagePnl | number: '1.2-2')
+                          : '—',
+                      early:
+                        s.earlyEntries.averagePnl !== null
+                          ? (s.earlyEntries.averagePnl | number: '1.2-2')
+                          : '—',
+                    }
+            }}
+          </div>
+        } @else {
+          <div class="kpi__value">—</div>
+        }
+      </div>
     </section>
   }
 
@@ -175,6 +222,23 @@
         <mat-button-toggle value="LOSING">
           {{ 'journal.enums.status.LOSING' | translate }}
         </mat-button-toggle>
+      </mat-button-toggle-group>
+
+      <!-- #651 : a trade with no timed entry fill is on neither side. -->
+      <mat-button-toggle-group
+        class="segmented"
+        [value]="appliedFilter().entry"
+        (change)="setEntry($event.value)"
+        [matTooltip]="'journal.filterPanel.entryHint' | translate"
+      >
+        <mat-button-toggle [value]="null">
+          {{ 'journal.filterPanel.entryAll' | translate }}
+        </mat-button-toggle>
+        @for (timing of entryTimings; track timing) {
+          <mat-button-toggle [value]="timing">
+            {{ 'journal.enums.entry.' + timing | translate }}
+          </mat-button-toggle>
+        }
       </mat-button-toggle-group>
     </div>
 
@@ -255,6 +319,14 @@
                   <span class="pattern-tag">{{
                     'journal.enums.direction.' + dir | translate
                   }}</span>
+                }
+                @if (d.enteredLate) {
+                  <span
+                    class="pattern-tag"
+                    data-testid="day-late-entry"
+                    [matTooltip]="'journal.dayLateEntryHint' | translate"
+                    >{{ 'journal.detail.after11am' | translate }}</span
+                  >
                 }
               </span>
             </td>
@@ -417,9 +489,16 @@
                       {{ 'journal.dayTrade' | translate: { n: i + 1 } }}
                     </span>
                     <span>{{ 'patterns.short.' + t.pattern | translate }}</span>
-                    <span>{{
-                      t.direction ? ('journal.enums.direction.' + t.direction | translate) : '—'
-                    }}</span>
+                    <span class="tags">
+                      {{
+                        t.direction ? ('journal.enums.direction.' + t.direction | translate) : '—'
+                      }}
+                      @if (t.enteredLate) {
+                        <span class="pattern-tag" data-testid="trade-late-entry">{{
+                          'journal.detail.after11am' | translate
+                        }}</span>
+                      }
+                    </span>
                     <span class="num">{{ t.size !== null ? (t.size | number) : '—' }}</span>
                     <span class="num">
                       {{ t.openPrice !== null ? (t.openPrice | price: t.openPrice) : '—' }}

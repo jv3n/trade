@@ -1,10 +1,14 @@
 package com.portfolioai.journal.infrastructure.persistence
 
+import com.portfolioai.journal.domain.EntryTiming
+import com.portfolioai.journal.domain.ExecutionKind
 import com.portfolioai.journal.domain.TradeEntry
 import com.portfolioai.journal.domain.TradeEntryFilter
+import com.portfolioai.journal.domain.TradeExecution
 import com.portfolioai.journal.domain.TradeStatus
 import jakarta.persistence.criteria.Predicate
 import java.math.BigDecimal
+import java.time.LocalTime
 import java.util.UUID
 import org.springframework.data.jpa.domain.Specification
 
@@ -17,7 +21,7 @@ import org.springframework.data.jpa.domain.Specification
 object TradeEntrySpecifications {
 
   fun matching(userId: UUID, filter: TradeEntryFilter): Specification<TradeEntry> =
-    Specification { root, _, cb ->
+    Specification { root, query, cb ->
       val predicates = mutableListOf<Predicate>()
 
       // Mandatory tenant scope — every query has it. Match against the FK column, not the
@@ -52,6 +56,26 @@ object TradeEntrySpecifications {
             TradeStatus.CLOSED -> cb.isNotNull(root.get<Any>("exitPrice"))
             TradeStatus.PROFITABLE -> cb.greaterThan(retainedProfit, BigDecimal.ZERO)
             TradeStatus.LOSING -> cb.lessThan(retainedProfit, BigDecimal.ZERO)
+          }
+      }
+
+      filter.entry?.let { timing ->
+        // `TradeEntry.firstEntryAt` in SQL (#651) : the earliest timed ENTRY fill. No timed entry
+        // gives NULL, which neither comparison lets through — an unknown time is on no side.
+        val firstEntry = query.subquery(LocalTime::class.java)
+        val fill = firstEntry.from(TradeExecution::class.java)
+        val executedAt = fill.get<LocalTime>("executedAt")
+        firstEntry
+          .select(cb.least(executedAt))
+          .where(
+            cb.equal(fill.get<TradeEntry>("tradeEntry"), root),
+            cb.equal(fill.get<ExecutionKind>("kind"), ExecutionKind.ENTRY),
+            cb.isNotNull(executedAt),
+          )
+        predicates +=
+          when (timing) {
+            EntryTiming.AFTER_11 -> cb.greaterThanOrEqualTo(firstEntry, TradeEntry.LATE_ENTRY)
+            EntryTiming.BEFORE_11 -> cb.lessThan(firstEntry, TradeEntry.LATE_ENTRY)
           }
       }
 

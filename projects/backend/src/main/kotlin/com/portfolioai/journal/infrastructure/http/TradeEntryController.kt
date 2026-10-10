@@ -6,6 +6,7 @@ import com.portfolioai.journal.application.dto.JournalDayDto
 import com.portfolioai.journal.application.dto.JournalSummaryDto
 import com.portfolioai.journal.application.dto.TradeEntryDto
 import com.portfolioai.journal.application.dto.TradeEntryRequest
+import com.portfolioai.journal.domain.EntryTiming
 import com.portfolioai.journal.domain.TradeEntryFilter
 import com.portfolioai.journal.domain.TradeStatus
 import com.portfolioai.shared.Pattern
@@ -55,7 +56,8 @@ class TradeEntryController(
    *
    * q — ticker LIKE %q% (case-insensitive) dateFrom — `trade_date >= dateFrom` (inclusive,
    * yyyy-MM-dd) dateTo — `trade_date <= dateTo` (inclusive, yyyy-MM-dd) pattern — repeated, IN
-   * (...) status — one of OPEN / CLOSED / PROFITABLE / LOSING (derived predicate)
+   * (...) status — one of OPEN / CLOSED / PROFITABLE / LOSING (derived predicate) entry — BEFORE_11
+   * / AFTER_11, off the earliest timed entry fill (#651)
    */
   @GetMapping
   fun findAll(
@@ -68,6 +70,7 @@ class TradeEntryController(
     dateTo: LocalDate? = null,
     @RequestParam(required = false) pattern: List<Pattern>? = null,
     @RequestParam(required = false) status: TradeStatus? = null,
+    @RequestParam(required = false) entry: EntryTiming? = null,
     // No `sort` default here — the service applies its own fallback when the URL has no `sort`
     // param, so we get a single source of truth and avoid the `@PageableDefault` quirk that was
     // making the user-supplied sort silently ignored.
@@ -80,6 +83,7 @@ class TradeEntryController(
         dateTo = dateTo,
         patterns = pattern,
         status = status,
+        entry = entry,
       ),
       pageable,
     )
@@ -102,6 +106,7 @@ class TradeEntryController(
     dateTo: LocalDate? = null,
     @RequestParam(required = false) pattern: List<Pattern>? = null,
     @RequestParam(required = false) status: TradeStatus? = null,
+    @RequestParam(required = false) entry: EntryTiming? = null,
     @PageableDefault(size = 50) pageable: Pageable,
   ): Page<JournalDayDto> =
     service.findDaysPaged(
@@ -111,6 +116,7 @@ class TradeEntryController(
         dateTo = dateTo,
         patterns = pattern,
         status = status,
+        entry = entry,
       ),
       pageable,
     )
@@ -131,6 +137,7 @@ class TradeEntryController(
     dateTo: LocalDate? = null,
     @RequestParam(required = false) pattern: List<Pattern>? = null,
     @RequestParam(required = false) status: TradeStatus? = null,
+    @RequestParam(required = false) entry: EntryTiming? = null,
   ): JournalSummaryDto =
     service.summarise(
       TradeEntryFilter(
@@ -139,6 +146,7 @@ class TradeEntryController(
         dateTo = dateTo,
         patterns = pattern,
         status = status,
+        entry = entry,
       )
     )
 

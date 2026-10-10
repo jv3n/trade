@@ -189,6 +189,18 @@ class TradeEntry(
   val openedAt: LocalTime?
     get() = executions.firstOrNull()?.executedAt
 
+  /**
+   * The earliest timed entry fill (#651) — not the first fill typed, nor any entry : a trade scaled
+   * into across 11 o'clock was entered before it. Null while no entry fill has a time.
+   */
+  val firstEntryAt: LocalTime?
+    get() =
+      executions.filter { it.kind == ExecutionKind.ENTRY }.mapNotNull { it.executedAt }.minOrNull()
+
+  /** Entered at [LATE_ENTRY] or later — null when [firstEntryAt] is not known. */
+  val enteredLate: Boolean?
+    get() = firstEntryAt?.let { it >= LATE_ENTRY }
+
   /** Copies the derived aggregates from [TradePositionCalculator] onto the flat columns. */
   fun applyAggregates(aggregates: TradePositionCalculator.Aggregates) {
     size = aggregates.size
@@ -199,6 +211,12 @@ class TradeEntry(
   }
 
   companion object {
+    /**
+     * The « after 11 am » threshold (#647, #651). The trade sheet keeps its own copy to tag the
+     * unsaved draft (`LATE_ENTRY` in `journal-detail-page.ts`) — move both together.
+     */
+    val LATE_ENTRY: LocalTime = LocalTime.of(11, 0)
+
     /**
      * The trades of one stat in the day's order (#500) : by first fill, untimed last, then created.
      */
