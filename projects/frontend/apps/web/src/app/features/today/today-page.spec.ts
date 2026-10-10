@@ -833,7 +833,6 @@ function makeStat(overrides: Partial<StatEntry> = {}): StatEntry {
     dtRetestTime: null,
     ssr: false,
     under1Dollar: false,
-    entryAfter11am: false,
     noPush: false,
     highInstitutions: false,
     completed: false,

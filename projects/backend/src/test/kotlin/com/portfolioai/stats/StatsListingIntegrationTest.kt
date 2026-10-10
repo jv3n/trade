@@ -246,7 +246,6 @@ class StatsListingIntegrationTest {
     assertNull(created.eodPrice)
     assertFalse(created.ssr)
     assertFalse(created.under1Dollar)
-    assertFalse(created.entryAfter11am)
   }
 
   @Test
@@ -257,12 +256,11 @@ class StatsListingIntegrationTest {
     val updated =
       service.update(
         created.id,
-        fullSessionRequest(ticker = "KTTA", ssr = true, entryAfter11am = true),
+        fullSessionRequest(ticker = "KTTA", ssr = true),
       )
 
     assertEquals(0, BigDecimal("3.52").compareTo(updated.eodPrice))
     assertTrue(updated.ssr)
-    assertTrue(updated.entryAfter11am)
     assertTrue(updated.updatedAt.isAfter(created.updatedAt))
   }
 
@@ -426,13 +424,13 @@ class StatsListingIntegrationTest {
     // 9:30 the open, then the push once it happened, then a flag — each field left is a save.
     val open = premarketRequest(ticker = "SGBX").copy(openPrice = BigDecimal("1.90"))
     service.update(stat.id, open)
-    val push = open.copy(pushOpenPrice = BigDecimal("2.20"), entryAfter11am = true)
+    val push = open.copy(pushOpenPrice = BigDecimal("2.20"), ssr = true)
     val saved = service.update(stat.id, push)
 
     assertEquals(0, BigDecimal("1.90").compareTo(saved.openPrice))
     assertEquals(0, BigDecimal("2.20").compareTo(saved.pushOpenPrice))
     assertNull(saved.hodPrice)
-    assertTrue(saved.entryAfter11am)
+    assertTrue(saved.ssr)
     assertFalse(saved.completed)
   }
 
@@ -985,20 +983,6 @@ class StatsListingIntegrationTest {
     assertEquals(1, service.summarise(gusOnly.copy(under1Dollar = true)).completed)
   }
 
-  @Test
-  fun `a double top's entry after 11 am follows its retest time, whatever box is sent`() {
-    // SGBX retested at 10:38 — a box sent ticked says nothing, and is not kept.
-    val early = service.create(doubleTopRequest().copy(entryAfter11am = true))
-
-    assertFalse(early.entryAfter11am)
-    assertFalse(repo.findById(early.id).orElseThrow().entryAfter11am, "not stored on a DT")
-
-    val late =
-      service.update(early.id, doubleTopRequest().copy(dtRetestTime = LocalTime.of(11, 12)))
-
-    assertTrue(late.entryAfter11am)
-  }
-
   // ---------------------------------------------------------------------------
   // KPIs
   // ---------------------------------------------------------------------------
@@ -1245,7 +1229,6 @@ class StatsListingIntegrationTest {
     tradeDate: LocalDate = DAY,
     pattern: Pattern = Pattern.GUS,
     ssr: Boolean = false,
-    entryAfter11am: Boolean = false,
   ) =
     premarketRequest(ticker = ticker, tradeDate = tradeDate, pattern = pattern)
       .copy(
@@ -1255,7 +1238,6 @@ class StatsListingIntegrationTest {
         lodPrice = BigDecimal("3.41"),
         eodPrice = BigDecimal("3.52"),
         ssr = ssr,
-        entryAfter11am = entryAfter11am,
       )
 
   private val outOfPatternOnly = StatEntryFilter(outOfPattern = true)

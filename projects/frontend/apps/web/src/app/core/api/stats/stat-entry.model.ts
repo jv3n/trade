@@ -61,7 +61,6 @@ export interface StatEntry {
   /** Opened under a dollar — derived from the open by the backend (#499), never typed. */
   under1Dollar: boolean;
   /** Ticked on a GUS ; derived from the retest time on a double top (#499). */
-  entryAfter11am: boolean;
   /** The stock never pushed after the open (#302) — [pushOpenPrice] stays null. */
   noPush: boolean;
   /** Less than 20 % of the float held by institutions (#349) — the threshold lives in the label. */

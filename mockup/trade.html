@@ -28,11 +28,11 @@
           <div>
             <h1><span class="ticker" style="font-size: 18px">SDEV</span> &nbsp;Short · lundi 29 septembre 2026</h1>
             <p data-with-stat>
-              <span class="tag tag-accent">GUS</span> · créé depuis la <a href="stats.html">stat du 29/09</a>
+              <span class="tag tag-accent">GUS</span> · <span class="tag" title="Première entrée à 11:08 — déduit des exécutions">après 11h</span> · créé depuis la <a href="stats.html">stat du 29/09</a>
             </p>
             <!-- #628 : un trade sans stat porte son propre pattern ; rien ne le relie à la feuille. -->
             <p data-without-stat hidden>
-              <span class="tag tag-accent">GUS</span> · sans stat
+              <span class="tag tag-accent">GUS</span> · <span class="tag" title="Première entrée à 11:08 — déduit des exécutions">après 11h</span> · sans stat
             </p>
             <p style="margin-top: 6px" data-with-stat>
               <span class="muted">Trades SDEV du jour :</span>
@@ -190,6 +190,8 @@
           Une stat peut porter plusieurs trades, créés un par un (« + Trade » sur la stat, #500), chacun avec son sens, ses
           exécutions, son P&amp;L réel et son post-mortem : l'app ne découpe jamais un trade d'elle-même. L'en-tête liste les trades
           de la stat, et « Position max » est la plus grosse position tenue à un instant, pas la somme des entrées.
+          Le tag « après 11h » de l'en-tête se déduit de la première exécution d'entrée (11:00 ou plus tard, #647) : rien à cocher,
+          ni sur le trade ni sur la stat.
           On saisit : exécutions, post-mortem, capture. Le P&amp;L est calculé à partir des exécutions, et peut être ajusté à la main
           (frais, arrondis du broker) ; c'est le P&amp;L retenu qui remonte au compte. Le P&amp;L réel ne se saisit qu'une fois la
           position clôturée : tant qu'il reste des actions ouvertes, le champ est grisé (« Une fois la position clôturée »).

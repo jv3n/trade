@@ -172,7 +172,6 @@ describe('HttpStatsRepository', () => {
       dtLowTime: null,
       dtRetestTime: null,
       ssr: true,
-      entryAfter11am: false,
       noPush: false,
       highInstitutions: false,
     });
@@ -294,7 +293,6 @@ describe('HttpStatsRepository', () => {
       dtRetestTime: null,
       ssr: true,
       under1Dollar: false,
-      entryAfter11am: false,
       noPush: false,
       highInstitutions: false,
       completed: true,
@@ -330,7 +328,6 @@ describe('HttpStatsRepository', () => {
       dtLowTime: null,
       dtRetestTime: null,
       ssr: true,
-      entryAfter11am: false,
       noPush: false,
       highInstitutions: false,
     };

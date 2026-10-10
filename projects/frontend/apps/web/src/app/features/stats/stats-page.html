@@ -898,24 +898,6 @@
         <mat-checkbox [checked]="session().ssr" (change)="toggleFlag('ssr', $event.checked)">
           {{ 'stats.fields.ssr' | translate }}
         </mat-checkbox>
-        <!-- A checkbox survives only if the app cannot derive it (#499) : a DT reads its retest time. -->
-        @if (isDoubleTop()) {
-          @if (doubleTopLateRetest(); as retest) {
-            <span
-              class="flag-tag"
-              data-testid="dt-late-entry"
-              [matTooltip]="'stats.doubleTop.lateEntryHint' | translate"
-              >{{ 'stats.doubleTop.lateEntry' | translate: { time: retest } }}</span
-            >
-          }
-        } @else {
-          <mat-checkbox
-            [checked]="session().entryAfter11am"
-            (change)="toggleFlag('entryAfter11am', $event.checked)"
-          >
-            {{ 'stats.fields.entryAfter11am' | translate }}
-          </mat-checkbox>
-        }
         <mat-checkbox
           [checked]="session().highInstitutions"
           (change)="toggleFlag('highInstitutions', $event.checked)"
@@ -1514,9 +1496,6 @@
                 }
                 @if (s.under1Dollar) {
                   <span class="flag-tag">{{ 'stats.fields.under1Dollar' | translate }}</span>
-                }
-                @if (s.entryAfter11am) {
-                  <span class="flag-tag">{{ 'stats.fields.entryAfter11am' | translate }}</span>
                 }
                 @if (s.highInstitutions) {
                   <span class="flag-tag">{{

@@ -113,7 +113,6 @@ interface SessionModel {
   dtLowTime: string | null;
   dtRetestTime: string | null;
   ssr: boolean;
-  entryAfter11am: boolean;
   noPush: boolean;
   highInstitutions: boolean;
 }
@@ -279,8 +278,6 @@ function derivedFromQuery(values: readonly string[]): readonly DerivedFilter[] {
 }
 
 const DEFAULT_PAGE_SIZE = 25;
-/** The backend's `StatEntry.entersAfter11am` threshold — `HH:mm` compares as text. */
-const LATE_ENTRY = '11:00';
 
 /** Empty session block — what the panel shows before a stat is picked. */
 const BLANK_SESSION: SessionModel = {
@@ -298,7 +295,6 @@ const BLANK_SESSION: SessionModel = {
   dtLowTime: null,
   dtRetestTime: null,
   ssr: false,
-  entryAfter11am: false,
   noPush: false,
   highInstitutions: false,
 };
@@ -490,7 +486,6 @@ function sessionOf(entry: StatEntry): SessionModel {
     dtLowTime: entry.dtLowTime,
     dtRetestTime: entry.dtRetestTime,
     ssr: entry.ssr,
-    entryAfter11am: entry.entryAfter11am,
     noPush: entry.noPush,
     highInstitutions: entry.highInstitutions,
   };
@@ -804,15 +799,6 @@ export class StatsPage {
     doubleTopLegs({ ...this.session(), previousClose: this.premarket().previousClose }),
   );
 
-  /**
-   * The retest time when it says « after 11 am » (#499) : a double top is entered on its retest, so
-   * the panel shows it rather than a box. Null before 11, or until the time is typed.
-   */
-  readonly doubleTopLateRetest = computed(() => {
-    const retest = this.session().dtRetestTime;
-    return retest !== null && retest >= LATE_ENTRY ? retest : null;
-  });
-
   /** How long each leg of the double top being typed took, live (#469). */
   readonly doubleTopDurations = computed(() => doubleTopDurations(this.session()));
 
@@ -1061,7 +1047,7 @@ export class StatsPage {
     this.session.update((m) => ({ ...m, [field]: value || null }));
   }
 
-  toggleFlag(field: 'ssr' | 'entryAfter11am' | 'highInstitutions', value: boolean): void {
+  toggleFlag(field: 'ssr' | 'highInstitutions', value: boolean): void {
     this.session.update((m) => ({ ...m, [field]: value }));
     this.saveSession('session');
   }

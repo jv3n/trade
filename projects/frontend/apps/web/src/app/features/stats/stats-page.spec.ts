@@ -91,7 +91,6 @@ function makeStat(overrides: Partial<StatEntry> = {}): StatEntry {
     dtRetestTime: null,
     ssr: false,
     under1Dollar: false,
-    entryAfter11am: false,
     highInstitutions: true,
     noPush: false,
     completed: true,
@@ -379,16 +378,13 @@ describe('StatsPage', () => {
   it('saves a flag as soon as it is ticked', () => {
     const { page, repo } = setup({ rows: [makePending()] });
 
-    page.toggleFlag('entryAfter11am', true);
+    page.toggleFlag('ssr', true);
 
-    expect(repo.update).toHaveBeenCalledWith(
-      'stat-sgbx',
-      expect.objectContaining({ entryAfter11am: true }),
-    );
+    expect(repo.update).toHaveBeenCalledWith('stat-sgbx', expect.objectContaining({ ssr: true }));
   });
 
   // #349 : screened upstream on a GUS, so it rides with the other flags rather than on its own.
-  it('saves the institutions flag like the other three', () => {
+  it('saves the institutions flag like the other two', () => {
     const { page, repo } = setup({ rows: [makePending({ highInstitutions: false })] });
 
     page.toggleFlag('highInstitutions', true);
@@ -1069,24 +1065,6 @@ describe('StatsPage', () => {
 
     expect(repo.lastFilter?.under1Dollar).toBe(true);
     expect(repo.lastFilter?.outOfPattern).toBe(true);
-  });
-
-  // #499 : SDEV's double top ran 11:03 -> 12:13 and the box was left unticked.
-  it('a double top shows « after 11 am » from its retest time, never a box', async () => {
-    // The double top is still to complete : the panel opens on it.
-    const { fixture, page } = setup({ rows: [makeDoubleTop()] });
-    await fixture.whenStable();
-    expect(page.isDoubleTop()).toBe(true);
-
-    page.setSessionTime('dtRetestTime', '10:38');
-    expect(page.doubleTopLateRetest()).toBeNull();
-    page.setSessionTime('dtRetestTime', '11:12');
-    expect(page.doubleTopLateRetest()).toBe('11:12');
-    fixture.detectChanges();
-
-    const panel = fixture.nativeElement as HTMLElement;
-    expect(panel.querySelector('[data-testid="dt-late-entry"]')).not.toBeNull();
-    expect(panel.textContent).not.toContain('stats.fields.entryAfter11am');
   });
 
   it('tags a stat out of pattern, with what the recorded prices say', async () => {

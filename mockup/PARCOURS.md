@@ -347,7 +347,9 @@ the journal). As a consequence : no real-time screen, no live position tracking.
 
 **What the app computes** : the **max position** (the most shares held at once — not the sum of the
 entries : a scale-in, a partial cover and a re-add count the peak), average entry / exit (and their
-distance to the open), P&L in $ and %, duration of the trade (first entry → last exit).
+distance to the open), P&L in $ and %, duration of the trade (first entry → last exit), and an
+**« after 11 am »** tag in the sheet's header when the first entry fill is at 11:00 or later (#647) —
+nothing to tick, the fill's time says it.
 
 **No automatic split** (#500) : the app never decides where a trade ends. An exit followed by a
 re-entry and an add after the stock pushes higher are the same sequence of fills to it, and « back to
@@ -413,7 +415,6 @@ push once it has happened, the flags as they come — and the rest after the 4 p
 | LOD | 3.41 | Low of Day |
 | EOD | 3.52 | Close |
 | SSR | yes / no | |
-| Entry after 11 am | yes / no | Kept even though in theory I shouldn't be doing it — ticked on a GUS, which stores no entry time ; **derived** from the retest time on a DT (#499) |
 | Institutions > 20 % | yes / no | More than 20 % of the float held by institutions, read on the broker screen — ticked by hand (#349, #369) |
 
 **What the app computes** : push at the open %, HOD %, LOD %, EOD %, all **vs the open** — e.g. push
@@ -421,7 +422,7 @@ at the open (4.62 − 4.20) ÷ 4.20 = +10.0 % ; and from the premarket, the **ho
 **cumulative** readings of the scanner (#499, below).
 
 **Institutional ownership** came back as a flag (#349) — « Institutions > 20 % », ticked by hand
-like the other three (#369 fixed a label that read the other way round). Low ownership is a GUS entry
+like the other two (#369 fixed a label that read the other way round). Low ownership is a GUS entry
 criterion filtered upstream (`docs/pattern/GUS.md`, #7), so the flag is expected to stay unticked
 most days ; keeping the trace on the stat is what lets the exceptions be seen later. The **exact percentage** stays out : the flag is the unit of comparison, and the
 threshold lives in the label, so it can move without touching the data.
@@ -576,8 +577,10 @@ price, wrong on a third of the stats. It becomes a « < $1 » tag derived from t
 **« Under $1 »** toggle — known **once the open is typed** : in premarket a stat whose PM prices
 sit under a dollar carries no tag yet, on purpose (the margin floor bites on the price traded, and
 the PM prices are not it ; the box could be ticked early, but was wrong a third of the time). Both toggles sit beside the status tabs, not among them : they combine with
-any tab (the out-of-pattern stats among the completed ones, the traded ones…) and with each other. « Entry after 11 am » is derived from the retest time on a DT, and stays a
-checkbox on a GUS. SSR, institutions > 20 % and no push stay : nothing else recorded says them.
+any tab (the out-of-pattern stats among the completed ones, the traded ones…) and with each other. « Entry after 11 am » leaves the stat
+too (#647), box and tag, on a GUS as on a DT : it is about the trade, not the setup — the trade sheet
+derives it from its first entry fill.
+SSR, institutions > 20 % and no push stay : nothing else recorded says them.
 
 ### The double top stat (#428)
 
@@ -612,8 +615,7 @@ whose low precedes its top is a typo.
   behind it : does a double top really play out over about half an hour ?
 - The stat is checked with the **four prices and the four times** (« n / 4 prices · n / 4 times ») ;
   same check, same rules.
-- The flags stay (SSR, institutions > 20 %) ; « entry after 11 am » is **derived** from the retest
-  time — a DT is entered on the retest (#499) ; « no push » does not apply.
+- The flags stay (SSR, institutions > 20 %) ; « no push » does not apply.
 - **The page follows the pattern** : a **GUS / DT / SIR / SIV / Discretionary / All** switch above
   the KPIs picks the KPIs, the table's columns and the averages. **Every pattern has its own
   numbers** (#512) : SIR, SIV and discretionary are measured like the GUS — completed, push at the

@@ -5,19 +5,15 @@ import com.portfolioai.auth.domain.User
 import com.portfolioai.shared.Pattern
 import java.math.BigDecimal
 import java.time.LocalDate
-import java.time.LocalTime
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 /**
  * Unit spec for the flags the app derives instead of asking (#499) — « a checkbox survives only if
- * the app cannot derive it » :
- * - [StatEntry.under1Dollar] off the open (a double top's start), where the margin floor bites ;
- *   the box it replaces was wrong on a third of the stats (SOAR at 0.40 and FBGL at 0.632 unticked)
- *   ;
- * - [StatEntry.entersAfter11am] off the retest time on a double top, entered on its retest ; the
- *   other patterns store no entry time, so there it stays the box ticked by hand.
+ * the app cannot derive it » : [StatEntry.under1Dollar] off the open (a double top's start), where
+ * the margin floor bites ; the box it replaces was wrong on a third of the stats (SOAR at 0.40 and
+ * FBGL at 0.632 unticked).
  *
  * No Spring / DB here.
  */
@@ -41,32 +37,7 @@ class StatEntryDerivedFlagsTest {
 
   @Test
   fun `a double top reads its start, the open unless moved`() {
-    assertTrue(doubleTop(start = "0.88", retestTime = null).under1Dollar)
-  }
-
-  @Test
-  fun `a double top retested after 11 am was entered after 11 am`() {
-    // SDEV 29/09 : the double top runs 11:03 -> 12:13, and the box was left unticked.
-    assertTrue(doubleTop(retestTime = LocalTime.of(12, 13)).entersAfter11am)
-  }
-
-  @Test
-  fun `a double top retested at 11 sharp counts, one retested before 11 does not`() {
-    assertTrue(doubleTop(retestTime = LocalTime.of(11, 0)).entersAfter11am)
-    assertFalse(doubleTop(retestTime = LocalTime.of(10, 38)).entersAfter11am)
-  }
-
-  @Test
-  fun `a double top ignores the box — its retest time is what it says`() {
-    val ticked = doubleTop(retestTime = LocalTime.of(10, 38)).apply { entryAfter11am = true }
-
-    assertFalse(ticked.entersAfter11am)
-  }
-
-  @Test
-  fun `a GUS stores no entry time, so it keeps the box ticked by hand`() {
-    assertTrue(gus(open = "4.20").apply { entryAfter11am = true }.entersAfter11am)
-    assertFalse(gus(open = "4.20").entersAfter11am)
+    assertTrue(doubleTop(start = "0.88").under1Dollar)
   }
 
   private fun gus(open: String?) =
@@ -80,11 +51,10 @@ class StatEntryDerivedFlagsTest {
       )
       .apply { openPrice = open?.let(::BigDecimal) }
 
-  private fun doubleTop(start: String = "2.30", retestTime: LocalTime?) =
+  private fun doubleTop(start: String) =
     gus(open = null).apply {
       pattern = Pattern.DT
       dtStartPrice = BigDecimal(start)
-      dtRetestTime = retestTime
     }
 
   private companion object {
