@@ -824,7 +824,7 @@
       "hint": "repris du candidat · modifiable · chaque champ s'enregistre à la sortie",
       "required": "requis",
       "doubleTopFixed": "Une stat DT reste un DT : ses prix n'ont pas de sens pour un autre pattern",
-      "refileHint": "S'enregistre au changement — les trades liés suivent. Un autre pattern le même jour est une autre stat : « Même ticker, autre pattern », ou « → DT » sur le candidat."
+      "gusFixed": "Une stat GUS reste un GUS : un double top le même jour est une autre stat"
     },
     "create": {
       "open": "Nouvelle stat",
@@ -865,12 +865,9 @@
     },
     "view": {
       "label": "Pattern affiché",
-      "hint": "les KPIs, les colonnes du tableau et les moyennes suivent le pattern — chaque pattern a ses chiffres, SIR, SIV et discrétionnaire se mesurent comme le GUS",
+      "hint": "les KPIs, les colonnes du tableau et les moyennes suivent le pattern — les stats ne mesurent que le GUS et le DT ; un trade SIR, SIV ou discrétionnaire se note au journal, sans stat",
       "GUS": "GUS",
       "DT": "DT",
-      "SIR": "SIR",
-      "SIV": "SIV",
-      "DISCRETIONARY": "Discr.",
       "ALL": "Tous"
     },
     "doubleTop": {
@@ -907,12 +904,12 @@
     },
     "sibling": {
       "label": "Même ticker, autre pattern",
-      "hint": "Un trade sous un autre pattern passe par sa propre stat : même jour et même ticker, les prix de la journée repris. Seulement les patterns encore libres ce jour-là.",
-      "create": "Stat"
+      "hint": "Le GUS du matin et le DT de fin de matinée sont deux stats : même jour, même ticker. Seulement si l'autre n'existe pas encore.",
+      "create": "Stat {{pattern}}"
     },
     "confirmSibling": {
       "title": "Créer la stat {{pattern}} de {{ticker}} ?",
-      "message": "Même jour, même ticker : les prix de la journée (clôture veille, premarket, open, push ou « pas de push », HOD, LOD, EOD) sont repris (un DT n'en garde pas le premarket), ce qui est propre au pattern part vide. Elle a ses propres trades et ne compte que dans les stats de son pattern.",
+      "message": "Même jour, même ticker : le float, le volume et les flags de la journée sont repris — un DT part de l'open sans premarket, un GUS prend le premarket du candidat. Elle a ses propres trades et ne compte que dans les stats de son pattern.",
       "confirm": "Créer la stat"
     },
     "confirmAnotherTrade": {

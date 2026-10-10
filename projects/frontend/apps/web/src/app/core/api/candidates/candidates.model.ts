@@ -1,4 +1,4 @@
-import { Pattern } from '../shared/pattern.model';
+import { Pattern, STAT_PATTERNS } from '../shared/pattern.model';
 
 /**
  * Candidates **domain** types — the morning capture of a ticker spotted on the radar, with what is
@@ -43,8 +43,8 @@ export interface CandidateStat {
   statId: string;
 }
 
-/** The patterns a candidate can be promoted to — the other ones wait for their own stat. */
-export const PROMOTION_PATTERNS: readonly Pattern[] = ['GUS', 'DT'];
+/** The patterns a candidate can be promoted to — a stat's own (#648). */
+export const PROMOTION_PATTERNS: readonly Pattern[] = STAT_PATTERNS;
 
 /** Create / update payload — [Candidate] minus the server-owned id, its stats and audit. */
 export type CandidateInput = Omit<Candidate, 'id' | 'stats' | 'createdAt' | 'updatedAt'>;

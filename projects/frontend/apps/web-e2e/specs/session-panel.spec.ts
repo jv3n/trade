@@ -10,7 +10,6 @@ import { Api, expect, isoToday, test, typeNumber } from '../fixtures';
  * - a HOD below the push flags the save, puts the ✓ out of reach, and **sends nothing** (#305) ;
  * - a required premarket price cleared holds the session card too, until the premarket is fixed
  *   (#348) ;
- * - the pattern saves as soon as it is picked (#393) ;
  * - « Fermer », « Nouvelle stat » and opening another stat ask before dropping a held edit ;
  * - a filter that takes the stat off the table closes the panel **without** asking, drops the edit,
  *   says so, and sends nothing (#383).
@@ -106,19 +105,6 @@ test('a cleared premarket price holds the session card until the premarket is fi
   await typeNumber(premarket(page).getByLabel('Clôture veille'), '2.65');
 
   await expect.poll(async () => (await api.get<Stat>(`/api/stats/${stat.id}`)).hodPrice).toBe(4.8);
-});
-
-test('the pattern saves as soon as it is picked', async ({ api, page }) => {
-  const stat = await seedStat(api);
-  await openPanel(page, stat);
-
-  await premarket(page).getByLabel('Pattern', { exact: true }).click();
-  // SIR, measured like a GUS : re-filing to or from DT is refused, a double top is a stat of its own.
-  await page.getByRole('option', { name: 'SIR — Short Into Resistance' }).click();
-
-  await expect.poll(async () => (await api.get<Stat>(`/api/stats/${stat.id}`)).pattern).toBe('SIR');
-  const row = page.getByRole('row').filter({ hasText: TICKER });
-  await expect(row.getByRole('cell', { name: 'SIR', exact: true })).toBeVisible();
 });
 
 test('closing, a new stat or another stat ask before dropping a held edit', async ({

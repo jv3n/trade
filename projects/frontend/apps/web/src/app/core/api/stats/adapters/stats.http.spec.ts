@@ -201,12 +201,12 @@ describe('HttpStatsRepository', () => {
 
   it('freePatterns reads the patterns still free for that day and ticker', () => {
     repo.freePatterns('stat-1').subscribe((patterns) => {
-      expect(patterns).toEqual(['SIR', 'DISCRETIONARY']);
+      expect(patterns).toEqual(['DT']);
     });
 
     const req = http.expectOne('/api/stats/stat-1/free-patterns');
     expect(req.request.method).toBe('GET');
-    req.flush(['SIR', 'DISCRETIONARY']);
+    req.flush(['DT']);
   });
 
   it('promoteToTrade POSTs to /:id/trade and parses the journal trade that comes back', () => {

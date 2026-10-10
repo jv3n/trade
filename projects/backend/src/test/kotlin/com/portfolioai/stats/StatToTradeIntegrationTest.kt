@@ -49,8 +49,7 @@ import org.springframework.web.server.ResponseStatusException
  *   retained P&L) so the UI can swap the button for them, and they survive an edit of the stat ;
  *   the « traded » KPI still counts stats, not trades ;
  * - deleting a stat **keeps its trades** (#635) : unlinked, with their executions, P&L, pattern and
- *   account line — the only way the stats invented for an import go away without the trades ;
- * - a stat **re-filed under another pattern** takes its trade along (#393).
+ *   account line — the only way the stats invented for an import go away without the trades.
  *
  * `AuthService` is mocked so the user scope is deterministic ; a second user is seeded to check the
  * action can't reach across tenants.
@@ -241,39 +240,18 @@ class StatToTradeIntegrationTest {
   }
 
   @Test
-  fun `re-filing a traded stat under another pattern moves its trade along`() {
-    val trade = statService.promoteToTrade(stat.id)
-
-    statService.update(stat.id, completionRequest().copy(pattern = Pattern.SIV))
-
-    assertEquals(Pattern.SIV, tradeRepo.findById(trade.id).orElseThrow().pattern)
-  }
-
-  @Test
-  fun `a stat without a trade is re-filed on its own, onto the new patterns too`() {
-    // SIR and SIV only exist once V9 added them to the Postgres enum : this save goes through it.
-    val updated = statService.update(stat.id, completionRequest().copy(pattern = Pattern.SIR))
-
-    assertEquals(Pattern.SIR, updated.pattern)
-    assertEquals(Pattern.SIR, statRepo.findByIdAndUserId(stat.id, testUser.id)!!.pattern)
-  }
-
-  @Test
   fun `deleting a stat keeps its trades, unlinked — fills, P&L, pattern and account line kept`() {
     // The import of #628 : a stat invented to hold a real trade goes, the trade stays.
     val short = statService.promoteToTrade(stat.id)
     fill(short.id, TradeDirection.SHORT, 350, "4.50", "3.66", LocalTime.of(9, 41))
     val long = statService.promoteToTrade(stat.id)
-    // Re-filed after the fills (#393) — `fill` sends GUS, so the trades only take SIR from the
-    // stat.
-    statService.update(stat.id, completionRequest().copy(pattern = Pattern.SIR))
 
     statService.delete(stat.id)
 
     assertNull(statRepo.findByIdAndUserId(stat.id, testUser.id), "the stat is gone")
     val kept = tradeService.findById(short.id)
     assertNull(kept.statEntryId)
-    assertEquals(Pattern.SIR, kept.pattern, "the trade keeps the pattern it was filed under")
+    assertEquals(Pattern.GUS, kept.pattern, "the trade keeps the pattern it was filed under")
     assertEquals(2, kept.executions.size, "one entry and one exit, as typed")
     assertEquals(0, kept.retainedProfitDollars!!.compareTo(BigDecimal("294.00")))
     assertNull(tradeService.findById(long.id).statEntryId, "every trade of the stat, not only one")

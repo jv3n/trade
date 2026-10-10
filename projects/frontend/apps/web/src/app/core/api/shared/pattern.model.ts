@@ -8,8 +8,15 @@
  */
 export type Pattern = 'GUS' | 'DT' | 'SIR' | 'SIV' | 'DISCRETIONARY';
 
-/** Every pattern, in display order. */
+/** Every pattern, in display order — what a trade can carry. */
 export const PATTERNS: readonly Pattern[] = ['GUS', 'DT', 'SIR', 'SIV', 'DISCRETIONARY'];
+
+/**
+ * The patterns a stat measures (#648) — the only two traded and measured. SIR, SIV and
+ * discretionary stay trades only, typed in the journal with no stat.
+ */
+export type StatPattern = 'GUS' | 'DT';
+export const STAT_PATTERNS: readonly StatPattern[] = ['GUS', 'DT'];
 
 /** Pattern pre-selected when something is created without one. */
 export const DEFAULT_PATTERN: Pattern = 'GUS';

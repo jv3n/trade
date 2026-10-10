@@ -42,8 +42,8 @@ import org.springframework.web.server.ResponseStatusException
  * journal / candidates / account.
  *
  * **One stat per (user, day, ticker, pattern)** — creating a second one is a 409 ; the DB unique
- * constraint `ux_stat_entry_user_day_ticker_pattern` is the race-safe backstop (#434). A double top
- * is a stat of its own : re-filing a stat to or from DT is a 400.
+ * constraint `ux_stat_entry_user_day_ticker_pattern` is the race-safe backstop (#434). A stat is a
+ * GUS or a DT (#648), any other pattern is a 400, and it is never re-filed : a 400 too.
  *
  * A stat is born from a candidate (the promotion action, #189, through [create]) or typed by hand
  * for a chart found afterwards, on any day up to today ([createByHand], #326). The CSV leg is
@@ -151,17 +151,14 @@ class StatEntryService(
   }
 
   /**
-   * « Same ticker, another pattern » (#507) — a stat born from [id] : same day, same ticker, same
-   * source candidate, and the [pattern] picked among the free ones. **The day's prices are carried
-   * over** — premarket, open, push at the open (or « no push »), HOD / LOD / EOD, float, volume,
-   * and the flags that describe the day (SSR, under $1, institutions) : they belong to the day, not
-   * to the setup, so a session-measured sibling is completable as born (#517) and two stats of one
-   * day never disagree about what the stock did. What is specific to a pattern starts empty : the
-   * double-top prices (a double top starts from the open, as when it is born from a candidate, and
-   * keeps none of the session), the note. A pattern the day and ticker already have is a 409.
+   * « Same ticker, another pattern » (#507) — the other stat of [id]'s day : a GUS gives its DT, a
+   * DT its GUS (#648). Same day, same ticker, same source candidate ; float, volume and the flags
+   * that describe the day (SSR, institutions) are carried over, the note is not. A double top
+   * starts from the open, as when it is born from a candidate. A pattern the day and ticker already
+   * have is a 409, a pattern a stat does not measure a 400.
    *
-   * A double top keeps no premarket (#649) : a sibling born from one takes its candidate's, and
-   * without a candidate it is a 400 — that stat is typed with « New stat ».
+   * A double top keeps no premarket (#649) : a GUS born from one takes its candidate's, and without
+   * a candidate it is a 400 — that stat is typed with « New stat ».
    */
   @Transactional
   fun createSibling(id: UUID, pattern: Pattern): StatEntryDto {
@@ -188,7 +185,7 @@ class StatEntryService(
         .toSet()
     // Every free pattern is measured on the session, so needs the premarket a DT lacks (#649).
     if (source.isDoubleTop && sourcePremarket(source) == null) return emptyList()
-    return Pattern.entries.filterNot { it in taken }
+    return STAT_PATTERNS.filterNot { it in taken }
   }
 
   /**
@@ -229,20 +226,18 @@ class StatEntryService(
    * Overwrites a stat — the session panel sends the whole row back each time a field is left
    * (premarket recap + session prices + flags), so any subset of the session may come in. Renaming
    * onto a (day, ticker, pattern) the caller already has is a 409. A ticked stat keeps its tick but
-   * can't lose a price : that is a 400, untick it first. Re-filing to or from DT is a 400 : a GUS
-   * that becomes a double top is a second stat (#434).
+   * can't lose a price : that is a 400, untick it first. Changing the pattern is a 400 : a GUS that
+   * becomes a double top is a second stat (#434), and no other pattern is left to re-file to
+   * (#648).
    */
   @Transactional
   fun update(id: UUID, request: StatEntryRequest): StatEntryDto {
     val entry = loadOwned(id)
     val ticker = request.cleanTicker()
-    val previousPattern = entry.pattern
-    if (
-      request.pattern != previousPattern && Pattern.DT in setOf(request.pattern, previousPattern)
-    ) {
+    if (request.pattern != entry.pattern) {
       throw badRequest(
-        "Stat ${entry.ticker} can't be re-filed from $previousPattern to ${request.pattern} — " +
-          "a double top is a stat of its own"
+        "Stat ${entry.ticker} can't be re-filed from ${entry.pattern} to ${request.pattern} — " +
+          "a GUS and a double top are two stats"
       )
     }
     requireFree(entry.user.id, request, ticker, ownId = entry.id)
@@ -255,9 +250,6 @@ class StatEntryService(
     }
     entry.updatedAt = Instant.now()
     val saved = repo.save(entry)
-    if (saved.pattern != previousPattern) {
-      events.publishEvent(StatPatternChangedEvent(saved.id, saved.user.id, saved.pattern))
-    }
     // The completion panel replaces its row with this response — dropping the link would make the
     // « → Trade » button reappear on a stat that already has its trade.
     return saved.toDto(tradeEntryService.tradeLinksByStat(listOf(saved.id))[saved.id].orEmpty())

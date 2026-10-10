@@ -363,13 +363,15 @@ class StatsListingIntegrationTest {
   }
 
   @Test
-  fun `re-filing a stat to or from DT is a 400 — a double top is a stat of its own`() {
+  fun `changing a stat's pattern is a 400 — a GUS and a double top are two stats`() {
     val gus = service.create(premarketRequest(ticker = "SGBX", pattern = Pattern.GUS))
     val dt = service.create(premarketRequest(ticker = "NXTT", pattern = Pattern.DT))
 
     listOf(
         gus.id to premarketRequest(ticker = "SGBX", pattern = Pattern.DT),
         dt.id to premarketRequest(ticker = "NXTT", pattern = Pattern.GUS),
+        // #648 : the re-filing among the patterns measured like a GUS (#393) is gone with them.
+        gus.id to premarketRequest(ticker = "SGBX", pattern = Pattern.SIR),
       )
       .forEach { (id, refiled) ->
         val ex = assertThrows(ResponseStatusException::class.java) { service.update(id, refiled) }
@@ -377,6 +379,19 @@ class StatsListingIntegrationTest {
       }
     assertEquals(Pattern.GUS, repo.findById(gus.id).orElseThrow().pattern)
     assertEquals(Pattern.DT, repo.findById(dt.id).orElseThrow().pattern)
+  }
+
+  @Test
+  fun `a stat is a GUS or a DT — typed by hand under another pattern, it is a 400`() {
+    // #648 : SIR, SIV and discretionary are trades only, typed in the journal with no stat.
+    for (pattern in listOf(Pattern.SIR, Pattern.SIV, Pattern.DISCRETIONARY)) {
+      val ex =
+        assertThrows(ResponseStatusException::class.java) {
+          service.createByHand(premarketRequest(ticker = "KTTA", pattern = pattern))
+        }
+      assertEquals(400, ex.statusCode.value(), "$pattern")
+    }
+    assertEquals(0, repo.count())
   }
 
   @Test
@@ -1165,24 +1180,6 @@ class StatsListingIntegrationTest {
     assertNull(summary.medianHoldPercent)
     assertEquals(0, summary.fadeCount)
     assertNull(summary.averageExtensionPercent)
-  }
-
-  @Test
-  fun `a stat born from a GUS counts in its own pattern, never in the GUS figures`() {
-    // KTTA, 17/09 : a GUS and the discretionary stat born from it share the day's open, LOD and
-    // EOD (#507). Mixed in, that ticker-day would count twice in the GUS averages.
-    seedThreeStats()
-    val gusBefore = service.summarise(gusOnly)
-    val source = service.findAllPaged(gusOnly, PageRequest.of(0, 50)).content.first { it.completed }
-    val sibling = service.createSibling(source.id, Pattern.DISCRETIONARY)
-    service.setCompleted(sibling.id, true)
-
-    val discretionary = service.summarise(StatEntryFilter(pattern = Pattern.DISCRETIONARY))
-
-    assertEquals(gusFigures(gusBefore), gusFigures(service.summarise(gusOnly)))
-    assertEquals(gusBefore.completed, service.summarise(gusOnly).completed)
-    assertEquals(1, discretionary.completed)
-    assertEquals(1, discretionary.fadeCount, "measured like a GUS, on its own stat")
   }
 
   @Test
