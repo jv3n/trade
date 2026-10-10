@@ -53,7 +53,23 @@
             <span class="trade-date">{{ e.tradeDate | date: 'fullDate' }}</span>
           </h2>
           <p class="subtitle">
-            <span class="tag tag-accent">{{ 'patterns.short.' + e.pattern | translate }}</span>
+            @if (!e.statEntryId && draft(); as d) {
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pattern-field">
+                <mat-select
+                  data-testid="pattern-select"
+                  [value]="d.pattern"
+                  [attr.aria-label]="'journal.newTrade.pattern' | translate"
+                  [matTooltip]="'journal.detail.patternHint' | translate"
+                  (selectionChange)="setPattern($event.value)"
+                >
+                  @for (p of patterns; track p) {
+                    <mat-option [value]="p">{{ 'patterns.short.' + p | translate }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            } @else {
+              <span class="tag tag-accent">{{ 'patterns.short.' + e.pattern | translate }}</span>
+            }
             @if (lateEntry(); as time) {
               <span
                 class="tag"

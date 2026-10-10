@@ -37,6 +37,7 @@ import {
 } from '../../../core/api/journal/trade-entry.model';
 import { Locate } from '../../../core/api/locates/locates.model';
 import { LocatesRepository } from '../../../core/api/locates/locates.repository';
+import { PATTERNS, Pattern } from '../../../core/api/shared/pattern.model';
 import { StatEntry } from '../../../core/api/stats/stat-entry.model';
 import { StatsRepository } from '../../../core/api/stats/stats.repository';
 import { ConfirmService } from '../../../core/app-state/confirm.service';
@@ -67,10 +68,12 @@ interface ExecRow {
 
 /**
  * What the page lets the user type : the position (direction + legs), the real P&L of the broker
- * statement and the two post-mortem fields. Everything else on a trade is inherited from its stat
- * (date, ticker, pattern) or derived from the executions.
+ * statement and the two post-mortem fields — plus the pattern of a trade no stat holds (#654).
+ * Everything else on a trade is inherited from its stat (date, ticker, pattern) or derived from
+ * the executions.
  */
 interface TradeDraft {
+  pattern: Pattern;
   direction: TradeDirection;
   executions: ExecRow[];
   realProfitDollars: number | null;
@@ -100,6 +103,7 @@ export interface PnlBlock {
 
 function draftOf(entry: TradeEntry): TradeDraft {
   return {
+    pattern: entry.pattern,
     // Short-biased default — the bread-and-butter of this journal, and what a fresh trade
     // promoted from a stat carries (the backend leaves `direction` null until the first save).
     direction: entry.direction ?? 'SHORT',
@@ -143,7 +147,8 @@ function spanMinutes(executions: ExecRow[]): number | null {
 /**
  * Trade page — the full sheet of one trade (`/journal/:id`), after `mockup/trade.html` and
  * `mockup/PARCOURS.md` › step 4. A trade is born from a stat, so its identity (date, ticker,
- * pattern) is read-only here ; what is typed in is the position and the debrief :
+ * pattern) is read-only here — but for the pattern of a trade with no stat (#654) ; what is typed
+ * in is the position and the debrief :
  *
  * - **KPIs** — retained P&L ($ and %), position, average entry → exit with their distance to the
  *   session open, and the duration between the first and the last fill.
@@ -218,6 +223,7 @@ export class JournalDetailPage implements HasUnsavedChanges {
   readonly saving = signal(false);
 
   readonly directions = TRADE_DIRECTIONS;
+  readonly patterns = PATTERNS;
   readonly executionKinds = EXECUTION_KINDS;
 
   // ---- Edit buffer ----------------------------------------------------------------------------
@@ -502,6 +508,10 @@ export class JournalDetailPage implements HasUnsavedChanges {
     );
   }
 
+  setPattern(pattern: Pattern): void {
+    this.patch({ pattern });
+  }
+
   setDirection(direction: TradeDirection): void {
     this.patch({ direction });
   }
@@ -579,7 +589,7 @@ export class JournalDetailPage implements HasUnsavedChanges {
       statEntryId: entry.statEntryId,
       tradeDate: entry.tradeDate,
       ticker: entry.ticker,
-      pattern: entry.pattern,
+      pattern: draft.pattern,
       // No position yet ⇒ no direction, matching the nullable backend column — unless one was
       // chosen at creation (a trade on its own, #634), which a save before any fill must keep.
       direction: executions.length > 0 || entry.direction ? draft.direction : null,
