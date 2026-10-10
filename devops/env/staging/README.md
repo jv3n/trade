@@ -26,8 +26,9 @@ To do once, in this order, before the first `-rc` release. Project `trade-496613
 ### 1. Supabase — the staging database
 
 1. Create a new project `trade-staging`, region `ca-central-1` (free tier).
-2. *Project settings → Database → Connection string → JDBC*, **Session pooler**. Keep it for step 2,
-   with the password inline and `sslmode=require` — the same shape as production's.
+2. *Project settings → Database → Connection string → JDBC*, **Session pooler**. Keep it for step 2
+   **without the password** (`user=…&sslmode=require`), and the password apart — the same shape as
+   production's (#659).
 
 Flyway creates the schema at the first boot ; nothing to run by hand.
 
@@ -38,15 +39,17 @@ folder's Terraform root. On an empty project, follow steps 2 and 3 of *Adding an
 [`../../terraform/`](../../terraform/README.md) — `plan` adds, `apply` creates :
 
 - the runtime account `portfolioai-staging-runtime@`, which `github-deploy@` may act as ;
-- the containers `supabase-db-url-staging` and `app-admin-emails-staging`, read by the staging
-  account alongside the shared ones — never the production database ;
+- the containers `supabase-db-url-staging`, `supabase-db-password-staging` and
+  `app-admin-emails-staging`, read by the staging account alongside the shared ones — never the
+  production database ;
 - the service `portfolioai-staging`, public, on Google's `hello` image until the first deploy.
 
 Then the values Terraform never holds :
 
 ```bash
-printf '%s' 'jdbc:postgresql://…pooler.supabase.com:5432/postgres?user=…&password=…&sslmode=require' \
+printf '%s' 'jdbc:postgresql://…pooler.supabase.com:5432/postgres?user=…&sslmode=require' \
   | gcloud secrets versions add supabase-db-url-staging --data-file=-
+printf '%s' '…' | gcloud secrets versions add supabase-db-password-staging --data-file=-
 printf '%s' 'you@example.com' | gcloud secrets versions add app-admin-emails-staging --data-file=-
 ```
 

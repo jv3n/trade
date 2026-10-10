@@ -6,8 +6,10 @@ its readers are declared in Terraform ([`../terraform/`](../terraform/README.md)
 
 | Name | Lives in | Read by | For | Secret ? |
 |---|---|---|---|---|
-| `supabase-db-url` | GCP Secret Manager | `portfolioai-runtime@`, `github-deploy@` | production JDBC URL (password inside) ; the monthly backup | **yes** |
-| `supabase-db-url-staging` | GCP Secret Manager | `portfolioai-staging-runtime@` | staging JDBC URL | **yes** |
+| `supabase-db-url` | GCP Secret Manager | `portfolioai-runtime@`, `github-deploy@` | production JDBC URL, user inside, **no password** ; the monthly backup | no — host and user only |
+| `supabase-db-password` | GCP Secret Manager | `portfolioai-runtime@`, `github-deploy@` | production database password ; the monthly backup | **yes** |
+| `supabase-db-url-staging` | GCP Secret Manager | `portfolioai-staging-runtime@` | staging JDBC URL, no password | no — host and user only |
+| `supabase-db-password-staging` | GCP Secret Manager | `portfolioai-staging-runtime@` | staging database password | **yes** |
 | `google-oauth-client-secret` | GCP Secret Manager | both runtimes | Google login | **yes** |
 | `google-oauth-client-id` | GCP Secret Manager | both runtimes | Google login | no — shown in the login URL |
 | `app-admin-emails` / `-staging` | GCP Secret Manager | its runtime | ADMIN role at first login | no — personal data |

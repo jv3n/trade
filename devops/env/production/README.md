@@ -20,14 +20,15 @@ Described in Terraform — this folder and [`../../terraform/project/`](../../te
 - Two service accounts, deploy and runtime kept separate :
   - `github-deploy@` — `run.admin` + `artifactregistry.writer` on the project,
     `iam.serviceAccountUser` on the runtime account, `secretmanager.secretAccessor` on
-    `supabase-db-url` (the monthly backup) ;
+    `supabase-db-url` and `supabase-db-password` (the monthly backup) ;
   - `portfolioai-runtime@` — `secretmanager.secretAccessor`, per secret.
 - Workload Identity Federation : pool + provider `github`, with an attribute condition on the
   repository owner. No long-lived service-account key exists anywhere.
 - Artifact Registry repository `northamerica-northeast1-docker.pkg.dev/trade-496613/backend`.
 - The Secret Manager containers `google-oauth-client-id`, `google-oauth-client-secret`,
-  `app-admin-emails`, `supabase-db-url` (JDBC URL of the Supabase session pooler, credentials
-  inline, `sslmode=require`) and `sentry-dsn-backend` — their values are added by hand.
+  `app-admin-emails`, `supabase-db-url` (JDBC URL of the Supabase session pooler, user inline,
+  `sslmode=require`, **no password**), `supabase-db-password` (#659) and `sentry-dsn-backend` —
+  their values are added by hand.
 - The Cloud Run service `portfolioai` and its public access ; its revisions belong to `deploy.yml`.
 
 By hand : the billing account, and the `run`, `artifactregistry`, `secretmanager`, `iam`,

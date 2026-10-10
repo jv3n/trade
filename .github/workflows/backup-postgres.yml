@@ -6,7 +6,8 @@ name: Backup Supabase Postgres
 # Supabase already keeps 7 days of daily snapshots ; the 12 kept here are the long-term net.
 #
 # Needs the R2 bucket, three GitHub secrets (R2_*), three repo variables (GCP_*), and
-# `roles/secretmanager.secretAccessor` granted to `github-deploy@` on `supabase-db-url`.
+# `roles/secretmanager.secretAccessor` granted to `github-deploy@` on `supabase-db-url` and
+# `supabase-db-password`.
 
 on:
   schedule:
@@ -63,16 +64,22 @@ jobs:
           /usr/lib/postgresql/17/bin/pg_dump --version
 
       # The secret holds a **JDBC** URL and libpq rejects the `jdbc:` prefix ; the rest is a valid
-      # libpq URI. Masked so a later step cannot echo the credentials into the logs.
-      - name: Read DATABASE_URL from Secret Manager
+      # libpq URI. The password is its own secret (#659), handed to pg_dump as PGPASSWORD. Both
+      # masked so a later step cannot echo them into the logs.
+      - name: Read the database URL and password from Secret Manager
         id: db
         run: |
           JDBC_URL=$(gcloud secrets versions access latest \
             --secret=supabase-db-url \
             --project=${{ vars.GCP_PROJECT }})
+          PASSWORD=$(gcloud secrets versions access latest \
+            --secret=supabase-db-password \
+            --project=${{ vars.GCP_PROJECT }})
           LIBPQ_URL="${JDBC_URL#jdbc:}"
           echo "::add-mask::$LIBPQ_URL"
+          echo "::add-mask::$PASSWORD"
           echo "url=$LIBPQ_URL" >> "$GITHUB_OUTPUT"
+          echo "password=$PASSWORD" >> "$GITHUB_OUTPUT"
 
       # `--no-owner --no-acl` so the dump restores anywhere, without the Supabase-specific roles.
       # Plain SQL + gzip rather than `custom` : less compact, but readable with `zless` during an
@@ -80,6 +87,7 @@ jobs:
       - name: Dump database
         env:
           DATABASE_URL: ${{ steps.db.outputs.url }}
+          PGPASSWORD: ${{ steps.db.outputs.password }}
         run: |
           # Without it a failing pg_dump hid behind gzip's success, and every weekly run from June
           # to September uploaded a 20-byte empty file with a green check (#402).
