@@ -85,6 +85,11 @@ spec:
                 secretKeyRef:
                   name: supabase-db-url
                   key: latest
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: supabase-db-password
+                  key: latest
   traffic:
     - latestRevision: true
       percent: 100

@@ -12,7 +12,10 @@ spring:
     timeout-per-shutdown-phase: 30s
 
   datasource:
+    # The URL carries no credentials ; the password is its own secret, so no log of the URL leaks it
+    # (#659). No default : a missing secret fails the start instead of trying the local one.
     url: ${SPRING_DATASOURCE_URL}
+    password: ${SPRING_DATASOURCE_PASSWORD}
     hikari:
       # 3 Cloud Run instances × 10 = 30 connections at most, under the 60 of the Supabase free tier.
       maximum-pool-size: 10

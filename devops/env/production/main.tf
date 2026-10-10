@@ -18,3 +18,9 @@ resource "google_secret_manager_secret_iam_member" "deploy_reads_db_url" {
   role      = "roles/secretmanager.secretAccessor"
   member    = "serviceAccount:${local.deploy_account}"
 }
+
+resource "google_secret_manager_secret_iam_member" "deploy_reads_db_password" {
+  secret_id = module.environment.secret_ids["supabase-db-password"]
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${local.deploy_account}"
+}

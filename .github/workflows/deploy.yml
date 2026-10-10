@@ -161,7 +161,7 @@ jobs:
             --timeout=300 \
             --port=8080 \
             --set-env-vars=SPRING_PROFILES_ACTIVE=prod,APP_FRONTEND_URL=${{ steps.target.outputs.url }},SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_REDIRECT_URI=${{ steps.target.outputs.url }}login/oauth2/code/google,SENTRY_RELEASE=${{ github.event.release.tag_name }},SENTRY_ENVIRONMENT=${{ steps.target.outputs.sentry_env }},GCP_PROJECT_ID=${{ vars.GCP_PROJECT }} \
-            --update-secrets=SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID=google-oauth-client-id:latest,SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET=google-oauth-client-secret:latest,APP_ADMIN_EMAILS=app-admin-emails${{ steps.target.outputs.secret_suffix }}:latest,SPRING_DATASOURCE_URL=supabase-db-url${{ steps.target.outputs.secret_suffix }}:latest,SENTRY_DSN=sentry-dsn-backend:latest
+            --update-secrets=SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID=google-oauth-client-id:latest,SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET=google-oauth-client-secret:latest,APP_ADMIN_EMAILS=app-admin-emails${{ steps.target.outputs.secret_suffix }}:latest,SPRING_DATASOURCE_URL=supabase-db-url${{ steps.target.outputs.secret_suffix }}:latest,SPRING_DATASOURCE_PASSWORD=supabase-db-password${{ steps.target.outputs.secret_suffix }}:latest,SENTRY_DSN=sentry-dsn-backend:latest
 
       # Defence in depth — `gcloud run deploy` already fails when the revision crashes at boot.
       - name: Smoke test and summary
