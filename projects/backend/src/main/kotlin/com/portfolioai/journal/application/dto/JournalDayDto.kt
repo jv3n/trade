@@ -16,6 +16,7 @@ import java.time.LocalDate
  * - [durationMinutes] : the sum of the trades' durations (« durée cumulée ») — not time in the
  *   market, a trade may hold a flat stretch. Null when no trade has one.
  * - [retainedProfitDollars] : the sum of the retained P&L of the trades that have one.
+ * - [enteredLate] : one of the day's trades was entered at 11:00 or later (#651).
  */
 data class JournalDayDto(
   val tradeDate: LocalDate,
@@ -29,5 +30,6 @@ data class JournalDayDto(
   val retainedGainPercent: BigDecimal?,
   val durationMinutes: Long?,
   val retainedProfitDollars: BigDecimal?,
+  val enteredLate: Boolean,
   val trades: List<TradeEntryDto>,
 )

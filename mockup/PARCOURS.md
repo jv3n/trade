@@ -395,6 +395,17 @@ row opens its sheet, as before ; a row with several opens onto its trades, each 
 Sorting, filtering and paging count rows, not trades ; the **CSV export stays one line per trade** —
 it is a dump the import reads back.
 
+**Late entries, across the journal** (#651) : the question behind the « after 11 am » tag is not
+« was this trade late » but « do my late entries lose money », so the journal answers it on the
+whole set, with **one definition** — the earliest timed entry fill, at 11:00 or later, the sheet's :
+
+- a row carries the tag as soon as one of its trades is late ; opened, each trade carries its own ;
+- an **« Entry »** filter in the toolbar — all / before 11 am / after 11 am ;
+- a KPI card comparing the two : win rate and average P&L, after 11 am versus before.
+
+A trade with no timed entry fill is on **neither side** — its entry time is not known. No CSV column
+for now.
+
 **Screens** : [`journal.html`](journal.html) (list + KPIs, pattern filter) and
 [`trade.html`](trade.html) (the trade sheet).
 

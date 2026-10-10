@@ -39,6 +39,8 @@ import {
 } from '@portfolioai/ui';
 import { JournalRepository, PageRequest } from '../../core/api/journal/journal.repository';
 import {
+  ENTRY_TIMINGS,
+  EntryTiming,
   JournalDay,
   JournalSummary,
   NewTradeInput,
@@ -79,7 +81,8 @@ interface SortRequest {
 }
 
 /**
- * The three filter axes of the toolbar (#195) : a period, one pattern at a time, and the outcome.
+ * The filter axes of the toolbar (#195) : a period, one pattern at a time, the outcome, and the
+ * entry time (#651).
  * They apply as soon as they are clicked — there is no « Apply » step anymore, the toolbar *is*
  * the filter. The period comes from the shared [PeriodFilter] (preset, or a custom range).
  */
@@ -90,6 +93,8 @@ interface FilterFormModel {
   pattern: Pattern | null;
   /** Outcome segment — only PROFITABLE / LOSING are reachable from the toolbar. */
   status: TradeStatus | null;
+  /** Entered before or after 11 am (#651) — null : any, untimed trades included. */
+  entry: EntryTiming | null;
 }
 
 /** The journal opens on the running month, the way the KPI row reads it ("P&L September"). */
@@ -101,6 +106,7 @@ function defaultFilter(): FilterFormModel {
     dateTo: range.dateTo,
     pattern: null,
     status: null,
+    entry: null,
   };
 }
 
@@ -244,6 +250,7 @@ export class JournalPage {
 
   // ---- Constants for the template ----
   readonly patterns = PATTERNS;
+  readonly entryTimings = ENTRY_TIMINGS;
 
   readonly columns = [
     'expand',
@@ -293,6 +300,7 @@ export class JournalPage {
         dateTo: f.dateTo,
         patterns: f.pattern ? [f.pattern] : null,
         status: f.status,
+        entry: f.entry,
       };
       this.fetchSummaries(criteria);
       this.fetch(criteria, {
@@ -323,6 +331,10 @@ export class JournalPage {
 
   setStatus(s: TradeStatus | null): void {
     this.patchFilter({ status: s });
+  }
+
+  setEntry(entry: EntryTiming | null): void {
+    this.patchFilter({ entry });
   }
 
   private patchFilter(change: Partial<FilterFormModel>): void {

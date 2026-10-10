@@ -462,13 +462,20 @@
       "outOfPattern": "Hors pattern",
       "outOfPatternSub": "{{count}} trades · dans les règles {{inRules}}",
       "outOfPatternSubOne": "{{count}} trade · dans les règles {{inRules}}",
-      "outOfPatternHint": "Les trades pris sur une stat que les prix enregistrés disent hors pattern. Un chiffre de discipline, pas de stratégie : avec celui des règles, il fait le P&L de la période."
+      "outOfPatternHint": "Les trades pris sur une stat que les prix enregistrés disent hors pattern. Un chiffre de discipline, pas de stratégie : avec celui des règles, il fait le P&L de la période.",
+      "lateEntries": "Entrées après 11h",
+      "lateEntriesValue": "{{late}} vs {{early}}",
+      "lateEntriesSub": "{{count}} trades · moy. {{late}} · avant 11h {{early}}",
+      "lateEntriesSubOne": "{{count}} trade · moy. {{late}} · avant 11h {{early}}",
+      "lateEntriesHint": "Taux de réussite et P&L moyen des trades entrés à 11:00 ou plus tard, contre ceux entrés avant — d'après la première exécution d'entrée. Un trade sans heure d'entrée n'est compté d'aucun côté."
     },
     "searchPlaceholder": "Rechercher un ticker…",
     "filterPanel": {
       "period": "Période",
       "statusAll": "Tout statut",
-      "allPatterns": "Tous les patterns"
+      "allPatterns": "Tous les patterns",
+      "entryAll": "Toutes entrées",
+      "entryHint": "D'après la première exécution d'entrée — un trade sans heure n'est dans aucun des deux"
     },
     "loading": "Chargement du journal…",
     "empty": "Aucun trade sur cette période. Un trade se crée depuis une stat, sur la feuille de stats.",
@@ -533,6 +540,10 @@
         "OPEN": "Ouverte",
         "PARTIAL": "Partielle",
         "CLOSED": "Clôturée"
+      },
+      "entry": {
+        "BEFORE_11": "Avant 11h",
+        "AFTER_11": "Après 11h"
       }
     },
     "actions": {
@@ -644,7 +655,8 @@
       "minutes": "{{minutes}} min",
       "hours": "{{hours}} h {{minutes}}"
     },
-    "dayTrade": "Trade {{n}}"
+    "dayTrade": "Trade {{n}}",
+    "dayLateEntryHint": "Au moins un trade du jour entré à 11:00 ou plus tard"
   },
   "stats": {
     "title": "Stats",

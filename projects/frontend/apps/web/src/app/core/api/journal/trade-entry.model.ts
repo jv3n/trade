@@ -20,6 +20,13 @@ export type PositionStatus = 'OPEN' | 'PARTIAL' | 'CLOSED';
 export type TradeStatus = 'OPEN' | 'CLOSED' | 'PROFITABLE' | 'LOSING';
 
 export const TRADE_STATUSES: readonly TradeStatus[] = ['OPEN', 'CLOSED', 'PROFITABLE', 'LOSING'];
+
+/**
+ * When the trade was entered (#651) — the earliest timed entry fill against 11:00, see backend
+ * `EntryTiming`. A trade with no timed entry fill is in neither.
+ */
+export type EntryTiming = 'BEFORE_11' | 'AFTER_11';
+export const ENTRY_TIMINGS: readonly EntryTiming[] = ['BEFORE_11', 'AFTER_11'];
 export const TRADE_DIRECTIONS: readonly TradeDirection[] = ['SHORT', 'BUY'];
 export const EXECUTION_KINDS: readonly ExecutionKind[] = ['ENTRY', 'EXIT'];
 
@@ -56,6 +63,7 @@ export interface TradeEntryFilter {
   dateTo?: Date | null;
   patterns?: Pattern[] | null;
   status?: TradeStatus | null;
+  entry?: EntryTiming | null;
 }
 
 /**
@@ -90,6 +98,8 @@ export interface TradeEntry {
   /** The retained P&L as a % of the same cost basis as [gainPercent]. */
   retainedGainPercent: number | null;
   durationMinutes: number | null;
+  /** The earliest timed entry fill at 11:00 or later (#651) — null while no entry fill has a time. */
+  enteredLate: boolean | null;
   note: string | null;
   errorNote: string | null;
   /** Whether a screenshot is attached (issue #110). The bytes are served on a dedicated endpoint. */
@@ -116,6 +126,8 @@ export interface JournalDay {
   retainedGainPercent: number | null;
   durationMinutes: number | null;
   retainedProfitDollars: number | null;
+  /** One of the day's trades was entered at 11:00 or later (#651). */
+  enteredLate: boolean;
   trades: TradeEntry[];
 }
 
@@ -141,6 +153,19 @@ export interface JournalSummary {
   outOfPatternCount: number;
   outOfPatternPnl: number;
   inRulesPnl: number;
+  /**
+   * The closed trades entered at 11:00 or later, and the ones entered before (#651) — a trade with
+   * no timed entry fill is in neither.
+   */
+  lateEntries: EntryTimingFigures;
+  earlyEntries: EntryTimingFigures;
+}
+
+/** One side of the « after 11 am » comparison : win rate and average retained P&L. */
+export interface EntryTimingFigures {
+  tradeCount: number;
+  winRatePercent: number | null;
+  averagePnl: number | null;
 }
 
 /**

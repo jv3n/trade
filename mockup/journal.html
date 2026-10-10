@@ -35,7 +35,7 @@
           </div>
         </header>
 
-        <section class="grid grid-5" style="margin-bottom: 16px">
+        <section class="grid grid-6" style="margin-bottom: 16px">
           <div class="card kpi">
             <div class="label">P&amp;L septembre</div>
             <div class="value loss">−652,41 $ US</div>
@@ -61,6 +61,12 @@
             <div class="label">Hors pattern</div>
             <div class="value loss">−233,55 $ US</div>
             <div class="sub">1 trade (IMNN 11/09) · dans les règles <span class="loss">−418,86</span></div>
+          </div>
+          <!-- #651 : la question derrière le tag — mes entrées tardives perdent-elles ? Première entrée à 11:00 ou plus tard. -->
+          <div class="card kpi" title="Déduit de la première exécution d'entrée de chaque trade (11:00 ou plus tard) ; un trade sans heure d'entrée n'est compté d'aucun côté">
+            <div class="label">Entrées après 11h</div>
+            <div class="value">33 % <span class="muted" style="font-size: 14px">vs 67 %</span></div>
+            <div class="sub">3 trades · moy. <span class="loss">−319,61</span> · avant 11h <span class="gain">+34,05</span></div>
           </div>
         </section>
 
@@ -95,6 +101,12 @@
               <button>Gagnants</button>
               <button>Perdants</button>
             </div>
+            <!-- #651 : un trade sans heure d'entrée n'est ni avant ni après. -->
+            <div class="segmented" title="Première exécution d'entrée — un trade sans heure n'est dans aucun des deux">
+              <button class="active">Toutes entrées</button>
+              <button>Avant 11h</button>
+              <button>Après 11h</button>
+            </div>
           </div>
 
           <div class="table-wrap">
@@ -121,7 +133,7 @@
                   <td>29/09</td>
                   <td><span class="ticker">SDEV</span></td>
                   <td><span class="tag tag-accent">GUS</span></td>
-                  <td><span class="tag">Short</span></td>
+                  <td><span class="tag">Short</span> <span class="tag" title="Au moins un trade du jour entré à 11:00 ou plus tard (#651)">après 11h</span></td>
                   <td class="num">3</td>
                   <td class="num">3 000</td>
                   <td class="num muted" title="Plusieurs trades : voir chacun">—</td>
@@ -147,7 +159,7 @@
                   <td></td>
                   <td class="muted" colspan="2" style="padding-left: 28px">Trade 2 · 11:00 → 11:04</td>
                   <td><span class="tag tag-accent">GUS</span></td>
-                  <td><span class="tag">Short</span></td>
+                  <td><span class="tag">Short</span> <span class="tag" title="Première entrée à 11:00 — déduit des exécutions (#651)">après 11h</span></td>
                   <td></td>
                   <td class="num">3 000</td>
                   <td class="num">2,24</td>
@@ -160,7 +172,7 @@
                   <td></td>
                   <td class="muted" colspan="2" style="padding-left: 28px">Trade 3 · 11:08 → 11:09</td>
                   <td><span class="tag tag-accent">GUS</span></td>
-                  <td><span class="tag">Short</span></td>
+                  <td><span class="tag">Short</span> <span class="tag" title="Première entrée à 11:08 — déduit des exécutions (#651)">après 11h</span></td>
                   <td></td>
                   <td class="num">3 000</td>
                   <td class="num">2,71</td>
@@ -342,6 +354,10 @@
           porte plusieurs. Une ligne à un seul
           trade ouvre sa fiche ; une ligne à plusieurs s'ouvre sur ses trades (SDEV, ouverte), chacun menant à sa fiche. Tri, filtres et
           pagination comptent des lignes ; l'export CSV reste une ligne par trade.
+          « après 11h » (#651) : déduit de la première exécution d'entrée de chaque trade (11:00 ou plus tard), comme sur la fiche.
+          Une ligne le porte dès qu'un de ses trades l'est (SDEV : les trades 2 et 3) ; ouverte, chaque trade porte le sien. Le filtre
+          « Avant 11h / Après 11h » et la carte qui compare les deux (taux de réussite, P&amp;L moyen) suivent la même définition ; un
+          trade sans heure d'entrée n'est compté d'aucun côté — on ne sait pas.
           « + Trade » (#628) crée un trade sans stat — date, ticker, pattern, sens — et ouvre sa fiche : les exécutions, le P&amp;L et
           le post-mortem s'y saisissent comme pour les autres. La ligne du jour le montre comme les autres trades.
         </p>

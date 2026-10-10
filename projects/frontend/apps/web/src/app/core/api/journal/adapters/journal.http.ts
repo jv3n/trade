@@ -60,6 +60,7 @@ export interface TradeEntryWireDto {
   retainedProfitDollars: number | null;
   retainedGainPercent: number | null;
   durationMinutes: number | null;
+  enteredLate: boolean | null;
   note: string | null;
   errorNote: string | null;
   hasScreenshot: boolean;
@@ -120,6 +121,7 @@ export function tradeEntryFromWire(w: TradeEntryWireDto): TradeEntry {
     retainedProfitDollars: w.retainedProfitDollars,
     retainedGainPercent: w.retainedGainPercent,
     durationMinutes: w.durationMinutes,
+    enteredLate: w.enteredLate,
     note: w.note,
     errorNote: w.errorNote,
     hasScreenshot: w.hasScreenshot,
@@ -180,6 +182,7 @@ interface JournalDayWireDto {
   retainedGainPercent: number | null;
   durationMinutes: number | null;
   retainedProfitDollars: number | null;
+  enteredLate: boolean;
   trades: TradeEntryWireDto[];
 }
 
@@ -208,6 +211,9 @@ function buildFilterParams(filter?: TradeEntryFilter): HttpParams {
   }
   if (filter.status) {
     params = params.set('status', filter.status);
+  }
+  if (filter.entry) {
+    params = params.set('entry', filter.entry);
   }
   return params;
 }

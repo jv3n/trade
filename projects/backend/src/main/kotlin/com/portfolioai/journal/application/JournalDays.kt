@@ -35,6 +35,7 @@ object JournalDays {
       durationMinutes = trades.mapNotNull { it.durationMinutes }.takeIf { it.isNotEmpty() }?.sum(),
       retainedProfitDollars =
         trades.mapNotNull { it.retainedProfitDollars }.reduceOrNull(BigDecimal::add),
+      enteredLate = trades.any { it.enteredLate == true },
       trades = trades,
     )
   }
