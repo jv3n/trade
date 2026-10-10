@@ -222,13 +222,20 @@ class TradeEntryService(
     return create(request.copy(statEntryId = null))
   }
 
-  /** The stat link is not the client's to change : [TradeEntryRequest.statEntryId] is ignored. */
+  /**
+   * The stat link is not the client's to change : [TradeEntryRequest.statEntryId] is ignored. The
+   * pattern of a trade a stat holds is the stat's (#654) — changing it is a 400.
+   */
   @Transactional
   fun update(id: UUID, request: TradeEntryRequest): TradeEntryDto {
     val entry = loadOwned(id)
+    val pattern = request.pattern ?: entry.pattern
+    require(entry.statEntryId == null || pattern == entry.pattern) {
+      "The pattern of a trade with a stat is the stat's (${entry.pattern})"
+    }
     entry.tradeDate = request.tradeDate
     entry.ticker = request.ticker.trim().uppercase()
-    entry.pattern = request.pattern ?: Pattern.GUS
+    entry.pattern = pattern
     entry.realProfitDollars = request.realProfitDollars
     entry.note = request.note
     entry.errorNote = request.errorNote

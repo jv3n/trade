@@ -32,6 +32,7 @@ import { JournalDetailPage } from './journal-detail-page';
  *   the key opens them to top up or fix (#625), a top-up starting from the last price paid.
  * - **A trade on its own (#634)** has no stat : nothing is asked of the stats, the header and the
  *   context card say so, and the locates, the fills and the direction chosen at creation still work.
+ *   Its pattern is a select (#654) ; a trade with a stat shows the stat's as a read-only tag.
  */
 describe('JournalDetailPage', () => {
   let findById: ReturnType<typeof vi.fn>;
@@ -243,6 +244,23 @@ describe('JournalDetailPage', () => {
         expect.anything(),
         expect.objectContaining({ data: expect.objectContaining({ stockPrice: null }) }),
       );
+    });
+
+    it('offers its pattern as a select, and the save sends the one picked (#654)', () => {
+      findById = vi.fn(() => of(alone()));
+      update = vi.fn((_id: string, _input: TradeEntryInput) => of(alone()));
+      const fixture = setup();
+      fixture.detectChanges();
+      const page = fixture.componentInstance;
+
+      expect(fixture.nativeElement.querySelector('[data-testid="pattern-select"]')).not.toBeNull();
+      page.setPattern('SIR');
+      expect(page.dirty()).toBe(true);
+      page.save();
+
+      const [, input] = update.mock.calls[0] as [string, TradeEntryInput];
+      expect(input.pattern).toBe('SIR');
+      expect(input.direction).toBe('BUY');
     });
 
     // A long typed at creation must not fall back to a short on the first save before any fill.
@@ -577,6 +595,15 @@ describe('JournalDetailPage', () => {
     page.addExecution();
 
     expect(page.draft()?.executions.at(-1)?.kind).toBe('EXIT');
+  });
+
+  it("shows a trade with a stat under the stat's pattern, as a read-only tag (#654)", () => {
+    const fixture = setup();
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+
+    expect(el.querySelector('[data-testid="pattern-select"]')).toBeNull();
+    expect(el.querySelector('.subtitle .tag-accent')?.textContent).toContain('patterns.short.GUS');
   });
 
   it('save sends the whole trade back, identity included, and drops half-typed fills', () => {

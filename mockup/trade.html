@@ -30,9 +30,16 @@
             <p data-with-stat>
               <span class="tag tag-accent">GUS</span> · <span class="tag" title="Première entrée à 11:08 — déduit des exécutions">après 11h</span> · créé depuis la <a href="stats.html">stat du 29/09</a>
             </p>
-            <!-- #628 : un trade sans stat porte son propre pattern ; rien ne le relie à la feuille. -->
+            <!-- #628 : un trade sans stat porte son propre pattern ; rien ne le relie à la feuille.
+                 #654 : sans stat, le pattern se change sur la fiche ; avec une stat, il reste celui de la stat. -->
             <p data-without-stat hidden>
-              <span class="tag tag-accent">GUS</span> · <span class="tag" title="Première entrée à 11:08 — déduit des exécutions">après 11h</span> · sans stat
+              <select class="input" aria-label="Pattern" title="Aucune stat ne tient ce trade : son pattern se change ici" style="width: auto; display: inline-block; padding: 2px 8px">
+                <option selected>GUS</option>
+                <option>DT</option>
+                <option>SIR</option>
+                <option>SIV</option>
+                <option>Discrétionnaire</option>
+              </select> · <span class="tag" title="Première entrée à 11:08 — déduit des exécutions">après 11h</span> · sans stat
             </p>
             <p style="margin-top: 6px" data-with-stat>
               <span class="muted">Trades SDEV du jour :</span>
@@ -187,6 +194,9 @@
           Maquette statique — un trade naît en général d'une stat (bouton « → Trade ») et hérite de son pattern et de son contexte (lecture seule).
           Il peut aussi exister seul (#628, « + Trade » au journal, ou sa stat supprimée) : <a href="trade.html?sans-stat">la variante sans stat</a>
           garde son pattern, ses exécutions, son P&amp;L, ses locates et son post-mortem — seul le contexte du jour manque.
+          Sur cette variante le pattern se change (#654) : une liste au lieu du tag, les cinq patterns. Avec une stat, il reste
+          en lecture seule — c'est celui de la stat, un GUS ou un DT. Pour reclasser un trade lié, on supprime la stat : le trade
+          reste, sans stat, et son pattern redevient libre.
           Une stat peut porter plusieurs trades, créés un par un (« + Trade » sur la stat, #500), chacun avec son sens, ses
           exécutions, son P&amp;L réel et son post-mortem : l'app ne découpe jamais un trade d'elle-même. L'en-tête liste les trades
           de la stat, et « Position max » est la plus grosse position tenue à un instant, pas la somme des entrées.

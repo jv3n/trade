@@ -569,6 +569,7 @@
       "noStat": "sans stat",
       "after11am": "après 11h",
       "after11amHint": "Première entrée à {{time}} — déduit des exécutions",
+      "patternHint": "Aucune stat ne tient ce trade : son pattern se change ici",
       "unsaved": "Modifications non enregistrées",
       "save": "Enregistrer",
       "cancel": "Annuler",

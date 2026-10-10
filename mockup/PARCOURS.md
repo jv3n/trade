@@ -337,6 +337,10 @@ the journal). As a consequence : no real-time screen, no live position tracking.
   pattern », #507) ; a trade under a pattern a stat does not measure (a discretionary long on the
   bounce) is typed in the journal, with no stat (#648).
 - The trade **inherits the stat's pattern** and shows its context (premarket + session), read-only.
+- **A trade's pattern changes only when no stat holds it** (#654) : on a trade without a stat the
+  sheet offers the five patterns in a list ; on a trade with a stat it stays the stat's — a GUS or a
+  DT — and the API refuses the change. To re-file a linked trade, delete the stat : the trade stays,
+  without a stat, and its pattern is free again.
 
 **What I type in on the trade** :
 

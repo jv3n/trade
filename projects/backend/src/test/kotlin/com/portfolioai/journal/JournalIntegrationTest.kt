@@ -53,7 +53,8 @@ import org.springframework.web.server.ResponseStatusException
  *
  * - **The stat link** — a trade is usually born from a stat (#192), and can stand alone (#633) :
  *   created on its own it is never linked, and no update can link or unlink it. A stat still
- *   holding trades can't be deleted out from under them (ON DELETE RESTRICT).
+ *   holding trades can't be deleted out from under them (ON DELETE RESTRICT). A linked trade's
+ *   pattern is the stat's ; only a trade on its own can be re-filed (#654).
  *
  * - **The three P&L figures** — computed from the executions, real (broker statement) and retained
  *   (real if set, else computed). The retained one is what the status filter and the account event
@@ -296,6 +297,53 @@ class JournalIntegrationTest {
 
     assertEquals(stat.id, service.findById(fromStat.id).statEntryId)
     assertNull(service.findById(alone.id).statEntryId)
+  }
+
+  @Test
+  fun `a trade on its own takes another pattern and keeps everything else`() {
+    val alone =
+      service.createStandalone(sampleRequest(ticker = "SGBX", exitPrice = BigDecimal("2.9000")))
+
+    val updated =
+      service.update(
+        alone.id,
+        sampleRequest(ticker = "SGBX", exitPrice = BigDecimal("2.9000"), pattern = Pattern.SIR),
+      )
+
+    assertEquals(Pattern.SIR, updated.pattern)
+    assertEquals("SGBX", updated.ticker)
+    assertEquals(alone.profitDollars, updated.profitDollars)
+    assertNull(updated.statEntryId)
+  }
+
+  @Test
+  fun `an update that sends no pattern keeps the one the trade has`() {
+    val alone = service.createStandalone(sampleRequest(ticker = "SGBX", pattern = Pattern.SIR))
+
+    val updated = service.update(alone.id, sampleRequest(ticker = "SGBX").copy(pattern = null))
+
+    assertEquals(Pattern.SIR, updated.pattern)
+  }
+
+  @Test
+  fun `a trade with a stat keeps the stat's pattern — a change is refused`() {
+    // The API used to take it : a SIR trade carrying a GUS stat, the state #648 rules out.
+    val fromStat = service.create(sampleRequest())
+
+    assertThrows(IllegalArgumentException::class.java) {
+      service.update(fromStat.id, sampleRequest(pattern = Pattern.SIR))
+    }
+    assertEquals(Pattern.GUS, service.findById(fromStat.id).pattern)
+  }
+
+  @Test
+  fun `a trade with a stat still saves when its pattern is sent back unchanged`() {
+    val fromStat = service.create(sampleRequest())
+
+    val updated = service.update(fromStat.id, sampleRequest(ticker = "TSLA"))
+
+    assertEquals(Pattern.GUS, updated.pattern)
+    assertEquals("TSLA", updated.ticker)
   }
 
   @Test

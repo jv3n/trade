@@ -569,6 +569,7 @@
       "noStat": "no stat",
       "after11am": "after 11 am",
       "after11amHint": "First entry at {{time}} — derived from the executions",
+      "patternHint": "No stat holds this trade: its pattern can be changed here",
       "unsaved": "Unsaved changes",
       "save": "Save",
       "cancel": "Cancel",
