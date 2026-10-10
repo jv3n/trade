@@ -544,7 +544,6 @@ function makeStatSummary(overrides: Partial<StatSummary> = {}): StatSummary {
     medianCumulativeOpenPercent: 42.9,
     completedDoubleTops: 0,
     averageExtensionPercent: null,
-    averageExtensionWithGapPercent: null,
     averageRejectionPercent: null,
     rejectionAtCriterionCount: 0,
     averageRetestPercent: null,

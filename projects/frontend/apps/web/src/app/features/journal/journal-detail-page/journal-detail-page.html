@@ -413,17 +413,20 @@
           }
           <dl class="kv">
             @if (context(); as ctx) {
-              <dt>{{ 'journal.detail.context.premarket' | translate }}</dt>
-              <dd>
-                {{ ctx.stat.previousClose | price }} ·
-                {{ ctx.stat.pmOpen | price: ctx.stat.previousClose }} ·
-                {{ ctx.stat.pmHigh | price: ctx.stat.previousClose }}
-              </dd>
-              <dt>{{ 'journal.detail.context.gapPush' | translate }}</dt>
-              <dd>
-                {{ ctx.gap !== null ? (ctx.gap | number: '1.1-1') + ' %' : '—' }} ·
-                {{ ctx.pmPush !== null ? (ctx.pmPush | number: '1.1-1') + ' %' : '—' }}
-              </dd>
+              <!-- A double top's stat carries no premarket prices (#649). -->
+              @if (ctx.stat.pmOpen !== null) {
+                <dt>{{ 'journal.detail.context.premarket' | translate }}</dt>
+                <dd>
+                  {{ ctx.stat.previousClose | price }} ·
+                  {{ ctx.stat.pmOpen | price: ctx.stat.previousClose }} ·
+                  {{ ctx.stat.pmHigh | price: ctx.stat.previousClose }}
+                </dd>
+                <dt>{{ 'journal.detail.context.gapPush' | translate }}</dt>
+                <dd>
+                  {{ ctx.gap !== null ? (ctx.gap | number: '1.1-1') + ' %' : '—' }} ·
+                  {{ ctx.pmPush !== null ? (ctx.pmPush | number: '1.1-1') + ' %' : '—' }}
+                </dd>
+              }
               <dt>{{ 'journal.detail.context.floatVolume' | translate }}</dt>
               <dd>
                 {{

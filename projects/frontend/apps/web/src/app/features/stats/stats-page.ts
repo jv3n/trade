@@ -255,8 +255,9 @@ const COLUMNS: Record<StatView, readonly string[]> = {
   SIR: SESSION_COLUMNS,
   SIV: SESSION_COLUMNS,
   DISCRETIONARY: SESSION_COLUMNS,
+  // A double top has no premarket prices (#649) : no gap, no PM push.
   DT: [
-    ...LEADING_COLUMNS,
+    ...LEADING_COLUMNS.filter((c) => c !== 'gap' && c !== 'pmPush'),
     'dtStart',
     'dtTop',
     'dtLow',
@@ -395,8 +396,12 @@ function premarketOf(entry: StatEntry): PremarketModel {
   };
 }
 
-/** Why a premarket block can't be saved — an i18n key — or null when it can. */
-export function premarketProblem(m: PremarketModel): string | null {
+/**
+ * Why a premarket block can't be saved — an i18n key — or null when it can. A double top carries no
+ * premarket prices (#649), so nothing to check.
+ */
+export function premarketProblem(m: PremarketModel, pattern: Pattern = m.pattern): string | null {
+  if (pattern === 'DT') return null;
   if (![m.previousClose, m.pmOpen, m.pmHigh].every(isPositive)) {
     return 'stats.save.premarketRequired';
   }
@@ -783,7 +788,9 @@ export class StatsPage {
     const missing: string[] = [];
     if (!id.tradeDate) missing.push('stats.fields.tradeDate');
     if (!id.ticker.trim()) missing.push('stats.fields.ticker');
-    if (premarketProblem(this.premarket())) missing.push('stats.create.premarketPrices');
+    if (premarketProblem(this.premarket(), id.pattern)) {
+      missing.push('stats.create.premarketPrices');
+    }
     return missing;
   });
 
@@ -794,10 +801,8 @@ export class StatsPage {
   /** A DT stat shows the « Double top » card in place of the session one. */
   readonly isDoubleTop = computed(() => this.panelPattern() === 'DT');
 
-  /** The legs of the double top being typed, live — A reads the gap off the premarket card. */
-  readonly doubleTopLegs = computed(() =>
-    doubleTopLegs({ ...this.session(), previousClose: this.premarket().previousClose }),
-  );
+  /** The legs of the double top being typed, live. */
+  readonly doubleTopLegs = computed(() => doubleTopLegs(this.session()));
 
   /** How long each leg of the double top being typed took, live (#469). */
   readonly doubleTopDurations = computed(() => doubleTopDurations(this.session()));
@@ -826,7 +831,7 @@ export class StatsPage {
   /** The required premarket prices left empty on an existing stat — each one says so under its field. */
   readonly premarketRequired = computed(() => {
     const m = this.premarket();
-    const edit = this.completing() !== null;
+    const edit = this.completing() !== null && !this.isDoubleTop();
     return {
       previousClose: edit && !isPositive(m.previousClose),
       pmOpen: edit && !isPositive(m.pmOpen),
@@ -1198,7 +1203,7 @@ export class StatsPage {
     // The identity goes last : it must win over anything the premarket card carries — the
     // pattern picked in « New stat » included.
     const input: StatEntryInput = {
-      ...this.premarketInput(this.premarket()),
+      ...this.premarketInput(this.premarket(), id.pattern),
       ...this.session(),
       tradeDate: id.tradeDate as Date,
       pattern: id.pattern,
@@ -1534,17 +1539,21 @@ export class StatsPage {
       tradeDate: entry.tradeDate,
       pattern: premarket.pattern,
       ticker: entry.ticker,
-      ...this.premarketInput(premarket),
+      ...this.premarketInput(premarket, premarket.pattern),
       ...session,
     };
   }
 
-  /** The premarket card as the API takes it — its three prices are checked before this is called. */
-  private premarketInput(m: PremarketModel) {
+  /**
+   * The premarket card as the API takes it — its three prices are checked before this is called,
+   * and a double top sends none (#649).
+   */
+  private premarketInput(m: PremarketModel, pattern: Pattern) {
+    const doubleTop = pattern === 'DT';
     return {
-      previousClose: m.previousClose as number,
-      pmOpen: m.pmOpen as number,
-      pmHigh: m.pmHigh as number,
+      previousClose: doubleTop ? null : m.previousClose,
+      pmOpen: doubleTop ? null : m.pmOpen,
+      pmHigh: doubleTop ? null : m.pmHigh,
       floatMillions: m.floatMillions,
       volumeMillions: m.volumeMillions,
       note: m.note.trim() || null,

@@ -6,6 +6,7 @@ import com.portfolioai.shared.badRequest
 import com.portfolioai.shared.requireNonNegative
 import com.portfolioai.shared.requirePositive
 import com.portfolioai.stats.application.dto.StatEntryRequest
+import com.portfolioai.stats.domain.Premarket
 import com.portfolioai.stats.domain.StatEntry
 import java.math.BigDecimal
 import java.time.LocalTime
@@ -25,21 +26,22 @@ internal fun newEntry(user: User, request: StatEntryRequest, ticker: String, can
     candidateId = candidateId,
     tradeDate = request.tradeDate,
     ticker = ticker,
-    previousClose = request.previousClose,
-    pmOpen = request.pmOpen,
-    pmHigh = request.pmHigh,
   )
 
 /**
  * Validates [request] and copies it onto this stat (ticker already cleaned). A double top keeps its
- * four prices and drops the GUS session (and « no push ») ; any other pattern the reverse.
+ * four prices and drops the premarket prices (#649), the GUS session and « no push » ; any other
+ * pattern the reverse.
  */
 internal fun StatEntry.fillFrom(request: StatEntryRequest, cleanTicker: String) {
-  val pmOpen = request.pmOpen.requirePositive("PM open")
-  val pmHigh = request.pmHigh.requirePositive("PM high")
-  if (pmHigh < pmOpen) throw badRequest("PM high must not be below the PM open")
   val doubleTop = request.pattern == Pattern.DT
   val gus = !doubleTop
+  val previousClose = if (gus) request.previousClose.required("Previous close") else null
+  val pmOpen = if (gus) request.pmOpen.required("PM open") else null
+  val pmHigh = if (gus) request.pmHigh.required("PM high") else null
+  if (pmHigh != null && pmOpen != null && pmHigh < pmOpen) {
+    throw badRequest("PM high must not be below the PM open")
+  }
   val hod = request.hodPrice?.takeIf { gus }?.requirePositive("HOD")
   val lod = request.lodPrice?.takeIf { gus }?.requirePositive("LOD")
   val open = request.openPrice?.takeIf { gus }?.requirePositive("Open")
@@ -62,7 +64,7 @@ internal fun StatEntry.fillFrom(request: StatEntryRequest, cleanTicker: String) 
   tradeDate = request.tradeDate
   pattern = request.pattern
   ticker = cleanTicker
-  previousClose = request.previousClose.requirePositive("Previous close")
+  this.previousClose = previousClose
   this.pmOpen = pmOpen
   this.pmHigh = pmHigh
   floatMillions = request.floatMillions?.requireNonNegative("Float")
@@ -87,6 +89,9 @@ internal fun StatEntry.fillFrom(request: StatEntryRequest, cleanTicker: String) 
   this.noPush = noPush
   highInstitutions = request.highInstitutions
 }
+
+private fun BigDecimal?.required(label: String): BigDecimal =
+  (this ?: throw badRequest("$label is required")).requirePositive(label)
 
 internal fun StatEntryRequest.cleanTicker(): String =
   ticker.trim().uppercase().ifEmpty { throw badRequest("Ticker must not be blank") }
@@ -161,14 +166,15 @@ private fun LocalTime.inSession(label: String): LocalTime =
     }
   }
 
-internal fun StatEntry.siblingRequest(pattern: Pattern) =
+/** [premarket] stands in for this stat's own, which a double top does not keep (#649). */
+internal fun StatEntry.siblingRequest(pattern: Pattern, premarket: Premarket? = null) =
   StatEntryRequest(
     tradeDate = tradeDate,
     pattern = pattern,
     ticker = ticker,
-    previousClose = previousClose,
-    pmOpen = pmOpen,
-    pmHigh = pmHigh,
+    previousClose = premarket?.previousClose ?: previousClose,
+    pmOpen = premarket?.pmOpen ?: pmOpen,
+    pmHigh = premarket?.pmHigh ?: pmHigh,
     floatMillions = floatMillions,
     volumeMillions = volumeMillions,
     openPrice = openPrice,

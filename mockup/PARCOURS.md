@@ -285,7 +285,8 @@ at 11:20 for a DT) — and a "promote them all in GUS" button, day-by-day naviga
   found afterwards — see step 5.)
 - The stat **takes every field of the candidate** (ticker, previous close, PM open / high, gap, PM
   push, float, volume, note, open) — not the target push, which is a plan — and **the pattern
-  of the button** used.
+  of the button** used. A **DT** takes no premarket (#649) : only float, volume, note and the open
+  (its start).
 - A candidate promoted before 9:30 has no open yet : the open typed on it afterwards also fills its
   stat, as long as the stat's open is still empty.
 - The stat is created "to complete" : the session data arrives at step 5.
@@ -297,7 +298,8 @@ at 11:20 for a DT) — and a "promote them all in GUS" button, day-by-day naviga
   (« ✓ GUS », « ✓ DT ») and the button of each pattern it has is gone : it cannot be promoted twice
   in the same pattern (refused). Each badge is a link : it opens the stats page on that stat, its
   panel already open (#383) — right after promoting is when you want to go and fill it.
-- The two stats of a candidate take the same premarket, then live their own lives.
+- The two stats of a candidate take the same float and volume — the GUS also its premarket — then
+  live their own lives.
 - Only GUS and DT have a button : SIR, SIV and discretionary are measured like a GUS, so a stat is
   re-filed into them on the stats page (step 5).
 - "Promote them all" makes **GUS** stats of the candidates **without any stat** ; the others are
@@ -459,6 +461,8 @@ shared between users — a stat always belongs to its user.
   **pattern**, previous close, PM open, PM high, float, volume, note, **editable** and saved
   field by field, gap and PM push shown live under their fields. Copied from the candidate at
   promotion, it can be fixed on the stat ; the stat keeps its own copy, the candidate is left alone.
+  **A DT has no premarket** (#649) : a double top is read off the session, not off the morning, so
+  its card keeps float, volume and note only (titled « Titre » rather than « Premarket »).
 - **The pattern can be changed after the fact** (#393) — a filing mistake, among the patterns
   measured the same way (GUS, SIR, SIV, discretionary). It is a select at the head of the card,
   saved when changed like a flag. **Not to or from DT** (#428) : a double top has prices of its own,
@@ -468,7 +472,7 @@ shared between users — a stat always belongs to its user.
 - **« Same ticker, another pattern »** (#507) : at the head of the premarket card, a stat gives birth
   to another one — same day, same ticker, a pattern still free for them (one stat per pattern, as
   ever). **The day's prices are carried over** (previous close, premarket, open, the push at the
-  open or « no push », HOD / LOD / EOD) : they belong to the day, not to the setup, so a SIR, SIV or
+  open or « no push », HOD / LOD / EOD — a DT sibling keeps none of the premarket, #649) : they belong to the day, not to the setup, so a SIR, SIV or
   discretionary sibling is completable as born and two stats of one day never disagree about what
   the stock did (#517) ; what is specific to the pattern starts empty. A double top keeps none of the
   session : it starts from the open and types its own four prices. It is an
@@ -481,7 +485,7 @@ shared between users — a stat always belongs to its user.
   my pattern a few days ago and never made it to my candidates — leaving it out would bias the stats
   towards the days I happened to be watching.
 - **« Create the stat »** asks for confirmation (it creates something) and needs the date, the
-  ticker and the three premarket prices. Picking DT swaps the session card for the double top one.
+  ticker and the three premarket prices — a DT only the date and the ticker (#649). Picking DT swaps the session card for the double top one.
   Same rules as any stat : one per day, per ticker and per pattern, ticked
   by hand once complete, « → Trade » available. It has no source candidate.
 - **No « Save » button** : each card shows where it stands next to its title — « saving… », then
@@ -584,8 +588,8 @@ SSR, institutions > 20 % and no push stay : nothing else recorded says them.
 
 ### The double top stat (#428)
 
-A DT is measured by what makes it (`docs/pattern/DT.md`), not by the GUS session : the **premarket
-card stays the same**, the « Session » card becomes a **« Double top »** card of four points — a
+A DT is measured by what makes it (`docs/pattern/DT.md`), not by the GUS session : it carries **no
+premarket** (#649) — the card above keeps float, volume and note — and the « Session » card becomes a **« Double top »** card of four points — a
 **time and a price** each (#469) — saved field by field like the rest. The card reads **one row per
 point**, like an execution in the journal : point, time, price, then the leg it closes.
 
@@ -602,9 +606,8 @@ whose low precedes its top is a typo.
 
 **What the app computes** — the three legs :
 
-- **A, the extension** = start → top (+55.3 %), and **with the gap**, from the previous close
-  (+163 %) — the Trading Desk's stats sheet keeps both, a gap plus a push can make 50 % without an
-  intraday 50 %. Amber under **50 %**.
+- **A, the extension** = start → top (+55.3 %). Amber under **50 %**. The « with the gap » reading
+  (from the previous close) went with the premarket (#649) : every leg is measured inside the session.
 - **B, the rejection** = top → rejection low (−20.0 %). Amber under **17 %** : a normal breath, not a
   rejection.
 - **C, the retest** = rejection low → retest (+20.8 %), and its **distance to the top** (−3.4 %, or
@@ -621,13 +624,12 @@ whose low precedes its top is a typo.
   numbers** (#512) : SIR, SIV and discretionary are measured like the GUS — completed, push at the
   open, LOD, fade — on their own stats only, never folded into the GUS's. A ticker-day carrying a
   GUS and a sibling stat (#507) shares its open, LOD and EOD between them : counted in each pattern's
-  numbers, it is never counted twice in one. **DT** : completed DT stats, average extension (and with the
-  gap), average rejection (and how many reach 17 %), average retest distance to the top (and how
+  numbers, it is never counted twice in one. **DT** : completed DT stats, average extension, average rejection (and how many reach 17 %), average retest distance to the top (and how
   many took it back), and the **median duration** start → retest with its `n` and the median
   rejection (B) — a median, not a mean : one DT that drags all afternoon would move an average and
-  say nothing about the typical one. The table shows the premarket, then start, A, B, C and the
+  say nothing about the typical one. The table shows float and volume, then start, A, B, C and the
   duration (total, and the three legs under it) ; its footer carries the median. **All** keeps what
-  compares across patterns — premarket, flags, check, trade — plus a one-line summary of each stat
+  compares across patterns — premarket (blank on a DT), float, volume, flags, check, trade — plus a one-line summary of each stat
   in its own pattern, and no averages, neither in the cards nor in a row : a push at the open and a
   DT extension don't add up, and the summary computes none without a pattern.
 - The « À l'open » push references only use GUS stats, as before (same pattern).

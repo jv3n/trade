@@ -28,17 +28,14 @@ object StatMetrics {
    * Hold % = (open − PM high) / PM high (#499) : what survives of the premarket at 9:30. Null until
    * the open is in.
    */
-  fun holdPercent(pmHigh: BigDecimal, open: BigDecimal?): BigDecimal? = open?.let {
-    change(pmHigh, it)
-  }
+  fun holdPercent(pmHigh: BigDecimal?, open: BigDecimal?): BigDecimal? = percentChange(pmHigh, open)
 
   /**
    * A level read from the previous close, as the TradeZero scanner does (#499) — the PM high, or
    * the open. The `gap ≥ 45 %` criterion of the GUS sheet speaks this figure, not [gapPercent].
    */
-  fun cumulativePercent(previousClose: BigDecimal, level: BigDecimal?): BigDecimal? = level?.let {
-    change(previousClose, it)
-  }
+  fun cumulativePercent(previousClose: BigDecimal?, level: BigDecimal?): BigDecimal? =
+    percentChange(previousClose, level)
 
   /** Any session level against the session open — push at open, HOD, LOD, EOD. */
   fun percentVsOpen(open: BigDecimal?, level: BigDecimal?): BigDecimal? {

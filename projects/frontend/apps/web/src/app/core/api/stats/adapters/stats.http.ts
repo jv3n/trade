@@ -29,9 +29,9 @@ interface StatEntryWireDto {
   tradeDate: string;
   pattern: Pattern;
   ticker: string;
-  previousClose: number;
-  pmOpen: number;
-  pmHigh: number;
+  previousClose: number | null;
+  pmOpen: number | null;
+  pmHigh: number | null;
   floatMillions: number | null;
   volumeMillions: number | null;
   note: string | null;

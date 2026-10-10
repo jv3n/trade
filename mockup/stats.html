@@ -325,7 +325,7 @@
           <div class="card kpi">
             <div class="label">Extension moyenne (A)</div>
             <div class="value">+59,2 %</div>
-            <div class="sub">depuis le départ · <b>+82,9 %</b> avec le gap</div>
+            <div class="sub">depuis le départ</div>
           </div>
           <div class="card kpi">
             <div class="label">Rejet moyen (B)</div>
@@ -435,9 +435,9 @@
 
         <section class="card" style="margin-bottom: 16px" id="premarket-panel">
           <h2>
-            <span data-mode="edit">Premarket — <span class="ticker">SGBX</span> <span class="muted" style="font-weight: 400">ven. 18/09</span><span class="save-state" id="premarket-state">✓ enregistré hier à 22:25</span></span>
+            <span data-mode="edit"><span data-group="panel" data-value="gus">Premarket</span><span data-group="panel" data-value="dt" hidden>Titre</span> — <span class="ticker">SGBX</span> <span class="muted" style="font-weight: 400">ven. 18/09</span><span class="save-state" id="premarket-state">✓ enregistré hier à 22:25</span></span>
             <span data-mode="new" hidden>Nouvelle stat</span>
-            <span class="hint" data-mode="edit">repris du candidat · modifiable · chaque champ s'enregistre à la sortie<span data-group="panel" data-value="dt" hidden> · même candidat que la stat GUS, chaque stat garde sa copie</span></span>
+            <span class="hint" data-mode="edit"><span data-group="panel" data-value="gus">repris du candidat · modifiable · chaque champ s'enregistre à la sortie</span><span data-group="panel" data-value="dt" hidden>float et volume repris du candidat · pas de premarket : un double top se lit sur la séance (#649)</span></span>
             <span class="hint" data-mode="new" hidden>un chart trouvé après coup · n'importe quel jour jusqu'à aujourd'hui</span>
           </h2>
           <div class="identity" data-mode="new" hidden>
@@ -484,9 +484,10 @@
                 </span>
               </div>
             </div>
-            <div class="field"><label>Clôture veille ($)</label><input class="input" id="p-close" data-pm value="1,12" /><span class="pct muted">&nbsp;</span></div>
-            <div class="field"><label>Open PM ($)</label><input class="input" id="p-open" data-pm value="1,85" /><span class="pct muted" id="p-gap">—</span></div>
-            <div class="field"><label>High PM ($)</label><input class="input" id="p-high" data-pm value="2,46" /><span class="pct muted" id="p-push">—</span><span class="pct muted" id="p-cumul">—</span></div>
+            <!-- #649 : un DT ne demande pas de premarket — seuls float, volume et note restent. -->
+            <div class="field" data-group="panel" data-value="gus"><label>Clôture veille ($)</label><input class="input" id="p-close" data-pm value="1,12" /><span class="pct muted">&nbsp;</span></div>
+            <div class="field" data-group="panel" data-value="gus"><label>Open PM ($)</label><input class="input" id="p-open" data-pm value="1,85" /><span class="pct muted" id="p-gap">—</span></div>
+            <div class="field" data-group="panel" data-value="gus"><label>High PM ($)</label><input class="input" id="p-high" data-pm value="2,46" /><span class="pct muted" id="p-push">—</span><span class="pct muted" id="p-cumul">—</span></div>
             <div class="field"><label>Float (M)</label><input class="input" data-pm-opt value="3,9" /></div>
             <div class="field"><label>Volume (M)</label><input class="input" data-pm-opt value="9,7" /></div>
             <div class="field wide"><label>Note</label><input class="input" data-pm-opt value="Float serré — attention au squeeze" /></div>
@@ -626,7 +627,7 @@
               <thead>
                 <tr class="group-head">
                   <th colspan="3"></th>
-                  <th colspan="4" class="sep">Premarket — repris du candidat</th>
+                  <th colspan="2" class="sep" title="Pas de premarket sur un double top (#649) : il se lit sur la séance">Titre</th>
                   <th colspan="4" class="sep">Double top — A extension · B rejet · C retest</th>
                   <th colspan="3" class="sep"></th>
                 </tr>
@@ -634,12 +635,10 @@
                   <th>Date ↓</th>
                   <th>Ticker</th>
                   <th>Pattern</th>
-                  <th class="num sep">Gap</th>
-                  <th class="num">Push PM</th>
-                  <th class="num">Float</th>
+                  <th class="num sep">Float</th>
                   <th class="num">Volume</th>
                   <th class="num sep">Départ</th>
-                  <th class="num" title="Du départ au top ; en dessous, avec le gap (depuis la clôture de la veille)">A — top</th>
+                  <th class="num" title="Du départ au top">A — top</th>
                   <th class="num" title="Du top au bas du rejet">B — bas</th>
                   <th class="num" title="Du bas au haut du retest ; en dessous, l'écart au top">C — retest</th>
                   <th class="num" title="Du départ au retest ; en dessous, les trois jambes">Durée</th>
@@ -651,9 +650,9 @@
               <tbody>
                 <tr class="pending">
                   <td>18/09</td><td><span class="ticker">SGBX</span></td><td><span class="tag tag-accent">DT</span></td>
-                  <td class="num sep">+65,2 %</td><td class="num">+33,0 %</td><td class="num">3,9 M</td><td class="num">9,7 M</td>
+                  <td class="num sep">3,9 M</td><td class="num">9,7 M</td>
                   <td class="num sep">1,90</td>
-                  <td class="num">2,95<small class="muted">+55,3 % · gap +163 %</small></td>
+                  <td class="num">2,95<small class="muted">+55,3 %</small></td>
                   <td class="num">2,36<small class="muted">−20,0 %</small></td>
                   <td class="num muted">—</td>
                   <td class="num muted">—<small class="muted">A 12 · B 7</small></td>
@@ -663,9 +662,9 @@
                 </tr>
                 <tr>
                   <td>16/09</td><td><span class="ticker">PRSO</span></td><td><span class="tag tag-accent">DT</span></td>
-                  <td class="num sep">+8,6 %</td><td class="num">+4,2 %</td><td class="num">6,1 M</td><td class="num">1,4 M</td>
+                  <td class="num sep">6,1 M</td><td class="num">1,4 M</td>
                   <td class="num sep">2,40</td>
-                  <td class="num">3,80<small class="muted">+58,3 % · gap +72,7 %</small></td>
+                  <td class="num">3,80<small class="muted">+58,3 %</small></td>
                   <td class="num">3,02<small class="muted">−20,5 %</small></td>
                   <td class="num">3,68<small class="muted">+21,9 % · top −3,2 %</small></td>
                   <td class="num">38 min<small class="muted">A 12 · B 9 · C 17</small></td>
@@ -675,9 +674,9 @@
                 </tr>
                 <tr>
                   <td>11/09</td><td><span class="ticker">IMNN</span></td><td><span class="tag tag-accent">DT</span></td>
-                  <td class="num sep">+12,3 %</td><td class="num">+3,1 %</td><td class="num">7,5 M</td><td class="num">0,8 M</td>
+                  <td class="num sep">7,5 M</td><td class="num">0,8 M</td>
                   <td class="num sep">2,10</td>
-                  <td class="num">3,40<small class="muted">+61,9 % · gap +74,4 %</small></td>
+                  <td class="num">3,40<small class="muted">+61,9 %</small></td>
                   <td class="num">2,70<small class="muted">−20,6 %</small></td>
                   <td class="num">3,46<small class="below" title="Le retest reprend le top : une cassure, pas un double top">+28,1 % · top repris +1,8 %</small></td>
                   <td class="num">34 min<small class="muted">A 15 · B 7 · C 12</small></td>
@@ -687,9 +686,9 @@
                 </tr>
                 <tr>
                   <td>08/09</td><td><span class="ticker">GRI</span></td><td><span class="tag tag-accent">DT</span></td>
-                  <td class="num sep">+21,9 %</td><td class="num">+6,4 %</td><td class="num">2,8 M</td><td class="num">3,3 M</td>
+                  <td class="num sep">2,8 M</td><td class="num">3,3 M</td>
                   <td class="num sep">4,10</td>
-                  <td class="num">6,45<small class="muted">+57,3 % · gap +101,6 %</small></td>
+                  <td class="num">6,45<small class="muted">+57,3 %</small></td>
                   <td class="num">5,45<small class="below" title="Sous les 17 % de la fiche : une respiration plutôt qu'un rejet">−15,5 %</small></td>
                   <td class="num">6,30<small class="muted">+15,6 % · top −2,3 %</small></td>
                   <td class="num">26 min<small class="muted">A 10 · B 6 · C 10</small></td>
@@ -700,8 +699,8 @@
               </tbody>
               <tfoot>
                 <tr>
-                  <td colspan="8">Moyennes — 3 stats DT complétées</td>
-                  <td class="num">+59,2 %<small class="muted">gap +82,9 %</small></td>
+                  <td colspan="6">Moyennes — 3 stats DT complétées</td>
+                  <td class="num">+59,2 %</td>
                   <td class="num">−18,9 %<small class="muted">2 / 3 ≥ 17 %</small></td>
                   <td class="num">+21,9 %<small class="muted">top −1,2 %</small></td>
                   <td class="num" title="Médiane, pas moyenne">méd. 34 min<small class="muted">n = 3 · B 7</small></td>
@@ -748,7 +747,7 @@
                 </tr>
                 <tr class="pending">
                   <td>18/09</td><td><span class="ticker">SGBX</span></td><td><span class="tag tag-accent">DT</span></td>
-                  <td class="num sep">+65,2 %</td><td class="num">+33,0 %</td><td class="num">3,9 M</td><td class="num">9,7 M</td>
+                  <td class="num sep muted" title="Pas de premarket sur un double top (#649)">—</td><td class="num muted">—</td><td class="num">3,9 M</td><td class="num">9,7 M</td>
                   <td class="sep"><span class="leg">A</span>+55,3 % · <span class="leg">B</span>−20,0 % · <span class="leg">C</span>—</td>
                   <td class="sep"></td>
                   <td><button class="check" disabled><span class="icon">radio_button_unchecked</span></button></td>
@@ -784,7 +783,7 @@
                 </tr>
                 <tr>
                   <td>16/09</td><td><span class="ticker">PRSO</span></td><td><span class="tag tag-accent">DT</span></td>
-                  <td class="num sep">+8,6 %</td><td class="num">+4,2 %</td><td class="num">6,1 M</td><td class="num">1,4 M</td>
+                  <td class="num sep muted" title="Pas de premarket sur un double top (#649)">—</td><td class="num muted">—</td><td class="num">6,1 M</td><td class="num">1,4 M</td>
                   <td class="sep"><span class="leg">A</span>+58,3 % · <span class="leg">B</span>−20,5 % · <span class="leg">C</span>top −3,2 %</td>
                   <td class="sep"></td>
                   <td><button class="check done"><span class="icon">check_circle</span></button></td>
@@ -802,7 +801,7 @@
                 </tr>
                 <tr>
                   <td>11/09</td><td><span class="ticker">IMNN</span></td><td><span class="tag tag-accent">DT</span></td>
-                  <td class="num sep">+12,3 %</td><td class="num">+3,1 %</td><td class="num">7,5 M</td><td class="num">0,8 M</td>
+                  <td class="num sep muted" title="Pas de premarket sur un double top (#649)">—</td><td class="num muted">—</td><td class="num">7,5 M</td><td class="num">0,8 M</td>
                   <td class="sep"><span class="leg">A</span>+61,9 % · <span class="leg">B</span>−20,6 % · <span class="leg">C</span>top repris +1,8 %</td>
                   <td class="sep"></td>
                   <td><button class="check done"><span class="icon">check_circle</span></button></td>
@@ -1093,16 +1092,16 @@
           « → Trade » crée le trade au journal (action manuelle). Une stat peut porter plusieurs trades, créés un par un avec « + » (#500, SDEV le 29/09) : une pastille par trade, dans l'ordre de la journée, chacun avec son sens — KTTA le 17/09 a un GUS short et, née de lui (#507), une stat discrétionnaire avec un long sur le rebond. Les variations de prix restent neutres : la couleur est réservée aux résultats (lien vers le trade).
         </p>
         <p class="mockup-note">
-          Double top (#428) — une stat DT garde le même premarket (repris du candidat, pour que ses KPIs se comparent à ceux du GUS),
-          mais sa séance est le double top lui-même : quatre prix, le départ (l'open par défaut, ou le bas d'où part la poussée), le
-          top, le bas du rejet et le haut du retest. L'app en tire les trois jambes : <b>A</b> l'extension (départ → top, ≥ 50 %, et
-          « avec le gap » depuis la clôture de la veille, comme la feuille de stats du Trading Desk), <b>B</b> le rejet (top → bas,
+          Double top (#428) — une stat DT n'a pas de premarket (#649) : elle se lit sur la séance, pas sur le matin. Sa première carte
+          ne garde que le float, le volume et la note, et « Créer la stat » ne demande que la date et le ticker. Sa séance est le double top lui-même : quatre prix, le départ (l'open par défaut, ou le bas d'où part la poussée), le
+          top, le bas du rejet et le haut du retest. L'app en tire les trois jambes : <b>A</b> l'extension (départ → top, ≥ 50 %),
+          <b>B</b> le rejet (top → bas,
           17-20 %, en ambre sous 17 % : une respiration), <b>C</b> le retest (bas → retest, et son écart au top — souvent frôlé sans
           être repris). Elle se coche avec les quatre prix. Un candidat peut avoir <b>une stat par pattern</b> : SGBX, GUS le matin,
           a aussi sa stat DT en fin de matinée — le sélecteur « SGBX · GUS / SGBX · DT » en haut montre les deux panneaux. Le pattern
           d'une stat se change encore entre GUS, SIR, SIV et discrétionnaire (même séance) ; un DT a ses propres prix, c'est une autre
           stat. En haut, GUS / DT / Tous choisit les KPIs, les colonnes et les moyennes ; « Tous » ne garde que ce qui se compare
-          (premarket, flags, trade) et résume chaque stat dans son pattern, sans ligne de moyennes.
+          (premarket — vide sur un DT —, float, volume, flags, trade) et résume chaque stat dans son pattern, sans ligne de moyennes.
         </p>
         <p class="mockup-note">
           Mesurer le GUS avec les chiffres sur lesquels il se décide (#499). Le <b>gap</b> de l'app (clôture veille → open PM) et le
@@ -1259,8 +1258,10 @@
           el.className = ok ? 'pct' : 'pct muted';
         };
         const required = () => [$('p-close'), $('p-open'), $('p-high')];
+        // #649 : un DT n'a pas de premarket, rien à exiger.
+        const isDt = () => !$('dt-panel').hidden;
         window.premarketProblem = () => {
-          if (isNew()) return null;
+          if (isNew() || isDt()) return null;
           const [close, open, high] = required().map((x) => parse(x.value));
           if (!(close > 0 && open > 0 && high > 0)) return 'les trois prix premarket sont requis';
           if (high < open) return "le high PM est sous l'open PM";
@@ -1272,7 +1273,7 @@
           show($('p-gap'), 'gap', parse($('p-close').value), parse($('p-open').value));
           show($('p-push'), 'push PM', parse($('p-open').value), parse($('p-high').value));
           show($('p-cumul'), 'cumul', parse($('p-close').value), parse($('p-high').value));
-          const edit = !isNew();
+          const edit = !isNew() && !isDt();
           required().forEach((input) => {
             const empty = edit && !(parse(input.value) > 0);
             input.classList.toggle('invalid', empty);
@@ -1343,7 +1344,7 @@
           const missing = [];
           if (!$('n-date').value) missing.push('la date');
           if (!$('n-ticker').value.trim()) missing.push('le ticker');
-          if (![$('p-close'), $('p-open'), $('p-high')].every((i) => parse(i.value) > 0)) missing.push('les trois prix premarket');
+          if (!isDt() && ![$('p-close'), $('p-open'), $('p-high')].every((i) => parse(i.value) > 0)) missing.push('les trois prix premarket');
           create.disabled = missing.length > 0;
           $('new-missing').textContent = missing.length ? 'Il manque ' + missing.join(', ') : '';
         }
@@ -1402,7 +1403,6 @@
         const parse = (v) => parseFloat(String(v).replace(',', '.'));
         const fmt = (pct) => (pct >= 0 ? '+' : '') + pct.toFixed(1).replace('.', ',') + ' %';
         const move = (from, to) => ((to - from) / from) * 100;
-        const prevClose = () => parse($('p-close').value);
         const prices = [$('dt-start'), $('dt-top'), $('dt-low'), $('dt-retest')];
         const names = ['le départ', 'le top', 'le bas du rejet', 'le retest'];
         const times = [$('dt-start-time'), $('dt-top-time'), $('dt-low-time'), $('dt-retest-time')];
@@ -1428,8 +1428,7 @@
           const [start, top, low, retest] = prices.map((p) => parse(p.value));
           if (start > 0 && top > 0) {
             const a = move(start, top);
-            const withGap = prevClose() > 0 ? fmt(move(prevClose(), top)) + ' avec le gap' : '';
-            leg($('dt-a'), 'A ' + fmt(a) + span(0), a < 50, a < 50 ? 'sous les 50 % de la fiche · ' + withGap : withGap);
+            leg($('dt-a'), 'A ' + fmt(a) + span(0), a < 50, a < 50 ? 'sous les 50 % de la fiche' : 'depuis le départ');
           } else leg($('dt-a'), '—');
           if (top > 0 && low > 0) {
             const b = move(top, low);

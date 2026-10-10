@@ -22,10 +22,10 @@ export interface StatEntry {
   pattern: Pattern;
   ticker: string;
 
-  // ---- Premarket (copied from the candidate) ----
-  previousClose: number;
-  pmOpen: number;
-  pmHigh: number;
+  // ---- Premarket (copied from the candidate ; none on a DT, #649) ----
+  previousClose: number | null;
+  pmOpen: number | null;
+  pmHigh: number | null;
   floatMillions: number | null;
   volumeMillions: number | null;
   note: string | null;
@@ -161,8 +161,6 @@ export interface StatSummary {
   completedDoubleTops: number;
   /** Leg A, start → top. */
   averageExtensionPercent: number | null;
-  /** Leg A counted from the previous close. */
-  averageExtensionWithGapPercent: number | null;
   /** Leg B, top → rejection low (negative). */
   averageRejectionPercent: number | null;
   /** Double tops whose rejection reached the 17 % of the DT sheet. */

@@ -220,7 +220,7 @@
       },
       "DT": {
         "title": "Promote {{ticker}} to a DT stat?",
-        "message": "The DT stat takes the candidate's premarket ; you will note the start, the top, the rejection low and the retest.",
+        "message": "The DT stat takes the candidate's float, volume and note, not its premarket ; you will note the start, the top, the rejection low and the retest.",
         "confirm": "Promote to DT"
       }
     },
@@ -669,7 +669,7 @@
       "noPushShare": "{{share}} % of the period's completed stats",
       "completedDt": "Completed DT stats",
       "extension": "Average extension (A)",
-      "extensionSub": "from the start · {{withGap}} with the gap",
+      "extensionSub": "from the start",
       "rejection": "Average rejection (B)",
       "rejectionSub": "from the top · {{count}} / {{total}} at {{criterion}} % or more",
       "retest": "Retest (C)",
@@ -819,6 +819,8 @@
     },
     "premarket": {
       "title": "Premarket —",
+      "titleDoubleTop": "Stock —",
+      "hintDoubleTop": "float and volume copied from the candidate · no premarket: a double top is read off the session",
       "hint": "copied from the candidate · editable · each field is saved when left",
       "required": "required",
       "doubleTopFixed": "A DT stat stays a DT: its prices mean nothing to another pattern",
@@ -875,23 +877,21 @@
       "title": "Double top",
       "hint": "late in the morning, when it forms · each price with its time · each field saves when you leave it · A ≥ 50 %, B 17-20 %",
       "startHint": "the 9:30 open by default — the low the push starts from",
-      "legA": "A {{leg}} % · {{withGap}} % with the gap",
+      "legA": "A {{leg}} %",
       "legB": "B {{leg}} % from the top",
       "legBBreath": "B {{leg}} % — under 17 %: a breath rather than a rejection",
       "legC": "C {{leg}} % · {{toTop}} % from the top",
       "legCTookTop": "C {{leg}} % · top taken back {{toTop}} %",
       "columnA": "A — top",
-      "columnAHint": "From the start to the top ; below, with the gap (from the previous close)",
+      "columnAHint": "From the start to the top",
       "columnB": "B — low",
       "columnBHint": "From the top to the rejection low",
       "columnC": "C — retest",
       "columnCHint": "From the low to the retest high ; below, the distance to the top",
       "cellA": "{{leg}} %",
-      "cellAGap": "· gap {{withGap}} %",
       "cellC": "{{leg}} % · top {{toTop}} %",
       "cellCTookTop": "{{leg}} % · top taken back {{toTop}} %",
       "breathHint": "Under the 17 % of the DT sheet: a breath rather than a rejection",
-      "averageA": "gap {{withGap}} %",
       "averageB": "{{count}} / {{total}} ≥ {{criterion}} %",
       "averageC": "top {{toTop}} %",
       "averages": "Averages — {{count}} completed DT stats",
@@ -912,7 +912,7 @@
     },
     "confirmSibling": {
       "title": "Create the {{pattern}} stat of {{ticker}}?",
-      "message": "Same day, same ticker: the day's prices (previous close, premarket, open, push or « no push », HOD, LOD, EOD) are carried over, what belongs to the pattern starts empty. It has its own trades and only counts in its pattern's stats.",
+      "message": "Same day, same ticker: the day's prices (previous close, premarket, open, push or « no push », HOD, LOD, EOD) are carried over (a DT keeps none of the premarket), what belongs to the pattern starts empty. It has its own trades and only counts in its pattern's stats.",
       "confirm": "Create the stat"
     },
     "confirmAnotherTrade": {

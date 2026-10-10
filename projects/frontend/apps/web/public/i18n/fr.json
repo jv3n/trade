@@ -220,7 +220,7 @@
       },
       "DT": {
         "title": "Passer {{ticker}} en stat DT ?",
-        "message": "La stat DT reprend le premarket du candidat ; tu y noteras le départ, le top, le bas du rejet et le retest.",
+        "message": "La stat DT reprend le float, le volume et la note du candidat, pas son premarket ; tu y noteras le départ, le top, le bas du rejet et le retest.",
         "confirm": "Passer en DT"
       }
     },
@@ -669,7 +669,7 @@
       "noPushShare": "{{share}} % des stats complétées de la période",
       "completedDt": "Stats DT complétées",
       "extension": "Extension moyenne (A)",
-      "extensionSub": "depuis le départ · {{withGap}} avec le gap",
+      "extensionSub": "depuis le départ",
       "rejection": "Rejet moyen (B)",
       "rejectionSub": "depuis le top · {{count}} / {{total}} à {{criterion}} % ou plus",
       "retest": "Retest (C)",
@@ -819,6 +819,8 @@
     },
     "premarket": {
       "title": "Premarket —",
+      "titleDoubleTop": "Titre —",
+      "hintDoubleTop": "float et volume repris du candidat · pas de premarket : un double top se lit sur la séance",
       "hint": "repris du candidat · modifiable · chaque champ s'enregistre à la sortie",
       "required": "requis",
       "doubleTopFixed": "Une stat DT reste un DT : ses prix n'ont pas de sens pour un autre pattern",
@@ -875,23 +877,21 @@
       "title": "Double top",
       "hint": "en fin de matinée, quand il se forme · chaque prix avec son heure · chaque champ s'enregistre à la sortie · A ≥ 50 %, B 17-20 %",
       "startHint": "l'open (9h30) par défaut — le bas d'où part la poussée",
-      "legA": "A {{leg}} % · {{withGap}} % avec le gap",
+      "legA": "A {{leg}} %",
       "legB": "B {{leg}} % depuis le top",
       "legBBreath": "B {{leg}} % — sous 17 % : une respiration plutôt qu'un rejet",
       "legC": "C {{leg}} % · {{toTop}} % du top",
       "legCTookTop": "C {{leg}} % · top repris {{toTop}} %",
       "columnA": "A — top",
-      "columnAHint": "Du départ au top ; en dessous, avec le gap (depuis la clôture de la veille)",
+      "columnAHint": "Du départ au top",
       "columnB": "B — bas",
       "columnBHint": "Du top au bas du rejet",
       "columnC": "C — retest",
       "columnCHint": "Du bas au haut du retest ; en dessous, l'écart au top",
       "cellA": "{{leg}} %",
-      "cellAGap": "· gap {{withGap}} %",
       "cellC": "{{leg}} % · top {{toTop}} %",
       "cellCTookTop": "{{leg}} % · top repris {{toTop}} %",
       "breathHint": "Sous les 17 % de la fiche : une respiration plutôt qu'un rejet",
-      "averageA": "gap {{withGap}} %",
       "averageB": "{{count}} / {{total}} ≥ {{criterion}} %",
       "averageC": "top {{toTop}} %",
       "averages": "Moyennes — {{count}} stats DT complétées",
@@ -912,7 +912,7 @@
     },
     "confirmSibling": {
       "title": "Créer la stat {{pattern}} de {{ticker}} ?",
-      "message": "Même jour, même ticker : les prix de la journée (clôture veille, premarket, open, push ou « pas de push », HOD, LOD, EOD) sont repris, ce qui est propre au pattern part vide. Elle a ses propres trades et ne compte que dans les stats de son pattern.",
+      "message": "Même jour, même ticker : les prix de la journée (clôture veille, premarket, open, push ou « pas de push », HOD, LOD, EOD) sont repris (un DT n'en garde pas le premarket), ce qui est propre au pattern part vide. Elle a ses propres trades et ne compte que dans les stats de son pattern.",
       "confirm": "Créer la stat"
     },
     "confirmAnotherTrade": {

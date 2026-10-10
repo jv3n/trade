@@ -4,6 +4,8 @@ import com.portfolioai.auth.application.AuthService
 import com.portfolioai.auth.domain.Role
 import com.portfolioai.auth.domain.User
 import com.portfolioai.auth.infrastructure.persistence.UserRepository
+import com.portfolioai.candidates.domain.Candidate
+import com.portfolioai.candidates.infrastructure.persistence.CandidateRepository
 import com.portfolioai.journal.infrastructure.persistence.TradeEntryRepository
 import com.portfolioai.shared.Pattern
 import com.portfolioai.stats.application.StatEntryService
@@ -38,6 +40,8 @@ import org.springframework.web.server.ResponseStatusException
  *   float, volume, the day's flags) — a session-measured sibling is completable as born (#517) —
  *   and what belongs to the setup starts empty (the note, the double-top prices — a double top
  *   starts from the open) ;
+ * - a double top keeps no premarket (#649) : born from the GUS it drops it, and a session stat born
+ *   from it takes its candidate's — without a candidate, none is offered ;
  * - the sibling keeps the day, the ticker and the source candidate ;
  * - **one stat per pattern** still holds : a pattern the day already has is a 409, and only the
  *   free ones are offered ;
@@ -50,6 +54,7 @@ class StatSiblingIntegrationTest {
   @Autowired private lateinit var statRepo: StatEntryRepository
   @Autowired private lateinit var tradeRepo: TradeEntryRepository
   @Autowired private lateinit var userRepository: UserRepository
+  @Autowired private lateinit var candidateRepo: CandidateRepository
 
   @MockitoBean private lateinit var authService: AuthService
 
@@ -63,6 +68,7 @@ class StatSiblingIntegrationTest {
   fun setUp() {
     tradeRepo.deleteAll()
     statRepo.deleteAll()
+    candidateRepo.deleteAll()
     userRepository.deleteAll()
     testUser = saveUser("trader")
     otherUser = saveUser("other")
@@ -78,7 +84,7 @@ class StatSiblingIntegrationTest {
     assertEquals(gus.tradeDate, sibling.tradeDate)
     assertEquals("KTTA", sibling.ticker)
     assertEquals(gus.candidateId, sibling.candidateId, "the same candidate gave birth to both")
-    assertEquals(0, sibling.pmHigh.compareTo(BigDecimal("4.6500")))
+    assertEquals(0, sibling.pmHigh!!.compareTo(BigDecimal("4.6500")))
     assertEquals(0, sibling.floatMillions!!.compareTo(BigDecimal("8.20")))
     assertEquals(0, sibling.openPrice!!.compareTo(BigDecimal("4.2000")))
     assertEquals(0, sibling.lodPrice!!.compareTo(BigDecimal("3.4100")))
@@ -133,7 +139,43 @@ class StatSiblingIntegrationTest {
     assertNull(dt.openPrice, "a double top has its own prices, not the GUS session")
     assertNull(dt.pushOpenPrice)
     assertFalse(dt.noPush)
-    assertEquals(0, dt.previousClose.compareTo(BigDecimal("2.6500")))
+  }
+
+  @Test
+  fun `a double top born from the GUS keeps none of the premarket, only float and volume`() {
+    val dt = statService.createSibling(gus.id, Pattern.DT)
+
+    assertNull(dt.previousClose)
+    assertNull(dt.pmOpen)
+    assertNull(dt.pmHigh)
+    assertEquals(0, dt.floatMillions!!.compareTo(BigDecimal("8.20")))
+    assertEquals(0, dt.volumeMillions!!.compareTo(BigDecimal("3.10")))
+  }
+
+  @Test
+  fun `a session stat born from a double top takes its candidate's premarket`() {
+    // SGBX 18/09 : promoted to DT only — the stat has no premarket to hand on.
+    val candidate = candidateRepo.save(sgbxCandidate(testUser))
+    val dt = statRepo.save(sgbxDoubleTop(testUser, candidate.id))
+
+    val sir = statService.createSibling(dt.id, Pattern.SIR)
+
+    assertEquals(0, sir.previousClose!!.compareTo(BigDecimal("1.1200")))
+    assertEquals(0, sir.pmOpen!!.compareTo(BigDecimal("1.8500")))
+    assertEquals(0, sir.pmHigh!!.compareTo(BigDecimal("2.4600")))
+    assertEquals(candidate.id, sir.candidateId)
+  }
+
+  @Test
+  fun `a double top typed by hand offers no sibling, and asking for one is a 400`() {
+    val dt = statRepo.save(sgbxDoubleTop(testUser, candidateId = null))
+
+    assertEquals(emptyList<Pattern>(), statService.freePatterns(dt.id))
+    val ex =
+      assertThrows(ResponseStatusException::class.java) {
+        statService.createSibling(dt.id, Pattern.SIR)
+      }
+    assertEquals(400, ex.statusCode.value())
   }
 
   @Test
@@ -224,5 +266,28 @@ class StatSiblingIntegrationTest {
         lodPrice = BigDecimal("3.4100")
         eodPrice = BigDecimal("3.5200")
         ssr = true
+      }
+
+  private fun sgbxCandidate(user: User) =
+    Candidate(
+      user = user,
+      tradingDate = LocalDate.of(2026, 9, 18),
+      ticker = "SGBX",
+      previousClose = BigDecimal("1.1200"),
+      pmOpen = BigDecimal("1.8500"),
+      pmHigh = BigDecimal("2.4600"),
+    )
+
+  private fun sgbxDoubleTop(user: User, candidateId: UUID?) =
+    StatEntry(
+        user = user,
+        candidateId = candidateId,
+        tradeDate = LocalDate.of(2026, 9, 18),
+        pattern = Pattern.DT,
+        ticker = "SGBX",
+      )
+      .apply {
+        floatMillions = BigDecimal("3.90")
+        dtStartPrice = BigDecimal("1.9000")
       }
 }

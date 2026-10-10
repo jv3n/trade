@@ -110,9 +110,9 @@ function makeDoubleTop(overrides: Partial<StatEntry> = {}): StatEntry {
   return makePending({
     id: 'stat-sgbx-dt',
     pattern: 'DT',
-    previousClose: 1.12,
-    pmOpen: 1.85,
-    pmHigh: 2.46,
+    previousClose: null,
+    pmOpen: null,
+    pmHigh: null,
     dtStartPrice: 1.9,
     dtTopPrice: 2.95,
     dtLowPrice: 2.36,
@@ -156,7 +156,6 @@ function makeSummary(overrides: Partial<StatSummary> = {}): StatSummary {
     medianCumulativeOpenPercent: 42.9,
     completedDoubleTops: 0,
     averageExtensionPercent: null,
-    averageExtensionWithGapPercent: null,
     averageRejectionPercent: null,
     rejectionAtCriterionCount: 0,
     averageRetestPercent: null,
@@ -1441,6 +1440,10 @@ describe('StatsPage', () => {
       expect.arrayContaining(['dtStart', 'dtTop', 'dtLow', 'dtRetest', 'dtDuration']),
     );
     expect(page.columns()).not.toContain('pushOpen');
+    // #649 : no premarket on a double top — float and volume stay.
+    expect(page.columns()).not.toContain('gap');
+    expect(page.columns()).not.toContain('pmPush');
+    expect(page.columns()).toEqual(expect.arrayContaining(['float', 'volume']));
     expect(fixture.nativeElement.querySelector('tr.averages-row')).not.toBeNull();
     expect(page.statusTabs()).not.toContain('NO_PUSH');
   });
@@ -1506,22 +1509,20 @@ describe('StatsPage', () => {
     expect(footer()?.classList).toContain('no-averages');
   });
 
-  // #453 : the gap figure is not judged against any criterion, yet it went amber with the extension.
-  it('ambers the extension of a double top under the criterion, never its gap figure', async () => {
-    // From 1,90 to 2,50 : +31,6 % from the start, under the 50 % criterion ; +123 % from the close.
+  it('ambers the extension of a double top under the criterion', async () => {
+    // From 1,90 to 2,50 : +31,6 % from the start, under the 50 % criterion.
     const { fixture, page } = setup({ rows: [makeDoubleTop({ dtTopPrice: 2.5 })] });
     TestBed.inject(TranslateService).setTranslation('en', {
-      stats: { doubleTop: { cellA: '{{leg}} %', cellAGap: '· gap {{withGap}} %' } },
+      stats: { doubleTop: { cellA: '{{leg}} %' } },
     });
 
     page.setView('DT');
     fixture.detectChanges();
     await fixture.whenStable();
 
-    const note: HTMLElement = fixture.nativeElement.querySelector('.leg-note');
-    expect(note.classList).not.toContain('warn');
-    expect(note.querySelector('.warn')?.textContent).toContain('31.6');
-    expect(note.querySelector('.warn')?.textContent).not.toContain('123');
+    const note: HTMLElement = fixture.nativeElement.querySelector('td.mat-column-dtTop .leg-note');
+    expect(note.classList).toContain('warn');
+    expect(note.textContent).toContain('31.6');
   });
 
   it('leaving the GUS view drops the « No push » tab it was on', () => {
@@ -1590,10 +1591,9 @@ describe('StatsPage', () => {
     expect(page.isDoubleTop()).toBe(true);
     page.setSessionPrice('dtRetestPrice', 2.85);
 
-    // The SGBX of the mockup : A +55.3 % (+163 % with the gap), B −20.0 %, C +20.8 %, −3.4 % off the top.
+    // The SGBX of the mockup : A +55.3 %, B −20.0 %, C +20.8 %, −3.4 % off the top.
     const legs = page.doubleTopLegs();
     expect(legs.extension).toBeCloseTo(55.26, 2);
-    expect(legs.extensionWithGap).toBeCloseTo(163.39, 2);
     expect(legs.rejection).toBeCloseTo(-20, 2);
     expect(legs.retest).toBeCloseTo(20.76, 2);
     expect(legs.retestToTop).toBeCloseTo(-3.39, 2);
@@ -1709,6 +1709,33 @@ describe('StatsPage', () => {
     expect(repo.setCompleted).toHaveBeenCalledWith('stat-sgbx-dt', true);
   });
 
+  // #649 : a double top is read off the session — its first card keeps float, volume and note.
+  it('asks a double top for no premarket price, and saves it without one', async () => {
+    const { fixture, page, repo } = setup({ rows: [makeDoubleTop()] });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const labels = (fixture.nativeElement as HTMLElement).querySelector(
+      '.premarket-form',
+    )?.textContent;
+    expect(labels).not.toContain('stats.fields.previousClose');
+    expect(labels).not.toContain('stats.fields.pmOpen');
+    expect(labels).toContain('stats.fields.float');
+    expect(page.premarketRequired()).toEqual({
+      previousClose: false,
+      pmOpen: false,
+      pmHigh: false,
+    });
+
+    page.setPremarketPrice('floatMillions', 4.2);
+    page.saveSession('premarket');
+
+    expect(repo.update).toHaveBeenCalledWith(
+      'stat-sgbx-dt',
+      expect.objectContaining({ previousClose: null, pmOpen: null, floatMillions: 4.2 }),
+    );
+  });
+
   it('sends nothing while the double top is out of shape, and names the fields', () => {
     const { page, repo } = setup({ rows: [makeDoubleTop()] });
 
@@ -1762,9 +1789,8 @@ describe('StatsPage', () => {
     page.setIdentity({ ticker: 'nxtt', tradeDate: new Date(2026, 8, 18), pattern: 'DT' });
     expect(page.isDoubleTop()).toBe(true);
     expect(page.sessionPriceCount()).toBe(4);
-    page.setPremarketPrice('previousClose', 1.6);
-    page.setPremarketPrice('pmOpen', 1.72);
-    page.setPremarketPrice('pmHigh', 1.8);
+    // #649 : a double top asks for no premarket — the date and the ticker are enough.
+    expect(page.createMissing()).toEqual([]);
     page.setSessionPrice('dtStartPrice', 1.75);
     page.setSessionPrice('dtTopPrice', 2.64);
     page.createStat();
@@ -1773,6 +1799,9 @@ describe('StatsPage', () => {
       expect.objectContaining({
         ticker: 'NXTT',
         pattern: 'DT',
+        previousClose: null,
+        pmOpen: null,
+        pmHigh: null,
         dtStartPrice: 1.75,
         dtTopPrice: 2.64,
       }),

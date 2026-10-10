@@ -32,8 +32,6 @@ import java.math.BigDecimal
  *   at the bell.
  * @param completedDoubleTops Completed stats that are double tops — part of [completed].
  * @param averageExtensionPercent Leg A of the double tops : start → top.
- * @param averageExtensionWithGapPercent Leg A counted from the previous close — a gap plus a push
- *   can make 50 % without an intraday 50 %, so the Trading Desk sheet keeps both.
  * @param averageRejectionPercent Leg B : top → rejection low (negative).
  * @param rejectionAtCriterionCount Double tops whose rejection reached the 17 % of the DT sheet —
  *   read against [completedDoubleTops].
@@ -65,7 +63,6 @@ data class StatSummaryDto(
   val medianCumulativeOpenPercent: BigDecimal?,
   val completedDoubleTops: Int,
   val averageExtensionPercent: BigDecimal?,
-  val averageExtensionWithGapPercent: BigDecimal?,
   val averageRejectionPercent: BigDecimal?,
   val rejectionAtCriterionCount: Int,
   val averageRetestPercent: BigDecimal?,

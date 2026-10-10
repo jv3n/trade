@@ -55,8 +55,6 @@ export const DT_REJECTION_CRITERION = 17;
 export interface DoubleTopLegs {
   /** A, the extension : start → top. */
   extension: number | null;
-  /** A counted from the previous close — a gap plus a push can make 50 % without an intraday 50 %. */
-  extensionWithGap: number | null;
   /** B, the rejection : top → rejection low (negative). */
   rejection: number | null;
   /** C, the retest : rejection low → retest. */
@@ -112,17 +110,15 @@ function toMinutes(time: string): number {
 }
 
 export function doubleTopLegs(prices: {
-  previousClose: number | null;
   dtStartPrice: number | null;
   dtTopPrice: number | null;
   dtLowPrice: number | null;
   dtRetestPrice: number | null;
 }): DoubleTopLegs {
-  const { previousClose, dtStartPrice: start, dtTopPrice: top, dtLowPrice: low } = prices;
+  const { dtStartPrice: start, dtTopPrice: top, dtLowPrice: low } = prices;
   const retest = prices.dtRetestPrice;
   return {
     extension: percentChange(start, top),
-    extensionWithGap: percentChange(previousClose, top),
     rejection: percentChange(top, low),
     retest: percentChange(low, retest),
     retestToTop: percentChange(top, retest),

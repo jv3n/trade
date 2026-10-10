@@ -29,10 +29,10 @@ data class StatEntryDto(
   val tradeDate: LocalDate,
   val pattern: Pattern,
   val ticker: String,
-  // ---- Premarket (copied from the candidate) ----
-  val previousClose: BigDecimal,
-  val pmOpen: BigDecimal,
-  val pmHigh: BigDecimal,
+  // ---- Premarket (copied from the candidate ; null on a DT, #649) ----
+  val previousClose: BigDecimal?,
+  val pmOpen: BigDecimal?,
+  val pmHigh: BigDecimal?,
   val floatMillions: BigDecimal?,
   val volumeMillions: BigDecimal?,
   val note: String?,

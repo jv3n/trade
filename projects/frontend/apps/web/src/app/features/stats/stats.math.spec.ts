@@ -82,20 +82,16 @@ describe('percentVsOpen', () => {
 });
 
 describe('doubleTopLegs', () => {
-  /** SGBX : previous close 1.12, start 1.90, top 2.95, rejection low 2.36, retest 2.85. */
+  /** SGBX : start 1.90, top 2.95, rejection low 2.36, retest 2.85. */
   const sgbx = {
-    previousClose: 1.12,
     dtStartPrice: 1.9,
     dtTopPrice: 2.95,
     dtLowPrice: 2.36,
     dtRetestPrice: 2.85,
   };
 
-  it('measures A from the start to the top, and from the previous close with the gap', () => {
-    const legs = doubleTopLegs(sgbx);
-
-    expect(legs.extension).toBeCloseTo(55.26, 2);
-    expect(legs.extensionWithGap).toBeCloseTo(163.39, 2);
+  it('measures A from the start to the top', () => {
+    expect(doubleTopLegs(sgbx).extension).toBeCloseTo(55.26, 2);
   });
 
   it('measures B as a negative move from the top to the rejection low', () => {

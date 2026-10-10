@@ -7,13 +7,14 @@ import { Api, expect, isoToday, test, typeNumber } from '../fixtures';
  * end to end :
  *
  * - « → GUS » then « → DT » on the same candidate leave one badge per stat ;
- * - the DT badge opens the « Double top » card in the DT view, its start pre-filled with the open ;
+ * - the DT badge opens the « Double top » card in the DT view, its start pre-filled with the open,
+ *   and the stat carries no premarket (#649) ;
  * - the four prices save field by field, the legs read like the mockup's SGBX ;
  * - their four times (#469) give each leg its duration, and the stat ticks with prices and times ;
  * - the DT view counts that double top, the GUS view doesn't.
  *
- * Prices are the SGBX of `mockup/stats.html` : previous close 1.12, open 1.90, top 2.95, rejection
- * low 2.36, retest 2.85 — A +55.3 % (+163 % with the gap), B −20.0 %, C +20.8 %, 3.4 % under the top
+ * Prices are the SGBX of `mockup/stats.html` : open 1.90, top 2.95, rejection low 2.36, retest 2.85
+ * — A +55.3 %, B −20.0 %, C +20.8 %, 3.4 % under the top
  * — at 10:02, 10:14, 10:21 and 10:38 : A 12 min, B 7 min, C 17 min, 36 min in all.
  */
 
@@ -26,6 +27,7 @@ interface Candidate {
 }
 interface Stat {
   id: string;
+  pmOpen: number | null;
   dtStartPrice: number | null;
   dtRetestPrice: number | null;
   dtRetestTime: string | null;
@@ -58,7 +60,9 @@ test('a candidate promoted in GUS then in DT is filled and ticked as a double to
   expect(stats.map((s) => s.pattern)).toEqual(['GUS', 'DT']);
   const dtId = stats.find((s) => s.pattern === 'DT')!.statId;
   // Promoted after the open was typed : the double top starts from it.
-  expect((await api.get<Stat>(`/api/stats/${dtId}`)).dtStartPrice).toBe(1.9);
+  const promoted = await api.get<Stat>(`/api/stats/${dtId}`);
+  expect(promoted.dtStartPrice).toBe(1.9);
+  expect(promoted.pmOpen).toBeNull();
 
   // ---- The DT badge opens the double top card, in the DT view ----
   await page.getByRole('link', { name: 'DT', exact: true }).click();
@@ -70,7 +74,7 @@ test('a candidate promoted in GUS then in DT is filled and ticked as a double to
 
   // ---- The three other prices, the legs computed as they come ----
   await typeNumber(card.getByLabel('Top ($)'), '2.95');
-  await expect(card.getByText('A 55,3 % · 163,4 % avec le gap')).toBeVisible();
+  await expect(card.getByText('A 55,3 %', { exact: true })).toBeVisible();
   await typeNumber(card.getByLabel('Bas du rejet ($)'), '2.36');
   await expect(card.getByText(/B [-−]20,0 % depuis le top/)).toBeVisible();
   await typeNumber(card.getByLabel('Retest ($)'), '2.85');
