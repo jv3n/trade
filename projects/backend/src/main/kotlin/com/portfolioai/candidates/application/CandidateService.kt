@@ -26,9 +26,6 @@ import org.springframework.web.server.ResponseStatusException
 /** Past it, a target push is a typo : a small cap can push 200 % and more, not ten times over. */
 private val MAX_TARGET_PUSH_PERCENT = BigDecimal(1000)
 
-/** The patterns a candidate is promoted to for now (#428) — SIR, SIV and discretionary wait. */
-private val PROMOTABLE = setOf(Pattern.GUS, Pattern.DT)
-
 /**
  * Candidates service — the morning capture (cf. `mockup/PARCOURS.md › Étape 1`). Everything is
  * scoped to the current user, and a missing-or-foreign id → 404 (never 403) so we don't leak
@@ -83,8 +80,6 @@ class CandidateService(
    */
   @Transactional
   fun promote(id: UUID, pattern: Pattern = Pattern.GUS): StatEntryDto {
-    if (pattern !in PROMOTABLE)
-      throw badRequest("A candidate is promoted to GUS or DT, not $pattern")
     val candidate = loadOwned(id)
     val stats = statLinks.statIdsByCandidate(listOf(candidate.id))[candidate.id].orEmpty()
     if (pattern in stats) {

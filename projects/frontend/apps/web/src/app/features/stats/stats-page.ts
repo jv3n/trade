@@ -50,7 +50,12 @@ import {
   switchMap,
   tap,
 } from 'rxjs';
-import { DEFAULT_PATTERN, PATTERNS, Pattern } from '../../core/api/shared/pattern.model';
+import {
+  DEFAULT_PATTERN,
+  Pattern,
+  STAT_PATTERNS,
+  StatPattern,
+} from '../../core/api/shared/pattern.model';
 import {
   OutOfPatternReason,
   StatEntry,
@@ -119,10 +124,7 @@ interface SessionModel {
 
 /** The premarket block being typed in the premarket card — copied from the candidate, editable. */
 interface PremarketModel {
-  /**
-   * Re-filing a stat under another pattern is a premarket edit too (#393) — its trade follows. Never
-   * to or from DT : a double top is a stat of its own.
-   */
+  /** Never changed : a GUS and a double top are two stats (#648). */
   pattern: Pattern;
   previousClose: number | null;
   pmOpen: number | null;
@@ -194,21 +196,20 @@ const STATUS_TABS: readonly StatTab[] = [null, 'TO_COMPLETE', 'COMPLETED', 'NO_P
 
 /**
  * The views of the page (#437) : the KPIs, the table's columns and the averages follow the pattern
- * — a GUS and a double top are not measured alike. Every pattern has its own view and its own
- * numbers (#512) : SIR, SIV and discretionary are measured like the GUS, on their own stats.
- * « All » keeps what compares across patterns, and no average.
+ * — a GUS and a double top are not measured alike, and they are the only two a stat measures
+ * (#648). « All » keeps what compares across patterns, and no average.
  */
-export type StatView = Pattern | 'ALL';
-const VIEWS: readonly StatView[] = ['GUS', 'DT', 'SIR', 'SIV', 'DISCRETIONARY', 'ALL'];
+export type StatView = StatPattern | 'ALL';
+const VIEWS: readonly StatView[] = [...STAT_PATTERNS, 'ALL'];
 
-/** The view a stat shows in — its pattern's own. */
+/** The view a stat shows in — its pattern's own ; a stat left under another pattern, only « All ». */
 function viewOf(pattern: Pattern): StatView {
-  return pattern;
+  return (STAT_PATTERNS as readonly Pattern[]).includes(pattern) ? (pattern as StatPattern) : 'ALL';
 }
 
-/** The views measured like a GUS session — open, push, HOD / LOD / EOD — and their « no push » tab. */
+/** The view measured on the session — open, push, HOD / LOD / EOD — and its « no push » tab. */
 function isSessionView(view: StatView): boolean {
-  return view !== 'DT' && view !== 'ALL';
+  return view === 'GUS';
 }
 
 const LEADING_COLUMNS = [
@@ -252,9 +253,6 @@ const SESSION_COLUMNS: readonly string[] = [
 ];
 const COLUMNS: Record<StatView, readonly string[]> = {
   GUS: SESSION_COLUMNS,
-  SIR: SESSION_COLUMNS,
-  SIV: SESSION_COLUMNS,
-  DISCRETIONARY: SESSION_COLUMNS,
   // A double top has no premarket prices (#649) : no gap, no PM push.
   DT: [
     ...LEADING_COLUMNS.filter((c) => c !== 'gap' && c !== 'pmPush'),
@@ -636,10 +634,8 @@ export class StatsPage {
 
   // ---- Filters ----
   readonly period = signal<PeriodSelection>({ period: 'all', dateFrom: null, dateTo: null });
-  /** Every pattern — what « New stat » picks from. */
-  readonly patterns = PATTERNS;
-  /** What a stat can be re-filed under : a double top is a stat of its own, never re-filed. */
-  readonly refilePatterns = PATTERNS.filter((p) => p !== 'DT');
+  /** What « New stat » picks from — a stat's patterns only (#648). */
+  readonly patterns = STAT_PATTERNS;
   readonly views = VIEWS;
   /**
    * Opens on the tab named by `?status=`, the way « Complete » on the Today page lands (#337), and
@@ -739,7 +735,8 @@ export class StatsPage {
   // ---- Same ticker, another pattern (#507) ----
   /** The patterns the open stat's day and ticker have no stat for yet — empty hides the action. */
   readonly freePatterns = signal<Pattern[]>([]);
-  readonly siblingPattern = signal<Pattern | null>(null);
+  /** A stat is a GUS or a DT (#648) : the other one is the only pattern left to give birth to. */
+  readonly siblingPattern = computed(() => this.freePatterns()[0] ?? null);
 
   /** A stat is dated up to today — the picker stops there, the backend refuses a future day. */
   readonly maxDate = startOfDay(new Date());
@@ -982,7 +979,6 @@ export class StatsPage {
   /** Not worth an error banner : without the list, the action simply doesn't show. */
   private loadFreePatterns(entry: StatEntry): void {
     this.freePatterns.set([]);
-    this.siblingPattern.set(null);
     this.repo
       .freePatterns(entry.id)
       .pipe(catchError(() => of<Pattern[]>([])))
@@ -990,7 +986,6 @@ export class StatsPage {
         // The panel may have moved on to another stat while the request was in flight.
         if (this.completing()?.id !== entry.id) return;
         this.freePatterns.set(patterns);
-        this.siblingPattern.set(patterns[0] ?? null);
       });
   }
 
@@ -1031,12 +1026,6 @@ export class StatsPage {
 
   setPremarketPrice(field: PremarketPrice, value: number | null): void {
     this.premarket.update((m) => ({ ...m, [field]: value }));
-  }
-
-  /** The pattern saves as soon as it is picked, like a flag — there is no field to leave. */
-  setPremarketPattern(pattern: Pattern): void {
-    this.premarket.update((m) => ({ ...m, pattern }));
-    this.saveSession('premarket');
   }
 
   setPremarketNote(note: string): void {
@@ -1117,10 +1106,6 @@ export class StatsPage {
           this.releaseHeldCard(card === 'premarket' ? 'session' : 'premarket', at);
           // The KPIs only count ticked stats : editing one of them moves them.
           if (saved.completed) this.refreshSummary();
-          // Re-filed : the pattern it left is free again, the one it took no longer is.
-          if (saved.pattern !== entry.pattern && this.completing()?.id === saved.id) {
-            this.loadFreePatterns(saved);
-          }
         }),
         catchError(() => {
           this.patchRow(entry);

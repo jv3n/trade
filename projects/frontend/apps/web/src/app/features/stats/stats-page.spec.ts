@@ -209,9 +209,7 @@ class MockStatsRepository extends StatsRepository {
   createSibling = vi.fn((_id: string, pattern: Pattern): Observable<StatEntry> =>
     of(makeStat({ id: 'stat-sibling', pattern, pushOpenPrice: null, completed: false })),
   );
-  freePatterns = vi.fn((_id: string): Observable<Pattern[]> =>
-    of(['DT', 'SIR', 'SIV', 'DISCRETIONARY']),
-  );
+  freePatterns = vi.fn((_id: string): Observable<Pattern[]> => of(['DT']));
   exportCsv = vi.fn((): Observable<Blob> => of(new Blob()));
 }
 
@@ -783,13 +781,13 @@ describe('StatsPage', () => {
 
   // ---- Same ticker, another pattern (#507) ----
 
-  it('opening a stat offers the patterns its day and ticker have free, the first one picked', () => {
+  // #648 : a stat is a GUS or a DT — the other pattern is the only one to give birth to.
+  it('opening a GUS offers its DT while the day has none', () => {
     const { fixture, page, repo } = setup({ rows: [makeStat()] });
     page.open(makeStat());
     fixture.detectChanges();
 
     expect(repo.freePatterns).toHaveBeenCalledWith('stat-ktta');
-    expect(page.freePatterns()).toEqual(['DT', 'SIR', 'SIV', 'DISCRETIONARY']);
     expect(page.siblingPattern()).toBe('DT');
     expect(fixture.nativeElement.querySelector('.premarket-form__sibling')).not.toBeNull();
   });
@@ -803,28 +801,18 @@ describe('StatsPage', () => {
     expect(fixture.nativeElement.querySelector('.premarket-form__sibling')).toBeNull();
   });
 
-  it('creates the stat of the picked pattern once confirmed, then opens it in the panel', () => {
-    // KTTA, 17/09 : the GUS short of the morning, then a long on the bounce — its own stat.
+  it('creates the DT of the day once confirmed, opens it in the panel and in the DT view', () => {
+    // SGBX of the mockup : a GUS in the morning, the double top it formed late in the morning.
     const { page, repo, toastShown } = setup({ rows: [makeStat()] });
-    page.open(makeStat());
-    page.siblingPattern.set('DISCRETIONARY');
-
-    page.createSibling();
-
-    expect(repo.createSibling).toHaveBeenCalledWith('stat-ktta', 'DISCRETIONARY');
-    expect(toastShown).toHaveBeenCalledWith('success', 'stats.snackbar.siblingSuccess');
-    expect(page.completing()?.id).toBe('stat-sibling');
-    expect(page.completing()?.pattern).toBe('DISCRETIONARY');
-  });
-
-  it('a double top born from the GUS lands in the DT view', () => {
-    const { page } = setup({ rows: [makeStat()] });
     page.setView('GUS');
     page.open(makeStat());
-    page.siblingPattern.set('DT');
 
     page.createSibling();
 
+    expect(repo.createSibling).toHaveBeenCalledWith('stat-ktta', 'DT');
+    expect(toastShown).toHaveBeenCalledWith('success', 'stats.snackbar.siblingSuccess');
+    expect(page.completing()?.id).toBe('stat-sibling');
+    expect(page.completing()?.pattern).toBe('DT');
     expect(page.view()).toBe('DT');
   });
 
@@ -838,20 +826,9 @@ describe('StatsPage', () => {
     expect(page.completing()?.id).toBe('stat-ktta');
   });
 
-  it('re-filing the open stat reloads the free patterns — the one it took is no longer offered', () => {
-    const { page, repo } = setup({ rows: [makeStat()] });
-    page.open(makeStat());
-    repo.freePatterns.mockReturnValue(of(['DT', 'SIV', 'GUS', 'DISCRETIONARY']));
-
-    page.setPremarketPattern('SIR');
-
-    expect(page.freePatterns()).toContain('GUS');
-    expect(page.freePatterns()).not.toContain('SIR');
-  });
-
   it('a session stat missing its push says so on its disabled tick, in the row and the panel', () => {
     // Recette #517 : a stat whose row looks full but stops at 4 / 5 must say what is missing.
-    const stat = makeStat({ pattern: 'DISCRETIONARY', pushOpenPrice: null, completed: false });
+    const stat = makeStat({ pushOpenPrice: null, completed: false });
     const { page } = setup({ rows: [stat] });
     page.open(stat);
 
@@ -1162,19 +1139,6 @@ describe('StatsPage', () => {
     expect(repo.update).toHaveBeenCalledWith(
       'stat-sgbx',
       expect.objectContaining({ pmHigh: 4.8, ticker: 'SGBX' }),
-    );
-    expect(page.saveStates().premarket.status).toBe('saved');
-  });
-
-  // #393 : a ticker captured as GUS that turned out to be a short into resistance gets re-filed.
-  it('re-files a stat under another pattern as soon as it is picked, with the whole row', () => {
-    const { page, repo } = setup({ rows: [makePending()] });
-
-    page.setPremarketPattern('SIR');
-
-    expect(repo.update).toHaveBeenCalledWith(
-      'stat-sgbx',
-      expect.objectContaining({ pattern: 'SIR', ticker: 'SGBX', pmOpen: expect.any(Number) }),
     );
     expect(page.saveStates().premarket.status).toBe('saved');
   });
@@ -1536,31 +1500,6 @@ describe('StatsPage', () => {
     expect(repo.lastFilter?.noPush).toBeNull();
   });
 
-  // ---- Every pattern its own numbers (#512) ----
-
-  it('a SIR view lists and summarises the SIR stats alone, measured like the GUS', () => {
-    const { fixture, page, repo } = setup({ rows: [makeStat()] });
-
-    page.setView('SIR');
-    fixture.detectChanges();
-
-    expect(repo.lastFilter?.pattern).toBe('SIR');
-    expect(repo.summary).toHaveBeenLastCalledWith(expect.objectContaining({ pattern: 'SIR' }));
-    expect(page.columns()).toContain('pushOpen');
-    expect(page.statusTabs()).toContain('NO_PUSH');
-  });
-
-  it('a discretionary stat born from a GUS opens in the discretionary view, not in « All »', () => {
-    const { page } = setup({ rows: [makeStat()] });
-    page.setView('GUS');
-    page.open(makeStat());
-    page.siblingPattern.set('DISCRETIONARY');
-
-    page.createSibling();
-
-    expect(page.view()).toBe('DISCRETIONARY');
-  });
-
   // A double top left to complete is one of them : the GUS view would hide it.
   it('lands on « All » from a link naming the stats to complete', () => {
     const { page, repo } = setup({ query: { status: 'TO_COMPLETE' } });
@@ -1748,11 +1687,22 @@ describe('StatsPage', () => {
     expect(page.atFault('dtTopPrice')).toBe(false);
   });
 
-  it('never offers DT when re-filing a stat', () => {
+  // #648 : SIR, SIV and discretionary are trades only — no view, no pattern for a new stat.
+  it('offers the GUS and DT views and patterns only', () => {
     const { page } = setup({ rows: [makePending()] });
 
-    expect(page.refilePatterns).not.toContain('DT');
-    expect(page.refilePatterns).toContain('SIR');
+    expect(page.views).toEqual(['GUS', 'DT', 'ALL']);
+    expect(page.patterns).toEqual(['GUS', 'DT']);
+  });
+
+  // The discretionary stat left in production before #648 : still reachable, through « All ».
+  it('opens a stat left under another pattern in « All », the only view that lists it', () => {
+    const legacy = makeStat({ id: 'stat-disc', pattern: 'DISCRETIONARY' });
+    const { fixture, page } = setup({ rows: [], query: { stat: 'stat-disc' }, byId: legacy });
+    fixture.detectChanges();
+
+    expect(page.view()).toBe('ALL');
+    expect(page.completing()?.id).toBe('stat-disc');
   });
 
   // ---- New stat (#326) ----

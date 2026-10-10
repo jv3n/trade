@@ -307,12 +307,9 @@
           <div class="segmented" data-group="pattern">
             <button class="active" data-value="gus">GUS</button>
             <button data-value="dt">DT</button>
-            <button data-value="sir">SIR</button>
-            <button data-value="siv">SIV</button>
-            <button data-value="disc">Discr.</button>
             <button data-value="all">Tous</button>
           </div>
-          <span>les KPIs, les colonnes du tableau et les moyennes suivent le pattern — chaque pattern a ses chiffres (#512) ; SIR, SIV et discrétionnaire se mesurent comme le GUS, sur leurs seules stats</span>
+          <span>les KPIs, les colonnes du tableau et les moyennes suivent le pattern — les stats ne mesurent que le GUS et le DT (#648) ; un trade SIR, SIV ou discrétionnaire se note au journal, sans stat</span>
         </div>
 
         <!-- DT : les trois jambes du double top, sur les stats DT cochées (docs/pattern/DT.md). -->
@@ -348,13 +345,13 @@
         <section class="grid grid-4" style="margin-bottom: 16px" data-group="pattern" data-value="all" hidden>
           <div class="card kpi">
             <div class="label">Stats complétées</div>
-            <div class="value">16</div>
-            <div class="sub">septembre · 12 GUS · 3 DT · 1 discr. · <span style="color: var(--warn)">3 à compléter</span></div>
+            <div class="value">15</div>
+            <div class="sub">septembre · 12 GUS · 3 DT · <span style="color: var(--warn)">3 à compléter</span></div>
           </div>
           <div class="card kpi">
             <div class="label">Tradées</div>
-            <div class="value">10 / 16</div>
-            <div class="sub">8 GUS · 1 DT · 1 discr.</div>
+            <div class="value">9 / 15</div>
+            <div class="sub">8 GUS · 1 DT</div>
           </div>
           <div class="card kpi">
             <div class="label">Candidats à deux stats</div>
@@ -365,71 +362,6 @@
             <div class="label">Moyennes</div>
             <div class="value" style="font-size: 16px">par pattern</div>
             <div class="sub">choisis un pattern pour le push, le LOD, l'extension, le rejet… — jamais un mélange</div>
-          </div>
-        </section>
-
-        <!-- SIR / SIV / Discrétionnaire (#512) : les cartes du GUS, sur les seules stats du pattern. -->
-        <section class="grid grid-4" style="margin-bottom: 16px" data-group="pattern" data-value="disc" hidden>
-          <div class="card kpi">
-            <div class="label">Stats discrétionnaires complétées</div>
-            <div class="value">1</div>
-            <div class="sub">septembre · toutes complétées</div>
-          </div>
-          <div class="card kpi">
-            <div class="label">Push à l'open médian</div>
-            <div class="value">+10,0 %</div>
-            <div class="sub">vs open · repris du GUS du jour avec les autres prix de la journée (#517)</div>
-          </div>
-          <div class="card kpi">
-            <div class="label">LOD médian</div>
-            <div class="value">−18,8 %</div>
-            <div class="sub">vs open</div>
-          </div>
-          <div class="card kpi">
-            <div class="label">Fade à la clôture</div>
-            <div class="value">1 / 1</div>
-            <div class="sub">EOD sous l'open · médiane −16,2 %</div>
-          </div>
-        </section>
-        <section class="card" style="margin-bottom: 16px" data-group="pattern" data-value="sir" hidden>
-          <p class="muted" style="margin: 0">Aucune stat SIR sur la période. Les cartes et le tableau sont ceux du GUS, sur les seules stats SIR.</p>
-        </section>
-        <section class="card" style="margin-bottom: 16px" data-group="pattern" data-value="siv" hidden>
-          <p class="muted" style="margin: 0">Aucune stat SIV sur la période. Les cartes et le tableau sont ceux du GUS, sur les seules stats SIV.</p>
-        </section>
-
-        <!-- #499 : médianes, pas moyennes — un ou deux gros mouvements tiraient « LOD moyen » de 7 points. -->
-        <section class="grid grid-5" style="margin-bottom: 16px" data-group="pattern" data-value="gus">
-          <div class="card kpi">
-            <div class="label">Stats GUS complétées</div>
-            <div class="value">12</div>
-            <div class="sub">septembre · <span style="color: var(--warn)">2 à compléter</span></div>
-          </div>
-          <div class="card kpi" data-group="status" data-value="all">
-            <div class="label">Push à l'open médian</div>
-            <div class="value">+8,0 %</div>
-            <div class="sub">vs open · sur les 11 qui ont poussé · <b>1 / 12 sans push</b> (8 %)</div>
-          </div>
-          <!-- Onglet « Sans push » : un push moyen n'y a rien à dire, la carte donne leur fréquence (#334). -->
-          <div class="card kpi" data-group="status" data-value="no-push" hidden>
-            <div class="label">Jours sans push</div>
-            <div class="value">1 / 12</div>
-            <div class="sub">8 % des stats complétées de la période</div>
-          </div>
-          <div class="card kpi">
-            <div class="label">LOD médian</div>
-            <div class="value">−15,4 %</div>
-            <div class="sub">vs open</div>
-          </div>
-          <div class="card kpi">
-            <div class="label">Fade à la clôture</div>
-            <div class="value">9 / 12</div>
-            <div class="sub">EOD sous l'open · médiane −11,2 %</div>
-          </div>
-          <div class="card kpi" title="High PM → open : ce qui reste du premarket à la cloche. Où placer le seuil sous lequel on ne prend plus, c'est cette carte qui le dira dans deux mois.">
-            <div class="label">Tenue médiane</div>
-            <div class="value">−17,3 %</div>
-            <div class="sub">high PM → open · cumul à l'open <b>+42,9 %</b> · au high PM +74,9 %</div>
           </div>
         </section>
 
@@ -447,24 +379,18 @@
               <select class="input" id="n-pattern" title="DT remplace la carte Séance par la carte Double top">
                 <option selected>GUS — Gap Up Short</option>
                 <option>DT — Double Top</option>
-                <option>SIR — Short Into Resistance</option>
-                <option>SIV — Short Into VWAP</option>
-                <option>Discrétionnaire</option>
               </select>
             </div>
             <div class="field"><label>Ticker</label><input class="input mono" id="n-ticker" placeholder="KTTA" /></div>
           </div>
           <form class="premarket" onsubmit="return false">
             <div data-mode="edit">
-              <!-- Reclasser reste possible entre les patterns qui se mesurent pareil ; un DT a ses propres prix, c'est une autre stat. -->
+              <!-- #648 : plus de reclassement — GUS et DT sont les deux seuls patterns d'une stat, et un DT a ses propres prix. -->
               <div class="field" data-group="panel" data-value="gus">
                 <label>Pattern</label>
-                <select class="input" id="p-pattern" title="S'enregistre au changement — les trades liés suivent. Un autre pattern le même jour est une autre stat : « Même ticker, autre pattern » ci-dessous, ou « → DT » sur le candidat.">
-                  <option selected>GUS — Gap Up Short</option>
-                  <option>SIR — Short Into Resistance</option>
-                  <option>SIV — Short Into VWAP</option>
-                  <option>Discrétionnaire</option>
-                </select>
+                <span class="input" style="display: flex; align-items: center" title="Une stat GUS reste un GUS : un double top le même jour est une autre stat">
+                  <span class="tag tag-accent">GUS</span>&nbsp;Gap Up Short
+                </span>
               </div>
               <div class="field" data-group="panel" data-value="dt" hidden>
                 <label>Pattern</label>
@@ -472,15 +398,11 @@
                   <span class="tag tag-accent">DT</span>&nbsp;Double Top
                 </span>
               </div>
-              <div class="field" title="#507 — un nouveau trade sous un autre pattern passe par sa propre stat">
+              <!-- #648 : l'autre pattern est forcément l'autre des deux — affiché seulement quand il manque (SGBX a déjà ses deux stats : maquette). -->
+              <div class="field" title="#507 — le GUS du matin et le DT de fin de matinée sont deux stats">
                 <label>Même ticker, autre pattern</label>
                 <span style="display: flex; gap: 6px">
-                  <select class="input" aria-label="Pattern de la nouvelle stat" title="Seulement les patterns encore libres pour SGBX le 18/09 — GUS et DT existent déjà">
-                    <option>SIR — Short Into Resistance</option>
-                    <option>SIV — Short Into VWAP</option>
-                    <option selected>Discrétionnaire</option>
-                  </select>
-                  <button class="btn btn-sm" type="button" data-confirm-title="Créer une autre stat SGBX du 18/09 ?" data-confirm-body="Même jour, même ticker, un autre pattern : les prix de la journée (clôture veille, premarket, open, push, HOD, LOD, EOD) sont repris, ce qui est propre au pattern part vide. Elle a ses propres trades et ne compte que dans les stats de son pattern." data-confirm-ok="Créer la stat"><span class="icon">add</span> Stat</button>
+                  <button class="btn btn-sm" type="button" data-confirm-title="Créer une autre stat SGBX du 18/09 ?" data-confirm-body="Même jour, même ticker, un autre pattern : les prix de la journée (clôture veille, premarket, open, push, HOD, LOD, EOD) sont repris, ce qui est propre au pattern part vide. Elle a ses propres trades et ne compte que dans les stats de son pattern." data-confirm-ok="Créer la stat"><span class="icon">add</span> <span data-group="panel" data-value="gus">Stat DT</span><span data-group="panel" data-value="dt" hidden>Stat GUS</span></button>
                 </span>
               </div>
             </div>
@@ -773,15 +695,6 @@
                   <td><button class="btn btn-sm btn-icon" title="Supprimer la stat" data-confirm-title="Supprimer la stat {ticker} ?" data-confirm-body="Définitif. Un trade y est rattaché : il reste au journal, sans stat — exécutions, P&amp;L, post-mortem et ligne de compte conservés, pattern inchangé. Sa fiche n'aura plus de contexte du jour." data-confirm-ok="Supprimer la stat" data-confirm-danger><span class="icon">delete</span></button></td>
                 </tr>
                 <tr>
-                  <td>17/09</td><td><span class="ticker">KTTA</span></td><td><span class="tag tag-accent">Discrétionnaire</span></td>
-                  <td class="num sep">+52,8 %</td><td class="num">+14,8 %</td><td class="num">8,2 M</td><td class="num">3,1 M</td>
-                  <td class="sep" title="Née de la stat GUS du jour (#507) : les prix de la journée sont repris">push +10,0 % · LOD −18,8 %</td>
-                  <td class="sep"></td>
-                  <td><button class="check done"><span class="icon">check_circle</span></button></td>
-                  <td style="white-space: nowrap"><a href="trade.html" class="tag tag-gain" title="Long sur le rebond du LOD">+64</a> <button class="btn btn-sm btn-icon" title="Un autre trade sur cette stat" data-confirm-title="Créer un autre trade {ticker} ?" data-confirm-body="Un nouveau trade vide sur la même stat : même pattern, son propre sens, ses exécutions, son P&amp;L et son post-mortem. Les trades existants ne changent pas. Sous un autre pattern, c'est une autre stat : « Même ticker, autre pattern » sur la stat." data-confirm-ok="Créer le trade"><span class="icon">add</span></button></td>
-                  <td><button class="btn btn-sm btn-icon" title="Supprimer la stat" data-confirm-title="Supprimer la stat {ticker} ?" data-confirm-body="Définitif. Un trade y est rattaché : il reste au journal, sans stat — exécutions, P&amp;L, post-mortem et ligne de compte conservés, pattern inchangé. Sa fiche n'aura plus de contexte du jour." data-confirm-ok="Supprimer la stat" data-confirm-danger><span class="icon">delete</span></button></td>
-                </tr>
-                <tr>
                   <td>16/09</td><td><span class="ticker">PRSO</span></td><td><span class="tag tag-accent">DT</span></td>
                   <td class="num sep muted" title="Pas de premarket sur un double top (#649)">—</td><td class="num muted">—</td><td class="num">6,1 M</td><td class="num">1,4 M</td>
                   <td class="sep"><span class="leg">A</span>+58,3 % · <span class="leg">B</span>−20,5 % · <span class="leg">C</span>top −3,2 %</td>
@@ -811,34 +724,6 @@
               </tbody>
             </table>
             <p class="muted" style="font-size: 12px; margin: 10px 0 0">Pas de ligne de moyennes sur « Tous » : un push à l'open et une extension de double top ne s'additionnent pas.</p>
-          </div>
-
-          <!-- ============================================================ Discrétionnaire (#512) -->
-          <div class="table-wrap" data-group="pattern" data-value="disc" hidden>
-            <table>
-              <thead>
-                <tr>
-                  <th>Date ↓</th><th>Ticker</th><th>Pattern</th>
-                  <th class="num sep">Gap</th><th class="num">Push PM</th><th class="num">Float</th><th class="num">Volume</th>
-                  <th class="num sep">Open</th><th class="num">Push open</th><th class="num">HOD</th><th class="num">LOD</th><th class="num">EOD</th>
-                  <th class="sep">Flags</th><th title="Complétée">✓</th><th>Trade</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>17/09</td><td><span class="ticker">KTTA</span></td><td><span class="tag tag-accent">Discrétionnaire</span></td>
-                  <td class="num sep">+52,8 %</td><td class="num">+14,8 %</td><td class="num">8,2 M</td><td class="num">3,1 M</td>
-                  <td class="num sep">4,20</td>
-                  <td class="num">4,62<small class="muted">+10,0 %</small></td>
-                  <td class="num">4,62<small class="muted">+10,0 %</small></td>
-                  <td class="num">3,41<small class="muted">−18,8 %</small></td>
-                  <td class="num">3,52<small class="muted">−16,2 %</small></td>
-                  <td class="sep"></td>
-                  <td><button class="check done"><span class="icon">check_circle</span></button></td>
-                  <td><a href="trade.html" class="tag tag-gain" title="Long sur le rebond du LOD">+64</a></td>
-                </tr>
-              </tbody>
-            </table>
           </div>
 
           <!-- ============================================================ GUS -->
@@ -1089,7 +974,7 @@
           l'open, rebond vers 11h seulement). Cocher grise et vide le champ, et la stat se coche avec les quatre autres prix. Ces
           jours-là comptent dans les stats — c'est un setup à part, à exécuter dès l'open : le push moyen ne compte que les stats qui
           ont poussé, et le taux de « sans push » s'affiche à côté ; le filtre « Sans push » les isole pour comparer leur premarket.
-          « → Trade » crée le trade au journal (action manuelle). Une stat peut porter plusieurs trades, créés un par un avec « + » (#500, SDEV le 29/09) : une pastille par trade, dans l'ordre de la journée, chacun avec son sens — KTTA le 17/09 a un GUS short et, née de lui (#507), une stat discrétionnaire avec un long sur le rebond. Les variations de prix restent neutres : la couleur est réservée aux résultats (lien vers le trade).
+          « → Trade » crée le trade au journal (action manuelle). Une stat peut porter plusieurs trades, créés un par un avec « + » (#500, SDEV le 29/09) : une pastille par trade, dans l'ordre de la journée, chacun avec son sens — SDEV le 29/09 en a trois. Un trade hors GUS et DT (SIR, SIV, discrétionnaire — KTTA, long sur le rebond le 17/09) se crée au journal, sans stat (#648). Les variations de prix restent neutres : la couleur est réservée aux résultats (lien vers le trade).
         </p>
         <p class="mockup-note">
           Double top (#428) — une stat DT n'a pas de premarket (#649) : elle se lit sur la séance, pas sur le matin. Sa première carte
@@ -1098,9 +983,8 @@
           <b>B</b> le rejet (top → bas,
           17-20 %, en ambre sous 17 % : une respiration), <b>C</b> le retest (bas → retest, et son écart au top — souvent frôlé sans
           être repris). Elle se coche avec les quatre prix. Un candidat peut avoir <b>une stat par pattern</b> : SGBX, GUS le matin,
-          a aussi sa stat DT en fin de matinée — le sélecteur « SGBX · GUS / SGBX · DT » en haut montre les deux panneaux. Le pattern
-          d'une stat se change encore entre GUS, SIR, SIV et discrétionnaire (même séance) ; un DT a ses propres prix, c'est une autre
-          stat. En haut, GUS / DT / Tous choisit les KPIs, les colonnes et les moyennes ; « Tous » ne garde que ce qui se compare
+          a aussi sa stat DT en fin de matinée — le sélecteur « SGBX · GUS / SGBX · DT » en haut montre les deux panneaux. Une stat
+          ne mesure que deux patterns, GUS et DT (#648), et ne se reclasse plus : un DT a ses propres prix, c'est une autre stat. En haut, GUS / DT / Tous choisit les KPIs, les colonnes et les moyennes ; « Tous » ne garde que ce qui se compare
           (premarket — vide sur un DT —, float, volume, flags, trade) et résume chaque stat dans son pattern, sans ligne de moyennes.
         </p>
         <p class="mockup-note">
@@ -1389,7 +1273,6 @@
         }, true);
 
         // Le pattern s'enregistre au changement, comme un flag ; le trade lié suit.
-        $('p-pattern').addEventListener('change', () => window.saveCue('premarket-state'));
 
         snapshot();
         preview();

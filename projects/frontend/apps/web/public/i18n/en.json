@@ -824,7 +824,7 @@
       "hint": "copied from the candidate · editable · each field is saved when left",
       "required": "required",
       "doubleTopFixed": "A DT stat stays a DT: its prices mean nothing to another pattern",
-      "refileHint": "Saves on change — the linked trades follow. Another pattern the same day is another stat: « Same ticker, another pattern », or « → DT » on the candidate."
+      "gusFixed": "A GUS stat stays a GUS: a double top on the same day is another stat"
     },
     "create": {
       "open": "New stat",
@@ -865,12 +865,9 @@
     },
     "view": {
       "label": "Pattern shown",
-      "hint": "the KPIs, the table's columns and the averages follow the pattern — every pattern has its own numbers, SIR, SIV and discretionary are measured like the GUS",
+      "hint": "the KPIs, the table's columns and the averages follow the pattern — the stats measure only the GUS and the DT ; a SIR, SIV or discretionary trade is typed in the journal, with no stat",
       "GUS": "GUS",
       "DT": "DT",
-      "SIR": "SIR",
-      "SIV": "SIV",
-      "DISCRETIONARY": "Discr.",
       "ALL": "All"
     },
     "doubleTop": {
@@ -907,12 +904,12 @@
     },
     "sibling": {
       "label": "Same ticker, another pattern",
-      "hint": "A trade under another pattern goes through its own stat: same day and ticker, the day's prices carried over. Only the patterns still free that day.",
-      "create": "Stat"
+      "hint": "The morning's GUS and the late-morning DT are two stats: same day, same ticker. Only while the other one does not exist yet.",
+      "create": "{{pattern}} stat"
     },
     "confirmSibling": {
       "title": "Create the {{pattern}} stat of {{ticker}}?",
-      "message": "Same day, same ticker: the day's prices (previous close, premarket, open, push or « no push », HOD, LOD, EOD) are carried over (a DT keeps none of the premarket), what belongs to the pattern starts empty. It has its own trades and only counts in its pattern's stats.",
+      "message": "Same day, same ticker: the day's float, volume and flags are carried over — a DT starts from the open with no premarket, a GUS takes the candidate's premarket. It has its own trades and only counts in its pattern's stats.",
       "confirm": "Create the stat"
     },
     "confirmAnotherTrade": {

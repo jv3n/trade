@@ -19,6 +19,12 @@ import java.util.UUID
 private val SESSION_OPENS: LocalTime = LocalTime.of(4, 0)
 private val SESSION_CLOSES: LocalTime = LocalTime.of(20, 0)
 
+/**
+ * The patterns a stat measures (#648) — the only two traded and measured. A trade keeps the whole
+ * [Pattern] list : a SIR, SIV or discretionary trade is typed in the journal, with no stat.
+ */
+internal val STAT_PATTERNS: List<Pattern> = listOf(Pattern.GUS, Pattern.DT)
+
 /** A blank shell — [apply] does the validation and fills every field right after. */
 internal fun newEntry(user: User, request: StatEntryRequest, ticker: String, candidateId: UUID?) =
   StatEntry(
@@ -34,6 +40,9 @@ internal fun newEntry(user: User, request: StatEntryRequest, ticker: String, can
  * pattern the reverse.
  */
 internal fun StatEntry.fillFrom(request: StatEntryRequest, cleanTicker: String) {
+  if (request.pattern !in STAT_PATTERNS) {
+    throw badRequest("A stat is a GUS or a DT, not ${request.pattern}")
+  }
   val doubleTop = request.pattern == Pattern.DT
   val gus = !doubleTop
   val previousClose = if (gus) request.previousClose.required("Previous close") else null
@@ -177,12 +186,8 @@ internal fun StatEntry.siblingRequest(pattern: Pattern, premarket: Premarket? = 
     pmHigh = premarket?.pmHigh ?: pmHigh,
     floatMillions = floatMillions,
     volumeMillions = volumeMillions,
+    // A DT born from a GUS starts from its open ; a GUS born from a DT has no session to take.
     openPrice = openPrice,
-    pushOpenPrice = pushOpenPrice,
-    noPush = noPush,
-    hodPrice = hodPrice,
-    lodPrice = lodPrice,
-    eodPrice = eodPrice,
     ssr = ssr,
     highInstitutions = highInstitutions,
   )

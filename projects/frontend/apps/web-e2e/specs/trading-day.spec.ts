@@ -8,8 +8,7 @@ import { expect, isoToday, parseFrAmount, test, typeNumber } from '../fixtures';
  * capture a candidate in premarket → type the open at 9:30 → promote it to a GUS stat → reach that
  * stat through its « ✓ GUS » badge, even off the first page of the sheet (#383) → fill HOD / LOD / EOD
  * → tick it → promote it to a trade → type the executions and the broker P&L → **the account balance
- * moves by exactly that P&L** → re-file the stat under another pattern and **the trade follows** in
- * the journal (#393) — SIR, measured like a GUS : a double top is a stat of its own (#434).
+ * moves by exactly that P&L**.
  *
  * Button names are matched as substrings, except where a shorter name is contained in a longer one
  * (« GUS » in « Tout passer en GUS ») — see `money.spec.ts`.
@@ -125,19 +124,6 @@ test('a full trading day moves the balance by the broker P&L, and the trade foll
       parseFrAmount(await page.getByTestId('account-balance').locator('.kpi__value').innerText()),
     )
     .toBe(BROKER_PNL);
-
-  // ---- Re-filed under another pattern, the trade follows (#393) ----
-  await page.goto(`/stats?stat=${statId}`);
-  await pickOption(
-    page,
-    premarket.getByLabel('Pattern', { exact: true }),
-    'SIR — Short Into Resistance',
-  );
-  await expect.poll(async () => (await api.get<Stat>(`/api/stats/${statId}`)).pattern).toBe('SIR');
-  expect((await api.get<Trade>(`/api/journal/trades/${tradeId}`)).pattern).toBe('SIR');
-  await page.goto('/journal');
-  const row = page.getByRole('row').filter({ hasText: TICKER });
-  await expect(row.getByRole('cell', { name: 'SIR', exact: true })).toBeVisible();
 });
 
 interface Candidate {

@@ -38,8 +38,9 @@ account — and offers « Se connecter avec Google ». Screen : [`connexion.html
 The **stat** and the **trade** carry a **pattern** — **chosen when the candidate is promoted**,
 inherited by the trade. **A candidate has no pattern** (#428) : it is the ticker of the day and its
 premarket, not yet assigned to a setup — the same ticker can give a GUS in the morning and a double
-top late in the morning. The list is planned now and **will grow over time**, but **only GUS and DT
-are worked on for now** (#428) : the other values stay in the enum, with no screen of their own :
+top late in the morning. **A stat is a GUS or a DT** (#648) — the only two patterns traded and
+measured. **A trade keeps all five** : a SIR, SIV or discretionary trade is typed in the journal, on
+its own, with no stat (#634) :
 
 | Value | Label | Description |
 |-------|-------|-------------|
@@ -300,8 +301,7 @@ at 11:20 for a DT) — and a "promote them all in GUS" button, day-by-day naviga
   panel already open (#383) — right after promoting is when you want to go and fill it.
 - The two stats of a candidate take the same float and volume — the GUS also its premarket — then
   live their own lives.
-- Only GUS and DT have a button : SIR, SIV and discretionary are measured like a GUS, so a stat is
-  re-filed into them on the stats page (step 5).
+- Only GUS and DT have a button — they are the only patterns of a stat (#648).
 - "Promote them all" makes **GUS** stats of the candidates **without any stat** ; the others are
   left alone without failing the batch — a DT stays a choice made by hand. The action is safe to
   replay.
@@ -333,11 +333,10 @@ the journal). As a consequence : no real-time screen, no live position tracking.
 - **Several trades per stat** (#500) : the button stays on the stat once it has a trade (« + Trade »)
   and creates the next one, empty — same date, ticker and pattern. Each trade has its **own
   direction** : one stat can hold a short and a long.
-  Another trade under **another pattern** (a GUS then a DT, or a discretionary long) goes through
-  another stat, born from this one (« Same ticker, another pattern », #507).
+  A double top on the same day goes through another stat, born from this one (« Same ticker, another
+  pattern », #507) ; a trade under a pattern a stat does not measure (a discretionary long on the
+  bounce) is typed in the journal, with no stat (#648).
 - The trade **inherits the stat's pattern** and shows its context (premarket + session), read-only.
-  If the stat's pattern is changed later, **the trades follow** (#393) : it is a filing correction,
-  not a different decision.
 
 **What I type in on the trade** :
 
@@ -463,23 +462,19 @@ shared between users — a stat always belongs to its user.
   promotion, it can be fixed on the stat ; the stat keeps its own copy, the candidate is left alone.
   **A DT has no premarket** (#649) : a double top is read off the session, not off the morning, so
   its card keeps float, volume and note only (titled « Titre » rather than « Premarket »).
-- **The pattern can be changed after the fact** (#393) — a filing mistake, among the patterns
-  measured the same way (GUS, SIR, SIV, discretionary). It is a select at the head of the card,
-  saved when changed like a flag. **Not to or from DT** (#428) : a double top has prices of its own,
-  and a GUS that turns into a double top is a second stat, not a re-filing. The row
-  moves under the pattern filter and the KPIs and push references follow ; a trade born from the
-  stat takes the new pattern too. The candidate is not concerned : it has no pattern.
+- **The pattern is not changed after the fact** (#648) : a stat is a GUS or a DT, and a double top
+  has prices of its own — a GUS that turns into a double top is a second stat, not a re-filing
+  (#428). The re-filing among the patterns measured like a GUS (#393) went with SIR, SIV and
+  discretionary.
 - **« Same ticker, another pattern »** (#507) : at the head of the premarket card, a stat gives birth
-  to another one — same day, same ticker, a pattern still free for them (one stat per pattern, as
-  ever). **The day's prices are carried over** (previous close, premarket, open, the push at the
-  open or « no push », HOD / LOD / EOD — a DT sibling keeps none of the premarket, #649) : they belong to the day, not to the setup, so a SIR, SIV or
-  discretionary sibling is completable as born and two stats of one day never disagree about what
-  the stock did (#517) ; what is specific to the pattern starts empty. A double top keeps none of the
+  to the other one — a GUS to its DT, a DT to its GUS — same day, same ticker, shown only while the
+  other is free (one stat per pattern, as ever ; #648 leaves two). **The day's prices are carried over** (previous close, premarket, open, the push at the
+  open or « no push », HOD / LOD / EOD — a DT sibling keeps none of the premarket, #649) : they belong to the day, not to the setup, so a GUS sibling is
+  completable as born and two stats of one day never disagree about what the stock did (#517) ; what is specific to the pattern starts empty. A double top keeps none of the
   session : it starts from the open and types its own four prices. It is an
   ordinary stat from there : its own check, its own trades, its own line in its pattern's
-  statistics. This is how a trade under another pattern gets recorded — the GUS in the morning, a DT
-  or a discretionary long in the afternoon : a trade always takes its stat's pattern, so a different
-  setup is a different stat. Asks for confirmation (it creates something).
+  statistics. This is how the GUS of the morning and the DT of late morning both get recorded : a trade
+  always takes its stat's pattern, so a different setup is a different stat. Asks for confirmation (it creates something).
 - **« New stat »** opens the two cards empty, with the **date** (any day up to today, never a future
   one), the pattern and the ticker on top : going through the charts, I find a ticker that matched
   my pattern a few days ago and never made it to my candidates — leaving it out would bias the stats
@@ -558,8 +553,7 @@ Gap, PM push and hold **compose** into the cumulative at the open — in log the
 everything is shown in percent, the unit the scanner, the broker and the tracker speak. Nothing is
 stored : all three are recomputed from the prices, like the session percentages.
 
-**Medians, not means** on the GUS cards and the table's footer row (and on the SIR / SIV /
-discretionary ones, measured like it) : one or two big movers dragged « average LOD » by up to 7
+**Medians, not means** on the GUS cards and the table's footer row : one or two big movers dragged « average LOD » by up to 7
 points. The DT already reads a median duration ; its leg averages stay for now.
 
 **Out of pattern** — a computed amber flag, never ticked by hand, carrying only what the recorded
@@ -619,12 +613,9 @@ whose low precedes its top is a typo.
 - The stat is checked with the **four prices and the four times** (« n / 4 prices · n / 4 times ») ;
   same check, same rules.
 - The flags stay (SSR, institutions > 20 %) ; « no push » does not apply.
-- **The page follows the pattern** : a **GUS / DT / SIR / SIV / Discretionary / All** switch above
-  the KPIs picks the KPIs, the table's columns and the averages. **Every pattern has its own
-  numbers** (#512) : SIR, SIV and discretionary are measured like the GUS — completed, push at the
-  open, LOD, fade — on their own stats only, never folded into the GUS's. A ticker-day carrying a
-  GUS and a sibling stat (#507) shares its open, LOD and EOD between them : counted in each pattern's
-  numbers, it is never counted twice in one. **DT** : completed DT stats, average extension, average rejection (and how many reach 17 %), average retest distance to the top (and how
+- **The page follows the pattern** : a **GUS / DT / All** switch above the KPIs picks the KPIs, the
+  table's columns and the averages (#648 — the SIR, SIV and discretionary views stayed empty). Each
+  pattern has its own numbers, never folded into the other's. **DT** : completed DT stats, average extension, average rejection (and how many reach 17 %), average retest distance to the top (and how
   many took it back), and the **median duration** start → retest with its `n` and the median
   rejection (B) — a median, not a mean : one DT that drags all afternoon would move an average and
   say nothing about the typical one. The table shows float and volume, then start, A, B, C and the

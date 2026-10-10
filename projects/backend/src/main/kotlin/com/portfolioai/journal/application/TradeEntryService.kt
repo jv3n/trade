@@ -165,18 +165,6 @@ class TradeEntryService(
   }
 
   /**
-   * Moves the trades born from [statEntryId] onto their stat's new [pattern] (#393) — the stat was
-   * re-filed, and its trades follow. No trade yet is a no-op. Driven by `StatPatternChangedEvent`.
-   */
-  @Transactional
-  fun followStatPattern(statEntryId: UUID, userId: UUID, pattern: Pattern) {
-    repo.findByUserIdAndStatEntryIdIn(userId, listOf(statEntryId)).forEach {
-      it.pattern = pattern
-      it.updatedAt = Instant.now()
-    }
-  }
-
-  /**
    * Unlinks the trades born from [statEntryId] (#635) — the stat is being deleted, its trades stay
    * as trades on their own : executions, P&L, pattern and account line untouched. No trade is a
    * no-op. Driven by `StatDeletedEvent`.
