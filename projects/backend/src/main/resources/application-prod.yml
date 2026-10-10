@@ -44,6 +44,9 @@ logging:
     org.springframework.web: WARN
     okhttp3: WARN
     org.flywaydb.core: INFO
+    # Both print the JDBC URL at startup, credentials included while the secret holds them (#659).
+    org.flywaydb.core.FlywayExecutor: WARN
+    org.hibernate.orm.connections.pooling: WARN
   # JSON lines Cloud Logging reads : severity, trace, and the MDC's `userId` — never the email
   # (cf. `CLAUDE.md > Backend`).
   structured:
