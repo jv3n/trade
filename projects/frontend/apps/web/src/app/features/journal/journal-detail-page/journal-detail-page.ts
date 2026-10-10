@@ -120,6 +120,9 @@ function draftOf(entry: TradeEntry): TradeDraft {
   };
 }
 
+/** `HH:mm` compares as text : the API's `LocalTime` and the time input both zero-pad it. */
+const LATE_ENTRY = '11:00';
+
 /** Minutes between the first and the last timed fill — null as soon as one end has no time. */
 function spanMinutes(executions: ExecRow[]): number | null {
   const minutes = executions
@@ -315,6 +318,16 @@ export class JournalDetailPage implements HasUnsavedChanges {
       .filter((t): t is string => !!t)
       .sort();
     return times.length === 0 ? null : { first: times[0], last: times[times.length - 1] };
+  });
+
+  /** The first timed entry fill when it is at 11:00 or later (#647) — fill times are New York time. */
+  readonly lateEntry = computed(() => {
+    const first = (this.draft()?.executions ?? [])
+      .filter((e) => e.kind === 'ENTRY')
+      .map((e) => e.executedAt)
+      .filter((t): t is string => !!t)
+      .sort()[0];
+    return first !== undefined && first >= LATE_ENTRY ? first : null;
   });
 
   // ---- Day context (the stat the trade was born from) -----------------------------------------

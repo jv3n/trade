@@ -51,7 +51,6 @@ interface StatEntryWireDto {
   dtRetestTime: string | null;
   ssr: boolean;
   under1Dollar: boolean;
-  entryAfter11am: boolean;
   noPush: boolean;
   highInstitutions: boolean;
   completed: boolean;

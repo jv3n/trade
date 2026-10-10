@@ -54,6 +54,14 @@
           </h2>
           <p class="subtitle">
             <span class="tag tag-accent">{{ 'patterns.short.' + e.pattern | translate }}</span>
+            @if (lateEntry(); as time) {
+              <span
+                class="tag"
+                data-testid="late-entry"
+                [matTooltip]="'journal.detail.after11amHint' | translate: { time }"
+                >{{ 'journal.detail.after11am' | translate }}</span
+              >
+            }
             @if (e.statEntryId) {
               <span>
                 {{ 'journal.detail.fromStat' | translate }}

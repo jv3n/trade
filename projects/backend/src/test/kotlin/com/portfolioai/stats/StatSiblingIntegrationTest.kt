@@ -36,8 +36,8 @@ import org.springframework.web.server.ResponseStatusException
  *
  * - **the day's prices are carried over** (premarket, open, push or « no push », HOD / LOD / EOD,
  *   float, volume, the day's flags) — a session-measured sibling is completable as born (#517) —
- *   and what belongs to the setup starts empty (« after 11 am », the note, the double-top prices —
- *   a double top starts from the open) ;
+ *   and what belongs to the setup starts empty (the note, the double-top prices — a double top
+ *   starts from the open) ;
  * - the sibling keeps the day, the ticker and the source candidate ;
  * - **one stat per pattern** still holds : a pattern the day already has is a 409, and only the
  *   free ones are offered ;
@@ -85,7 +85,6 @@ class StatSiblingIntegrationTest {
     assertEquals(0, sibling.eodPrice!!.compareTo(BigDecimal("3.5200")))
     assertTrue(sibling.ssr, "SSR is the day's, whatever the setup")
     assertEquals(0, sibling.pushOpenPrice!!.compareTo(BigDecimal("4.6200")), "the day pushed")
-    assertFalse(sibling.entryAfter11am)
     assertNull(sibling.note)
     assertFalse(sibling.completed, "ticked by hand, like any stat")
   }
@@ -225,6 +224,5 @@ class StatSiblingIntegrationTest {
         lodPrice = BigDecimal("3.4100")
         eodPrice = BigDecimal("3.5200")
         ssr = true
-        entryAfter11am = true
       }
 }

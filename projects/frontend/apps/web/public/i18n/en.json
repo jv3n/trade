@@ -556,6 +556,8 @@
       "fromStat": "created from the",
       "statOf": "stat of {{date}}",
       "noStat": "no stat",
+      "after11am": "after 11 am",
+      "after11amHint": "First entry at {{time}} — derived from the executions",
       "unsaved": "Unsaved changes",
       "save": "Save",
       "cancel": "Cancel",
@@ -733,7 +735,6 @@
       "flags": "Flags",
       "ssr": "SSR",
       "under1Dollar": "< $1",
-      "entryAfter11am": "Entry after 11 am",
       "highInstitutions": "Institutions > 20 %",
       "highInstitutionsShort": "Inst. > 20 %",
       "highInstitutionsHint": "More than 20 % of the float held by institutions",
@@ -902,9 +903,7 @@
       "durationC": "C · {{minutes}} min · total {{total}} min",
       "durationLegs": "A {{rise}} · B {{rejection}} · C {{retest}}",
       "medianDuration": "med. {{minutes}} min",
-      "progress": "{{prices}} / {{total}} prices · {{times}} / {{total}} times",
-      "lateEntry": "after 11 am — retest at {{time}}",
-      "lateEntryHint": "Derived from the retest time, not ticked : a double top is entered on its retest."
+      "progress": "{{prices}} / {{total}} prices · {{times}} / {{total}} times"
     },
     "sibling": {
       "label": "Same ticker, another pattern",

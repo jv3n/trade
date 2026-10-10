@@ -442,6 +442,60 @@ describe('JournalDetailPage', () => {
     expect(page.dirty()).toBe(true);
   });
 
+  // #647 : SDEV's third trade on 29/09 was shorted at 11:08 — the flag left the stat for the trade.
+  it('tags a trade « after 11 am » off its first entry fill, nothing to tick', () => {
+    findById = vi.fn(() =>
+      of(
+        makeTrade({
+          executions: [
+            { seq: 0, kind: 'ENTRY', shares: 3000, price: 2.706, executedAt: '11:08' },
+            { seq: 1, kind: 'EXIT', shares: 3000, price: 2.895, executedAt: '11:09' },
+          ],
+        }),
+      ),
+    );
+    const fixture = setup();
+    fixture.detectChanges();
+    const tag = (): HTMLElement | null =>
+      fixture.nativeElement.querySelector('[data-testid="late-entry"]');
+
+    expect(fixture.componentInstance.lateEntry()).toBe('11:08');
+    expect(tag()?.textContent).toContain('journal.detail.after11am');
+
+    fixture.componentInstance.setExecutionTime(0, {
+      target: { value: '10:59' },
+    } as unknown as Event);
+    fixture.detectChanges();
+
+    expect(tag()).toBeNull();
+  });
+
+  it('an exit after 11 am does not make the trade a late entry', () => {
+    // closedTrade() is shorted at 09:41 and covered last at 13:15.
+    findById = vi.fn(() => of(closedTrade()));
+    const fixture = setup();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.lateEntry()).toBeNull();
+  });
+
+  it('counts 11:00 sharp as after 11 am, and an untimed entry not at all', () => {
+    findById = vi.fn(() =>
+      of(
+        makeTrade({
+          executions: [
+            { seq: 0, kind: 'ENTRY', shares: 500, price: 4.41, executedAt: null },
+            { seq: 1, kind: 'ENTRY', shares: 500, price: 4.5, executedAt: '11:00' },
+          ],
+        }),
+      ),
+    );
+    const fixture = setup();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.lateEntry()).toBe('11:00');
+  });
+
   // Hit twice in the pilot test : leaving the page dropped the post-mortem without a word (#303).
   it('reports unsaved changes to the leave guard, and asks the browser on tab close', () => {
     findById = vi.fn(() => of(closedTrade()));
@@ -743,7 +797,6 @@ function makeStat(overrides: Partial<StatEntry> = {}): StatEntry {
     dtRetestTime: null,
     ssr: true,
     under1Dollar: false,
-    entryAfter11am: false,
     noPush: false,
     highInstitutions: false,
     completed: true,

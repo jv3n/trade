@@ -84,8 +84,6 @@ internal fun StatEntry.fillFrom(request: StatEntryRequest, cleanTicker: String) 
   this.dtRetestTime = dtRetestTime
 
   ssr = request.ssr
-  // A double top derives it from its retest (#499) : a box sent for one would say something else.
-  entryAfter11am = request.entryAfter11am && !doubleTop
   this.noPush = noPush
   highInstitutions = request.highInstitutions
 }
