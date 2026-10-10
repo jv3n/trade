@@ -10,6 +10,8 @@ import com.portfolioai.stats.application.dto.StatEntryDto
 import com.portfolioai.stats.application.dto.StatEntryRequest
 import com.portfolioai.stats.application.dto.StatSummaryDto
 import com.portfolioai.stats.application.dto.toDto
+import com.portfolioai.stats.domain.CandidatePremarket
+import com.portfolioai.stats.domain.Premarket
 import com.portfolioai.stats.domain.StatEntry
 import com.portfolioai.stats.domain.StatEntryFilter
 import com.portfolioai.stats.domain.StatMetrics
@@ -53,6 +55,7 @@ class StatEntryService(
   private val authService: AuthService,
   private val tradeEntryService: TradeEntryService,
   private val events: ApplicationEventPublisher,
+  private val candidatePremarket: CandidatePremarket,
 ) {
 
   // ---- Listing -------------------------------------------------------------------------------
@@ -156,12 +159,23 @@ class StatEntryService(
    * day never disagree about what the stock did. What is specific to a pattern starts empty : the
    * double-top prices (a double top starts from the open, as when it is born from a candidate, and
    * keeps none of the session), the note. A pattern the day and ticker already have is a 409.
+   *
+   * A double top keeps no premarket (#649) : a sibling born from one takes its candidate's, and
+   * without a candidate it is a 400 — that stat is typed with « New stat ».
    */
   @Transactional
   fun createSibling(id: UUID, pattern: Pattern): StatEntryDto {
     val source = loadOwned(id)
-    return create(source.siblingRequest(pattern), candidateId = source.candidateId)
+    val premarket =
+      if (source.isDoubleTop) {
+        sourcePremarket(source)
+          ?: throw badRequest("A stat born from a double top needs its candidate's premarket")
+      } else null
+    return create(source.siblingRequest(pattern, premarket), candidateId = source.candidateId)
   }
+
+  private fun sourcePremarket(source: StatEntry): Premarket? =
+    source.candidateId?.let { candidatePremarket.of(it, source.user.id) }
 
   /** The patterns [id]'s day and ticker don't have a stat for yet — what a sibling can take. */
   @Transactional(readOnly = true)
@@ -172,6 +186,8 @@ class StatEntryService(
         .findByUserIdAndTradeDateAndTicker(source.user.id, source.tradeDate, source.ticker)
         .map { it.pattern }
         .toSet()
+    // Every free pattern is measured on the session, so needs the premarket a DT lacks (#649).
+    if (source.isDoubleTop && sourcePremarket(source) == null) return emptyList()
     return Pattern.entries.filterNot { it in taken }
   }
 

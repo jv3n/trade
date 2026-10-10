@@ -222,9 +222,9 @@ class StatsListingIntegrationTest {
     val reloaded = service.findById(created.id)
     assertEquals("KTTA", reloaded.ticker, "ticker is trimmed + upper-cased")
     assertEquals(Pattern.GUS, reloaded.pattern)
-    assertEquals(0, BigDecimal("2.65").compareTo(reloaded.previousClose))
-    assertEquals(0, BigDecimal("4.05").compareTo(reloaded.pmOpen))
-    assertEquals(0, BigDecimal("4.65").compareTo(reloaded.pmHigh))
+    assertEquals(0, BigDecimal("2.65").compareTo(reloaded.previousClose!!))
+    assertEquals(0, BigDecimal("4.05").compareTo(reloaded.pmOpen!!))
+    assertEquals(0, BigDecimal("4.65").compareTo(reloaded.pmHigh!!))
     assertEquals(0, BigDecimal("4.20").compareTo(reloaded.openPrice))
     assertEquals(0, BigDecimal("4.62").compareTo(reloaded.pushOpenPrice))
     assertEquals(0, BigDecimal("4.62").compareTo(reloaded.hodPrice))
@@ -726,10 +726,38 @@ class StatsListingIntegrationTest {
   }
 
   @Test
+  fun `a double top drops the premarket it is sent, a GUS needs it`() {
+    // #649 : a double top is read off the session — the three prices are dropped, not refused.
+    val dt = service.create(doubleTopRequest())
+
+    assertNull(dt.previousClose)
+    assertNull(dt.pmOpen)
+    assertNull(dt.pmHigh)
+    val ex =
+      assertThrows(ResponseStatusException::class.java) {
+        service.create(premarketRequest(ticker = "KTTA").copy(pmHigh = null))
+      }
+    assertEquals(400, ex.statusCode.value())
+  }
+
+  @Test
+  fun `the database holds the premarket to the pattern — none on a double top, all on the others`() {
+    val dtWithPremarket =
+      makeStat(testUser, ticker = "SGBX", tradeDate = DAY).apply { pattern = Pattern.DT }
+    assertThrows(DataIntegrityViolationException::class.java) {
+      repo.saveAndFlush(dtWithPremarket)
+    }
+
+    val gusWithout = makeStat(testUser, ticker = "KTTA", tradeDate = DAY).apply { pmOpen = null }
+    assertThrows(DataIntegrityViolationException::class.java) { repo.saveAndFlush(gusWithout) }
+  }
+
+  @Test
   fun `the database refuses a ticked double top without its four prices`() {
     val stat =
       makeStat(testUser, ticker = "SGBX", tradeDate = DAY).apply {
         pattern = Pattern.DT
+        clearPremarket()
         dtStartPrice = BigDecimal("1.90")
         dtTopPrice = BigDecimal("2.95")
         completedAt = Instant.now()
@@ -760,8 +788,6 @@ class StatsListingIntegrationTest {
     assertEquals(2, summary.completedDoubleTops)
     // SGBX start 1.90 -> top 2.95 = +55.26, NXTT 2.00 -> 3.00 = +50.00 -> 52.63.
     assertEquals(0, BigDecimal("52.63").compareTo(summary.averageExtensionPercent))
-    // From the 1.12 previous close : +163.39 and +167.86 -> 165.63 (HALF_UP).
-    assertEquals(0, BigDecimal("165.63").compareTo(summary.averageExtensionWithGapPercent))
     // SGBX 2.95 -> 2.36 = -20.00, NXTT 3.00 -> 2.70 = -10.00 -> -15.00.
     assertEquals(0, BigDecimal("-15.00").compareTo(summary.averageRejectionPercent))
     assertEquals(1, summary.rejectionAtCriterionCount, "only SGBX reached the 17 %")
@@ -883,6 +909,7 @@ class StatsListingIntegrationTest {
     val backwards =
       makeStat(testUser, ticker = "SGBX", tradeDate = DAY).apply {
         pattern = Pattern.DT
+        clearPremarket()
         dtTopTime = LocalTime.of(10, 14)
         dtLowTime = LocalTime.of(10, 2)
       }
@@ -1337,6 +1364,13 @@ class StatsListingIntegrationTest {
       pmOpen = BigDecimal("4.05"),
       pmHigh = BigDecimal("4.65"),
     )
+
+  /** A double top carries no premarket (#649) — the CHECK refuses one that does. */
+  private fun StatEntry.clearPremarket() {
+    previousClose = null
+    pmOpen = null
+    pmHigh = null
+  }
 
   private fun makeUser(prefix: String) =
     User(

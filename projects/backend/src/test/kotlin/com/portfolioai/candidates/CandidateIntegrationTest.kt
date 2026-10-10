@@ -302,15 +302,15 @@ class CandidateIntegrationTest {
         )
       )
 
-    val stat = service.promote(candidate.id, Pattern.DT)
+    val stat = service.promote(candidate.id, Pattern.GUS)
 
     assertEquals(candidate.id, stat.candidateId, "the stat keeps a trace of its source candidate")
     assertEquals(DAY, stat.tradeDate)
     assertEquals("KTTA", stat.ticker)
-    assertEquals(Pattern.DT, stat.pattern, "the pattern is the one chosen when promoting")
-    assertEquals(0, BigDecimal("2.65").compareTo(stat.previousClose))
-    assertEquals(0, BigDecimal("4.05").compareTo(stat.pmOpen))
-    assertEquals(0, BigDecimal("4.65").compareTo(stat.pmHigh))
+    assertEquals(Pattern.GUS, stat.pattern, "the pattern is the one chosen when promoting")
+    assertEquals(0, BigDecimal("2.65").compareTo(stat.previousClose!!))
+    assertEquals(0, BigDecimal("4.05").compareTo(stat.pmOpen!!))
+    assertEquals(0, BigDecimal("4.65").compareTo(stat.pmHigh!!))
     assertEquals(0, BigDecimal("8.2").compareTo(stat.floatMillions))
     assertEquals(0, BigDecimal("3.1").compareTo(stat.volumeMillions))
     assertEquals("Push rejeté sous 4,65", stat.note)
@@ -613,6 +613,25 @@ class CandidateIntegrationTest {
 
     assertEquals(1, updated.stats.size, "an inline edit still reports the candidate as in stats")
     assertEquals(0, BigDecimal("4.20").compareTo(statService.findById(stat.id).openPrice))
+  }
+
+  @Test
+  fun `promoting in DT keeps float, volume and note, and drops the premarket`() {
+    // #649 : a double top is read off the session — the candidate keeps its premarket, the stat
+    // none.
+    val candidate =
+      service.create(
+        request(ticker = "SGBX", floatMillions = BigDecimal("3.9"), note = "Float serré")
+      )
+
+    val stat = service.promote(candidate.id, Pattern.DT)
+
+    assertNull(stat.previousClose)
+    assertNull(stat.pmOpen)
+    assertNull(stat.pmHigh)
+    assertEquals(0, BigDecimal("3.9").compareTo(stat.floatMillions))
+    assertEquals("Float serré", stat.note)
+    assertEquals(0, BigDecimal("2.65").compareTo(service.findById(candidate.id).previousClose))
   }
 
   @Test

@@ -43,8 +43,6 @@ internal fun statSummaryOf(rows: List<StatEntry>, pattern: Pattern?, traded: Int
     completedDoubleTops = doubleTops.size,
     averageExtensionPercent =
       doubleTops.averageOf { StatMetrics.percentChange(it.dtStartPrice, it.dtTopPrice) },
-    averageExtensionWithGapPercent =
-      doubleTops.averageOf { StatMetrics.percentChange(it.previousClose, it.dtTopPrice) },
     averageRejectionPercent =
       doubleTops.averageOf { StatMetrics.percentChange(it.dtTopPrice, it.dtLowPrice) },
     rejectionAtCriterionCount =

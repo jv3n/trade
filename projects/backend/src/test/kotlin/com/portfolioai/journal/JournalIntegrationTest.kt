@@ -528,6 +528,10 @@ class JournalIntegrationTest {
       statRepo.save(
         sampleStat(user = testUser, ticker = "IMNN").apply {
           pattern = Pattern.DT
+          // A double top carries no premarket (#649).
+          previousClose = null
+          pmOpen = null
+          pmHigh = null
           dtTopPrice = BigDecimal("3.40")
           dtRetestPrice = BigDecimal("3.46")
         }

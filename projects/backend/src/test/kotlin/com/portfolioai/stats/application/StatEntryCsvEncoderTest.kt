@@ -96,10 +96,13 @@ class StatEntryCsvEncoderTest {
   }
 
   @Test
-  fun `a double top fills its four prices and times and leaves the GUS session empty`() {
+  fun `a double top fills its four prices and times and leaves the premarket and session empty`() {
     val dt =
       makeEntry(completed = false).apply {
         pattern = Pattern.DT
+        previousClose = null
+        pmOpen = null
+        pmHigh = null
         dtStartPrice = BigDecimal("1.90")
         dtTopPrice = BigDecimal("2.95")
         dtLowPrice = BigDecimal("2.36")
@@ -112,6 +115,8 @@ class StatEntryCsvEncoderTest {
     val cells = dataRowOf(StatEntryCsvEncoder.encode(listOf(dt))).split(",")
 
     assertEquals("DT", cells[1])
+    // No premarket on a double top (#649) : previous close / PM open / PM high at 3-5.
+    assertEquals(listOf("", "", ""), cells.subList(3, 6))
     // Open / push / HOD / LOD / EOD at 9-13, then start / top / rejection low / retest at 14-17.
     assertEquals(listOf("", "", "", "", ""), cells.subList(9, 14))
     assertEquals(listOf("1.90", "2.95", "2.36", "2.85"), cells.subList(14, 18))

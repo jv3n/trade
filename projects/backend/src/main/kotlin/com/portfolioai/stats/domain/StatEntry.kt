@@ -25,8 +25,9 @@ import org.hibernate.type.SqlTypes
  *
  * Two blocks :
  * - **Premarket** ([previousClose] … [note]) — copied from the source candidate when the stat is
- *   created, and kept as-is afterwards. [candidateId] keeps the trace (deleting the candidate later
- *   nulls the link without touching the stat).
+ *   created, and kept as-is afterwards. A DT keeps float, volume and note only (#649) : it is read
+ *   off the session, so its three premarket prices stay null. [candidateId] keeps the trace
+ *   (deleting the candidate later nulls the link without touching the stat).
  * - **Session** — typed field by field during the day, any subset may be in. A GUS (and the
  *   patterns measured like it) fills [openPrice] … [eodPrice] ; a DT fills its four prices instead,
  *   [dtStartPrice] … [dtRetestPrice] (#428), each with its time (#469). [completedAt] is the status
@@ -52,10 +53,9 @@ class StatEntry(
   @Column(nullable = false, length = 20) var ticker: String,
 
   // ---- Premarket (copied from the candidate) ----
-  @Column(name = "previous_close", nullable = false, precision = 18, scale = 4)
-  var previousClose: BigDecimal,
-  @Column(name = "pm_open", nullable = false, precision = 18, scale = 4) var pmOpen: BigDecimal,
-  @Column(name = "pm_high", nullable = false, precision = 18, scale = 4) var pmHigh: BigDecimal,
+  @Column(name = "previous_close", precision = 18, scale = 4) var previousClose: BigDecimal? = null,
+  @Column(name = "pm_open", precision = 18, scale = 4) var pmOpen: BigDecimal? = null,
+  @Column(name = "pm_high", precision = 18, scale = 4) var pmHigh: BigDecimal? = null,
   @Column(name = "float_millions", precision = 12, scale = 2) var floatMillions: BigDecimal? = null,
   @Column(name = "volume_millions", precision = 12, scale = 2)
   var volumeMillions: BigDecimal? = null,
