@@ -481,14 +481,11 @@ export class JournalPage {
           this.toasts.success(
             this.translate.instant('journal.snackbar.deleteSuccess', { ticker: entry.ticker }),
           );
-          if (willEmptyPage) {
-            // The page change alone refetches, on the previous (existing) page.
-            this.pageIndex.update((n) => n - 1);
-          } else {
-            // Refetch the current page — local splicing would leave us with N-1 rows on the
-            // page and the total count out of sync ; trust the server for both.
-            this.refetch();
-          }
+          // Refetch — local splicing would leave us with N-1 rows on the page and the total count
+          // out of sync ; trust the server for both. Even when the page steps back : only the
+          // listing is keyed on it, and the KPIs counted the deleted trade too.
+          this.refetch();
+          if (willEmptyPage) this.pageIndex.update((n) => n - 1);
         }),
         catchError(() => {
           this.toasts.error(this.translate.instant('journal.snackbar.deleteError'));

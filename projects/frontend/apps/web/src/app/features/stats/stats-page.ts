@@ -1370,11 +1370,12 @@ export class StatsPage {
             this.translate.instant('stats.snackbar.deleteSuccess', { ticker: entry.ticker }),
           );
           if (this.completing()?.id === entry.id) this.completing.set(null);
+          // Even when the page steps back : only the listing is keyed on it, and the KPIs counted
+          // the deleted stat too.
+          this.refetch();
           // Deleting the last row of a non-zero page would strand the user on an empty page.
           if (this.entries().length === 1 && this.pageIndex() > 0) {
             this.pageIndex.update((n) => n - 1);
-          } else {
-            this.refetch();
           }
         }),
         catchError(() => {
