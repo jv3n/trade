@@ -114,11 +114,11 @@ dependencies {
   testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
   // Kotlin-friendly matchers for Mockito (any(), eq(), times() that respect Kotlin's non-null
   // types — the Java equivalents return `null` for non-nullable parameters and crash).
-  testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
+  testImplementation("org.mockito.kotlin:mockito-kotlin:6.4.0")
   // Local HTTP server for testing outbound clients without hitting the real internet — used by
-  // TwelveDataClientTest and FinnhubClientTest to assert rate-limit / 404 / auth-failure
-  // behaviour deterministically.
-  testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
+  // FrankfurterForexClientTest to assert the upstream failures deterministically. `mockwebserver3`
+  // is OkHttp 5's API ; the `mockwebserver` artifact only survives there for JUnit 4 code.
+  testImplementation("com.squareup.okhttp3:mockwebserver3:5.5.0")
   // Testcontainers — boots a real Postgres in Docker for `@SpringBootTest` integration tests so
   // `./gradlew test` no longer needs Tilt / docker-compose orchestrated by the dev infra. A single
   // container is shared across the JVM via a JUnit Platform LauncherSessionListener (singleton in

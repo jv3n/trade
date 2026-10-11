@@ -3,8 +3,8 @@ package com.portfolioai.forex.infrastructure.http
 import com.portfolioai.shared.UpstreamUnavailableException
 import java.math.BigDecimal
 import java.time.LocalDate
-import okhttp3.mockwebserver.MockResponse
-import okhttp3.mockwebserver.MockWebServer
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
@@ -35,7 +35,7 @@ class FrankfurterForexClientTest {
 
   @AfterEach
   fun tearDown() {
-    server.shutdown()
+    server.close()
   }
 
   private fun client(): FrankfurterForexClient =
@@ -59,7 +59,7 @@ class FrankfurterForexClientTest {
 
   @Test
   fun `surfaces a 5xx as UpstreamUnavailable rather than inventing a rate`() {
-    server.enqueue(MockResponse().setResponseCode(503))
+    server.enqueue(MockResponse.Builder().code(503).build())
 
     assertThrows<UpstreamUnavailableException> { client().latest("USD", "CAD") }
   }
@@ -88,5 +88,5 @@ class FrankfurterForexClientTest {
   }
 
   private fun jsonOk(body: String) =
-    MockResponse().setHeader("Content-Type", "application/json").setBody(body)
+    MockResponse.Builder().addHeader("Content-Type", "application/json").body(body).build()
 }
