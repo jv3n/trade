@@ -1,5 +1,14 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, LOCALE_ID, computed, inject, signal } from '@angular/core';
+import {
+  Component,
+  LOCALE_ID,
+  Resource,
+  computed,
+  inject,
+  linkedSignal,
+  signal,
+} from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
@@ -19,21 +28,21 @@ import {
   subBusinessDays,
   subDays,
 } from 'date-fns';
-import { EMPTY, catchError, filter, finalize, switchMap, tap } from 'rxjs';
-import { AccountSummary } from '../../core/api/account/account.model';
+import { EMPTY, catchError, filter, switchMap, tap } from 'rxjs';
 import { AccountRepository } from '../../core/api/account/account.repository';
 import { Candidate } from '../../core/api/candidates/candidates.model';
 import { CandidatesRepository } from '../../core/api/candidates/candidates.repository';
 import { JournalRepository } from '../../core/api/journal/journal.repository';
-import { JournalSummary, TradeEntry } from '../../core/api/journal/trade-entry.model';
+import { TradeEntry } from '../../core/api/journal/trade-entry.model';
 import { Locate, LocateInput } from '../../core/api/locates/locates.model';
 import { LocatesRepository } from '../../core/api/locates/locates.repository';
 import { PATTERNS } from '../../core/api/shared/pattern.model';
 import { StatEntry } from '../../core/api/stats/stat-entry.model';
 import { StatsRepository } from '../../core/api/stats/stats.repository';
-import { TradingDay, TradingDayMarks } from '../../core/api/trading-day/trading-day.model';
+import { TradingDayMarks } from '../../core/api/trading-day/trading-day.model';
 import { TradingDayRepository } from '../../core/api/trading-day/trading-day.repository';
 import { ConfirmService } from '../../core/app-state/confirm.service';
+import { keptValue } from '../../shared/kept-value/kept-value';
 import { sumCents } from '../../shared/locate-cost/locate-cost';
 import { PluralPipe, pluralKey } from '../../shared/plural/plural';
 import { MorningReconciliation } from '../account/morning-reconciliation/morning-reconciliation';
@@ -71,17 +80,6 @@ const REQUIRED_STEPS = STEPS.filter((key) => !OPTIONAL_STEPS.includes(key));
  * what to do now, `todo` = not yet.
  */
 export type StepState = 'done' | 'none' | 'current' | 'todo';
-
-/** The calls a step's state is read from — the side column's figures are not among them. */
-type StepSource = 'reconciliations' | 'candidates' | 'locates' | 'stats' | 'trades' | 'tradingDay';
-const STEP_SOURCES: readonly StepSource[] = [
-  'reconciliations',
-  'candidates',
-  'locates',
-  'stats',
-  'trades',
-  'tradingDay',
-];
 
 /** Minutes since midnight, New York time — the session boundaries are wall-clock over there. */
 const PREMARKET_OPEN = 4 * 60;
@@ -149,6 +147,8 @@ export function marketStatusAt(now: Date): MarketStatus {
  * whether it was reconciled, the P&L of the day / week / month, the candidates captured today and
  * the trades of the week.
  *
+ * Each source is a resource of its own ; a write bumps the counter of what it moved — the whole
+ * day, the account, the locates — folded into the params, so it supersedes a load in flight.
  */
 @Component({
   selector: 'app-today-page',
@@ -188,30 +188,111 @@ export class TodayPage {
   readonly requiredStepCount = REQUIRED_STEPS.length;
 
   // ---- What the day is made of ----
-  readonly accountSummary = signal<AccountSummary | null>(null);
-  readonly reconciledToday = signal(false);
-  readonly candidates = signal<Candidate[]>([]);
-  readonly dayLocates = signal<Locate[]>([]);
+  private readonly dayWrites = signal(0);
+  private readonly accountWrites = signal(0);
+  private readonly locateWrites = signal(0);
+  private readonly dayRange = { dateFrom: this.today, dateTo: this.today };
+  private readonly weekRange = {
+    dateFrom: startOfWeek(this.today, { weekStartsOn: 1 }),
+    dateTo: endOfWeek(this.today, { weekStartsOn: 1 }),
+  };
+
+  private readonly accountResource = rxResource({
+    params: () => ({ day: this.dayWrites(), account: this.accountWrites() }),
+    stream: () => this.accountRepo.getSummary(),
+  });
+  /**
+   * Step 1's own block loads the history too ; the page reads it for the side column and for the
+   * step state, which it needs even before the block is rendered.
+   */
+  private readonly reconciliationsResource = rxResource({
+    params: () => ({ day: this.dayWrites(), account: this.accountWrites() }),
+    stream: () => this.accountRepo.reconciliations(1),
+  });
+  private readonly candidatesResource = rxResource({
+    params: () => ({ day: this.dayWrites() }),
+    stream: () => this.candidatesRepo.listForDate(this.today),
+  });
+  private readonly locatesResource = rxResource({
+    params: () => ({ day: this.dayWrites(), locates: this.locateWrites() }),
+    stream: () => this.locatesRepo.listForDate(this.today),
+  });
+  private readonly statsResource = rxResource({
+    params: () => ({ day: this.dayWrites() }),
+    stream: () =>
+      this.statsRepo.findAll(
+        { status: 'TO_COMPLETE', dateTo: subDays(this.today, 1) },
+        { pageIndex: 0, pageSize: 50, sortField: 'tradeDate', sortDirection: 'desc' },
+      ),
+  });
+  private readonly todayTradesResource = rxResource({
+    params: () => ({ day: this.dayWrites() }),
+    stream: () => this.journalRepo.findAll(this.dayRange, { pageIndex: 0, pageSize: 20 }),
+  });
+  private readonly weekTradesResource = rxResource({
+    params: () => ({ day: this.dayWrites() }),
+    stream: () => this.journalRepo.findAll(this.weekRange, { pageIndex: 0, pageSize: 20 }),
+  });
+  private readonly tradingDayResource = rxResource({
+    params: () => ({ day: this.dayWrites() }),
+    stream: () => this.tradingDayRepo.get(this.today),
+  });
+  private readonly dayPnlResource = rxResource({
+    params: () => ({ day: this.dayWrites() }),
+    stream: () => this.journalRepo.summary(this.dayRange),
+  });
+  private readonly weekPnlResource = rxResource({
+    params: () => ({ day: this.dayWrites() }),
+    stream: () => this.journalRepo.summary(this.weekRange),
+  });
+  private readonly monthPnlResource = rxResource({
+    params: () => ({ day: this.dayWrites() }),
+    stream: () => this.journalRepo.summary(computeMonthRange(this.today)),
+  });
+
+  readonly accountSummary = keptValue(this.accountResource);
+  private readonly reconciliations = keptValue(this.reconciliationsResource);
+  readonly reconciledToday = computed(
+    () => this.reconciliations()?.some((r) => isSameDay(r.valueDate, this.today)) ?? false,
+  );
+  private readonly keptCandidates = keptValue(this.candidatesResource);
+  readonly candidates = computed<Candidate[]>(() => this.keptCandidates() ?? []);
+  private readonly keptLocates = keptValue(this.locatesResource);
+  readonly dayLocates = computed(() => this.keptLocates() ?? []);
+  private readonly statsPage = keptValue(this.statsResource);
   /** Newest first, one page : the count of the step comes from [statsToCompleteTotal]. */
-  readonly statsToComplete = signal<StatEntry[]>([]);
+  readonly statsToComplete = computed<StatEntry[]>(() => this.statsPage()?.content ?? []);
   /** `null` until the stats answer, or when they fail : unknown is not « nothing left ». */
-  readonly statsToCompleteTotal = signal<number | null>(null);
-  readonly todayTrades = signal<TradeEntry[]>([]);
-  readonly weekTrades = signal<TradeEntry[]>([]);
-  readonly dayPnl = signal<JournalSummary | null>(null);
-  readonly weekPnl = signal<JournalSummary | null>(null);
-  readonly monthPnl = signal<JournalSummary | null>(null);
+  readonly statsToCompleteTotal = computed(() => this.statsPage()?.totalElements ?? null);
+  private readonly todayPage = keptValue(this.todayTradesResource);
+  readonly todayTrades = computed<TradeEntry[]>(() => this.todayPage()?.content ?? []);
+  private readonly weekPage = keptValue(this.weekTradesResource);
+  readonly weekTrades = computed<TradeEntry[]>(() => this.weekPage()?.content ?? []);
+  readonly dayPnl = keptValue(this.dayPnlResource);
+  readonly weekPnl = keptValue(this.weekPnlResource);
+  readonly monthPnl = keptValue(this.monthPnlResource);
   /** The day's « nothing today » marks, as stored — `null` until read, or when the read fails. */
-  readonly tradingDay = signal<TradingDay | null>(null);
+  readonly tradingDay = keptValue(this.tradingDayResource);
   readonly savingMarks = signal(false);
 
-  /** Step sources still unanswered — a failed one counts as answered, it won't come back. */
-  private readonly pendingSources = signal<ReadonlySet<StepSource>>(new Set(STEP_SOURCES));
+  /** The sources a step's state is read from — the side column's figures are not among them. */
+  private readonly stepSources: readonly Resource<unknown>[] = [
+    this.reconciliationsResource,
+    this.candidatesResource,
+    this.locatesResource,
+    this.statsResource,
+    this.todayTradesResource,
+    this.tradingDayResource,
+  ];
   /**
    * Every source a step reads has answered (#544) : before that the steps would read « to do » or
-   * « nothing today » off empty data, so they show as a skeleton.
+   * « nothing today » off empty data, so they show as a skeleton. A failed one counts as answered —
+   * it won't come back — and once they all have, a reload never puts the skeleton back.
    */
-  readonly stepsLoaded = computed(() => this.pendingSources().size === 0);
+  readonly stepsLoaded = linkedSignal<boolean, boolean>({
+    source: () => this.stepSources.every((r) => r.status() !== 'loading'),
+    computation: (answered, previous) => previous?.value === true || answered,
+  });
   readonly gate = stbLoadGate(() => !this.stepsLoaded());
 
   /**
@@ -339,16 +420,12 @@ export class TodayPage {
     () => this.dayLocates().length === 0 && (this.noCandidateToday() || this.sessionOver),
   );
 
-  constructor() {
-    this.fetch();
-  }
-
   /**
    * The morning block settled — reconciled *or* cancelled, it emits the same output : the balance
    * moved, and step 1 is re-read rather than assumed done (#425).
    */
   onSettled(): void {
-    this.fetchAccount();
+    this.accountWrites.update((n) => n + 1);
   }
 
   /**
@@ -372,7 +449,7 @@ export class TodayPage {
               { count: result.promoted.length },
             ),
           );
-          this.fetch();
+          this.dayWrites.update((n) => n + 1);
         }),
         catchError(() => {
           this.toasts.error(this.translate.instant('today.snackbar.promoteError'));
@@ -398,7 +475,7 @@ export class TodayPage {
     this.savingMarks.set(true);
     this.tradingDayRepo.put(this.today, marks).subscribe({
       next: (day) => {
-        this.tradingDay.set(day);
+        this.tradingDayResource.value.set(day);
         this.savingMarks.set(false);
       },
       error: () => {
@@ -425,7 +502,7 @@ export class TodayPage {
               this.toasts.success(
                 this.translate.instant('locates.snackbar.createSuccess', { ticker: saved.ticker }),
               );
-              this.fetchLocates();
+              this.locateWrites.update((n) => n + 1);
             }),
             catchError(() => {
               this.toasts.error(this.translate.instant('locates.snackbar.saveError'));
@@ -454,7 +531,7 @@ export class TodayPage {
       })
       .afterClosed()
       .pipe(filter(Boolean))
-      .subscribe(() => this.fetchLocates());
+      .subscribe(() => this.locateWrites.update((n) => n + 1));
   }
 
   /** « KTTA, BNZI, SNTG » — the tickers of a list, for the one-line recap of a step. */
@@ -477,97 +554,6 @@ export class TodayPage {
 
   pushOf(candidate: Candidate): number | null {
     return pushPercent(candidate.pmOpen, candidate.pmHigh);
-  }
-
-  private fetch(): void {
-    const day = { dateFrom: this.today, dateTo: this.today };
-    const week = {
-      dateFrom: startOfWeek(this.today, { weekStartsOn: 1 }),
-      dateTo: endOfWeek(this.today, { weekStartsOn: 1 }),
-    };
-    const month = computeMonthRange(this.today);
-
-    this.fetchAccount();
-    this.candidatesRepo
-      .listForDate(this.today)
-      .pipe(finalize(() => this.answered('candidates')))
-      .subscribe({
-        next: (rows) => this.candidates.set(rows),
-        error: () => this.candidates.set([]),
-      });
-    this.fetchLocates();
-    this.statsRepo
-      .findAll(
-        { status: 'TO_COMPLETE', dateTo: subDays(this.today, 1) },
-        { pageIndex: 0, pageSize: 50, sortField: 'tradeDate', sortDirection: 'desc' },
-      )
-      .pipe(finalize(() => this.answered('stats')))
-      .subscribe({
-        next: (page) => {
-          this.statsToComplete.set(page.content);
-          this.statsToCompleteTotal.set(page.totalElements);
-        },
-        error: () => {
-          this.statsToComplete.set([]);
-          this.statsToCompleteTotal.set(null);
-        },
-      });
-    this.journalRepo
-      .findAll(day, { pageIndex: 0, pageSize: 20 })
-      .pipe(finalize(() => this.answered('trades')))
-      .subscribe({
-        next: (page) => this.todayTrades.set(page.content),
-        error: () => this.todayTrades.set([]),
-      });
-    this.journalRepo.findAll(week, { pageIndex: 0, pageSize: 20 }).subscribe({
-      next: (page) => this.weekTrades.set(page.content),
-      error: () => this.weekTrades.set([]),
-    });
-    this.tradingDayRepo
-      .get(this.today)
-      .pipe(finalize(() => this.answered('tradingDay')))
-      .subscribe({
-        next: (d) => this.tradingDay.set(d),
-        error: () => this.tradingDay.set(null),
-      });
-    this.journalRepo.summary(day).subscribe({ next: (s) => this.dayPnl.set(s) });
-    this.journalRepo.summary(week).subscribe({ next: (s) => this.weekPnl.set(s) });
-    this.journalRepo.summary(month).subscribe({ next: (s) => this.monthPnl.set(s) });
-  }
-
-  private fetchLocates(): void {
-    this.locatesRepo
-      .listForDate(this.today)
-      .pipe(finalize(() => this.answered('locates')))
-      .subscribe({
-        next: (locates) => this.dayLocates.set(locates),
-        error: () => this.dayLocates.set([]),
-      });
-  }
-
-  private answered(source: StepSource): void {
-    this.pendingSources.update((pending) => {
-      const next = new Set(pending);
-      next.delete(source);
-      return next;
-    });
-  }
-
-  private fetchAccount(): void {
-    this.accountRepo.getSummary().subscribe({
-      next: (s) => this.accountSummary.set(s),
-      error: () => this.accountSummary.set(null),
-    });
-    // Step 1's own block loads the history too ; the page reads it for the side column and for the
-    // step state, which it needs even before the block is rendered.
-    this.accountRepo
-      .reconciliations(1)
-      .pipe(finalize(() => this.answered('reconciliations')))
-      .subscribe({
-        next: (rows) =>
-          this.reconciledToday.set(rows.some((r) => isSameDay(r.valueDate, this.today))),
-        error: () => this.reconciledToday.set(false),
-      });
   }
 }
 

@@ -1,5 +1,5 @@
 import { provideZonelessChangeDetection, signal } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { of, Subject, throwError } from 'rxjs';
@@ -40,6 +40,9 @@ import { AccountPage } from './account-page';
  *    movement, it deletes its locate ; the tile reads the period's locates and their
  *    part paid for nothing, amber when there is one.
  *
+ * The summary, the series and the movements load through resources (#670), which answer a tick
+ * after the call : `render()` and `settle()` wait for them.
+ *
  * Creation and edition go through `MovementDialog` / `NewLocateDialog` and are their concern, not the
  * page's.
  */
@@ -50,6 +53,19 @@ describe('AccountPage', () => {
   let page: PagedResult<AccountMovement>;
   let locates: { create: ReturnType<typeof vi.fn>; delete: ReturnType<typeof vi.fn> };
   let dialogOpen: ReturnType<typeof vi.fn>;
+
+  /** Renders once the summary, the series and the movements have answered — a tick after the call. */
+  async function render(): Promise<ComponentFixture<AccountPage>> {
+    const fixture = TestBed.createComponent(AccountPage);
+    await settle(fixture);
+    return fixture;
+  }
+
+  async function settle(fixture: ComponentFixture<AccountPage>): Promise<void> {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
 
   beforeEach(async () => {
     page = makePage([]);
@@ -103,9 +119,8 @@ describe('AccountPage', () => {
     }).compileComponents();
   });
 
-  it('opens on the running month and asks the listing and the summary for that same window', () => {
-    const fixture = TestBed.createComponent(AccountPage);
-    fixture.detectChanges();
+  it('opens on the running month and asks the listing and the summary for that same window', async () => {
+    await render();
 
     const listed = findMovements.mock.calls[0][0] as AccountMovementFilter;
     const summarised = getSummary.mock.calls[0][0] as AccountMovementFilter;
@@ -116,30 +131,28 @@ describe('AccountPage', () => {
     expect(summarised.dateTo?.getTime()).toBe(listed.dateTo?.getTime());
   });
 
-  it('sends only resolved dates — a preset name never reaches the repository', () => {
-    const fixture = TestBed.createComponent(AccountPage);
-    fixture.detectChanges();
+  it('sends only resolved dates — a preset name never reaches the repository', async () => {
+    await render();
 
     const sent = findMovements.mock.calls[0][0] as Record<string, unknown>;
     expect(Object.keys(sent).sort()).toEqual(['dateFrom', 'dateTo', 'types']);
     expect(sent['period']).toBeUndefined();
   });
 
-  it('expands the « deposits / withdrawals » choice into the two movement types', () => {
-    const fixture = TestBed.createComponent(AccountPage);
-    fixture.detectChanges();
+  it('expands the « deposits / withdrawals » choice into the two movement types', async () => {
+    const fixture = await render();
     findMovements.mockClear();
 
     fixture.componentInstance.onTypeChange('cash');
+    await settle(fixture);
 
     const sent = findMovements.mock.calls[0][0] as AccountMovementFilter;
     expect(sent.types).toEqual(['DEPOSIT', 'WITHDRAWAL']);
   });
 
   // #629 : a month of real data holds more locates than trades — they have their own filter.
-  it('opens on the trades alone, the rows the page is opened for', () => {
-    const fixture = TestBed.createComponent(AccountPage);
-    fixture.detectChanges();
+  it('opens on the trades alone, the rows the page is opened for', async () => {
+    const fixture = await render();
 
     const sent = findMovements.mock.calls[0][0] as AccountMovementFilter;
     expect(fixture.componentInstance.appliedFilter().type).toBe('trades');
@@ -147,46 +160,47 @@ describe('AccountPage', () => {
   });
 
   // #624 : « add a deposit » under a filter read as an empty account.
-  it('says an empty filter is a filter, and offers to clear it', () => {
-    const fixture = TestBed.createComponent(AccountPage);
-    fixture.detectChanges();
+  it('says an empty filter is a filter, and offers to clear it', async () => {
+    const fixture = await render();
     const el: HTMLElement = fixture.nativeElement;
 
     expect(el.textContent).toContain('account.emptyFiltered');
     el.querySelector<HTMLButtonElement>('[data-testid="movements-empty"] button')!.click();
+    await settle(fixture);
 
     expect(fixture.componentInstance.appliedFilter().type).toBe('all');
   });
 
-  it('asks for every type when the filter is « all »', () => {
-    const fixture = TestBed.createComponent(AccountPage);
-    fixture.detectChanges();
+  it('asks for every type when the filter is « all »', async () => {
+    const fixture = await render();
     findMovements.mockClear();
 
     fixture.componentInstance.onTypeChange('all');
+    await settle(fixture);
 
     const sent = findMovements.mock.calls[0][0] as AccountMovementFilter;
     expect(sent.types).toBeNull();
   });
 
-  it('rewinds to the first page when the filter changes', () => {
-    const fixture = TestBed.createComponent(AccountPage);
-    fixture.detectChanges();
+  it('rewinds to the first page when the filter changes', async () => {
+    const fixture = await render();
     fixture.componentInstance.onPage({ pageIndex: 3, pageSize: 25, length: 200 });
+    await settle(fixture);
     expect(fixture.componentInstance.pageIndex()).toBe(3);
 
     fixture.componentInstance.onTypeChange('cash');
+    await settle(fixture);
 
     expect(fixture.componentInstance.pageIndex()).toBe(0);
   });
 
-  it('applies a custom range picked in the period filter', () => {
-    const fixture = TestBed.createComponent(AccountPage);
-    fixture.detectChanges();
+  it('applies a custom range picked in the period filter', async () => {
+    const fixture = await render();
     const from = new Date(2026, 8, 1);
     const to = new Date(2026, 8, 18);
 
     fixture.componentInstance.setPeriod({ period: 'custom', dateFrom: from, dateTo: to });
+    await settle(fixture);
 
     const f = fixture.componentInstance.appliedFilter();
     expect(f.period).toBe('custom');
@@ -199,13 +213,12 @@ describe('AccountPage', () => {
    * computed over the whole history. Here the withdrawal between the two trades is filtered out,
    * and the rendered balances must still be the server's 1041.85 / 1291.85.
    */
-  it('renders the balance the server sent rather than recomputing it from the visible rows', () => {
+  it('renders the balance the server sent rather than recomputing it from the visible rows', async () => {
     page = makePage([
       makeMovement({ id: 'b', amount: 150, balanceAfter: 1041.85, type: 'TRADE' }),
       makeMovement({ id: 'a', amount: 291.85, balanceAfter: 1291.85, type: 'TRADE' }),
     ]);
-    const fixture = TestBed.createComponent(AccountPage);
-    fixture.detectChanges();
+    const fixture = await render();
 
     const balances = fixture.componentInstance.movements().map((m) => m.balanceAfter);
     expect(balances).toEqual([1041.85, 1291.85]);
@@ -216,13 +229,13 @@ describe('AccountPage', () => {
    * opened on « Apports nets 0,00 » under the default « Trades » — September held −850 of cash.
    */
   describe('type filter', () => {
-    it('narrows the table only : the tiles keep the whole period', () => {
-      const fixture = TestBed.createComponent(AccountPage);
-      fixture.detectChanges();
+    it('narrows the table only : the tiles keep the whole period', async () => {
+      const fixture = await render();
       getSummary.mockClear();
       findMovements.mockClear();
 
       fixture.componentInstance.onTypeChange('cash');
+      await settle(fixture);
 
       expect(getSummary).not.toHaveBeenCalled();
       expect((findMovements.mock.calls[0][0] as AccountMovementFilter).types).toEqual([
@@ -231,7 +244,7 @@ describe('AccountPage', () => {
       ]);
     });
 
-    it('keeps the net injected of the period under the default « Trades »', () => {
+    it('keeps the net injected of the period under the default « Trades »', async () => {
       getSummary.mockImplementation((f?: AccountMovementFilter) =>
         of(
           f?.types
@@ -239,8 +252,7 @@ describe('AccountPage', () => {
             : makeSummary({ periodNetInjected: -850 }),
         ),
       );
-      const fixture = TestBed.createComponent(AccountPage);
-      fixture.detectChanges();
+      const fixture = await render();
 
       expect(fixture.componentInstance.appliedFilter().type).toBe('trades');
       expect(fixture.componentInstance.summary()?.periodNetInjected).toBe(-850);
@@ -252,80 +264,83 @@ describe('AccountPage', () => {
    * type filter used to leave the banner of its own earlier failure above 23 freshly loaded rows.
    */
   describe('load error banner', () => {
-    it('goes away once the failed listing loads again under another type', () => {
+    it('goes away once the failed listing loads again under another type', async () => {
       findMovements.mockReturnValueOnce(throwError(() => new Error('503')));
-      const fixture = TestBed.createComponent(AccountPage);
-      fixture.detectChanges();
+      const fixture = await render();
       expect(fixture.componentInstance.loadFailed()).toBe(true);
 
       fixture.componentInstance.onTypeChange('all');
+      await settle(fixture);
 
       expect(fixture.componentInstance.loadFailed()).toBe(false);
     });
 
-    it('stays while the summary is still missing, even when the listing loads', () => {
+    it('stays while the summary is still missing, even when the listing loads', async () => {
       getSummary.mockReturnValue(throwError(() => new Error('503')));
-      const fixture = TestBed.createComponent(AccountPage);
-      fixture.detectChanges();
+      const fixture = await render();
 
       fixture.componentInstance.onTypeChange('cash');
+      await settle(fixture);
 
       expect(fixture.componentInstance.loadFailed()).toBe(true);
     });
 
-    it('goes away once a new period loads everything that had failed', () => {
+    it('goes away once a new period loads everything that had failed', async () => {
       getSummary.mockReturnValueOnce(throwError(() => new Error('503')));
-      const fixture = TestBed.createComponent(AccountPage);
-      fixture.detectChanges();
+      const fixture = await render();
 
       fixture.componentInstance.setPeriod({
         period: 'lastMonth',
         ...computePeriodRange('lastMonth'),
       });
+      await settle(fixture);
 
       expect(fixture.componentInstance.loadFailed()).toBe(false);
     });
 
-    it('shows « Retry » at work while the failed call is tried again', () => {
+    it('shows « Retry » at work while the failed call is tried again', async () => {
       getSummary.mockReturnValueOnce(throwError(() => new Error('503')));
       const pending = new Subject<AccountSummary>();
-      const fixture = TestBed.createComponent(AccountPage);
-      fixture.detectChanges();
+      const fixture = await render();
       getSummary.mockReturnValueOnce(pending);
 
       fixture.componentInstance.retry();
+      fixture.detectChanges();
       expect(fixture.componentInstance.retrying()).toBe(true);
 
       pending.error(new Error('503'));
+      await settle(fixture);
       expect(fixture.componentInstance.retrying()).toBe(false);
       expect(fixture.componentInstance.summaryFailed()).toBe(true);
     });
 
     // A late success of a superseded listing used to clear the banner over another period's rows.
-    it('drops the answer of a superseded listing when it lands after the current one', () => {
+    it('drops the answer of a superseded listing when it lands after the current one', async () => {
       const superseded = new Subject<PagedResult<AccountMovement>>();
-      const fixture = TestBed.createComponent(AccountPage);
-      fixture.detectChanges();
+      const fixture = await render();
       findMovements.mockReturnValueOnce(superseded);
       fixture.componentInstance.onTypeChange('cash');
+      fixture.detectChanges();
       findMovements.mockReturnValueOnce(throwError(() => new Error('503')));
       fixture.componentInstance.onTypeChange('all');
+      fixture.detectChanges();
 
       superseded.next(makePage([makeMovement()]));
+      await settle(fixture);
 
       expect(superseded.observed).toBe(false);
       expect(fixture.componentInstance.movementsFailed()).toBe(true);
     });
 
-    it('« Retry » reruns the calls that failed, and only those', () => {
+    it('« Retry » reruns the calls that failed, and only those', async () => {
       findMovements.mockReturnValueOnce(throwError(() => new Error('503')));
-      const fixture = TestBed.createComponent(AccountPage);
-      fixture.detectChanges();
+      const fixture = await render();
       getSummary.mockClear();
       getBalanceSeries.mockClear();
       findMovements.mockClear();
 
       fixture.componentInstance.retry();
+      await settle(fixture);
 
       expect(findMovements).toHaveBeenCalledTimes(1);
       expect(getSummary).not.toHaveBeenCalled();
@@ -339,10 +354,9 @@ describe('AccountPage', () => {
    * « unavailable », never the figure of the previous render.
    */
   describe('unavailable figures', () => {
-    it('shows the tiles unavailable rather than hiding them when the summary fails', () => {
+    it('shows the tiles unavailable rather than hiding them when the summary fails', async () => {
       getSummary.mockReturnValue(throwError(() => new Error('503')));
-      const fixture = TestBed.createComponent(AccountPage);
-      fixture.detectChanges();
+      const fixture = await render();
 
       // Balance, P&L, net injected and locates — the gap tile is left out : whether the period
       // had a reconciled morning is not known.
@@ -353,9 +367,8 @@ describe('AccountPage', () => {
 
     // A period whose summary fails used to leave the previous period's balance on screen — and in
     // the reconciliation, which would have measured a gap against it.
-    it('withholds the balance from the reconciliation once the summary fails on a new period', () => {
-      const fixture = TestBed.createComponent(AccountPage);
-      fixture.detectChanges();
+    it('withholds the balance from the reconciliation once the summary fails on a new period', async () => {
+      const fixture = await render();
       expect(fixture.componentInstance.appBalance()).toBe(makeSummary().balance);
 
       getSummary.mockReturnValue(throwError(() => new Error('503')));
@@ -363,14 +376,14 @@ describe('AccountPage', () => {
         period: 'lastMonth',
         ...computePeriodRange('lastMonth'),
       });
+      await settle(fixture);
 
       expect(fixture.componentInstance.appBalance()).toBeNull();
     });
 
-    it('says the curve is unavailable when the series fails', () => {
+    it('says the curve is unavailable when the series fails', async () => {
       getBalanceSeries.mockReturnValue(throwError(() => new Error('503')));
-      const fixture = TestBed.createComponent(AccountPage);
-      fixture.detectChanges();
+      const fixture = await render();
 
       expect(fixture.componentInstance.seriesFailed()).toBe(true);
       expect(fixture.nativeElement.querySelector('.chart-empty')?.textContent).toContain(
@@ -380,28 +393,26 @@ describe('AccountPage', () => {
 
     // The range is computed from the series : after a failed reload it would date the previous
     // points, clipped to the new period — a stale figure next to « unavailable ».
-    it('drops the curve range once the series fails after a first load', () => {
+    it('drops the curve range once the series fails after a first load', async () => {
       // One point : enough for a range, short of the chart, whose ResizeObserver jsdom lacks.
       getBalanceSeries.mockReturnValue(of([{ date: new Date(), balance: 27360 }]));
-      const fixture = TestBed.createComponent(AccountPage);
-      fixture.detectChanges();
+      const fixture = await render();
       expect(fixture.nativeElement.querySelector('.chart-card .hint')).not.toBeNull();
 
       getBalanceSeries.mockReturnValue(throwError(() => new Error('503')));
       fixture.componentInstance.onReconciled();
-      fixture.detectChanges();
+      await settle(fixture);
 
       expect(fixture.nativeElement.querySelector('.chart-card .hint')).toBeNull();
     });
 
-    it('replaces the rows with « unavailable » when the listing fails', () => {
+    it('replaces the rows with « unavailable » when the listing fails', async () => {
       page = makePage([makeMovement()]);
-      const fixture = TestBed.createComponent(AccountPage);
-      fixture.detectChanges();
+      const fixture = await render();
 
       findMovements.mockReturnValueOnce(throwError(() => new Error('503')));
       fixture.componentInstance.onTypeChange('all');
-      fixture.detectChanges();
+      await settle(fixture);
 
       expect(
         fixture.nativeElement.querySelector('[data-testid="movements-unavailable"]'),
@@ -412,12 +423,11 @@ describe('AccountPage', () => {
 
   describe('reconciliation-gap tile', () => {
     // October in the issue : $3,000 of P&L, $200 of corrections the broker took.
-    it("reads the period's corrections unsigned, and their share of the P&L", () => {
+    it("reads the period's corrections unsigned, and their share of the P&L", async () => {
       getSummary.mockReturnValue(
         of(makeSummary({ periodPnl: 3000, periodReconciliationGap: -200 })),
       );
-      const fixture = TestBed.createComponent(AccountPage);
-      fixture.detectChanges();
+      const fixture = await render();
 
       const gap = fixture.componentInstance.reconciliationGap();
       expect(gap?.amount).toBe(200);
@@ -428,9 +438,8 @@ describe('AccountPage', () => {
       ).not.toBeNull();
     });
 
-    it('reads a period without any correction as 0 and 0 %', () => {
-      const fixture = TestBed.createComponent(AccountPage);
-      fixture.detectChanges();
+    it('reads a period without any correction as 0 and 0 %', async () => {
+      const fixture = await render();
 
       expect(fixture.componentInstance.reconciliationGap()).toEqual({
         amount: 0,
@@ -439,12 +448,11 @@ describe('AccountPage', () => {
       });
     });
 
-    it('keeps the amount but drops the ratio on a losing period', () => {
+    it('keeps the amount but drops the ratio on a losing period', async () => {
       getSummary.mockReturnValue(
         of(makeSummary({ periodPnl: -420, periodReconciliationGap: -35 })),
       );
-      const fixture = TestBed.createComponent(AccountPage);
-      fixture.detectChanges();
+      const fixture = await render();
 
       const gap = fixture.componentInstance.reconciliationGap();
       expect(gap?.amount).toBe(35);
@@ -452,10 +460,9 @@ describe('AccountPage', () => {
     });
 
     // A credited-back locate can leave the period's corrections net positive.
-    it('reads a net positive period as a credit, without a negative percentage', () => {
+    it('reads a net positive period as a credit, without a negative percentage', async () => {
       getSummary.mockReturnValue(of(makeSummary({ periodReconciliationGap: 5 })));
-      const fixture = TestBed.createComponent(AccountPage);
-      fixture.detectChanges();
+      const fixture = await render();
 
       expect(fixture.componentInstance.reconciliationGap()).toEqual({
         amount: 5,
@@ -465,38 +472,35 @@ describe('AccountPage', () => {
     });
 
     // #480 : no reconciled morning in the period means nothing was measured — no plausible 0.
-    it('hides the tile when no morning was reconciled in the period', () => {
+    it('hides the tile when no morning was reconciled in the period', async () => {
       getSummary.mockReturnValue(of(makeSummary({ periodReconciliationGap: null })));
-      const fixture = TestBed.createComponent(AccountPage);
-      fixture.detectChanges();
+      const fixture = await render();
 
       expect(fixture.componentInstance.reconciliationGap()).toBeNull();
       expect(fixture.nativeElement.querySelector('[data-testid="reconciliation-gap"]')).toBeNull();
     });
 
     // #480 : the corrections can hold a later fix absorbed into them ; the tile must not read it.
-    it("reads the mornings' recorded gap, not the corrections' current amount", () => {
+    it("reads the mornings' recorded gap, not the corrections' current amount", async () => {
       getSummary.mockReturnValue(
         of(
           makeSummary({ periodPnl: 3000, periodAdjustments: -201, periodReconciliationGap: -200 }),
         ),
       );
-      const fixture = TestBed.createComponent(AccountPage);
-      fixture.detectChanges();
+      const fixture = await render();
 
       expect(fixture.componentInstance.reconciliationGap()?.amount).toBe(200);
     });
 
-    it('asks the summary once per load, over the dates only', () => {
-      const fixture = TestBed.createComponent(AccountPage);
-      fixture.detectChanges();
+    it('asks the summary once per load, over the dates only', async () => {
+      await render();
 
       expect(getSummary).toHaveBeenCalledTimes(1);
       expect((getSummary.mock.calls[0][0] as AccountMovementFilter).types).toBeNull();
     });
 
     // A period moved quickly used to let an older answer overwrite a newer one.
-    it('drops the answer of a superseded period when it lands after the current one', () => {
+    it('drops the answer of a superseded period when it lands after the current one', async () => {
       const superseded = new Subject<AccountSummary>();
       let calls = 0;
       getSummary.mockImplementation(() => {
@@ -504,32 +508,33 @@ describe('AccountPage', () => {
         if (calls === 2) return superseded;
         return of(makeSummary({ periodReconciliationGap: calls === 3 ? -80 : 0 }));
       });
-      const fixture = TestBed.createComponent(AccountPage);
-      fixture.detectChanges();
+      const fixture = await render();
 
       fixture.componentInstance.setPeriod({
         period: 'lastMonth',
         ...computePeriodRange('lastMonth'),
       });
+      fixture.detectChanges();
       fixture.componentInstance.setPeriod({
         period: 'thisMonth',
         ...computePeriodRange('thisMonth'),
       });
+      fixture.detectChanges();
       superseded.next(makeSummary({ periodReconciliationGap: -999 }));
+      await settle(fixture);
 
       expect(superseded.observed).toBe(false);
       expect(fixture.componentInstance.reconciliationGap()?.amount).toBe(80);
     });
 
-    it('flags the page when the summary fails', () => {
+    it('flags the page when the summary fails', async () => {
       getSummary.mockReturnValue(throwError(() => new Error('503')));
-      const fixture = TestBed.createComponent(AccountPage);
-      fixture.detectChanges();
+      const fixture = await render();
 
       expect(fixture.componentInstance.loadFailed()).toBe(true);
     });
 
-    it('reads a dash, not « — % of the P&L », when the period made no profit', () => {
+    it('reads a dash, not « — % of the P&L », when the period made no profit', async () => {
       getSummary.mockReturnValue(of(makeSummary({ periodPnl: 0, periodReconciliationGap: -12.4 })));
       TestBed.inject(TranslateService).setTranslation('en', {
         account: {
@@ -539,8 +544,7 @@ describe('AccountPage', () => {
           },
         },
       });
-      const fixture = TestBed.createComponent(AccountPage);
-      fixture.detectChanges();
+      const fixture = await render();
 
       const sub = fixture.nativeElement.querySelector(
         '[data-testid="reconciliation-gap"] .kpi__sub',
@@ -559,24 +563,24 @@ describe('AccountPage', () => {
    * on the row type alone, so an untouched correction looks exactly as before.
    */
   describe('adjusted correction', () => {
-    function renderRows(movements: AccountMovement[]): HTMLElement {
+    async function renderRows(movements: AccountMovement[]): Promise<HTMLElement> {
       page = makePage(movements);
       const fixture = TestBed.createComponent(AccountPage);
       fixture.componentInstance.onTypeChange('all');
-      fixture.detectChanges();
+      await settle(fixture);
       return fixture.nativeElement as HTMLElement;
     }
 
-    it('marks a correction whose amount moved away from what its morning measured', () => {
-      const el = renderRows([
+    it('marks a correction whose amount moved away from what its morning measured', async () => {
+      const el = await renderRows([
         makeMovement({ type: 'ADJUSTMENT', amount: -12.4, measuredGap: -15.4, note: null }),
       ]);
 
       expect(el.querySelector('[data-testid="adjusted-correction"]')).not.toBeNull();
     });
 
-    it('leaves a correction that still matches its morning unmarked', () => {
-      const el = renderRows([
+    it('leaves a correction that still matches its morning unmarked', async () => {
+      const el = await renderRows([
         makeMovement({ type: 'ADJUSTMENT', amount: -12.4, measuredGap: -12.4, note: null }),
       ]);
 
@@ -609,8 +613,8 @@ describe('AccountPage', () => {
       expect(cmp.isMorningCorrection(withoutField)).toBe(false);
     });
 
-    it('names a morning correction without a note after its morning, not with a dash', () => {
-      const el = renderRows([
+    it('names a morning correction without a note after its morning, not with a dash', async () => {
+      const el = await renderRows([
         makeMovement({ type: 'ADJUSTMENT', amount: -12.4, measuredGap: -12.4, note: null }),
       ]);
 
@@ -619,11 +623,11 @@ describe('AccountPage', () => {
   });
 
   describe('locates', () => {
-    function render(movements: AccountMovement[]) {
+    async function renderWith(movements: AccountMovement[]) {
       page = makePage(movements);
       const fixture = TestBed.createComponent(AccountPage);
       fixture.componentInstance.onTypeChange('all');
-      fixture.detectChanges();
+      await settle(fixture);
       return fixture;
     }
 
@@ -652,26 +656,26 @@ describe('AccountPage', () => {
       });
     }
 
-    it('narrows the table to the locates', () => {
-      const fixture = TestBed.createComponent(AccountPage);
-      fixture.detectChanges();
+    it('narrows the table to the locates', async () => {
+      const fixture = await render();
       findMovements.mockClear();
 
       fixture.componentInstance.onTypeChange('locates');
+      await settle(fixture);
 
       expect((findMovements.mock.calls[0][0] as AccountMovementFilter).types).toEqual(['LOCATE']);
     });
 
-    it('labels a locate line with its ticker, and never edits or deletes it as a movement', () => {
-      const el: HTMLElement = render([locateLine()]).nativeElement;
+    it('labels a locate line with its ticker, and never edits or deletes it as a movement', async () => {
+      const el: HTMLElement = (await renderWith([locateLine()])).nativeElement;
 
       expect(el.textContent).toContain('SGBX');
       expect(el.querySelector('button[aria-label="account.actions.delete"]')).toBeNull();
       expect(el.querySelector('button[aria-label="account.actions.edit"]')).toBeNull();
     });
 
-    it('deletes the locate itself from its line', () => {
-      const fixture = render([locateLine()]);
+    it('deletes the locate itself from its line', async () => {
+      const fixture = await renderWith([locateLine()]);
       const el: HTMLElement = fixture.nativeElement;
       const button = el.querySelector<HTMLButtonElement>(
         'button[aria-label="account.actions.deleteLocate"]',
@@ -682,45 +686,45 @@ describe('AccountPage', () => {
       expect(locates.delete).toHaveBeenCalledWith('loc-1');
     });
 
-    it('saves the locate typed in the « Locate » dialog, then reloads the page', () => {
+    it('saves the locate typed in the « Locate » dialog, then reloads the page', async () => {
       const input = newLocate();
       dialogOpen.mockReturnValue({ afterClosed: () => of(input) });
-      const fixture = TestBed.createComponent(AccountPage);
-      fixture.detectChanges();
+      const fixture = await render();
       getSummary.mockClear();
 
       fixture.componentInstance.openLocate();
+      await settle(fixture);
 
       expect(locates.create).toHaveBeenCalledWith(input);
       expect(getSummary).toHaveBeenCalled();
     });
 
-    it('switches the default « Trades » filter to the locates, so the one just typed shows', () => {
+    it('switches the default « Trades » filter to the locates, so the one just typed shows', async () => {
       dialogOpen.mockReturnValue({ afterClosed: () => of(newLocate()) });
-      const fixture = TestBed.createComponent(AccountPage);
-      fixture.detectChanges();
+      const fixture = await render();
       findMovements.mockClear();
 
       fixture.componentInstance.openLocate();
+      await settle(fixture);
 
       expect(fixture.componentInstance.appliedFilter().type).toBe('locates');
       expect((findMovements.mock.calls[0][0] as AccountMovementFilter).types).toEqual(['LOCATE']);
     });
 
-    it('leaves « all types » alone, the locate already shows under it', () => {
+    it('leaves « all types » alone, the locate already shows under it', async () => {
       dialogOpen.mockReturnValue({ afterClosed: () => of(newLocate()) });
       const fixture = TestBed.createComponent(AccountPage);
       fixture.componentInstance.onTypeChange('all');
-      fixture.detectChanges();
+      await settle(fixture);
 
       fixture.componentInstance.openLocate();
+      await settle(fixture);
 
       expect(fixture.componentInstance.appliedFilter().type).toBe('all');
     });
 
-    it("reads the period's locates and their part paid for nothing, amber", () => {
-      const fixture = TestBed.createComponent(AccountPage);
-      fixture.detectChanges();
+    it("reads the period's locates and their part paid for nothing, amber", async () => {
+      const fixture = await render();
       const tile: HTMLElement = fixture.nativeElement.querySelector(
         '[data-testid="period-locates"]',
       );
@@ -733,18 +737,16 @@ describe('AccountPage', () => {
     });
 
     // Unlike the gap tile (#480) : nothing located is a measured 0, not a missing measure.
-    it('keeps the tile on a period with nothing located', () => {
+    it('keeps the tile on a period with nothing located', async () => {
       getSummary.mockReturnValue(of(makeSummary({ periodLocates: 0, periodUnusedLocates: 0 })));
-      const fixture = TestBed.createComponent(AccountPage);
-      fixture.detectChanges();
+      const fixture = await render();
 
       expect(fixture.nativeElement.querySelector('[data-testid="period-locates"]')).not.toBeNull();
     });
 
-    it('leaves the part paid for nothing neutral when there is none', () => {
+    it('leaves the part paid for nothing neutral when there is none', async () => {
       getSummary.mockReturnValue(of(makeSummary({ periodUnusedLocates: 0 })));
-      const fixture = TestBed.createComponent(AccountPage);
-      fixture.detectChanges();
+      const fixture = await render();
 
       const part: HTMLElement = fixture.nativeElement.querySelector(
         '[data-testid="paid-for-nothing"]',
