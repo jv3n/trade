@@ -123,6 +123,15 @@
           <mat-icon matListItemIcon>account_balance_wallet</mat-icon>
           <span matListItemTitle>{{ 'nav.account' | translate }}</span>
         </a>
+        <a
+          mat-list-item
+          routerLink="/reports"
+          routerLinkActive="sidenav-active"
+          [routerLinkActiveOptions]="{ exact: true }"
+        >
+          <mat-icon matListItemIcon>bar_chart</mat-icon>
+          <span matListItemTitle>{{ 'nav.reports' | translate }}</span>
+        </a>
       </mat-nav-list>
       <!-- Pinned to the bottom — a reference and a back-office, not part of the daily flow. -->
       <mat-nav-list class="sidenav-list sidenav-list--footer">

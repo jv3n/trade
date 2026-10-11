@@ -109,6 +109,40 @@ export interface AccountMovementFilter {
   types: readonly AccountMovementType[] | null;
 }
 
+/** The width of one bar of the « Flux du compte » report (#685). */
+export type CashFlowBucketSize = 'DAY' | 'WEEK' | 'MONTH' | 'QUARTER' | 'YEAR';
+
+/**
+ * What one bar of the report moved, each amount signed as on the ledger — trades split into
+ * winners and losers. [from] / [to] are the days it covers **within** the period : the first and
+ * last bars are clipped to it.
+ */
+export interface CashFlowBucket {
+  from: Date;
+  to: Date;
+  winningTrades: number;
+  losingTrades: number;
+  locates: number;
+  deposits: number;
+  withdrawals: number;
+  adjustments: number;
+  net: number;
+}
+
+/**
+ * The account's flow over a period, bar by bar, every bar present (an empty one at zero). The
+ * balances are the whole account's on either side of it, whatever the type filter. [dateFrom] /
+ * [dateTo] are the period as resolved — an open one runs from the first movement to the last ;
+ * null when the account has no movement in it.
+ */
+export interface CashFlow {
+  dateFrom: Date | null;
+  dateTo: Date | null;
+  openingBalance: number;
+  closingBalance: number;
+  buckets: CashFlowBucket[];
+}
+
 /**
  * One morning's reconciliation between the app balance and the one TradeZero displays (#198).
  * [gap] is `brokerBalance − appBalance` as it was that morning : zero on a clean one, and then

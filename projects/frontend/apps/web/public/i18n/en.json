@@ -25,6 +25,7 @@
     "menu": "Menu",
     "today": "Today",
     "account": "Account",
+    "reports": "Reports",
     "journal": "Journal",
     "candidates": "Candidates",
     "stats": "Stats",
@@ -1337,6 +1338,81 @@
       "SIR": "SIR — Short Into Resistance",
       "SIV": "SIV — Short Into VWAP",
       "DISCRETIONARY": "Discretionary"
+    }
+  },
+  "reports": {
+    "title": "Reports",
+    "subtitle": "What the account already holds, period by period — nothing new is recorded here.",
+    "tabs": {
+      "cashFlow": "Account flow"
+    },
+    "flow": {
+      "bucket": {
+        "label": "One bar per",
+        "DAY": "Day",
+        "WEEK": "Week",
+        "MONTH": "Month",
+        "QUARTER": "Quarter",
+        "YEAR": "Year"
+      },
+      "types": {
+        "label": "Types",
+        "TRADE": "Trades",
+        "LOCATE": "Locates",
+        "DEPOSIT": "Deposits",
+        "WITHDRAWAL": "Withdrawals",
+        "ADJUSTMENT": "Corrections",
+        "tradingOnly": "Trading only"
+      },
+      "kpi": {
+        "net": "Net for the period",
+        "trading": "Trading result",
+        "tradingSub": "trades {{trades}} · locates {{locates}}",
+        "injected": "Net injected",
+        "injectedSub": "{{deposits}} deposits · {{withdrawals}} withdrawals",
+        "balance": "Balance on {{date}}",
+        "balanceSub": "from {{amount}} on {{date}}",
+        "filteredOut": "outside the chosen types"
+      },
+      "chart": {
+        "DAY": "Flow by day",
+        "WEEK": "Flow by week",
+        "MONTH": "Flow by month",
+        "QUARTER": "Flow by quarter",
+        "YEAR": "Flow by year"
+      },
+      "series": {
+        "winning": "Winning trades",
+        "losing": "Losing trades",
+        "fees": "Fees — locates and corrections",
+        "locates": "Locates",
+        "adjustments": "Corrections",
+        "deposits": "Deposits",
+        "withdrawals": "Withdrawals",
+        "net": "Net"
+      },
+      "weekOf": "Week of {{from}} to {{to}}",
+      "quarter": "Q{{quarter}} {{year}}",
+      "breakdown": {
+        "title": "Breakdown",
+        "type": "Type",
+        "amount": "Amount",
+        "share": "Share",
+        "net": "Net for the period",
+        "rows": {
+          "trades": "Trades",
+          "winning": "of which winners",
+          "losing": "of which losers",
+          "locates": "Locates",
+          "adjustments": "Corrections",
+          "deposits": "Deposits",
+          "withdrawals": "Withdrawals"
+        }
+      },
+      "empty": "No movement in this period.",
+      "loading": "Loading the account flow",
+      "loadError": "The account flow could not be loaded.",
+      "retry": "Retry"
     }
   },
   "periods": {

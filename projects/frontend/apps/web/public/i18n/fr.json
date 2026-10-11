@@ -25,6 +25,7 @@
     "menu": "Menu",
     "today": "Aujourd'hui",
     "account": "Compte",
+    "reports": "Rapports",
     "journal": "Journal",
     "candidates": "Candidats",
     "stats": "Stats",
@@ -1337,6 +1338,81 @@
       "SIR": "SIR — Short Into Resistance",
       "SIV": "SIV — Short Into VWAP",
       "DISCRETIONARY": "Discrétionnaire"
+    }
+  },
+  "reports": {
+    "title": "Rapports",
+    "subtitle": "Ce que le compte contient déjà, période par période — rien de nouveau n'est saisi ici.",
+    "tabs": {
+      "cashFlow": "Flux du compte"
+    },
+    "flow": {
+      "bucket": {
+        "label": "Une barre par",
+        "DAY": "Jour",
+        "WEEK": "Semaine",
+        "MONTH": "Mois",
+        "QUARTER": "Trimestre",
+        "YEAR": "Année"
+      },
+      "types": {
+        "label": "Types",
+        "TRADE": "Trades",
+        "LOCATE": "Locates",
+        "DEPOSIT": "Dépôts",
+        "WITHDRAWAL": "Retraits",
+        "ADJUSTMENT": "Corrections",
+        "tradingOnly": "Trading seul"
+      },
+      "kpi": {
+        "net": "Net de la période",
+        "trading": "Résultat de trading",
+        "tradingSub": "trades {{trades}} · locates {{locates}}",
+        "injected": "Apports nets",
+        "injectedSub": "{{deposits}} dépôts · {{withdrawals}} retraits",
+        "balance": "Solde au {{date}}",
+        "balanceSub": "depuis {{amount}} au {{date}}",
+        "filteredOut": "hors des types choisis"
+      },
+      "chart": {
+        "DAY": "Flux par jour",
+        "WEEK": "Flux par semaine",
+        "MONTH": "Flux par mois",
+        "QUARTER": "Flux par trimestre",
+        "YEAR": "Flux par année"
+      },
+      "series": {
+        "winning": "Trades gagnants",
+        "losing": "Trades perdants",
+        "fees": "Frais — locates et corrections",
+        "locates": "Locates",
+        "adjustments": "Corrections",
+        "deposits": "Dépôts",
+        "withdrawals": "Retraits",
+        "net": "Net"
+      },
+      "weekOf": "Semaine du {{from}} au {{to}}",
+      "quarter": "T{{quarter}} {{year}}",
+      "breakdown": {
+        "title": "Répartition",
+        "type": "Type",
+        "amount": "Montant",
+        "share": "Part",
+        "net": "Net de la période",
+        "rows": {
+          "trades": "Trades",
+          "winning": "dont gagnants",
+          "losing": "dont perdants",
+          "locates": "Locates",
+          "adjustments": "Corrections",
+          "deposits": "Dépôts",
+          "withdrawals": "Retraits"
+        }
+      },
+      "empty": "Aucun mouvement sur cette période.",
+      "loading": "Chargement du flux du compte",
+      "loadError": "Le flux du compte n'a pas pu être chargé.",
+      "retry": "Réessayer"
     }
   },
   "periods": {

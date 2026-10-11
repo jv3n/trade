@@ -10,6 +10,9 @@ import {
   AccountMovementType,
   AccountSummary,
   BalancePoint,
+  CashFlow,
+  CashFlowBucket,
+  CashFlowBucketSize,
   Reconciliation,
   ReconciliationInput,
 } from '../account.model';
@@ -59,6 +62,28 @@ interface ReconciliationWireDto {
 interface BalancePointWireDto {
   date: string;
   balance: number;
+}
+
+interface CashFlowBucketWireDto extends Omit<CashFlowBucket, 'from' | 'to'> {
+  from: string;
+  to: string;
+}
+
+interface CashFlowWireDto {
+  dateFrom: string | null;
+  dateTo: string | null;
+  openingBalance: number;
+  closingBalance: number;
+  buckets: CashFlowBucketWireDto[];
+}
+
+function cashFlowFromWire(w: CashFlowWireDto): CashFlow {
+  return {
+    ...w,
+    dateFrom: w.dateFrom ? parseISO(w.dateFrom) : null,
+    dateTo: w.dateTo ? parseISO(w.dateTo) : null,
+    buckets: w.buckets.map((b) => ({ ...b, from: parseISO(b.from), to: parseISO(b.to) })),
+  };
 }
 
 interface PageWireDto<T> {
@@ -169,6 +194,14 @@ export class HttpAccountRepository extends AccountRepository {
     return this.http
       .get<BalancePointWireDto[]>(`${this.base}/balance-series`)
       .pipe(map((pts) => pts.map((p) => ({ date: parseISO(p.date), balance: p.balance }))));
+  }
+
+  getCashFlow(filter: AccountMovementFilter, groupBy: CashFlowBucketSize): Observable<CashFlow> {
+    return this.http
+      .get<CashFlowWireDto>(`${this.base}/cash-flow`, {
+        params: withFilter(new HttpParams(), filter).set('groupBy', groupBy),
+      })
+      .pipe(map(cashFlowFromWire));
   }
 
   addMovement(input: AccountMovementInput): Observable<AccountMovement> {

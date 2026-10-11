@@ -5,6 +5,8 @@ import {
   AccountMovementInput,
   AccountSummary,
   BalancePoint,
+  CashFlow,
+  CashFlowBucketSize,
   Reconciliation,
   ReconciliationInput,
 } from './account.model';
@@ -28,6 +30,15 @@ export abstract class AccountRepository {
   abstract getSummary(filter?: AccountMovementFilter): Observable<AccountSummary>;
   /** Cumulative end-of-day balance series (ascending) for the evolution chart. */
   abstract getBalanceSeries(): Observable<BalancePoint[]>;
+  /**
+   * The « Flux du compte » report (#685) : one bar per [groupBy] over the filtered period, and the
+   * balance on either side of it. Same filter as [findMovements] ; an open period runs from the
+   * first movement to the last.
+   */
+  abstract getCashFlow(
+    filter: AccountMovementFilter,
+    groupBy: CashFlowBucketSize,
+  ): Observable<CashFlow>;
   /** Adds a DEPOSIT or WITHDRAWAL (positive magnitude ; the backend applies the sign). */
   abstract addMovement(input: AccountMovementInput): Observable<AccountMovement>;
 
