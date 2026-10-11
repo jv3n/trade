@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   MatDialog,
@@ -14,6 +14,7 @@ import { EMPTY, Observable, catchError, filter, switchMap, tap } from 'rxjs';
 import { LexiconEntry, LexiconEntryInput } from '../../../core/api/lexicon/lexicon.model';
 import { LexiconRepository } from '../../../core/api/lexicon/lexicon.repository';
 import { ConfirmService } from '../../../core/app-state/confirm.service';
+import { keptValue } from '../../../shared/kept-value/kept-value';
 import {
   skeletonHeaderKeys,
   toSkeletonColumns,
@@ -36,7 +37,8 @@ const SKELETON_COLUMNS: SkeletonColumnDefs = {
  * `/settings/lexicon` behind `adminGuard`.
  *
  * Every mutation refetches the full list — the dataset is small, so we trust the server rather than
- * splicing locally.
+ * splicing locally : a write bumps a counter folded into the list's params, so it supersedes a load
+ * in flight.
  */
 @Component({
   selector: 'app-lexicon-admin',
@@ -51,7 +53,12 @@ export class LexiconAdminPage {
   private readonly translate = inject(TranslateService);
   private readonly toasts = inject(StbToast);
 
-  readonly loading = signal(true);
+  private readonly writes = signal(0);
+  private readonly listing = rxResource({
+    params: () => ({ writes: this.writes() }),
+    stream: () => this.repo.findAll(),
+  });
+  readonly loading = this.listing.isLoading;
 
   /** First load only (#539) : a refetch keeps the content on screen. */
   readonly gate = stbLoadGate(this.loading);
@@ -64,12 +71,9 @@ export class LexiconAdminPage {
   readonly skeletonColumns = computed(() =>
     toSkeletonColumns(['term', 'definition', 'actions'], SKELETON_COLUMNS, this.headerLabels()),
   );
-  readonly error = signal<string | null>(null);
-  readonly entries = signal<LexiconEntry[]>([]);
-
-  constructor() {
-    this.fetch();
-  }
+  readonly error = computed(() => this.listing.status() === 'error');
+  private readonly kept = keptValue(this.listing);
+  readonly entries = computed<LexiconEntry[]>(() => this.kept() ?? []);
 
   openCreate(): void {
     this.openDialog(null);
@@ -100,18 +104,7 @@ export class LexiconAdminPage {
   }
 
   private fetch(): void {
-    this.loading.set(true);
-    this.error.set(null);
-    this.repo.findAll().subscribe({
-      next: (rows) => {
-        this.entries.set(rows);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.error.set(this.translate.instant('lexicon.errors.load'));
-        this.loading.set(false);
-      },
-    });
+    this.writes.update((n) => n + 1);
   }
 
   private openDialog(entry: LexiconEntry | null): void {

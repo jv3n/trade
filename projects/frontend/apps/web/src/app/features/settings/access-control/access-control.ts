@@ -1,4 +1,5 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   StbButtonModule,
@@ -50,17 +51,28 @@ const ALLOWED_EMAILS_KEY = 'app.allowed.emails';
   templateUrl: './access-control.html',
   styleUrl: './access-control.scss',
 })
-export class AccessControlPage implements OnInit {
+export class AccessControlPage {
   private readonly repo = inject(ConfigRepository);
   private readonly translate = inject(TranslateService);
 
-  readonly emails = signal<string[]>([]);
-  readonly loading = signal(true);
+  /** Bumped by a reset : the whitelist comes back from the server. */
+  private readonly writes = signal(0);
+  private readonly entryResource = rxResource({
+    params: () => ({ writes: this.writes() }),
+    stream: () => this.repo.list(),
+  });
+  /** The whitelist as stored, then as edited here until Save — a reload puts the stored one back. */
+  readonly emails = linkedSignal<string[]>(() => {
+    if (!this.entryResource.hasValue()) return [];
+    const entry = this.entryResource.value().find((e) => e.key === ALLOWED_EMAILS_KEY);
+    return this.parseCsv(entry?.currentValue ?? '');
+  });
+  readonly loading = this.entryResource.isLoading;
 
   /** First load only (#539) : a refetch keeps the content on screen. */
   readonly gate = stbLoadGate(this.loading);
   readonly saving = signal(false);
-  readonly loadError = signal(false);
+  readonly loadError = computed(() => this.entryResource.status() === 'error');
   readonly saveError = signal(false);
   readonly saved = signal(false);
   /** Email value the user just tried to add but that didn't pass front validation (no '@'). */
@@ -68,26 +80,6 @@ export class AccessControlPage implements OnInit {
 
   /** True when no email is configured — gating is OFF, anyone with a Google account is let in. */
   readonly isOpenMode = computed(() => this.emails().length === 0);
-
-  ngOnInit(): void {
-    this.loadEntry();
-  }
-
-  private loadEntry(): void {
-    this.loading.set(true);
-    this.loadError.set(false);
-    this.repo.list().subscribe({
-      next: (entries) => {
-        const entry = entries.find((e) => e.key === ALLOWED_EMAILS_KEY);
-        this.emails.set(this.parseCsv(entry?.currentValue ?? ''));
-        this.loading.set(false);
-      },
-      error: () => {
-        this.loadError.set(true);
-        this.loading.set(false);
-      },
-    });
-  }
 
   /**
    * Validates and appends `value` to the chip list (no save side effect — explicit Save handles
@@ -184,7 +176,7 @@ export class AccessControlPage implements OnInit {
       next: () => {
         this.saving.set(false);
         this.saved.set(true);
-        this.loadEntry();
+        this.writes.update((n) => n + 1);
       },
       error: () => {
         this.saving.set(false);
