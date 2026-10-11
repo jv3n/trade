@@ -56,7 +56,7 @@ readonly gate = stbLoadGate(this.loading);      // a field initialiser : needs a
   {`
 | Input | |
 | --- | --- |
-| \`variant\` | \`text\` (a line of text) · \`line\` (thinner) · \`block\` · \`circle\` (a 32 px dot) · \`chip\` (the ticker chip's own height and radius) |
+| \`variant\` | \`text\` (a line of text) · \`line\` (thinner) · \`block\` · \`circle\` (a 32 px dot) · \`chip\` (the ticker chip's own height and radius ; add the \`stb-skeleton-chip-set\` class when it stands for a chip inside a \`mat-chip-set\`, which spaces it 4 px above and below) |
 | \`width\` / \`height\` | A number is pixels, a string goes through as written (\`60%\`, \`8rem\`). |
 | \`count\` | Stacked blocks, for paragraph lines. |
 `}
@@ -86,7 +86,11 @@ Headers come translated from the app — through `TranslateService.stream`, sinc
 
 <Canvas of={Stories.KpiRow} />
 
-**`<ui-skeleton-kpi-row [count] [label]>`** — the `.kpi-row` of label / value / sub-line tiles ; `count` 5 takes the five-column row.
+Each ghost row over the real row it stands for — the tiles must line up and share their height :
+
+<Canvas of={Stories.KpiRowAgainstReal} />
+
+**`<ui-skeleton-kpi-row [count] [label]>`** — the `.kpi-row` of label / value / sub-line tiles, each line on the real tile's class (`.kpi__label`, `.kpi__value`, `.kpi__sub`) so the ghost is as tall as the figures ; `count` 5 and 6 take the five- and six-column rows.
 
 <Canvas of={Stories.Card} />
 

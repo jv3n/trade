@@ -84,8 +84,9 @@ export class StbSkeletonTable {
 }
 
 /**
- * The first load of a KPI row (#539) : per tile a label bar, a value block and a sub-line. Without
- * a label it is decoration — hidden from assistive tech, the page's main skeleton speaks for it.
+ * The first load of a KPI row (#539) : per tile a label bar, a value block and a sub-line, each on
+ * the real line's class so the tile is as tall as the one it stands for (#616). Without a label it
+ * is decoration — hidden from assistive tech, the page's main skeleton speaks for it.
  */
 @Component({
   selector: 'ui-skeleton-kpi-row',
@@ -94,12 +95,22 @@ export class StbSkeletonTable {
     @if (label()) {
       <span class="cdk-visually-hidden">{{ label() }}</span>
     }
-    <section class="kpi-row" [class.kpi-row--five]="count() === 5">
+    <section
+      class="kpi-row"
+      [class.kpi-row--five]="count() === 5"
+      [class.kpi-row--six]="count() === 6"
+    >
       @for (i of tiles(); track i) {
         <mat-card class="kpi" appearance="outlined">
-          <ui-skeleton [width]="labelWidth(i)" />
-          <ui-skeleton variant="block" class="stb-skeleton-kpi-value" />
-          <ui-skeleton variant="line" width="60%" />
+          <div class="kpi__label stb-skeleton-kpi-line">
+            <ui-skeleton [width]="labelWidth(i)" />&nbsp;
+          </div>
+          <div class="kpi__value stb-skeleton-kpi-line">
+            <ui-skeleton variant="block" class="stb-skeleton-kpi-value" />&nbsp;
+          </div>
+          <div class="kpi__sub stb-skeleton-kpi-line">
+            <ui-skeleton variant="line" width="60%" />&nbsp;
+          </div>
         </mat-card>
       }
     </section>

@@ -19,8 +19,9 @@ import { StbSkeleton } from './skeleton.component';
  *    the ghost cells, chip-shaped tickers and empty action cells, so nothing moves when rows land.
  *  - **The KPI row and the card take their count** — tiles, lines, and a bare card for a card that
  *    is already on screen.
+ *  - **A KPI tile is as tall as the real one** — its lines carry the real tile's classes (#616).
  */
-type Shown = 'block' | 'table' | 'kpi' | 'card' | 'bare' | 'decor';
+type Shown = 'block' | 'table' | 'kpi' | 'kpi6' | 'card' | 'bare' | 'decor';
 
 @Component({
   imports: [StbSkeleton, StbSkeletonTable, StbSkeletonKpiRow, StbSkeletonCard],
@@ -34,6 +35,9 @@ type Shown = 'block' | 'table' | 'kpi' | 'card' | 'bare' | 'decor';
       }
       @case ('kpi') {
         <ui-skeleton-kpi-row label="Loading" [count]="5" />
+      }
+      @case ('kpi6') {
+        <ui-skeleton-kpi-row [count]="6" />
       }
       @case ('card') {
         <ui-skeleton-card label="Loading" [lines]="2" />
@@ -124,6 +128,25 @@ describe('skeletons', () => {
 
     expect(el.querySelectorAll('.kpi').length).toBe(5);
     expect(el.querySelector('.kpi-row')?.classList).toContain('kpi-row--five');
+  });
+
+  // The journal's six figures sit on one row : without its class the ghost wrapped onto two (#616).
+  it('takes the six-column row for six', () => {
+    show('kpi6');
+
+    expect(el.querySelectorAll('.kpi').length).toBe(6);
+    expect(el.querySelector('.kpi-row')?.classList).toContain('kpi-row--six');
+  });
+
+  // Bars alone were shorter than the text lines they stand for : the page jumped by 14 px when the
+  // figures landed (#616). Each ghost line now takes the real line's class, so its height.
+  it('builds each tile from the real label, value and sub-line', () => {
+    show('kpi');
+
+    const [label, value, sub] = el.querySelectorAll('.kpi')[0].children;
+    expect(label.classList.contains('kpi__label')).toBe(true);
+    expect(value.classList.contains('kpi__value')).toBe(true);
+    expect(sub.classList.contains('kpi__sub')).toBe(true);
   });
 
   // A page announces « loading » once : its repeats stay silent instead of nameless busy regions.
