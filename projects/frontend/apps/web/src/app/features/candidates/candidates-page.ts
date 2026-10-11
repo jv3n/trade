@@ -3,7 +3,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
   DOCUMENT,
-  DestroyRef,
   ElementRef,
   LOCALE_ID,
   computed,
@@ -11,7 +10,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { FormField, form, maxLength, required } from '@angular/forms/signals';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -29,19 +28,7 @@ import {
   stbLoadGate,
 } from '@portfolioai/ui';
 import { addDays, isBefore, isSameDay, isWeekend, startOfDay } from 'date-fns';
-import {
-  EMPTY,
-  Observable,
-  Subscription,
-  catchError,
-  filter,
-  finalize,
-  map,
-  of,
-  shareReplay,
-  switchMap,
-  tap,
-} from 'rxjs';
+import { EMPTY, Observable, catchError, filter, finalize, map, of, switchMap, tap } from 'rxjs';
 import {
   Candidate,
   CandidateInput,
@@ -51,6 +38,7 @@ import { CandidatesRepository } from '../../core/api/candidates/candidates.repos
 import { Pattern } from '../../core/api/shared/pattern.model';
 import { StatsRepository } from '../../core/api/stats/stats.repository';
 import { ConfirmService } from '../../core/app-state/confirm.service';
+import { keptValue } from '../../shared/kept-value/kept-value';
 import { NumberMaskDirective } from '../../shared/number-mask/number-mask.directive';
 import { PluralPipe, pluralKey } from '../../shared/plural/plural';
 import { PricePipe } from '../../shared/price/price.pipe';
@@ -128,6 +116,9 @@ const SKELETON_COLUMNS: SkeletonColumnDefs = {
  *
  * One candidate per (day, ticker) : the backend answers 409 on a duplicate, surfaced as a dedicated
  * toast. The derived figures come from the pure `candidates.math` helpers.
+ *
+ * The day's list is a resource keyed on [day] : a day switch cancels the request it supersedes
+ * (#370), a write reloads it.
  */
 @Component({
   selector: 'app-candidates-page',
@@ -187,8 +178,18 @@ export class CandidatesPage {
   readonly weekend = computed(() => isWeekend(this.day()));
 
   // ---- List ----
-  readonly loading = signal(true);
-  readonly loadError = signal(false);
+  /**
+   * Bumped by a write, and part of the list's params : a new key supersedes a load in flight, where
+   * `reload()` is a no-op while one runs — its pre-write answer would win.
+   */
+  private readonly writes = signal(0);
+  private readonly listing = rxResource({
+    params: () => ({ day: this.day(), writes: this.writes() }),
+    stream: ({ params }) => this.repo.listForDate(params.day),
+  });
+  private readonly listed = keptValue(this.listing);
+  readonly loading = this.listing.isLoading;
+  readonly loadError = computed(() => this.listing.status() === 'error');
 
   /** First load only (#539) : a refetch dims the table instead. */
   readonly gate = stbLoadGate(this.loading);
@@ -201,15 +202,11 @@ export class CandidatesPage {
   readonly skeletonColumns = computed(() =>
     toSkeletonColumns(this.columns, SKELETON_COLUMNS, this.headerLabels()),
   );
-  // A superseded day is dropped, or a slow answer for yesterday lands on today's page (#370).
-  private listing?: Subscription;
-  readonly candidates = signal<Candidate[]>([]);
+  readonly candidates = computed<Candidate[]>(() => this.listed() ?? []);
   /**
    * Push at the open of the completed GUS stats — the references of the « À l'open » card. Fetched
    * once : they only move when a stat is completed.
    */
-  readonly pushReferences = signal<PushReferences | null>(null);
-  readonly noPushRate = signal<NoPushRate | null>(null);
   private readonly gusSummary$ = this.stats.summary({ pattern: 'GUS' }).pipe(
     map((summary): GusSummary => ({
       references: {
@@ -222,7 +219,15 @@ export class CandidatesPage {
     })),
     // No summary = no reference, so no target price ; the candidates themselves still show.
     catchError(() => of<GusSummary>({ references: NO_REFERENCES, rate: null })),
-    shareReplay(1),
+  );
+  private readonly gusSummary = rxResource({
+    stream: () => this.gusSummary$,
+  });
+  readonly pushReferences = computed<PushReferences | null>(() =>
+    this.gusSummary.hasValue() ? this.gusSummary.value().references : null,
+  );
+  readonly noPushRate = computed<NoPushRate | null>(() =>
+    this.gusSummary.hasValue() ? this.gusSummary.value().rate : null,
   );
   /** The day's candidates with their derived figures, largest gap first (no gap → last). */
   readonly rows = computed<CandidateRow[]>(() =>
@@ -281,11 +286,6 @@ export class CandidatesPage {
     );
   });
 
-  constructor() {
-    inject(DestroyRef).onDestroy(() => this.listing?.unsubscribe());
-    this.load();
-  }
-
   // ---- Day navigation ----
 
   previousDay(): void {
@@ -304,7 +304,6 @@ export class CandidatesPage {
     if (!date) return;
     this.day.set(startOfDay(date));
     this.resetForm();
-    this.load();
   }
 
   // ---- Capture form ----
@@ -332,7 +331,7 @@ export class CandidatesPage {
             ),
           );
           this.resetForm();
-          this.load();
+          this.refetch();
         }),
         catchError((err: unknown) => {
           const duplicate = err instanceof HttpErrorResponse && err.status === 409;
@@ -384,6 +383,10 @@ export class CandidatesPage {
     this.repo
       .update(candidate.id, toCandidateInput(patched))
       .pipe(
+        // A load still running now was asked before the save committed : one more, after it.
+        tap(() => {
+          if (this.listing.isLoading()) this.refetch();
+        }),
         catchError(() => {
           this.replaceCandidate(current);
           this.toasts.error(
@@ -397,8 +400,20 @@ export class CandidatesPage {
       .subscribe();
   }
 
+  private refetch(): void {
+    this.writes.update((n) => n + 1);
+  }
+
+  /**
+   * While the day loads, writing the resource would cancel that load, and its GET may predate the
+   * save : the day is asked again instead (#667 review).
+   */
   private replaceCandidate(candidate: Candidate): void {
-    this.candidates.update((list) => list.map((c) => (c.id === candidate.id ? candidate : c)));
+    if (this.listing.isLoading()) {
+      this.refetch();
+      return;
+    }
+    this.listing.value.update((list) => list?.map((c) => (c.id === candidate.id ? candidate : c)));
   }
 
   // ---- Promotion to the stats sheet (#189) ----
@@ -423,7 +438,7 @@ export class CandidatesPage {
               pattern,
             }),
           );
-          this.load();
+          this.refetch();
         }),
         catchError(() => {
           this.toasts.error(
@@ -472,7 +487,7 @@ export class CandidatesPage {
               )
             : '';
           this.toasts.success(promoted + skipped);
-          this.load();
+          this.refetch();
         }),
         catchError(() => {
           this.toasts.error(this.translate.instant('candidates.snackbar.promoteAllError'));
@@ -495,7 +510,7 @@ export class CandidatesPage {
             }),
           );
           if (this.editingId() === candidate.id) this.resetForm();
-          this.load();
+          this.refetch();
         }),
         catchError(() => {
           this.toasts.error(this.translate.instant('candidates.snackbar.deleteError'));
@@ -506,35 +521,6 @@ export class CandidatesPage {
   }
 
   // ---- Internals ----
-
-  private load(): void {
-    // Before `loading.set(true)` : the dropped request's `finalize` resets the flag.
-    this.listing?.unsubscribe();
-    this.loading.set(true);
-    this.loadError.set(false);
-    this.listing = this.repo
-      .listForDate(this.day())
-      .pipe(finalize(() => this.loading.set(false)))
-      .subscribe({
-        next: (list) => {
-          this.candidates.set(list);
-          this.loadPushReferences();
-        },
-        error: () => {
-          this.candidates.set([]);
-          this.loadError.set(true);
-        },
-      });
-  }
-
-  /** Reads the GUS references — the request is shared, so it only goes out once. */
-  private loadPushReferences(): void {
-    if (this.pushReferences()) return;
-    this.gusSummary$.subscribe(({ references, rate }) => {
-      this.pushReferences.set(references);
-      this.noPushRate.set(rate);
-    });
-  }
 
   /**
    * Clears the form for the next capture.
