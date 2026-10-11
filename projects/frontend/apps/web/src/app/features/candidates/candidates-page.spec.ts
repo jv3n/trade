@@ -715,7 +715,8 @@ describe('CandidatesPage', () => {
     fixture.detectChanges();
 
     expect(repo.update).toHaveBeenCalledWith('c-ktta', expect.objectContaining({ openPrice: 4.2 }));
-    expect(repo.listForDate.mock.calls.length).toBeGreaterThan(callsBefore);
+    // Once, after the save : a reload before it would read nothing newer (#375 review).
+    expect(repo.listForDate.mock.calls.length).toBe(callsBefore + 1);
   });
 
   // #320 : Sunday 2026-09-20 read « no candidate on this day », as if a session had been missed.

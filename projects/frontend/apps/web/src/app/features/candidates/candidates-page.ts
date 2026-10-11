@@ -405,14 +405,12 @@ export class CandidatesPage {
   }
 
   /**
-   * While the day loads, writing the resource would cancel that load, and its GET may predate the
-   * save : the day is asked again instead (#667 review).
+   * Not while the day loads : writing the resource would cancel that load. Nothing is asked again
+   * here either — before the save goes out, or put back after it failed, a reload would read nothing
+   * newer than the load already running ; [saveAtOpen] asks once the server answered.
    */
   private replaceCandidate(candidate: Candidate): void {
-    if (this.listing.isLoading()) {
-      this.refetch();
-      return;
-    }
+    if (this.listing.isLoading()) return;
     this.listing.value.update((list) => list?.map((c) => (c.id === candidate.id ? candidate : c)));
   }
 

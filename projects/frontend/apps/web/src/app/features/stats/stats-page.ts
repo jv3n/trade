@@ -1115,7 +1115,7 @@ export class StatsPage {
     }
     // Patched right away : the next field left starts from this one, not from the server's reply.
     const input = this.toInput(entry, premarket, session);
-    this.patchRow({ ...entry, ...input });
+    this.patchRow({ ...entry, ...input }, false);
     this.setSaveState(card, { status: 'saving', at: null, reason: null });
     this.enqueue(
       this.repo.update(entry.id, input).pipe(
@@ -1130,7 +1130,7 @@ export class StatsPage {
           if (saved.completed) this.refreshSummary();
         }),
         catchError(() => {
-          this.patchRow(entry);
+          this.patchRow(entry, false);
           if (this.completing()?.id === entry.id) {
             this.premarket.set(premarketOf(entry));
             this.session.set(sessionOf(entry));
@@ -1440,13 +1440,17 @@ export class StatsPage {
 
   /**
    * Replaces a row of the page — and the panel's stat when it is that one — with [entry]. While a
-   * page loads, writing the resource would cancel that load, and its GET may predate the save : the
-   * page is asked again instead, so the row and the panel end up agreeing.
+   * page loads, writing the resource would cancel that load, and its GET may predate the save :
+   * the page is asked again instead, so the row and the panel end up agreeing — once the server
+   * has [answered] only. Before the save goes out, or put back after it failed, a reload would
+   * read nothing newer than the load already running.
    */
-  private patchRow(entry: StatEntry): void {
+  private patchRow(entry: StatEntry, answered = true): void {
     if (this.listing.isLoading()) {
-      this.keepPanelOnNextLoad = true;
-      this.listingWrites.update((n) => n + 1);
+      if (answered) {
+        this.keepPanelOnNextLoad = true;
+        this.listingWrites.update((n) => n + 1);
+      }
     } else {
       this.listing.value.update(
         (page) =>
