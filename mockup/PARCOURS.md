@@ -1017,7 +1017,10 @@ schedule is in [`docs/notes/tradezero-fees.md`](../docs/notes/tradezero-fees.md)
   and then holds more than what the broker took ; a recorded gap never moves, so the same period
   reads the same tomorrow. The window is the mornings dated in the period — a morning measures the
   day before it, a one-day shift accepted so the tile agrees with the movements table. With no
-  reconciled morning in the period the tile is hidden : nothing was measured, and a 0 would lie.
+  reconciled morning in the period the tile **keeps its slot** and reads **« — »** over **« Aucun
+  matin rapproché »** : nothing was measured, so a 0 would lie — and a tile that came and went would
+  make the row jump from four to five tiles when the figures land, which its skeleton cannot foresee
+  (#687). The row always holds its five tiles.
 - A **losing or flat period** shows the amount and a dash for the ratio. A period whose corrections
   come out **net positive** (a credited-back locate) shows « +5,00 $ » and « crédit net » instead of
   a percentage.
@@ -1044,8 +1047,8 @@ being an adjustment.
 
 **A figure on the page is current or visibly absent** (#493) : the page loads in three calls — the
 period's figures (the KPI tiles), the balance curve, the movements. When one fails, what it feeds
-shows **« — »** and **« Indisponible »** in place of its value — the tiles (the gap tile is left out :
-whether the period had a reconciled morning is not known), « Courbe indisponible », « Mouvements
+shows **« — »** and **« Indisponible »** in place of its value — the five tiles, the gap tile
+included (#687), « Courbe indisponible », « Mouvements
 indisponibles » — never the figure of the previous render. **The morning reconciliation waits for
 the balance** : with the period's figures missing, « Solde app » reads « — » and both buttons are
 disabled — a gap measured against a stale balance would write a wrong correction. One red banner above says that part of

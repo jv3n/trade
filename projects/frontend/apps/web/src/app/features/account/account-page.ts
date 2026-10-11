@@ -282,6 +282,7 @@ export class AccountPage {
     'account.currentBalance',
     'account.kpi.periodPnl',
     'account.kpi.netInjected',
+    'account.kpi.reconciliationGap',
     'account.kpi.locates',
   ] as const;
   /** The period's figures, over its dates only — never narrowed by the table's type filter. */
@@ -336,7 +337,7 @@ export class AccountPage {
 
   readonly reconciliationGap = computed<ReconciliationGap | null>(() => {
     const s = this.summary();
-    // No reconciled morning in the period : nothing was measured, so no tile (#480).
+    // No reconciled morning in the period : nothing was measured, the tile reads « — » (#480, #687).
     if (!s || s.periodReconciliationGap === null) return null;
     // A gap is negative when the broker took money : a positive sum is a credit.
     const credit = s.periodReconciliationGap > 0;
@@ -349,8 +350,8 @@ export class AccountPage {
   });
 
   /**
-   * Always a tile, unlike the gap's : a period with nothing located measured 0, it did not miss a
-   * measure.
+   * A 0 when nothing was located, unlike the gap's « — » : a period with nothing located measured
+   * 0, it did not miss a measure.
    */
   locatesOf(s: AccountSummary): PeriodLocates {
     return { total: Math.abs(s.periodLocates), paidForNothing: Math.abs(s.periodUnusedLocates) };

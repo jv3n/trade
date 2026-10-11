@@ -358,10 +358,10 @@ describe('AccountPage', () => {
       getSummary.mockReturnValue(throwError(() => new Error('503')));
       const fixture = await render();
 
-      // Balance, P&L, net injected and locates — the gap tile is left out : whether the period
-      // had a reconciled morning is not known.
+      // The five tiles of the loaded row, the gap included (#687) : the row keeps its shape.
       const tiles = fixture.nativeElement.querySelector('[data-testid="kpi-unavailable"]');
-      expect(tiles?.querySelectorAll('.kpi').length).toBe(4);
+      expect(tiles?.querySelectorAll('.kpi').length).toBe(5);
+      expect(tiles?.classList).toContain('kpi-row--five');
       expect(tiles?.textContent).toContain('—');
     });
 
@@ -425,6 +425,28 @@ describe('AccountPage', () => {
     });
   });
 
+  // #687 : the loaded row always holds five tiles, so the skeleton must draw five — with its default
+  // four, the row reflowed by a column when the figures landed, and nothing else would notice.
+  it('draws a five-tile KPI skeleton while the first load is on its way', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    try {
+      // The page's load gate follows the movements ; the summary is held too, so no tile lands.
+      findMovements.mockReturnValue(new Subject<PagedResult<AccountMovement>>());
+      getSummary.mockReturnValue(new Subject<AccountSummary>());
+      const fixture = TestBed.createComponent(AccountPage);
+      fixture.detectChanges();
+
+      vi.advanceTimersByTime(200);
+      fixture.detectChanges();
+
+      const ghost = fixture.nativeElement.querySelector('ui-skeleton-kpi-row');
+      expect(ghost?.querySelectorAll('.kpi').length).toBe(5);
+      expect(ghost?.querySelector('.kpi-row')?.classList).toContain('kpi-row--five');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   describe('reconciliation-gap tile', () => {
     // October in the issue : $3,000 of P&L, $200 of corrections the broker took.
     it("reads the period's corrections unsigned, and their share of the P&L", async () => {
@@ -475,13 +497,19 @@ describe('AccountPage', () => {
       });
     });
 
-    // #480 : no reconciled morning in the period means nothing was measured — no plausible 0.
-    it('hides the tile when no morning was reconciled in the period', async () => {
+    // #480 : no reconciled morning in the period means nothing was measured — no plausible 0. And
+    // #687 : the tile keeps its slot, or the row would jump from four to five tiles on load.
+    it('keeps the tile with a dash when no morning was reconciled in the period', async () => {
       getSummary.mockReturnValue(of(makeSummary({ periodReconciliationGap: null })));
       const fixture = await render();
 
       expect(fixture.componentInstance.reconciliationGap()).toBeNull();
-      expect(fixture.nativeElement.querySelector('[data-testid="reconciliation-gap"]')).toBeNull();
+      const tile = fixture.nativeElement.querySelector('[data-testid="reconciliation-gap"]');
+      expect(tile?.querySelector('.kpi__value')?.textContent?.trim()).toBe('—');
+      expect(tile?.querySelector('.kpi__sub')?.textContent).toContain(
+        'account.kpi.reconciliationGapNone',
+      );
+      expect(fixture.nativeElement.querySelector('.kpi-row')?.classList).toContain('kpi-row--five');
     });
 
     // #480 : the corrections can hold a later fix absorbed into them ; the tile must not read it.

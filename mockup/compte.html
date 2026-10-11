@@ -40,6 +40,11 @@
           <button class="active" data-value="ok">Chargé</button>
           <button data-value="failed">Appels en échec</button>
         </div>
+        <!-- #687 : la tuile des écarts garde sa place sans matin rapproché — la rangée ne passe plus de 4 à 5 tuiles au chargement. -->
+        <div class="segmented" data-group="gap" style="margin: 0 0 16px 8px" aria-label="Aperçu (maquette)">
+          <button class="active" data-value="measured">Matin rapproché</button>
+          <button data-value="none">Aucun matin rapproché</button>
+        </div>
 
         <div class="error-banner" data-group="load" data-value="failed" hidden>
           <span class="icon">error</span>
@@ -72,8 +77,10 @@
           </div>
           <div class="card kpi" title="Ce que le courtier a pris hors trades — locates, abonnement, arrondis. Lu aux matins rapprochés de la période : une ligne corrigée depuis ne le change pas. Suit les dates, pas le filtre de type.">
             <div class="label">Écarts de rapprochement septembre</div>
-            <div class="value">12,40 $</div>
-            <div class="sub">1,6 % du P&amp;L</div>
+            <div class="value" data-group="gap" data-value="measured">12,40 $</div>
+            <div class="sub" data-group="gap" data-value="measured">1,6 % du P&amp;L</div>
+            <div class="value muted" data-group="gap" data-value="none" hidden>—</div>
+            <div class="sub" data-group="gap" data-value="none" hidden>Aucun matin rapproché</div>
           </div>
           <!-- #602 : ce que la discipline coûte — les locates de la période, et la part prise sur un ticker jamais tradé ce jour-là. -->
           <div class="card kpi" title="Les locates pris sur la période. « Payés pour rien » : sur un ticker sans trade ce jour-là — ceux du jour comptent une fois New York fermé (16h). Un maximum : un locate relisté et remboursé en partie compte en entier, son remboursement étant un ajustement.">
@@ -83,7 +90,7 @@
           </div>
         </section>
 
-        <section class="grid grid-4" style="margin-bottom: 16px" data-group="load" data-value="failed" hidden>
+        <section class="grid grid-5" style="margin-bottom: 16px" data-group="load" data-value="failed" hidden>
           <div class="card kpi">
             <div class="label">Solde du compte</div>
             <div class="value muted">—</div>
@@ -96,6 +103,11 @@
           </div>
           <div class="card kpi">
             <div class="label">Apports nets septembre</div>
+            <div class="value muted">—</div>
+            <div class="sub">Indisponible</div>
+          </div>
+          <div class="card kpi">
+            <div class="label">Écarts de rapprochement septembre</div>
             <div class="value muted">—</div>
             <div class="sub">Indisponible</div>
           </div>
