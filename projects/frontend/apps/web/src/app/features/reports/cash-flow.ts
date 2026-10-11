@@ -1,10 +1,27 @@
-import { differenceInCalendarDays } from 'date-fns';
+import { differenceInCalendarDays, isAfter } from 'date-fns';
 import {
   AccountMovementType,
   CashFlowBucket,
   CashFlowBucketSize,
 } from '../../core/api/account/account.model';
-import { PeriodPresetKey } from '../../shared/period-preset/period-preset';
+import {
+  PeriodPresetKey,
+  PeriodRange,
+  PeriodSelection,
+} from '../../shared/period-preset/period-preset';
+
+/**
+ * The window the report asks for. A preset never runs past [today] (#703) : « Ce mois », « Ce
+ * trimestre » and « Cette année » end with the calendar period, and the report would then date the
+ * balance in the future and draw empty bars for weeks to come. A custom range keeps its end — a
+ * future one is the user's choice.
+ */
+export function reportWindow(selection: PeriodSelection, today: Date): PeriodRange {
+  const { period, dateFrom, dateTo } = selection;
+  if (period === 'custom' || dateTo === null || !isAfter(dateTo, today))
+    return { dateFrom, dateTo };
+  return { dateFrom, dateTo: today };
+}
 
 /** The bar sizes, narrowest first — the order of the « Une barre par » toggle. */
 export const BUCKET_SIZES: readonly CashFlowBucketSize[] = [

@@ -1,6 +1,7 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideTranslateService } from '@ngx-translate/core';
+import { startOfDay } from 'date-fns';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -102,6 +103,18 @@ describe('ReportsPage', () => {
     expect(groupBy).toBe('WEEK');
     expect(filter.types).toEqual(['TRADE', 'LOCATE', 'DEPOSIT', 'WITHDRAWAL', 'ADJUSTMENT']);
     expect(filter.dateFrom).not.toBeNull();
+  });
+
+  // #703 : « Ce trimestre » asked up to the 31st of December, and dated the balance there.
+  it('never asks past today for a current-period preset', async () => {
+    const fixture = await render();
+    const page = fixture.componentInstance;
+
+    page.setSelection(selectPeriod('thisQuarter', page.selection()));
+    await fixture.whenStable();
+
+    const dateTo = getCashFlow.mock.lastCall?.[0].dateTo;
+    expect(dateTo?.getTime()).toBeLessThanOrEqual(startOfDay(new Date()).getTime());
   });
 
   it('sums the period in the KPI row, trades and locates in the trading result', async () => {

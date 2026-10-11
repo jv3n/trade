@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CashFlowBucket } from '../../core/api/account/account.model';
+import { selectPeriod } from '../../shared/period-preset/period-preset';
 import {
   REPORT_TYPES,
   TRADING_ONLY,
@@ -8,6 +9,7 @@ import {
   defaultBucketSize,
   fittingBucketSize,
   nothingMoved,
+  reportWindow,
   seriesKeys,
   seriesValues,
   totals,
@@ -42,6 +44,30 @@ function bucket(overrides: Partial<CashFlowBucket> = {}): CashFlowBucket {
 const SEPT = { from: new Date(2026, 8, 1), to: new Date(2026, 8, 30) };
 const QUARTER = { from: new Date(2026, 6, 1), to: new Date(2026, 8, 30) };
 const TWO_YEARS = { from: new Date(2025, 0, 1), to: new Date(2026, 11, 31) };
+
+// #703, found on staging the 11th of October 2026.
+describe('the window', () => {
+  const today = new Date(2026, 9, 11);
+  const from = (key: Parameters<typeof selectPeriod>[0]) =>
+    reportWindow(selectPeriod(key, { period: 'all', dateFrom: null, dateTo: null }, today), today);
+
+  it('ends a current-period preset today, never with the calendar period', () => {
+    expect(from('thisMonth').dateTo).toEqual(today);
+    expect(from('thisQuarter').dateTo).toEqual(today);
+    expect(from('thisYear').dateTo).toEqual(today);
+    expect(from('thisQuarter').dateFrom).toEqual(new Date(2026, 9, 1));
+  });
+
+  it('leaves a period that ended in the past as it is', () => {
+    expect(from('lastMonth').dateTo?.getMonth()).toBe(8);
+  });
+
+  it('keeps a custom range running into the future — the user picked it', () => {
+    const custom = { period: 'custom' as const, dateFrom: today, dateTo: new Date(2026, 11, 31) };
+
+    expect(reportWindow(custom, today).dateTo).toEqual(new Date(2026, 11, 31));
+  });
+});
 
 describe('the bar size', () => {
   it('opens a month by days, three months by weeks, a year and all time by months', () => {
