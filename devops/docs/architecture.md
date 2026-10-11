@@ -13,6 +13,10 @@ browser ──► Cloudflare ─────────────────
   *custom domain* (the DNS record is the Worker itself, type `Worker`) : it forwards every request to
   the Cloud Run URL with the right `Host`, and passes the public host in `X-Forwarded-Host`. Their
   code and config live in [`cloudflare/`](../cloudflare/README.md), deployed with wrangler (#494).
+  The zone's Cache Rules keep the static assets for a year, so every deploy purges the whole zone
+  (#595) : a post-build rewrite can change a chunk without changing its name. The deploy needs a
+  purge-only API token in the `CLOUDFLARE_PURGE_TOKEN` secret and the zone id in the
+  `CLOUDFLARE_ZONE_ID` variable.
 - **GCP** (project `trade-496613`, region `northamerica-northeast1`) runs the app : one Cloud Run
   service per environment, scale-to-zero, the image from Artifact Registry. Each service runs as its
   own runtime service account, which can read only its own secrets. GitHub Actions deploys through

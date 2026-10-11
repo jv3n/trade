@@ -122,6 +122,18 @@ jobs:
             exit 1
           fi
 
+      # The edge cache purge runs after the revision is live : a missing token would only show then,
+      # with the new revision already serving stale chunks (#595).
+      - name: Check the Cloudflare purge settings
+        env:
+          CLOUDFLARE_PURGE_TOKEN: ${{ secrets.CLOUDFLARE_PURGE_TOKEN }}
+          CLOUDFLARE_ZONE_ID: ${{ vars.CLOUDFLARE_ZONE_ID }}
+        run: |
+          if [[ -z "$CLOUDFLARE_PURGE_TOKEN" || -z "$CLOUDFLARE_ZONE_ID" ]]; then
+            echo "::error::Set the CLOUDFLARE_PURGE_TOKEN secret and the CLOUDFLARE_ZONE_ID variable. See devops/docs/secrets.md."
+            exit 1
+          fi
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v7
         with:
@@ -162,6 +174,26 @@ jobs:
             --port=8080 \
             --set-env-vars=SPRING_PROFILES_ACTIVE=prod,APP_FRONTEND_URL=${{ steps.target.outputs.url }},SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_REDIRECT_URI=${{ steps.target.outputs.url }}login/oauth2/code/google,SENTRY_RELEASE=${{ github.event.release.tag_name }},SENTRY_ENVIRONMENT=${{ steps.target.outputs.sentry_env }},GCP_PROJECT_ID=${{ vars.GCP_PROJECT }} \
             --update-secrets=SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID=google-oauth-client-id:latest,SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET=google-oauth-client-secret:latest,APP_ADMIN_EMAILS=app-admin-emails${{ steps.target.outputs.secret_suffix }}:latest,SPRING_DATASOURCE_URL=supabase-db-url${{ steps.target.outputs.secret_suffix }}:latest,SPRING_DATASOURCE_PASSWORD=supabase-db-password${{ steps.target.outputs.secret_suffix }}:latest,SENTRY_DSN=sentry-dsn-backend:latest
+
+      # The `sourcemaps inject` rewrites chunks after Angular hashed their names : a change to that
+      # post-build step gives a chunk new content under its old name, and the zone's Cache Rules keep
+      # `.js` for a year (#595). The whole zone, not the host : one call covers whatever cache key the
+      # Worker's subrequests use, and a staging deploy only costs production a cold edge.
+      - name: Purge the Cloudflare cache
+        env:
+          CLOUDFLARE_PURGE_TOKEN: ${{ secrets.CLOUDFLARE_PURGE_TOKEN }}
+          CLOUDFLARE_ZONE_ID: ${{ vars.CLOUDFLARE_ZONE_ID }}
+        run: |
+          response=$(curl --silent --show-error --max-time 30 \
+            -X POST "https://api.cloudflare.com/client/v4/zones/$CLOUDFLARE_ZONE_ID/purge_cache" \
+            -H "Authorization: Bearer $CLOUDFLARE_PURGE_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data '{"purge_everything":true}' || true)
+          if ! jq -e '.success == true' <<< "$response" > /dev/null; then
+            echo "::error::Cloudflare cache purge failed — the edge may serve the previous build's chunks. Purge the zone by hand. Response : $response"
+            exit 1
+          fi
+          echo "Cloudflare cache purged."
 
       # Defence in depth — `gcloud run deploy` already fails when the revision crashes at boot.
       - name: Smoke test and summary
