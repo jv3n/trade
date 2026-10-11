@@ -1,6 +1,6 @@
 ---
 name: angular-signals
-description: Signal-based reactive state conventions for the PortfolioAI frontend (Angular 22, zoneless). Use when adding state to a service or component, deriving values with `computed()`, wiring side effects with `effect()`, designing signal-based component I/O via `input()`/`output()`, bridging RxJS with `toSignal()`/`toObservable()`, or forcing an effect to re-fire when no dependency changed. Skips general Angular signals tutorial content.
+description: Signal-based reactive state conventions for the PortfolioAI frontend (Angular 22, zoneless). Use when adding state to a service or component, deriving values with `computed()`, wiring side effects with `effect()`, designing signal-based component I/O via `input()`/`output()`, bridging RxJS with `toSignal()`/`toObservable()`, or loading data through `rxResource()` (`keptValue`, write counters, `linkedSignal` copies). Skips general Angular signals tutorial content.
 ---
 
 # Angular Signals
@@ -84,9 +84,13 @@ Why not `effect()` when you own the signal:
 
 ### When `effect()` is justified — real usages
 
-1. **Reacting to signals you don't own.** `ThemeService` / `LanguageService` apply `theme()` / `lang()` to the DOM / `TranslateService.use()` via `effect()`, because the change comes from `AuthService.currentUser`. `LoginPage` redirects to `/account` when `auth.isAuthenticated()` flips. `NumberMaskDirective` (`shared/number-mask/`) re-syncs the input text when its `value` input changes.
-2. **Coordinating several signals into one side effect** — the fetch effect of `journal-page.ts` / `stats-page.ts` (search, filter, sort, page, `refetchTrigger`), see below.
-3. **Imperative DOM / third-party bridging** — `App` and `Settings` call `MatSidenavContainer.updateContentMargins()` when `sidenavCollapse.collapsed()` flips.
+Only to sync with what Angular does not own — five left in the front (#375) :
+
+1. **The DOM outside a template** — `ThemeService` writes `<html data-theme>` (and the detached Picture-in-Picture windows registered through `mirrorTo()`), `NumberMaskDirective` (`shared/number-mask/`) re-syncs the input's text when its `number` input changes.
+2. **A non-signal API** — `LanguageService` drives `TranslateService.use()` and `<html lang>`.
+3. **Timers and third-party rendering** — `stbLoadGate` (`libs/ui`, the skeleton's delay and minimum), `StbChartComponent` (echarts).
+
+Not an effect : **loading data** (a resource, below), **navigating** (a route guard — `guestGuard` on `/login`), **state derived from other signals and still writable** (a `linkedSignal` — `App.menuOpen` closes on a navigation or a breakpoint crossing).
 
 Rules when you reach for it:
 - Create it in an injection context — field initialiser or `constructor()`. Never from an event handler.
@@ -95,41 +99,34 @@ Rules when you reach for it:
 - Browser-global side effects gate on `isBrowser` — see [`angular-di > SSR-safe pattern`](../angular-di/SKILL.md#ssr-safe-pattern--platform_id--isplatformbrowser).
 - Say *why* in a comment when the reason isn't obvious from the code — one line, and only then (cf. [`CLAUDE.md > Comments`](../../CLAUDE.md#comments--the-strict-minimum)).
 
-## `refetchTrigger` — force the fetch effect to re-fire
+## Loading data — `rxResource()`
 
-List pages drive their backend query from one `effect()` over every query input. After a CRUD op the data on the server moved but none of those inputs changed — bump a dedicated counter:
+Every page and dialog loads through `rxResource()` keyed on what it reads (#375) — never an `effect()` calling `fetch()`, never a hand-kept `Subscription`. A superseded request is cancelled by the framework.
 
 ```typescript
 // features/journal/journal-page.ts
-private readonly refetchTrigger = signal(0);
-
-constructor() {
-  effect(() => {
-    const q = this.searchTerm();
-    const f = this.appliedFilter();
-    const sort = this.sort();
-    const pageIndex = this.pageIndex();
-    const pageSize = this.pageSize();
-    this.refetchTrigger(); // read so the effect re-fires when the CRUD path bumps it
-    this.fetch(/* filter + page built from the values above */);
-  });
-}
-
-private refetch(): void {
-  this.refetchTrigger.update((n) => n + 1);
-}
+private readonly listing = rxResource({
+  params: () => ({ filter: this.criteria(), page: /* index, size, sort */, writes: this.writes() }),
+  stream: ({ params }) => this.repo.findDays(params.filter, params.page),
+});
+private readonly listed = keptValue(this.listing);
+readonly loading = this.listing.isLoading;
+readonly error = computed(() => this.listing.status() === 'error');
+readonly days = computed(() => this.listed()?.content ?? []);
 ```
 
-Why a dedicated signal rather than re-pushing a current value:
-- The search pipe ends with `distinctUntilChanged()` — pushing the same string back after a delete is swallowed and the table shows stale data (real bug hit on the journal CRUD).
-- `n + 1` always changes identity, so the signal always notifies.
-- Some paths don't need it: deleting the last row of a page decrements `pageIndex`, which already re-fires the effect.
-
-Same pattern in `stats-page.ts`. Apply it to any page where one effect serves both "user changed a filter" and "data on the server moved".
+- **A write bumps a counter folded into the params** (`writes`, or scoped ones — `listingWrites` / `kpiWrites`, `dayWrites` / `accountWrites` / `locateWrites`), each declaration saying what bumps it. `reload()` is a **no-op while a load runs** (`ResourceImpl.reload()` returns `false` on `idle` / `loading`) — a write landing then would let the pre-write answer win. `reload()` only where the resource is known to be settled : the account page's « Retry », on a failed resource.
+- **What the template shows** — `keptValue(resource)` (`shared/kept-value/`) holds the last answer while the next one loads, so a listing stays on screen, dimmed (#370). The rule : keep the stale answer while the next load answers **the same question**, drop it when the question changed. When only part of the params is the question (a write counter is not), pass it as `{ question }` — the trade sheet's locates, keyed on (day, ticker). When every change of params is a new question, read `hasValue()` raw — the new-locate dialog's PM opens of another day.
+- **Failure** — `status() === 'error'`, or `lastLoadFailed(resource)` where a « Retry » can be clicked : it stays up while the retry runs.
+- **A copy the user edits** — a `linkedSignal` off the loaded value : the trade sheet's draft, the access-control whitelist, the locates dialog's share price. A reload resets it ; an edit is a plain `set()`.
+- **A server answer written back** — `resource.value.set()` / `.update()` (status `local`). Not while a load runs : it would cancel it — reload instead, and only once the server answered (`patchRow` on the stats sheet).
+- **Reacting to a page that landed** — a `tap` in `stream` (`StatsPage.listed()`, `PatternsPage.openLinked()`) : the reaction belongs to every load, a reload after a write included. Name the method and say so in its KDoc.
+- **Order of fields** — a resource is read as soon as `stbLoadGate(this.loading)` is created : declare the signals its params read, then the resource, then the gate.
+- **Specs** — a resource answers a microtask after its call : render through a `settle()` (`detectChanges()`, `await whenStable()`, `detectChanges()`) and settle again after an action that reloads. A test holding an answer back with a `Subject` keeps a plain `detectChanges()` — `whenStable()` would wait for it forever.
 
 ## RxJS interop — `toSignal()` / `toObservable()`
 
-Repositories return `Observable<T>`; components subscribe for one-shot calls and `set()` the result into signals (`fetch()` in `journal-page.ts`, CRUD ops with `tap` / `catchError` → snackbar). When a stream needs operators, bridge explicitly:
+Repositories return `Observable<T>`. Loads go through `rxResource()` (above) ; writes stay one-shot subscriptions (CRUD ops with `tap` / `catchError` → toast). When a stream needs operators, bridge explicitly:
 
 ```typescript
 // features/journal/journal-page.ts — debounced search
@@ -152,7 +149,7 @@ readonly statCandidates = toSignal(
 
 `toSignal` on router streams gives reactive route state: `App.currentUrl` (from `router.events`), `queryParams` in `LoginPage` / `ErrorPage` (seeded with `route.snapshot.queryParamMap`). Always pass an `initialValue` so the signal is never `undefined`.
 
-Not used today: `rxResource` / `resource()`, `linkedSignal()`, `untracked()`. If you introduce one, add a section here citing the first usage.
+Not used today: `resource()` (promise-based), `untracked()` outside the lib. If you introduce one, add a section here citing the first usage.
 
 ## Component-level signals
 

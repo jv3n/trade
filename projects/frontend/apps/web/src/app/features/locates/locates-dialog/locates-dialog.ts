@@ -149,7 +149,7 @@ export class LocatesDialog {
             }),
           );
           this.shares.set(null);
-          this.load();
+          this.refetch();
         }),
         catchError(() => {
           this.toasts.error(this.translate.instant('locates.snackbar.saveError'));
@@ -213,7 +213,7 @@ export class LocatesDialog {
           this.changed = true;
           this.editing.set(null);
           this.toasts.success(this.translate.instant('locates.snackbar.updateSuccess'));
-          this.load();
+          this.refetch();
         }),
         catchError(() => {
           this.toasts.error(this.translate.instant('locates.snackbar.saveError'));
@@ -238,7 +238,7 @@ export class LocatesDialog {
         tap(() => {
           this.changed = true;
           this.toasts.success(this.translate.instant('locates.snackbar.deleteSuccess'));
-          this.load();
+          this.refetch();
         }),
         catchError(() => {
           this.toasts.error(this.translate.instant('locates.snackbar.deleteError'));
@@ -252,7 +252,7 @@ export class LocatesDialog {
     this.dialogRef.close(this.changed);
   }
 
-  private load(): void {
+  private refetch(): void {
     this.writes.update((n) => n + 1);
   }
 }

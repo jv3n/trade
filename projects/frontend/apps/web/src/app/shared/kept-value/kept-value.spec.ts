@@ -97,6 +97,29 @@ describe('keptValue', () => {
     expect(kept()).toBeNull();
   });
 
+  // #673 review : the trade sheet's locates, keyed on (day, ticker) plus a write counter.
+  it('drops the stale answer once the question changes, keeps it while only the rest does', async () => {
+    let question!: ReturnType<typeof signal<string>>;
+    let byQuestion!: ReturnType<typeof keptValue<string[]>>;
+    TestBed.runInInjectionContext(() => {
+      question = signal('KTTA');
+      byQuestion = keptValue(rows, { question });
+    });
+    TestBed.inject(ApplicationRef).tick();
+    loads[0].next(['KTTA']);
+    await settle();
+    expect(byQuestion()).toEqual(['KTTA']);
+
+    day.set('2026-09-18');
+    TestBed.inject(ApplicationRef).tick();
+    expect(byQuestion()).toEqual(['KTTA']);
+
+    question.set('SDEV');
+    day.set('2026-09-19');
+    TestBed.inject(ApplicationRef).tick();
+    expect(byQuestion()).toBeNull();
+  });
+
   it('follows a local write on the resource', async () => {
     TestBed.inject(ApplicationRef).tick();
     loads[0].next(['KTTA']);
