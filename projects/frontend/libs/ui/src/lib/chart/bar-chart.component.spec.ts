@@ -188,6 +188,25 @@ describe('StbBarChart', () => {
       expect(legend).toEqual(['Winning trades', 'Losing trades', 'Fees', 'Deposits', 'Net']);
     });
 
+    // A canvas is mute : the bars are also a table, for a screen reader and for an e2e test (#702).
+    it('carries the chart as a visually hidden table, the canvas hidden from assistive tech', async () => {
+      const fixture = TestBed.createComponent(Host);
+      await fixture.whenStable();
+
+      const el: HTMLElement = fixture.nativeElement;
+      const table = el.querySelector('[data-testid="bar-chart-data"]');
+      expect(table?.classList).toContain('cdk-visually-hidden');
+      expect(el.querySelector('ui-chart')?.getAttribute('aria-hidden')).toBe('true');
+      const rows = [...(table?.querySelectorAll('tbody tr') ?? [])].map((tr) =>
+        [...tr.children].map((cell) => cell.textContent?.trim()),
+      );
+      expect(rows).toEqual([
+        ['Week of 14/09', '+312.00 $', '-405.00 $', '-262.00 $', '', '-355.00 $'],
+        ['Week of 07/09', '', '', '', '', '0.00 $'],
+        ['Week of 31/08', '', '', '', '+1000.00 $', '+1000.00 $'],
+      ]);
+    });
+
     it('renders nothing without a bucket', async () => {
       const fixture = TestBed.createComponent(Host);
       fixture.componentInstance.buckets.set([]);
