@@ -17,7 +17,7 @@
     "lint": "ng lint web && ng lint ui",
     "web:check-a11y": "node apps/web/tools/check-icon-button-names.mjs",
     "docs:check-sync": "node apps/web/tools/check-docs-sync.mjs",
-    "format": "prettier --write \"{apps,libs}/**/*.{ts,html,scss}\"",
+    "format": "prettier --write \"{apps,libs}/**/*.{ts,html,scss}\" test-setup.ts",
     "ui:build": "ng build ui",
     "ui:test": "ng test ui",
     "ui:lint": "ng lint ui",

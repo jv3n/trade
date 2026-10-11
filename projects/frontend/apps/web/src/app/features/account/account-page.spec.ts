@@ -394,8 +394,12 @@ describe('AccountPage', () => {
     // The range is computed from the series : after a failed reload it would date the previous
     // points, clipped to the new period — a stale figure next to « unavailable ».
     it('drops the curve range once the series fails after a first load', async () => {
-      // One point : enough for a range, short of the chart, whose ResizeObserver jsdom lacks.
-      getBalanceSeries.mockReturnValue(of([{ date: new Date(), balance: 27360 }]));
+      getBalanceSeries.mockReturnValue(
+        of([
+          { date: new Date(Date.now() - 86_400_000), balance: 26810 },
+          { date: new Date(), balance: 27360 },
+        ]),
+      );
       const fixture = await render();
       expect(fixture.nativeElement.querySelector('.chart-card .hint')).not.toBeNull();
 
