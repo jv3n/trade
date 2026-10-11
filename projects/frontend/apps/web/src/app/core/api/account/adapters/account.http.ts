@@ -61,7 +61,7 @@ interface BalancePointWireDto {
   balance: number;
 }
 
-interface SpringPageWireDto<T> {
+interface PageWireDto<T> {
   content: T[];
   number: number;
   size: number;
@@ -89,7 +89,7 @@ function fromWire(w: AccountMovementWireDto): AccountMovement {
   };
 }
 
-function fromPageWire(p: SpringPageWireDto<AccountMovementWireDto>): PagedResult<AccountMovement> {
+function fromPageWire(p: PageWireDto<AccountMovementWireDto>): PagedResult<AccountMovement> {
   return {
     content: p.content.map(fromWire),
     pageIndex: p.number,
@@ -154,7 +154,7 @@ export class HttpAccountRepository extends AccountRepository {
     }
     params = withFilter(params, filter);
     return this.http
-      .get<SpringPageWireDto<AccountMovementWireDto>>(`${this.base}/movements`, { params })
+      .get<PageWireDto<AccountMovementWireDto>>(`${this.base}/movements`, { params })
       .pipe(map(fromPageWire));
   }
 

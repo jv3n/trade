@@ -9,11 +9,12 @@ import com.portfolioai.journal.application.dto.TradeEntryRequest
 import com.portfolioai.journal.domain.EntryTiming
 import com.portfolioai.journal.domain.TradeEntryFilter
 import com.portfolioai.journal.domain.TradeStatus
+import com.portfolioai.shared.PageResponse
 import com.portfolioai.shared.Pattern
+import com.portfolioai.shared.toPageResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import java.time.LocalDate
 import java.util.UUID
-import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
 import org.springframework.format.annotation.DateTimeFormat
@@ -51,8 +52,8 @@ class TradeEntryController(
    *
    * Pagination is standard Spring `Pageable` — clients pass `?page=0&size=50&sort=tradeDate,desc`.
    * Default : 50 rows per page, sorted by `tradeDate` desc then `createdAt` desc (which puts the
-   * latest trades on page 0). The response body is Spring's `Page<T>` shape : `{ content: [...],
-   * totalElements: N, totalPages: M, number: page, size: pageSize, ... }`.
+   * latest trades on page 0). The response body is a [PageResponse] : `{ content: [...],
+   * totalElements: N, totalPages: M, number: page, size: pageSize }`.
    *
    * q — ticker LIKE %q% (case-insensitive) dateFrom — `trade_date >= dateFrom` (inclusive,
    * yyyy-MM-dd) dateTo — `trade_date <= dateTo` (inclusive, yyyy-MM-dd) pattern — repeated, IN
@@ -75,18 +76,20 @@ class TradeEntryController(
     // param, so we get a single source of truth and avoid the `@PageableDefault` quirk that was
     // making the user-supplied sort silently ignored.
     @PageableDefault(size = 50) pageable: Pageable,
-  ): Page<TradeEntryDto> =
-    service.findAllPaged(
-      TradeEntryFilter(
-        query = q,
-        dateFrom = dateFrom,
-        dateTo = dateTo,
-        patterns = pattern,
-        status = status,
-        entry = entry,
-      ),
-      pageable,
-    )
+  ): PageResponse<TradeEntryDto> =
+    service
+      .findAllPaged(
+        TradeEntryFilter(
+          query = q,
+          dateFrom = dateFrom,
+          dateTo = dateTo,
+          patterns = pattern,
+          status = status,
+          entry = entry,
+        ),
+        pageable,
+      )
+      .toPageResponse()
 
   /**
    * The journal's rows (#500) — one per ticker and day, the same filters as [findAll], paged and
@@ -108,18 +111,20 @@ class TradeEntryController(
     @RequestParam(required = false) status: TradeStatus? = null,
     @RequestParam(required = false) entry: EntryTiming? = null,
     @PageableDefault(size = 50) pageable: Pageable,
-  ): Page<JournalDayDto> =
-    service.findDaysPaged(
-      TradeEntryFilter(
-        query = q,
-        dateFrom = dateFrom,
-        dateTo = dateTo,
-        patterns = pattern,
-        status = status,
-        entry = entry,
-      ),
-      pageable,
-    )
+  ): PageResponse<JournalDayDto> =
+    service
+      .findDaysPaged(
+        TradeEntryFilter(
+          query = q,
+          dateFrom = dateFrom,
+          dateTo = dateTo,
+          patterns = pattern,
+          status = status,
+          entry = entry,
+        ),
+        pageable,
+      )
+      .toPageResponse()
 
   /**
    * KPIs of the journal page over the **same filter** as the listing (#195) — realized P&L, win

@@ -10,10 +10,11 @@ import com.portfolioai.account.application.dto.ReconciliationDto
 import com.portfolioai.account.application.dto.ReconciliationRequest
 import com.portfolioai.account.domain.AccountMovementFilter
 import com.portfolioai.account.domain.AccountMovementType
+import com.portfolioai.shared.PageResponse
+import com.portfolioai.shared.toPageResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import java.time.LocalDate
 import java.util.UUID
-import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
 import org.springframework.format.annotation.DateTimeFormat
@@ -61,8 +62,8 @@ class AccountController(
     dateTo: LocalDate? = null,
     @RequestParam(required = false) type: List<AccountMovementType>? = null,
     @PageableDefault(size = 25) pageable: Pageable,
-  ): Page<AccountMovementDto> =
-    service.findAllPaged(AccountMovementFilter(dateFrom, dateTo, type), pageable)
+  ): PageResponse<AccountMovementDto> =
+    service.findAllPaged(AccountMovementFilter(dateFrom, dateTo, type), pageable).toPageResponse()
 
   /**
    * Current balance (never windowed) plus the figures of the filtered period — trades P&L with its
