@@ -1,6 +1,6 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { Component, computed, inject, signal } from '@angular/core';
+import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 
 import { Router, RouterLink } from '@angular/router';
 
@@ -9,7 +9,6 @@ import {
   EMPTY,
   Observable,
   Subject,
-  Subscription,
   catchError,
   debounceTime,
   distinctUntilChanged,
@@ -49,9 +48,9 @@ import {
   TradeStatus,
 } from '../../core/api/journal/trade-entry.model';
 import { PATTERNS, Pattern } from '../../core/api/shared/pattern.model';
-import { StatSummary } from '../../core/api/stats/stat-entry.model';
 import { StatsRepository } from '../../core/api/stats/stats.repository';
 import { ConfirmService } from '../../core/app-state/confirm.service';
+import { keptValue } from '../../shared/kept-value/kept-value';
 import { PeriodFilter } from '../../shared/period-filter/period-filter';
 import {
   PeriodPresetKey,
@@ -157,8 +156,8 @@ const SKELETON_COLUMNS: SkeletonColumnDefs = {
  *   - **« + Trade »** (#634) : a trade on its own, with no stat behind it — the « Nouveau trade »
  *     dialog is the confirmation, and the new trade opens on its sheet.
  *
- * One effect watches (`searchTerm`, `appliedFilter`, `sort`, `pageIndex`, `pageSize`) and
- * refetches when any of them changes.
+ * The listing and the two summaries are resources keyed on (`searchTerm`, `appliedFilter`, `sort`,
+ * `pageIndex`, `pageSize`) : any change refetches, cancelling the request it supersedes (#370).
  */
 @Component({
   selector: 'app-journal-page',
@@ -196,29 +195,13 @@ export class JournalPage {
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
 
-  // ---- Data state ----
-  readonly loading = signal(true);
-  // A superseded request is dropped, or the slower of two quick filter changes wins (#370).
-  private listing?: Subscription;
-  private summaryFetch?: Subscription;
-  private statSummaryFetch?: Subscription;
-  readonly error = signal<string | null>(null);
-  readonly days = signal<JournalDay[]>([]);
   /** The multi-trade rows opened onto their trades. */
   readonly expanded = signal<ReadonlySet<string>>(new Set());
-  readonly totalElements = signal(0);
 
   // ---- Pagination ----
   readonly pageIndex = signal(0);
   readonly pageSize = signal(DEFAULT_PAGE_SIZE);
   readonly pageSizeOptions = [10, 25, 50, 100];
-
-  // ---- Refetch nudge ----
-  // The CRUD ops (create / update / delete) bump this counter to force the fetch effect to
-  // re-fire even when no other dependency (search, filter, sort, page) has changed. Using
-  // a dedicated signal avoids the `distinctUntilChanged` of the search pipe swallowing the
-  // refresh request when the search hasn't changed.
-  private readonly refetchTrigger = signal(0);
 
   // ---- Search (debounced 250 ms before the backend call) ----
   private readonly searchInput$ = new Subject<string>();
@@ -231,15 +214,6 @@ export class JournalPage {
   // ---- Filters (applied on click — the toolbar is the filter) ----
   readonly appliedFilter = signal<FilterFormModel>(defaultFilter());
 
-  // ---- KPIs over the filtered set ----
-  readonly summary = signal<JournalSummary | null>(null);
-  /** « 8 / 10 stats traded » — the stats sheet's own count over the same period. */
-  readonly statSummary = signal<StatSummary | null>(null);
-  readonly statCount = computed(() => {
-    const s = this.statSummary();
-    return s === null ? null : s.traded + s.untraded;
-  });
-
   // ---- Sort (server-side, controlled-component pattern) ----
   // The `sort` signal is the **source of truth** for the table's sort state. It's bound back
   // into MatSort via `[matSortActive]` + `[matSortDirection]` in the template, so a) the
@@ -247,6 +221,66 @@ export class JournalPage {
   // internal state divergent from the data. Empty `columnName` = no user sort (server falls
   // back to its DEFAULT_SORT).
   readonly sort = signal<SortRequest>({ columnName: '', isAscending: true });
+
+  // ---- Data, loaded from the signals above ----
+  /**
+   * Bumped by a write, and part of every resource's params : a new key supersedes a load in flight,
+   * where `reload()` is a no-op while one runs — its pre-write answer would win.
+   */
+  private readonly writes = signal(0);
+  private readonly criteria = computed<TradeEntryFilter>(() => {
+    const f = this.appliedFilter();
+    return {
+      query: this.searchTerm() || null,
+      dateFrom: f.dateFrom,
+      dateTo: f.dateTo,
+      patterns: f.pattern ? [f.pattern] : null,
+      status: f.status,
+      entry: f.entry,
+    };
+  });
+
+  private readonly listing = rxResource({
+    params: () => {
+      const sort = this.sort();
+      const page: PageRequest = {
+        pageIndex: this.pageIndex(),
+        pageSize: this.pageSize(),
+        sortField: sort.columnName || undefined,
+        sortDirection: sort.columnName ? (sort.isAscending ? 'asc' : 'desc') : undefined,
+      };
+      return { filter: this.criteria(), page, writes: this.writes() };
+    },
+    stream: ({ params }) => this.repo.findDays(params.filter, params.page),
+  });
+  private readonly listed = keptValue(this.listing);
+  readonly loading = this.listing.isLoading;
+  readonly error = computed(() => this.listing.status() === 'error');
+  readonly days = computed<JournalDay[]>(() => this.listed()?.content ?? []);
+  readonly totalElements = computed(() => this.listed()?.totalElements ?? 0);
+
+  // ---- KPIs over the filtered set ----
+  // Each summary fails on its own : its cards go empty, the table is what the user came for. The
+  // stats count only cares about the period — a pattern or an outcome filter would make « traded
+  // / all » compare two different sets.
+  private readonly summaryResource = rxResource({
+    params: () => ({ filter: this.criteria(), writes: this.writes() }),
+    stream: ({ params }) => this.repo.summary(params.filter),
+  });
+  readonly summary = keptValue<JournalSummary>(this.summaryResource);
+  private readonly statSummaryResource = rxResource({
+    params: () => {
+      const { dateFrom, dateTo } = this.criteria();
+      return { period: { dateFrom, dateTo }, writes: this.writes() };
+    },
+    stream: ({ params }) => this.statsRepo.summary(params.period),
+  });
+  /** « 8 / 10 stats traded » — the stats sheet's own count over the same period. */
+  readonly statSummary = keptValue(this.statSummaryResource);
+  readonly statCount = computed(() => {
+    const s = this.statSummary();
+    return s === null ? null : s.traded + s.untraded;
+  });
 
   // ---- Constants for the template ----
   readonly patterns = PATTERNS;
@@ -280,37 +314,6 @@ export class JournalPage {
   readonly skeletonColumns = computed(() =>
     toSkeletonColumns(this.columns, SKELETON_COLUMNS, this.headerLabels()),
   );
-
-  constructor() {
-    inject(DestroyRef).onDestroy(() => {
-      this.listing?.unsubscribe();
-      this.summaryFetch?.unsubscribe();
-      this.statSummaryFetch?.unsubscribe();
-    });
-    effect(() => {
-      const q = this.searchTerm();
-      const f = this.appliedFilter();
-      const sort = this.sort();
-      const pageIndex = this.pageIndex();
-      const pageSize = this.pageSize();
-      this.refetchTrigger(); // read so the effect re-fires when the CRUD path bumps it
-      const criteria: TradeEntryFilter = {
-        query: q || null,
-        dateFrom: f.dateFrom,
-        dateTo: f.dateTo,
-        patterns: f.pattern ? [f.pattern] : null,
-        status: f.status,
-        entry: f.entry,
-      };
-      this.fetchSummaries(criteria);
-      this.fetch(criteria, {
-        pageIndex,
-        pageSize,
-        sortField: sort.columnName || undefined,
-        sortDirection: sort.columnName ? (sort.isAscending ? 'asc' : 'desc') : undefined,
-      });
-    });
-  }
 
   // ---- Search handlers ----
   onSearchInput(value: string): void {
@@ -478,15 +481,11 @@ export class JournalPage {
           this.toasts.success(
             this.translate.instant('journal.snackbar.deleteSuccess', { ticker: entry.ticker }),
           );
-          if (willEmptyPage) {
-            // Decrementing pageIndex triggers the effect — no need to bump `refetchTrigger`,
-            // the page change is enough to re-fire the fetch on the previous (existing) page.
-            this.pageIndex.update((n) => n - 1);
-          } else {
-            // Refetch the current page — local splicing would leave us with N-1 rows on the
-            // page and the total count out of sync ; trust the server for both.
-            this.refetch();
-          }
+          // Refetch — local splicing would leave us with N-1 rows on the page and the total count
+          // out of sync ; trust the server for both. Even when the page steps back : only the
+          // listing is keyed on it, and the KPIs counted the deleted trade too.
+          this.refetch();
+          if (willEmptyPage) this.pageIndex.update((n) => n - 1);
         }),
         catchError(() => {
           this.toasts.error(this.translate.instant('journal.snackbar.deleteError'));
@@ -496,51 +495,8 @@ export class JournalPage {
       .subscribe();
   }
 
-  /**
-   * Re-runs the fetch effect without touching any user-facing state. Bumping a dedicated
-   * counter sidesteps the search pipe's `distinctUntilChanged` (which would swallow a "push
-   * the same value" trick if the search hasn't moved) and any signal-identity short-circuit
-   * on the other deps.
-   */
+  /** After a write : the listing and its KPIs again, on the same criteria. */
   private refetch(): void {
-    this.refetchTrigger.update((n) => n + 1);
-  }
-
-  /**
-   * KPI row — two independent calls, each over the same filtered set as the listing. A failing
-   * summary leaves its cards empty rather than taking the page down : the table is what the user
-   * came for. The stats count only cares about the period (a pattern or an outcome filter would
-   * make « traded / all » compare two different sets).
-   */
-  private fetchSummaries(criteria: TradeEntryFilter): void {
-    this.summaryFetch?.unsubscribe();
-    this.summaryFetch = this.repo.summary(criteria).subscribe({
-      next: (s) => this.summary.set(s),
-      error: () => this.summary.set(null),
-    });
-    this.statSummaryFetch?.unsubscribe();
-    this.statSummaryFetch = this.statsRepo
-      .summary({ dateFrom: criteria.dateFrom, dateTo: criteria.dateTo })
-      .subscribe({
-        next: (s) => this.statSummary.set(s),
-        error: () => this.statSummary.set(null),
-      });
-  }
-
-  private fetch(filter: TradeEntryFilter, page: PageRequest): void {
-    this.listing?.unsubscribe();
-    this.loading.set(true);
-    this.error.set(null);
-    this.listing = this.repo.findDays(filter, page).subscribe({
-      next: (result) => {
-        this.days.set(result.content);
-        this.totalElements.set(result.totalElements);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.error.set(this.translate.instant('journal.errors.load'));
-        this.loading.set(false);
-      },
-    });
+    this.writes.update((n) => n + 1);
   }
 }
