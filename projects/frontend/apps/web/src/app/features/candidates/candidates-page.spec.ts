@@ -31,7 +31,9 @@ import { CandidatesPage } from './candidates-page';
  * Component spec for the candidates page (morning capture). The formulas are pinned in
  * `candidates.math.spec` ; here we pin the wiring :
  *
- * - **List** — the day's candidates load on init and are sorted by gap, largest first.
+ * - **List** — the day's candidates load on init and are sorted by gap, largest first. They load
+ *   through a resource (#375), which answers a microtask after the call : `setup()` and `settle()`
+ *   wait for it.
  * - **Quick entry** — the save stays blocked until the three premarket prices are valid (PM high
  *   below the PM open included), a submit creates the candidate — with no pattern — for the browsed
  *   day and resets the form, and a 409 surfaces the dedicated "duplicate" toast.
@@ -154,7 +156,7 @@ class MockStatsRepository extends StatsRepository {
   exportCsv = vi.fn((): Observable<Blob> => throwError(() => new Error('not used')));
 }
 
-function setup(
+async function setup(
   options: {
     list?: Candidate[];
     confirmed?: boolean;
@@ -162,13 +164,13 @@ function setup(
     /** The day's answer, held back — a first load still running. */
     answer?: Observable<Candidate[]>;
   } = {},
-): {
+): Promise<{
   fixture: ComponentFixture<CandidatesPage>;
   page: CandidatesPage;
   repo: MockCandidatesRepository;
   stats: MockStatsRepository;
   toastShown: ReturnType<typeof vi.fn>;
-} {
+}> {
   const toastShown = vi.fn();
   TestBed.configureTestingModule({
     imports: [CandidatesPage],
@@ -196,8 +198,17 @@ function setup(
     stats.summary.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
   }
   const fixture = TestBed.createComponent(CandidatesPage);
-  fixture.detectChanges();
+  // A day's answer held back would keep the page from ever settling.
+  if (options.answer) fixture.detectChanges();
+  else await settle(fixture);
   return { fixture, page: fixture.componentInstance, repo, stats, toastShown };
+}
+
+/** Renders once the day and the references have answered — a resource resolves a tick later. */
+async function settle(fixture: ComponentFixture<CandidatesPage>): Promise<void> {
+  fixture.detectChanges();
+  await fixture.whenStable();
+  fixture.detectChanges();
 }
 
 /** Types a valid KTTA capture into the form. */
@@ -216,10 +227,10 @@ describe('CandidatesPage', () => {
   // ---- List ----
 
   // #542 : the first load showed a spinner, then the table jumped in.
-  it('shows the table skeleton on a slow first load, then the rows once they land', () => {
+  it('shows the table skeleton on a slow first load, then the rows once they land', async () => {
     vi.useFakeTimers();
     const answer = new Subject<Candidate[]>();
-    const { fixture } = setup({ answer });
+    const { fixture } = await setup({ answer });
     const el: HTMLElement = fixture.nativeElement;
 
     vi.advanceTimersByTime(200);
@@ -228,6 +239,8 @@ describe('CandidatesPage', () => {
 
     answer.next([makeCandidate()]);
     answer.complete();
+    // The resource takes the answer a microtask later — flushed along with the timers.
+    await vi.advanceTimersByTimeAsync(0);
     fixture.detectChanges();
     vi.advanceTimersByTime(300);
     fixture.detectChanges();
@@ -236,14 +249,14 @@ describe('CandidatesPage', () => {
     vi.useRealTimers();
   });
 
-  it("loads today's candidates on init", () => {
-    const { repo } = setup();
+  it("loads today's candidates on init", async () => {
+    const { repo } = await setup();
 
     expect(repo.listForDate).toHaveBeenCalledWith(startOfDay(new Date()));
   });
 
-  it('sorts the day by gap, largest first, with the derived figures', () => {
-    const { page } = setup({
+  it('sorts the day by gap, largest first, with the derived figures', async () => {
+    const { page } = await setup({
       list: [
         makeCandidate({
           id: 'verb',
@@ -271,8 +284,8 @@ describe('CandidatesPage', () => {
 
   // ---- Quick entry ----
 
-  it('blocks the save until the ticker and the three premarket prices are set', () => {
-    const { page } = setup();
+  it('blocks the save until the ticker and the three premarket prices are set', async () => {
+    const { page } = await setup();
     expect(page.canSave()).toBe(false);
 
     fillKtta(page);
@@ -280,8 +293,8 @@ describe('CandidatesPage', () => {
     expect(page.canSave()).toBe(true);
   });
 
-  it('blocks the save and flags the field when the PM high is below the PM open', () => {
-    const { page } = setup();
+  it('blocks the save and flags the field when the PM high is below the PM open', async () => {
+    const { page } = await setup();
     fillKtta(page);
 
     page.setNumber('pmHigh', 3.9);
@@ -290,8 +303,8 @@ describe('CandidatesPage', () => {
     expect(page.canSave()).toBe(false);
   });
 
-  it('previews gap and push while typing', () => {
-    const { page } = setup();
+  it('previews gap and push while typing', async () => {
+    const { page } = await setup();
     expect(page.gapPreview()).toBeNull();
 
     fillKtta(page);
@@ -300,11 +313,12 @@ describe('CandidatesPage', () => {
     expect(page.pushPreview()).toBeCloseTo(14.81, 2);
   });
 
-  it('creates the candidate for the browsed day, without a pattern, then resets the form', () => {
-    const { page, repo, toastShown } = setup();
+  it('creates the candidate for the browsed day, without a pattern, then resets the form', async () => {
+    const { fixture, page, repo, toastShown } = await setup();
     fillKtta(page);
 
     page.submit();
+    await settle(fixture);
 
     expect(repo.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -323,8 +337,8 @@ describe('CandidatesPage', () => {
     expect(repo.listForDate).toHaveBeenCalledTimes(2); // init + reload after the save
   });
 
-  it('surfaces a duplicate (409) with its own toast and keeps the typed capture', () => {
-    const { page, repo, toastShown } = setup();
+  it('surfaces a duplicate (409) with its own toast and keeps the typed capture', async () => {
+    const { page, repo, toastShown } = await setup();
     repo.create.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 409 })));
     fillKtta(page);
 
@@ -336,9 +350,9 @@ describe('CandidatesPage', () => {
 
   // ---- Edit ----
 
-  it('saves a candidate loaded for edit as an update', () => {
+  it('saves a candidate loaded for edit as an update', async () => {
     const ktta = makeCandidate();
-    const { page, repo } = setup({ list: [ktta] });
+    const { page, repo } = await setup({ list: [ktta] });
 
     page.edit(ktta);
     page.setNumber('pmHigh', 4.9);
@@ -354,9 +368,9 @@ describe('CandidatesPage', () => {
   // into the model. The cleared value came back and rode into the next candidate of the morning.
   it('an edited field does not write itself back when the form resets', async () => {
     const ktta = makeCandidate();
-    const { fixture, page, repo } = setup({ list: [ktta] });
+    const { fixture, page, repo } = await setup({ list: [ktta] });
     page.edit(ktta);
-    fixture.detectChanges();
+    await settle(fixture);
     await fixture.whenStable();
 
     const pmHigh = fixture.nativeElement.querySelectorAll(
@@ -368,7 +382,7 @@ describe('CandidatesPage', () => {
     pmHigh.dispatchEvent(new Event('input'));
 
     page.submit();
-    fixture.detectChanges();
+    await settle(fixture);
     await fixture.whenStable();
 
     // The typed value did reach the save — it is the *reset* that must not give it back.
@@ -378,17 +392,17 @@ describe('CandidatesPage', () => {
     expect(pmHigh.value).toBe('');
   });
 
-  it('flags a ticker already captured that day while it is typed, and blocks the save', () => {
-    const { page } = setup({ list: [makeCandidate()] });
+  it('flags a ticker already captured that day while it is typed, and blocks the save', async () => {
+    const { page } = await setup({ list: [makeCandidate()] });
     fillKtta(page);
 
     expect(page.duplicateTicker()).toBe(true);
     expect(page.canSave()).toBe(false);
   });
 
-  it('an edited candidate is not its own duplicate', () => {
+  it('an edited candidate is not its own duplicate', async () => {
     const ktta = makeCandidate();
-    const { page } = setup({ list: [ktta] });
+    const { page } = await setup({ list: [ktta] });
 
     page.edit(ktta);
 
@@ -398,26 +412,27 @@ describe('CandidatesPage', () => {
 
   // ---- Promotion ----
 
-  it('promotes a candidate in the pattern asked once the modal is confirmed, then reloads the day', () => {
-    const { page, repo, toastShown } = setup({ list: [makeCandidate()] });
+  it('promotes a candidate in the pattern asked once the modal is confirmed, then reloads the day', async () => {
+    const { fixture, page, repo, toastShown } = await setup({ list: [makeCandidate()] });
 
     page.promote(makeCandidate(), 'DT');
+    await settle(fixture);
 
     expect(repo.promote).toHaveBeenCalledWith('c-ktta', 'DT');
     expect(lastToast(toastShown)).toBe('success');
     expect(repo.listForDate).toHaveBeenCalledTimes(2); // init + reload
   });
 
-  it('never promotes when the confirmation modal is cancelled', () => {
-    const { page, repo } = setup({ list: [makeCandidate()], confirmed: false });
+  it('never promotes when the confirmation modal is cancelled', async () => {
+    const { page, repo } = await setup({ list: [makeCandidate()], confirmed: false });
 
     page.promote(makeCandidate(), 'GUS');
 
     expect(repo.promote).not.toHaveBeenCalled();
   });
 
-  it('toasts an error when a promotion fails', () => {
-    const { page, repo, toastShown } = setup({ list: [makeCandidate()] });
+  it('toasts an error when a promotion fails', async () => {
+    const { page, repo, toastShown } = await setup({ list: [makeCandidate()] });
     repo.promote.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 409 })));
 
     page.promote(makeCandidate(), 'GUS');
@@ -425,8 +440,8 @@ describe('CandidatesPage', () => {
     expect(lastToast(toastShown)).toBe('error');
   });
 
-  it('counts only the candidates without any stat as promotable to GUS — a DT only one included', () => {
-    const { page } = setup({
+  it('counts only the candidates without any stat as promotable to GUS — a DT only one included', async () => {
+    const { page } = await setup({
       list: [
         makeCandidate({
           id: 'nxtt',
@@ -440,8 +455,8 @@ describe('CandidatesPage', () => {
     expect(page.promotable().map((c) => c.ticker)).toEqual(['BNRG']);
   });
 
-  it('offers the patterns a candidate has no stat in yet', () => {
-    const { page } = setup({
+  it('offers the patterns a candidate has no stat in yet', async () => {
+    const { page } = await setup({
       list: [
         makeCandidate({ id: 'sgbx', ticker: 'SGBX', stats: [{ pattern: 'GUS', statId: 'st' }] }),
         makeCandidate({ id: 'bnrg', ticker: 'BNRG' }),
@@ -452,8 +467,8 @@ describe('CandidatesPage', () => {
     expect(promotableTo).toEqual({ SGBX: ['DT'], BNRG: ['GUS', 'DT'] });
   });
 
-  it('promotes the whole day in one call and reports how many landed, in the singular for one', () => {
-    const { page, repo, toastShown } = setup({ list: [makeCandidate()] });
+  it('promotes the whole day in one call and reports how many landed, in the singular for one', async () => {
+    const { page, repo, toastShown } = await setup({ list: [makeCandidate()] });
 
     page.promoteAll();
 
@@ -461,8 +476,8 @@ describe('CandidatesPage', () => {
     expect(toastShown).toHaveBeenCalledWith('success', 'candidates.snackbar.promoteAllSuccessOne');
   });
 
-  it('names the candidates the bulk promotion left alone in its toast', () => {
-    const { page, repo, toastShown } = setup({ list: [makeCandidate()] });
+  it('names the candidates the bulk promotion left alone in its toast', async () => {
+    const { page, repo, toastShown } = await setup({ list: [makeCandidate()] });
     repo.promoteDay.mockReturnValue(of({ promoted: ['BNRG', 'MLGO'], skipped: ['SGBX'] }));
 
     page.promoteAll();
@@ -476,7 +491,7 @@ describe('CandidatesPage', () => {
   // #383 : the badge used to be plain text, so the moment you'd jump to the new stat was the moment
   // the link disappeared. SGBX of the mockup : a GUS in the morning, a double top late in the morning.
   it('shows one badge per stat, each opening its own stat, and no button left to promote', async () => {
-    const { fixture } = setup({
+    const { fixture } = await setup({
       list: [
         makeCandidate({
           ticker: 'SGBX',
@@ -502,8 +517,8 @@ describe('CandidatesPage', () => {
     expect(buttons.some((b) => b.textContent?.includes('arrow_forward'))).toBe(false);
   });
 
-  it('does nothing when every candidate of the day already has a stat', () => {
-    const { page, repo } = setup({
+  it('does nothing when every candidate of the day already has a stat', async () => {
+    const { page, repo } = await setup({
       list: [makeCandidate({ stats: [{ pattern: 'GUS', statId: 'st' }] })],
     });
 
@@ -514,16 +529,16 @@ describe('CandidatesPage', () => {
 
   // ---- Delete ----
 
-  it('deletes a candidate once the confirmation modal is confirmed', () => {
-    const { page, repo } = setup({ list: [makeCandidate()] });
+  it('deletes a candidate once the confirmation modal is confirmed', async () => {
+    const { page, repo } = await setup({ list: [makeCandidate()] });
 
     page.delete(makeCandidate());
 
     expect(repo.delete).toHaveBeenCalledWith('c-ktta');
   });
 
-  it('never reaches the repository when the confirmation modal is cancelled', () => {
-    const { page, repo } = setup({ list: [makeCandidate()], confirmed: false });
+  it('never reaches the repository when the confirmation modal is cancelled', async () => {
+    const { page, repo } = await setup({ list: [makeCandidate()], confirmed: false });
 
     page.delete(makeCandidate());
 
@@ -532,8 +547,8 @@ describe('CandidatesPage', () => {
 
   // ---- At the open (#261) ----
 
-  it('fetches the GUS push references and the no-push rate for the card', () => {
-    const { page, stats } = setup({ list: [makeCandidate()] });
+  it('fetches the GUS push references and the no-push rate for the card', async () => {
+    const { page, stats } = await setup({ list: [makeCandidate()] });
 
     expect(stats.summary).toHaveBeenCalledWith({ pattern: 'GUS' });
     expect(page.pushReferences()).toEqual({
@@ -546,8 +561,8 @@ describe('CandidatesPage', () => {
     expect(page.noPushRate()).toEqual({ noPush: 0, completed: 10 });
   });
 
-  it('leaves a candidate whose only stat is a DT out of the card', () => {
-    const { page } = setup({
+  it('leaves a candidate whose only stat is a DT out of the card', async () => {
+    const { page } = await setup({
       list: [
         makeCandidate({ id: 'nxtt', ticker: 'NXTT', stats: [{ pattern: 'DT', statId: 'st-n' }] }),
         makeCandidate({
@@ -565,8 +580,8 @@ describe('CandidatesPage', () => {
     expect(page.openRows().map((c) => c.ticker)).toEqual(['SGBX', 'BNRG']);
   });
 
-  it('fetches the references once, not on every reload', () => {
-    const { page, stats } = setup({ list: [makeCandidate()] });
+  it('fetches the references once, not on every reload', async () => {
+    const { page, stats } = await setup({ list: [makeCandidate()] });
 
     page.previousDay();
     page.nextDay();
@@ -574,16 +589,16 @@ describe('CandidatesPage', () => {
     expect(stats.summary).toHaveBeenCalledTimes(1);
   });
 
-  it('still lists the candidates when the references cannot be fetched', () => {
-    const { page } = setup({ list: [makeCandidate()], referencesFail: true });
+  it('still lists the candidates when the references cannot be fetched', async () => {
+    const { page } = await setup({ list: [makeCandidate()], referencesFail: true });
 
     expect(page.rows().length).toBe(1);
     expect(page.pushReferences()?.average).toBeNull();
   });
 
-  it('saves an open coming out of the card and patches the row without reloading the day', () => {
+  it('saves an open coming out of the card and patches the row without reloading the day', async () => {
     const ktta = makeCandidate();
-    const { page, repo } = setup({ list: [ktta] });
+    const { page, repo } = await setup({ list: [ktta] });
 
     page.saveAtOpen({ candidate: ktta, patch: { openPrice: 4.2 } });
 
@@ -595,10 +610,10 @@ describe('CandidatesPage', () => {
     expect(repo.listForDate).toHaveBeenCalledTimes(1); // init only
   });
 
-  it('starts the push save from the open just typed, not from the stale row', () => {
+  it('starts the push save from the open just typed, not from the stale row', async () => {
     // Open then push, typed back to back : the card still holds the row as it was before the open.
     const ktta = makeCandidate();
-    const { page, repo } = setup({ list: [ktta] });
+    const { page, repo } = await setup({ list: [ktta] });
 
     page.saveAtOpen({ candidate: ktta, patch: { openPrice: 4.2 } });
     page.saveAtOpen({ candidate: ktta, patch: { targetPushPercent: 15 } });
@@ -609,9 +624,9 @@ describe('CandidatesPage', () => {
     );
   });
 
-  it('reverts the row and toasts an error when the save fails', () => {
+  it('reverts the row and toasts an error when the save fails', async () => {
     const ktta = makeCandidate();
-    const { page, repo, toastShown } = setup({ list: [ktta] });
+    const { page, repo, toastShown } = await setup({ list: [ktta] });
     repo.update.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
 
     page.saveAtOpen({ candidate: ktta, patch: { openPrice: 4.2 } });
@@ -620,10 +635,10 @@ describe('CandidatesPage', () => {
     expect(lastToast(toastShown)).toBe('error');
   });
 
-  it('keeps what was typed in the card when the candidate is edited through the form', () => {
+  it('keeps what was typed in the card when the candidate is edited through the form', async () => {
     // The form has no open nor push field : saving it must not wipe what was typed at 9:30.
     const ktta = makeCandidate({ openPrice: 4.2, targetPushPercent: 15 });
-    const { page, repo } = setup({ list: [ktta] });
+    const { page, repo } = await setup({ list: [ktta] });
 
     page.edit(ktta);
     page.setNumber('pmHigh', 4.9);
@@ -637,19 +652,20 @@ describe('CandidatesPage', () => {
 
   // ---- Day navigation ----
 
-  it('reloads the list for the previous day and makes it read-only', () => {
-    const { page, repo } = setup();
+  it('reloads the list for the previous day and makes it read-only', async () => {
+    const { fixture, page, repo } = await setup();
     expect(page.readOnly()).toBe(false);
 
     page.previousDay();
+    await settle(fixture);
 
     expect(repo.listForDate).toHaveBeenLastCalledWith(addDays(startOfDay(new Date()), -1));
     expect(page.readOnly()).toBe(true);
   });
 
   // #370 : a slow answer for the day left behind landed on the day being browsed.
-  it('keeps the list of the day left until the next one arrives, and drops a stale answer', () => {
-    const { fixture, page, repo } = setup({ list: [makeCandidate()] });
+  it('keeps the list of the day left until the next one arrives, and drops a stale answer', async () => {
+    const { fixture, page, repo } = await setup({ list: [makeCandidate()] });
     const dayBefore = new Subject<Candidate[]>();
     const twoDaysBefore = new Subject<Candidate[]>();
     repo.listForDate.mockReturnValueOnce(dayBefore).mockReturnValueOnce(twoDaysBefore);
@@ -659,19 +675,55 @@ describe('CandidatesPage', () => {
     expect(fixture.nativeElement.querySelector('.stb-table--busy')).not.toBeNull();
 
     page.previousDay();
+    fixture.detectChanges();
     twoDaysBefore.next([makeCandidate({ id: 'c-bnrg', ticker: 'BNRG' })]);
     twoDaysBefore.complete();
     dayBefore.next([makeCandidate({ id: 'c-slnh', ticker: 'SLNH' })]);
+    await settle(fixture);
 
     expect(page.rows().map((c) => c.ticker)).toEqual(['BNRG']);
     expect(page.loading()).toBe(false);
   });
 
-  // #320 : Sunday 2026-09-20 read « no candidate on this day », as if a session had been missed.
-  it('says there is no session on a weekend day', () => {
-    const { fixture, page } = setup();
-    page.day.set(new Date(2026, 8, 20));
+  // A load in flight when a write lands answers with pre-write data : the write must supersede it.
+  it('a promotion during a load reloads the day, rather than letting the older load win', async () => {
+    const { fixture, page, repo } = await setup({ list: [makeCandidate()] });
+    repo.listForDate.mockReturnValue(new Subject<Candidate[]>());
+    page.previousDay();
+    page.nextDay();
     fixture.detectChanges();
+    const callsBefore = repo.listForDate.mock.calls.length;
+
+    page.promote(makeCandidate(), 'GUS');
+    fixture.detectChanges();
+
+    expect(repo.promote).toHaveBeenCalledWith('c-ktta', 'GUS');
+    expect(repo.listForDate.mock.calls.length).toBe(callsBefore + 1);
+  });
+
+  // #667 review : the GET in flight may predate the save — the row would come back without the open.
+  it('an open saved during a load asks the day again, rather than trusting the older load', async () => {
+    const ktta = makeCandidate();
+    const { fixture, page, repo } = await setup({ list: [ktta] });
+    repo.listForDate.mockReturnValue(new Subject<Candidate[]>());
+    page.previousDay();
+    page.nextDay();
+    fixture.detectChanges();
+    const callsBefore = repo.listForDate.mock.calls.length;
+
+    page.saveAtOpen({ candidate: ktta, patch: { openPrice: 4.2 } });
+    fixture.detectChanges();
+
+    expect(repo.update).toHaveBeenCalledWith('c-ktta', expect.objectContaining({ openPrice: 4.2 }));
+    // Once, after the save : a reload before it would read nothing newer (#375 review).
+    expect(repo.listForDate.mock.calls.length).toBe(callsBefore + 1);
+  });
+
+  // #320 : Sunday 2026-09-20 read « no candidate on this day », as if a session had been missed.
+  it('says there is no session on a weekend day', async () => {
+    const { fixture, page } = await setup();
+    page.day.set(new Date(2026, 8, 20));
+    await settle(fixture);
 
     expect(page.weekend()).toBe(true);
     expect(fixture.nativeElement.querySelector('.empty-state').textContent).toContain(
