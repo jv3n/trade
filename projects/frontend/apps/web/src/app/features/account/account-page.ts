@@ -1,6 +1,6 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
@@ -26,7 +26,7 @@ import {
   stbLoadGate,
 } from '@portfolioai/ui';
 import { format } from 'date-fns';
-import { EMPTY, Observable, Subscription, catchError, filter, switchMap, tap } from 'rxjs';
+import { EMPTY, Observable, catchError, filter, switchMap, tap } from 'rxjs';
 import {
   AccountMovement,
   AccountMovementFilter,
@@ -36,7 +36,6 @@ import {
   BalancePoint,
 } from '../../core/api/account/account.model';
 import { AccountRepository } from '../../core/api/account/account.repository';
-import { ForexRate } from '../../core/api/forex/forex.model';
 import { ForexRepository } from '../../core/api/forex/forex.repository';
 import { LocateInput } from '../../core/api/locates/locates.model';
 import { LocatesRepository } from '../../core/api/locates/locates.repository';
@@ -45,6 +44,7 @@ import {
   BalanceCurrencyService,
 } from '../../core/app-state/balance-currency.service';
 import { ConfirmService } from '../../core/app-state/confirm.service';
+import { keptValue, lastLoadFailed } from '../../shared/kept-value/kept-value';
 import { PeriodFilter } from '../../shared/period-filter/period-filter';
 import {
   PeriodPresetKey,
@@ -111,8 +111,15 @@ interface AccountFilter {
   type: MovementTypeFilter;
 }
 
-/** The calls behind the page, each able to fail on its own. */
-type LoadCall = 'summary' | 'series' | 'movements';
+/** Same day, or both open : a type change keeps the period, and must not reload the tiles. */
+function samePeriod(
+  a: { dateFrom: Date | null; dateTo: Date | null },
+  b: { dateFrom: Date | null; dateTo: Date | null },
+): boolean {
+  return (
+    a.dateFrom?.getTime() === b.dateFrom?.getTime() && a.dateTo?.getTime() === b.dateTo?.getTime()
+  );
+}
 
 /** The movements table as its skeleton shows it (#539). */
 const SKELETON_COLUMNS: SkeletonColumnDefs = {
@@ -145,8 +152,10 @@ const SKELETON_COLUMNS: SkeletonColumnDefs = {
  * The balance column comes from the server (`balanceAfter`), never recomputed here : it is defined
  * over the whole history, so filtering to trades must not renumber it.
  *
- * Every mutation refetches summary + movements — the dataset is small, so we trust the server
- * rather than splicing locally.
+ * The summary, the series and the movements are resources, each able to fail on its own (#493) :
+ * the summary keyed on the period's dates, the movements on the whole filter and the page, the
+ * series on nothing — it is the whole history, clipped here. Every mutation refetches the three —
+ * the dataset is small, so we trust the server rather than splicing locally.
  */
 @Component({
   selector: 'app-account-page',
@@ -186,7 +195,52 @@ export class AccountPage {
   private readonly translate = inject(TranslateService);
   private readonly toasts = inject(StbToast);
 
-  readonly loading = signal(true);
+  /**
+   * Defaults to the running month's trades — what the page is opened for (#473, #629) ; locates,
+   * deposits and corrections have their own filters, and the KPI tiles keep counting them.
+   */
+  readonly appliedFilter = signal<AccountFilter>({
+    period: 'thisMonth',
+    ...computePeriodRange('thisMonth'),
+    type: 'trades',
+  });
+
+  readonly pageIndex = signal(0);
+  readonly pageSize = signal(25);
+  /**
+   * Bumped by a write, and part of every resource's params : a new key supersedes a load in flight,
+   * where `reload()` is a no-op while one runs — its pre-write answer would win.
+   */
+  private readonly writes = signal(0);
+  private readonly period = computed(
+    () => {
+      const { dateFrom, dateTo } = this.appliedFilter();
+      return { dateFrom, dateTo };
+    },
+    { equal: samePeriod },
+  );
+  private readonly summaryResource = rxResource({
+    params: () => ({ ...this.period(), writes: this.writes() }),
+    stream: ({ params: { dateFrom, dateTo } }) =>
+      this.repo.getSummary({ dateFrom, dateTo, types: null }),
+  });
+  /**
+   * The whole series, always : the chart is clipped client-side, so changing the window doesn't
+   * cost a round-trip and the curve keeps its shape when the user flips between presets.
+   */
+  private readonly seriesResource = rxResource({
+    params: () => ({ writes: this.writes() }),
+    stream: () => this.repo.getBalanceSeries(),
+  });
+  private readonly movementsResource = rxResource({
+    params: () => ({
+      filter: this.toApiFilter(),
+      page: { pageIndex: this.pageIndex(), pageSize: this.pageSize() },
+      writes: this.writes(),
+    }),
+    stream: ({ params }) => this.repo.findMovements(params.filter, params.page),
+  });
+  readonly loading = this.movementsResource.isLoading;
 
   /** First load only (#539) : a refetch keeps the content on screen. */
   readonly gate = stbLoadGate(this.loading);
@@ -200,18 +254,23 @@ export class AccountPage {
     toSkeletonColumns(this.displayedColumns, SKELETON_COLUMNS, this.headerLabels()),
   );
   /**
-   * The calls whose last attempt failed. Each clears itself on its next success, so the banner
-   * stays while anything is still missing and goes once everything loaded again (#493). What a
-   * failed call feeds reads « unavailable » rather than its previous figure.
+   * Each call clears its failure on its next success, so the banner stays while anything is still
+   * missing and goes once everything loaded again (#493). What a failed call feeds reads
+   * « unavailable » rather than its previous figure.
    */
-  private readonly failedCalls = signal<ReadonlySet<LoadCall>>(new Set());
-  readonly loadFailed = computed(() => this.failedCalls().size > 0);
-  private readonly inFlight = signal<ReadonlySet<LoadCall>>(new Set());
+  readonly summaryFailed = lastLoadFailed(this.summaryResource);
+  readonly seriesFailed = lastLoadFailed(this.seriesResource);
+  readonly movementsFailed = lastLoadFailed(this.movementsResource);
+  readonly loadFailed = computed(
+    () => this.summaryFailed() || this.seriesFailed() || this.movementsFailed(),
+  );
   /** A failed call is being tried again — the banner's « Retry » shows it is at work. */
-  readonly retrying = computed(() => [...this.failedCalls()].some((c) => this.inFlight().has(c)));
-  readonly summaryFailed = computed(() => this.failedCalls().has('summary'));
-  readonly seriesFailed = computed(() => this.failedCalls().has('series'));
-  readonly movementsFailed = computed(() => this.failedCalls().has('movements'));
+  readonly retrying = computed(
+    () =>
+      (this.summaryFailed() && this.summaryResource.isLoading()) ||
+      (this.seriesFailed() && this.seriesResource.isLoading()) ||
+      (this.movementsFailed() && this.movementsResource.isLoading()),
+  );
   /**
    * The balance the morning reconciliation measures against — null while the summary is missing :
    * a gap taken against a stale balance would write a wrong correction.
@@ -226,37 +285,27 @@ export class AccountPage {
     'account.kpi.locates',
   ] as const;
   /** The period's figures, over its dates only — never narrowed by the table's type filter. */
-  readonly summary = signal<AccountSummary | null>(null);
-  /** The in-flight calls — each cancelled on refetch so a stale answer never lands last. */
-  private summaryCall?: Subscription;
-  private seriesCall?: Subscription;
-  private movementsCall?: Subscription;
-  readonly movements = signal<AccountMovement[]>([]);
-  readonly totalElements = signal(0);
-  readonly pageIndex = signal(0);
-  readonly pageSize = signal(25);
-
-  readonly series = signal<BalancePoint[]>([]);
+  readonly summary = keptValue(this.summaryResource);
+  private readonly page = keptValue(this.movementsResource);
+  readonly movements = computed<AccountMovement[]>(() => this.page()?.content ?? []);
+  readonly totalElements = computed(() => this.page()?.totalElements ?? 0);
+  readonly series = computed<BalancePoint[]>(() => this.keptSeries() ?? []);
+  private readonly keptSeries = keptValue(this.seriesResource);
 
   /** Today, captured once so the header date doesn't re-evaluate on every change detection. */
   readonly today = new Date();
 
   readonly typeFilters = MOVEMENT_TYPE_FILTERS;
 
-  /**
-   * Defaults to the running month's trades — what the page is opened for (#473, #629) ; locates,
-   * deposits and corrections have their own filters, and the KPI tiles keep counting them.
-   */
-  readonly appliedFilter = signal<AccountFilter>({
-    period: 'thisMonth',
-    ...computePeriodRange('thisMonth'),
-    type: 'trades',
-  });
-
   readonly displayedColumns = ['valueDate', 'type', 'label', 'amount', 'balanceAfter', 'actions'];
 
-  /** USD→other-currency rate for the hero toggle ; null until loaded (or if the lookup failed). */
-  readonly rate = signal<ForexRate | null>(null);
+  /**
+   * USD→other-currency rate for the hero toggle ; null until loaded, or if the lookup failed — then
+   * the CAD toggle stays disabled and the balance keeps showing USD, no banner for a cosmetic
+   * feature. Loaded once : the figure is cached ~6 h backend-side.
+   */
+  private readonly rateResource = rxResource({ stream: () => this.forex.latestRate() });
+  readonly rate = computed(() => (this.rateResource.hasValue() ? this.rateResource.value() : null));
 
   /**
    * The display currency is a **user preference** since #201 : toggling it here writes it on the
@@ -316,11 +365,6 @@ export class AccountPage {
     this.currency() === 'CAD' ? 'account.cadSuffix' : 'account.usdSuffix',
   );
 
-  constructor() {
-    this.fetch();
-    this.fetchRate();
-  }
-
   openAdd(): void {
     this.openMovementDialog(null);
   }
@@ -360,9 +404,10 @@ export class AccountPage {
               const types = TYPES_BY_FILTER[this.appliedFilter().type];
               if (types && !types.includes('LOCATE')) {
                 this.applyFilter({ ...this.appliedFilter(), type: 'locates' });
-              } else {
-                this.fetch();
               }
+              // Even when the filter switches : a type change only reloads the table, and the
+              // locates tile moved too.
+              this.fetch();
             }),
             catchError(() => {
               this.toasts.error(this.translate.instant('locates.snackbar.saveError'));
@@ -445,18 +490,19 @@ export class AccountPage {
     this.fetch();
   }
 
-  /** The banner's « Retry » — reruns the calls that failed, and only those. */
+  /**
+   * The banner's « Retry » — reruns the calls that failed, and only those. `reload()` is enough
+   * here : a failed resource has no load in flight.
+   */
   retry(): void {
-    const failed = this.failedCalls();
-    if (failed.has('summary')) this.fetchSummary();
-    if (failed.has('series')) this.fetchSeries();
-    if (failed.has('movements')) this.fetchMovements();
+    if (this.summaryFailed()) this.summaryResource.reload();
+    if (this.seriesFailed()) this.seriesResource.reload();
+    if (this.movementsFailed()) this.movementsResource.reload();
   }
 
   onPage(event: PageEvent): void {
     this.pageIndex.set(event.pageIndex);
     this.pageSize.set(event.pageSize);
-    this.fetchMovements();
   }
 
   setPeriod(selection: PeriodSelection): void {
@@ -467,7 +513,6 @@ export class AccountPage {
   onTypeChange(type: MovementTypeFilter): void {
     this.appliedFilter.set({ ...this.appliedFilter(), type });
     this.pageIndex.set(0);
-    this.fetchMovements();
   }
 
   setCurrency(currency: BalanceCurrency): void {
@@ -488,7 +533,6 @@ export class AccountPage {
   private applyFilter(next: AccountFilter): void {
     this.appliedFilter.set(next);
     this.pageIndex.set(0);
-    this.fetch();
   }
 
   private clippedSeries(): BalancePoint[] {
@@ -543,89 +587,8 @@ export class AccountPage {
       .subscribe();
   }
 
+  /** After a write : the three calls again, superseding whatever is in flight. */
   private fetch(): void {
-    this.fetchSummary();
-    this.fetchSeries();
-    this.fetchMovements();
-  }
-
-  private fetchSummary(): void {
-    const { dateFrom, dateTo } = this.toApiFilter();
-    this.summaryCall?.unsubscribe();
-    this.started('summary');
-    this.summaryCall = this.repo.getSummary({ dateFrom, dateTo, types: null }).subscribe({
-      next: (s) => {
-        this.summary.set(s);
-        this.markLoaded('summary', true);
-      },
-      error: () => this.markLoaded('summary', false),
-    });
-  }
-
-  private fetchSeries(): void {
-    // The whole series, always : the chart is clipped client-side, so changing the window doesn't
-    // cost a round-trip and the curve keeps its shape when the user flips between presets.
-    this.seriesCall?.unsubscribe();
-    this.started('series');
-    this.seriesCall = this.repo.getBalanceSeries().subscribe({
-      next: (pts) => {
-        this.series.set(pts);
-        this.markLoaded('series', true);
-      },
-      error: () => this.markLoaded('series', false),
-    });
-  }
-
-  /**
-   * One-shot USD→CAD rate fetch (the figure is cached ~6 h backend-side, so we don't refetch on each
-   * mutation like summary/movements). A failure is non-blocking : `rate` stays null, the CAD toggle
-   * stays disabled and the balance keeps showing USD — no error banner for a cosmetic feature.
-   */
-  private fetchRate(): void {
-    this.forex.latestRate().subscribe({
-      next: (r) => this.rate.set(r),
-      error: () => this.rate.set(null),
-    });
-  }
-
-  private fetchMovements(): void {
-    this.loading.set(true);
-    this.movementsCall?.unsubscribe();
-    this.started('movements');
-    this.movementsCall = this.repo
-      .findMovements(this.toApiFilter(), {
-        pageIndex: this.pageIndex(),
-        pageSize: this.pageSize(),
-      })
-      .subscribe({
-        next: (page) => {
-          this.movements.set(page.content);
-          this.totalElements.set(page.totalElements);
-          this.markLoaded('movements', true);
-          this.loading.set(false);
-        },
-        error: () => {
-          this.markLoaded('movements', false);
-          this.loading.set(false);
-        },
-      });
-  }
-
-  private started(call: LoadCall): void {
-    this.inFlight.update((calls) => new Set(calls).add(call));
-  }
-
-  private markLoaded(call: LoadCall, loaded: boolean): void {
-    this.inFlight.update((calls) => {
-      const next = new Set(calls);
-      next.delete(call);
-      return next;
-    });
-    this.failedCalls.update((failed) => {
-      const next = new Set(failed);
-      if (loaded) next.delete(call);
-      else next.add(call);
-      return next;
-    });
+    this.writes.update((n) => n + 1);
   }
 }
