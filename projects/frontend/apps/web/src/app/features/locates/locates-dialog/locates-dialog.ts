@@ -1,5 +1,6 @@
 import { DecimalPipe } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   MAT_DIALOG_DATA,
@@ -17,6 +18,7 @@ import { EMPTY, catchError, filter, finalize, switchMap, tap } from 'rxjs';
 import { Locate } from '../../../core/api/locates/locates.model';
 import { LocatesRepository } from '../../../core/api/locates/locates.repository';
 import { ConfirmService } from '../../../core/app-state/confirm.service';
+import { keptValue } from '../../../shared/kept-value/kept-value';
 import {
   blendedLocatePercent,
   locateBreach,
@@ -75,8 +77,15 @@ export class LocatesDialog {
   private readonly toasts = inject(StbToast);
   private readonly translate = inject(TranslateService);
 
-  readonly locates = signal<Locate[]>([]);
-  readonly loadError = signal(false);
+  /** Bumped by a write : a new key supersedes a load in flight, where `reload()` would be a no-op. */
+  private readonly writes = signal(0);
+  private readonly listing = rxResource({
+    params: () => ({ writes: this.writes() }),
+    stream: () => this.repo.listForDate(this.data.tradingDate, this.data.ticker),
+  });
+  private readonly listed = keptValue(this.listing);
+  readonly locates = computed<Locate[]>(() => this.listed() ?? []);
+  readonly loadError = computed(() => this.listing.status() === 'error');
   readonly saving = signal(false);
   private changed = false;
 
@@ -93,7 +102,13 @@ export class LocatesDialog {
    * The share's price when the locate is bought — starts from the last locate's (a top-up is the same
    * share), else from the day's PM open ; corrected when typed.
    */
-  readonly stockPrice = signal<number | null>(this.data.stockPrice);
+  readonly stockPrice = linkedSignal<Locate[] | null, number | null>({
+    source: () => this.listed(),
+    computation: (list, previous) =>
+      this.stockPriceTyped && previous
+        ? previous.value
+        : (list?.at(-1)?.stockPrice ?? this.data.stockPrice),
+  });
   private stockPriceTyped = false;
   readonly cost = computed(() => locateCost(this.shares(), this.price()));
   readonly percent = computed(() => locatePercent(this.price(), this.stockPrice()));
@@ -110,10 +125,6 @@ export class LocatesDialog {
     const e = this.editing();
     return e ? locateCost(e.shares, e.price) : null;
   });
-
-  constructor() {
-    this.load();
-  }
 
   add(): void {
     const shares = this.shares();
@@ -242,15 +253,6 @@ export class LocatesDialog {
   }
 
   private load(): void {
-    this.repo.listForDate(this.data.tradingDate, this.data.ticker).subscribe({
-      next: (list) => {
-        this.locates.set(list);
-        this.loadError.set(false);
-        if (!this.stockPriceTyped) {
-          this.stockPrice.set(list.at(-1)?.stockPrice ?? this.data.stockPrice);
-        }
-      },
-      error: () => this.loadError.set(true),
-    });
+    this.writes.update((n) => n + 1);
   }
 }

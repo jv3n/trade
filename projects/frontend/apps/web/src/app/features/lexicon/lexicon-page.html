@@ -21,10 +21,10 @@
     </div>
   </header>
 
-  @if (error(); as msg) {
+  @if (error()) {
     <div class="error-banner">
       <mat-icon>error</mat-icon>
-      <span>{{ msg }}</span>
+      <span>{{ 'lexicon.errors.load' | translate }}</span>
     </div>
   }
 
