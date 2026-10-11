@@ -3,7 +3,7 @@ import { adminGuard, authGuard, guestGuard } from './core/router/auth.guards';
 import { unsavedChangesGuard } from './core/router/unsaved-changes.guard';
 
 /**
- * Trading-tracking app : today (home), candidates, stats sheet, journal, account, patterns,
+ * Trading-tracking app : today (home), candidates, stats sheet, journal, account, reports, patterns,
  * lexicon and settings.
  *
  * **Admin gating** is per sub-route, not on `/settings` itself, so USER role can reach
@@ -35,6 +35,11 @@ export const routes: Routes = [
     path: 'account',
     canActivate: [authGuard],
     loadComponent: () => import('./features/account/account-page').then((m) => m.AccountPage),
+  },
+  {
+    path: 'reports',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/reports/reports-page').then((m) => m.ReportsPage),
   },
   {
     path: 'candidates',
