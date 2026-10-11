@@ -34,7 +34,7 @@ function series(days: number, start: number, drift: number, noise: number): Area
 }
 
 const meta: Meta<AreaChartArgs> = {
-  title: 'Components/Chart',
+  title: 'Components/Chart/Area',
   decorators: [moduleMetadata({ imports: [StbAreaChart] })],
   argTypes: {
     points: {
