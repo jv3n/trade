@@ -1,5 +1,5 @@
 import { provideZonelessChangeDetection } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
 import { MatDialog, StbToast } from '@portfolioai/ui';
@@ -30,6 +30,9 @@ import { JournalDetailPage } from './journal-detail-page';
  * - **Delete (confirmed)** navigates back to the journal.
  * - **The day's locates (#609)** on the trade's ticker sit in the day context, summed to the cent ;
  *   the key opens them to top up or fix (#625), a top-up starting from the last price paid.
+ * - **Loading (#671)** — the trade, its stat, the locates and the screenshot are resources : a
+ *   switch between the trades of a stat drops the answer of the one left, and `settle()` waits for
+ *   them before a test reads the page.
  * - **A trade on its own (#634)** has no stat : nothing is asked of the stats, the header and the
  *   context card say so, and the locates, the fills and the direction chosen at creation still work.
  *   Its pattern is a select (#654) ; a trade with a stat shows the stat's as a read-only tag.
@@ -103,15 +106,22 @@ describe('JournalDetailPage', () => {
     TestBed.resetTestingModule();
   });
 
+  /** The trade and what reads off it load through resources (#671), a tick after the call. */
+  async function settle(fixture: ComponentFixture<JournalDetailPage>): Promise<void> {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+
   describe("the day's locates", () => {
     function dayLocates(fixture: ReturnType<typeof setup>): HTMLElement {
       return fixture.nativeElement.querySelector('[data-testid="day-locates"]');
     }
 
-    it("reads the locates of the trade's day and ticker", () => {
+    it("reads the locates of the trade's day and ticker", async () => {
       listLocates.mockReturnValue(of([makeLocate()]));
       const fixture = setup();
-      fixture.detectChanges();
+      await settle(fixture);
 
       expect(listLocates).toHaveBeenCalledWith(new Date(2026, 8, 17), 'KTTA');
       expect(dayLocates(fixture).textContent).toContain('2,000 × 0.04');
@@ -119,13 +129,14 @@ describe('JournalDetailPage', () => {
     });
 
     // The page open when the figures are checked against the broker statement.
-    it('opens them at the last price paid to top up or fix, then reads them again', () => {
+    it('opens them at the last price paid to top up or fix, then reads them again', async () => {
       listLocates.mockReturnValue(of([makeLocate()]));
       const fixture = setup();
-      fixture.detectChanges();
+      await settle(fixture);
       listLocates.mockClear();
 
       fixture.componentInstance.editLocates();
+      await settle(fixture);
 
       expect(dialogOpen).toHaveBeenCalledWith(
         expect.anything(),
@@ -142,7 +153,7 @@ describe('JournalDetailPage', () => {
       expect(listLocates).toHaveBeenCalledWith(new Date(2026, 8, 17), 'KTTA');
     });
 
-    it('adds a top-up to the cent, and its shares to weigh against the position', () => {
+    it('adds a top-up to the cent, and its shares to weigh against the position', async () => {
       listLocates.mockReturnValue(
         of([
           makeLocate({ shares: 2000, cost: 0.1 }),
@@ -150,16 +161,16 @@ describe('JournalDetailPage', () => {
         ]),
       );
       const fixture = setup();
-      fixture.detectChanges();
+      await settle(fixture);
 
       expect(fixture.componentInstance.locatesTotal()).toBe(0.3);
       expect(fixture.componentInstance.locatesShares()).toBe(2500);
     });
 
-    it('says the locates are unavailable rather than showing none', () => {
+    it('says the locates are unavailable rather than showing none', async () => {
       listLocates.mockReturnValue(throwError(() => new Error('503')));
       const fixture = setup();
-      fixture.detectChanges();
+      await settle(fixture);
 
       expect(dayLocates(fixture).textContent).toContain(
         'journal.detail.context.locatesUnavailable',
@@ -167,10 +178,10 @@ describe('JournalDetailPage', () => {
     });
   });
 
-  it('loads the trade by route id and the stat behind it for the day context', () => {
+  it('loads the trade by route id and the stat behind it for the day context', async () => {
     findById = vi.fn(() => of(closedTrade()));
     const fixture = setup();
-    fixture.detectChanges();
+    await settle(fixture);
     const page = fixture.componentInstance;
 
     expect(findById).toHaveBeenCalledWith('abc-123');
@@ -181,11 +192,11 @@ describe('JournalDetailPage', () => {
     expect(page.context()?.lodPercent).toBeCloseTo(-18.81, 2);
   });
 
-  it('keeps the page usable when the day context fails to load', () => {
+  it('keeps the page usable when the day context fails to load', async () => {
     findById = vi.fn(() => of(closedTrade()));
     statFindById = vi.fn(() => throwError(() => new Error('boom')));
     const fixture = setup();
-    fixture.detectChanges();
+    await settle(fixture);
 
     expect(fixture.componentInstance.context()).toBeNull();
     expect(fixture.componentInstance.entry()).not.toBeNull();
@@ -194,10 +205,10 @@ describe('JournalDetailPage', () => {
   describe('a trade on its own (#634)', () => {
     const alone = () => makeTrade({ statEntryId: null, direction: 'BUY', executions: [] });
 
-    it('asks no stat, and says so in the header and the day context', () => {
+    it('asks no stat, and says so in the header and the day context', async () => {
       findById = vi.fn(() => of(alone()));
       const fixture = setup();
-      fixture.detectChanges();
+      await settle(fixture);
       const el: HTMLElement = fixture.nativeElement;
 
       expect(statFindById).not.toHaveBeenCalled();
@@ -207,7 +218,7 @@ describe('JournalDetailPage', () => {
       expect(el.querySelector('a[href="/stats"]')).toBeNull();
     });
 
-    it('keeps its locates, weighed against the price of its first entry', () => {
+    it('keeps its locates, weighed against the price of its first entry', async () => {
       findById = vi.fn(() =>
         of(
           makeTrade({
@@ -221,24 +232,26 @@ describe('JournalDetailPage', () => {
       );
       listLocates.mockReturnValue(of([makeLocate()]));
       const fixture = setup();
-      fixture.detectChanges();
+      await settle(fixture);
 
       expect(
         fixture.nativeElement.querySelector('[data-testid="day-locates"]').textContent,
       ).toContain('80.00');
       fixture.componentInstance.editLocates();
+      await settle(fixture);
       expect(dialogOpen).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({ data: expect.objectContaining({ stockPrice: 2.5 }) }),
       );
     });
 
-    it('has no share price to offer before any fill', () => {
+    it('has no share price to offer before any fill', async () => {
       findById = vi.fn(() => of(alone()));
       const fixture = setup();
-      fixture.detectChanges();
+      await settle(fixture);
 
       fixture.componentInstance.editLocates();
+      await settle(fixture);
 
       expect(dialogOpen).toHaveBeenCalledWith(
         expect.anything(),
@@ -246,17 +259,18 @@ describe('JournalDetailPage', () => {
       );
     });
 
-    it('offers its pattern as a select, and the save sends the one picked (#654)', () => {
+    it('offers its pattern as a select, and the save sends the one picked (#654)', async () => {
       findById = vi.fn(() => of(alone()));
       update = vi.fn((_id: string, _input: TradeEntryInput) => of(alone()));
       const fixture = setup();
-      fixture.detectChanges();
+      await settle(fixture);
       const page = fixture.componentInstance;
 
       expect(fixture.nativeElement.querySelector('[data-testid="pattern-select"]')).not.toBeNull();
       page.setPattern('SIR');
       expect(page.dirty()).toBe(true);
       page.save();
+      await settle(fixture);
 
       const [, input] = update.mock.calls[0] as [string, TradeEntryInput];
       expect(input.pattern).toBe('SIR');
@@ -264,14 +278,15 @@ describe('JournalDetailPage', () => {
     });
 
     // A long typed at creation must not fall back to a short on the first save before any fill.
-    it('keeps the direction chosen at creation through a save before any fill', () => {
+    it('keeps the direction chosen at creation through a save before any fill', async () => {
       findById = vi.fn(() => of(alone()));
       update = vi.fn((_id: string, _input: TradeEntryInput) => of(alone()));
       const fixture = setup();
-      fixture.detectChanges();
+      await settle(fixture);
 
       fixture.componentInstance.setNote('Bounce off the LOD, typed from the statement.');
       fixture.componentInstance.save();
+      await settle(fixture);
 
       const [, input] = update.mock.calls[0] as [string, TradeEntryInput];
       expect(input.direction).toBe('BUY');
@@ -280,10 +295,10 @@ describe('JournalDetailPage', () => {
     });
 
     // #642 : « La stat du jour est conservée » under a header that says « sans stat ».
-    it('asks to delete it without promising a stat', () => {
+    it('asks to delete it without promising a stat', async () => {
       findById = vi.fn(() => of(alone()));
       const fixture = setup();
-      fixture.detectChanges();
+      await settle(fixture);
       const ask = vi.spyOn(TestBed.inject(ConfirmService), 'ask');
 
       fixture.componentInstance.delete();
@@ -296,18 +311,18 @@ describe('JournalDetailPage', () => {
   });
 
   // #320 : « Position closed · computed P&L — » stood under the empty message of a new trade.
-  it('shows no position footer while the trade has no execution', () => {
+  it('shows no position footer while the trade has no execution', async () => {
     findById = vi.fn(() => of(makeTrade({ executions: [] })));
     const fixture = setup();
-    fixture.detectChanges();
+    await settle(fixture);
 
     expect(fixture.nativeElement.querySelector('.exec-footer')).toBeNull();
   });
 
-  it('derives the position, its duration and the computed P&L from the executions', () => {
+  it('derives the position, its duration and the computed P&L from the executions', async () => {
     findById = vi.fn(() => of(closedTrade()));
     const fixture = setup();
-    fixture.detectChanges();
+    await settle(fixture);
     const page = fixture.componentInstance;
 
     expect(page.preview().size).toBe(350);
@@ -318,20 +333,20 @@ describe('JournalDetailPage', () => {
     expect(page.timeRange()).toEqual({ first: '09:41', last: '13:15' });
   });
 
-  it('retains the computed P&L while no real one is typed', () => {
+  it('retains the computed P&L while no real one is typed', async () => {
     findById = vi.fn(() => of(closedTrade()));
     const fixture = setup();
-    fixture.detectChanges();
+    await settle(fixture);
 
     expect(fixture.componentInstance.pnl().real).toBeNull();
     expect(fixture.componentInstance.pnl().gap).toBeNull();
     expect(fixture.componentInstance.pnl().retained).toBeCloseTo(294, 2);
   });
 
-  it('shows the gap live as soon as the broker P&L is typed, and retains that one', () => {
+  it('shows the gap live as soon as the broker P&L is typed, and retains that one', async () => {
     findById = vi.fn(() => of(closedTrade()));
     const fixture = setup();
-    fixture.detectChanges();
+    await settle(fixture);
     const page = fixture.componentInstance;
 
     page.setRealProfit(291.85);
@@ -343,14 +358,14 @@ describe('JournalDetailPage', () => {
   });
 
   // Hit in the pilot test : 592.15 $ typed on a still-open short reached the account (#304).
-  it('keeps the broker P&L out of an open position, in the figures and in what is saved', () => {
+  it('keeps the broker P&L out of an open position, in the figures and in what is saved', async () => {
     const openShort = makeTrade({
       executions: [{ seq: 0, kind: 'ENTRY', shares: 500, price: 8.4, executedAt: '09:41' }],
     });
     findById = vi.fn(() => of(openShort));
     update = vi.fn((_id: string, _input: TradeEntryInput) => of(openShort));
     const fixture = setup();
-    fixture.detectChanges();
+    await settle(fixture);
     const page = fixture.componentInstance;
 
     page.setRealProfit(592.15);
@@ -358,15 +373,16 @@ describe('JournalDetailPage', () => {
     expect(page.realAllowed()).toBe(false);
     expect(page.pnl().retained).toBeNull();
     page.save();
+    await settle(fixture);
     const [, input] = update.mock.calls[0] as [string, TradeEntryInput];
     expect(input.realProfitDollars).toBeNull();
   });
 
-  it('warns that Save erases the broker P&L of a trade whose position was reopened', () => {
+  it('warns that Save erases the broker P&L of a trade whose position was reopened', async () => {
     const closed = closedTrade();
     findById = vi.fn(() => of({ ...closed, realProfitDollars: 746.34 }));
     const fixture = setup();
-    fixture.detectChanges();
+    await settle(fixture);
     const page = fixture.componentInstance;
 
     expect(page.realToBeErased()).toBeNull();
@@ -376,16 +392,17 @@ describe('JournalDetailPage', () => {
     expect(page.realToBeErased()).toBe(746.34);
   });
 
-  it('asks before a Save that erases the broker P&L, and saves nothing when cancelled', () => {
+  it('asks before a Save that erases the broker P&L, and saves nothing when cancelled', async () => {
     findById = vi.fn(() => of({ ...closedTrade(), realProfitDollars: 746.34 }));
     const fixture = setup();
     confirmed = false;
     const ask = vi.spyOn(TestBed.inject(ConfirmService), 'ask');
-    fixture.detectChanges();
+    await settle(fixture);
     const page = fixture.componentInstance;
     page.removeExecution(3);
 
     page.save();
+    await settle(fixture);
 
     expect(ask).toHaveBeenCalledWith('journal.confirmEraseReal', {
       params: { amount: '746.34' },
@@ -394,7 +411,7 @@ describe('JournalDetailPage', () => {
     expect(update).not.toHaveBeenCalled();
   });
 
-  it('disables the broker P&L field until the position is closed', () => {
+  it('disables the broker P&L field until the position is closed', async () => {
     findById = vi.fn(() =>
       of(
         makeTrade({
@@ -403,7 +420,7 @@ describe('JournalDetailPage', () => {
       ),
     );
     const fixture = setup();
-    fixture.detectChanges();
+    await settle(fixture);
     const realInput = (): HTMLInputElement =>
       fixture.nativeElement.querySelector('[data-testid="real-pnl"]');
 
@@ -413,16 +430,16 @@ describe('JournalDetailPage', () => {
     page.addExecution();
     page.setExecutionShares(1, 500);
     page.setExecutionPrice(1, 7.2);
-    fixture.detectChanges();
+    await settle(fixture);
 
     expect(page.realAllowed()).toBe(true);
     expect(realInput().disabled).toBe(false);
   });
 
-  it('the save bar only shows up once the draft drifts, and Cancel puts the trade back', () => {
+  it('the save bar only shows up once the draft drifts, and Cancel puts the trade back', async () => {
     findById = vi.fn(() => of(closedTrade()));
     const fixture = setup();
-    fixture.detectChanges();
+    await settle(fixture);
     const page = fixture.componentInstance;
 
     expect(page.dirty()).toBe(false);
@@ -437,7 +454,7 @@ describe('JournalDetailPage', () => {
 
   // Seen on staging (#331) : the API sends `09:38:00`, the time input hands back `09:38` once
   // touched — re-picking the same fill time raised the save bar and the leave confirmation.
-  it('shows fill times without seconds, and re-picking the same one leaves the trade clean', () => {
+  it('shows fill times without seconds, and re-picking the same one leaves the trade clean', async () => {
     findById = vi.fn(() =>
       of(
         makeTrade({
@@ -446,7 +463,7 @@ describe('JournalDetailPage', () => {
       ),
     );
     const fixture = setup();
-    fixture.detectChanges();
+    await settle(fixture);
     const page = fixture.componentInstance;
     const pick = (value: string) =>
       page.setExecutionTime(0, { target: { value } } as unknown as Event);
@@ -461,7 +478,7 @@ describe('JournalDetailPage', () => {
   });
 
   // #647 : SDEV's third trade on 29/09 was shorted at 11:08 — the flag left the stat for the trade.
-  it('tags a trade « after 11 am » off its first entry fill, nothing to tick', () => {
+  it('tags a trade « after 11 am » off its first entry fill, nothing to tick', async () => {
     findById = vi.fn(() =>
       of(
         makeTrade({
@@ -473,7 +490,7 @@ describe('JournalDetailPage', () => {
       ),
     );
     const fixture = setup();
-    fixture.detectChanges();
+    await settle(fixture);
     const tag = (): HTMLElement | null =>
       fixture.nativeElement.querySelector('[data-testid="late-entry"]');
 
@@ -483,21 +500,21 @@ describe('JournalDetailPage', () => {
     fixture.componentInstance.setExecutionTime(0, {
       target: { value: '10:59' },
     } as unknown as Event);
-    fixture.detectChanges();
+    await settle(fixture);
 
     expect(tag()).toBeNull();
   });
 
-  it('an exit after 11 am does not make the trade a late entry', () => {
+  it('an exit after 11 am does not make the trade a late entry', async () => {
     // closedTrade() is shorted at 09:41 and covered last at 13:15.
     findById = vi.fn(() => of(closedTrade()));
     const fixture = setup();
-    fixture.detectChanges();
+    await settle(fixture);
 
     expect(fixture.componentInstance.lateEntry()).toBeNull();
   });
 
-  it('counts 11:00 sharp as after 11 am, and an untimed entry not at all', () => {
+  it('counts 11:00 sharp as after 11 am, and an untimed entry not at all', async () => {
     findById = vi.fn(() =>
       of(
         makeTrade({
@@ -509,16 +526,16 @@ describe('JournalDetailPage', () => {
       ),
     );
     const fixture = setup();
-    fixture.detectChanges();
+    await settle(fixture);
 
     expect(fixture.componentInstance.lateEntry()).toBe('11:00');
   });
 
   // Hit twice in the pilot test : leaving the page dropped the post-mortem without a word (#303).
-  it('reports unsaved changes to the leave guard, and asks the browser on tab close', () => {
+  it('reports unsaved changes to the leave guard, and asks the browser on tab close', async () => {
     findById = vi.fn(() => of(closedTrade()));
     const fixture = setup();
-    fixture.detectChanges();
+    await settle(fixture);
     const page = fixture.componentInstance;
     const unload = () => {
       const event = new Event('beforeunload', { cancelable: true });
@@ -539,37 +556,57 @@ describe('JournalDetailPage', () => {
   // `unsavedChangesGuard` runs on a parameter-only change too : the sheet asking again on top of
   // it showed two dialogs for one click, and the previous trade under the new URL in between.
 
-  it('moving to another trade of the stat asks nothing of its own — the router guard does', () => {
+  it('moving to another trade of the stat asks nothing of its own — the router guard does', async () => {
     findById = vi.fn(() => of(closedTrade()));
     const fixture = setup();
-    fixture.detectChanges();
+    await settle(fixture);
     const page = fixture.componentInstance;
     const ask = vi.spyOn(TestBed.inject(ConfirmService), 'ask');
     page.setNote('Re-entered 20 % above my exit.');
 
     params.next(convertToParamMap({ id: 't3' }));
+    await settle(fixture);
 
     expect(ask).not.toHaveBeenCalled();
     expect(findById).toHaveBeenLastCalledWith('t3');
   });
 
-  it('saving refreshes the header : the tag of the trade, the total and the order', () => {
+  // #671 : the trade loads through a resource keyed on the route id — a switch cancels the load left.
+  it('a switch to another trade of the stat drops the answer of the one left', async () => {
+    const left = new Subject<TradeEntry>();
+    findById = vi.fn((id: string) => (id === 't3' ? left : of(makeTrade({ id }))));
+    const fixture = setup();
+    await settle(fixture);
+
+    params.next(convertToParamMap({ id: 't3' }));
+    fixture.detectChanges();
+    params.next(convertToParamMap({ id: 't4' }));
+    await settle(fixture);
+    left.next(makeTrade({ id: 't3' }));
+
+    expect(left.observed).toBe(false);
+    expect(fixture.componentInstance.entry()?.id).toBe('t4');
+    expect(fixture.componentInstance.dirty()).toBe(false);
+  });
+
+  it('saving refreshes the header : the tag of the trade, the total and the order', async () => {
     findById = vi.fn(() => of(closedTrade()));
     const fixture = setup();
-    fixture.detectChanges();
+    await settle(fixture);
     const page = fixture.componentInstance;
     statFindById.mockClear();
     page.setNote('Faded the push as planned.');
 
     page.save();
+    await settle(fixture);
 
     expect(statFindById).toHaveBeenCalledWith('stat-1');
   });
 
-  it('leaves without asking once the trade is deleted', () => {
+  it('leaves without asking once the trade is deleted', async () => {
     findById = vi.fn(() => of(closedTrade()));
     const fixture = setup();
-    fixture.detectChanges();
+    await settle(fixture);
     const page = fixture.componentInstance;
     vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     page.setNote('Half-written debrief');
@@ -580,7 +617,7 @@ describe('JournalDetailPage', () => {
     expect(page.hasUnsavedChanges()).toBe(false);
   });
 
-  it('a new fill defaults to a cover while shares are still open', () => {
+  it('a new fill defaults to a cover while shares are still open', async () => {
     findById = vi.fn(() =>
       of(
         makeTrade({
@@ -589,7 +626,7 @@ describe('JournalDetailPage', () => {
       ),
     );
     const fixture = setup();
-    fixture.detectChanges();
+    await settle(fixture);
     const page = fixture.componentInstance;
 
     page.addExecution();
@@ -597,26 +634,27 @@ describe('JournalDetailPage', () => {
     expect(page.draft()?.executions.at(-1)?.kind).toBe('EXIT');
   });
 
-  it("shows a trade with a stat under the stat's pattern, as a read-only tag (#654)", () => {
+  it("shows a trade with a stat under the stat's pattern, as a read-only tag (#654)", async () => {
     const fixture = setup();
-    fixture.detectChanges();
+    await settle(fixture);
     const el: HTMLElement = fixture.nativeElement;
 
     expect(el.querySelector('[data-testid="pattern-select"]')).toBeNull();
     expect(el.querySelector('.subtitle .tag-accent')?.textContent).toContain('patterns.short.GUS');
   });
 
-  it('save sends the whole trade back, identity included, and drops half-typed fills', () => {
+  it('save sends the whole trade back, identity included, and drops half-typed fills', async () => {
     findById = vi.fn(() => of(closedTrade()));
     update = vi.fn((_id: string, _input: TradeEntryInput) => of(closedTrade()));
     const fixture = setup();
-    fixture.detectChanges();
+    await settle(fixture);
     const page = fixture.componentInstance;
 
     page.addExecution(); // left blank on purpose — it must not reach the backend
     page.setRealProfit(291.85);
     page.setNote('  Rejected under the premarket high.  ');
     page.save();
+    await settle(fixture);
 
     expect(update).toHaveBeenCalledTimes(1);
     const [id, input] = update.mock.calls[0] as [string, TradeEntryInput];
@@ -632,7 +670,7 @@ describe('JournalDetailPage', () => {
     expect(page.dirty()).toBe(false);
   });
 
-  it('refuses to save a set that covers more shares than it shorted', () => {
+  it('refuses to save a set that covers more shares than it shorted', async () => {
     findById = vi.fn(() =>
       of(
         makeTrade({
@@ -645,19 +683,20 @@ describe('JournalDetailPage', () => {
     );
     update = vi.fn((_id: string, _input: TradeEntryInput) => of(makeTrade()));
     const fixture = setup();
-    fixture.detectChanges();
+    await settle(fixture);
     const page = fixture.componentInstance;
 
     expect(page.executionInvalid()).toBe(true);
     page.save();
+    await settle(fixture);
 
     expect(update).not.toHaveBeenCalled();
   });
 
-  it('delete (confirmed) navigates back to the journal', () => {
+  it('delete (confirmed) navigates back to the journal', async () => {
     findById = vi.fn(() => of(makeTrade()));
     const fixture = setup();
-    fixture.detectChanges();
+    await settle(fixture);
     const router = TestBed.inject(Router);
     const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
@@ -670,7 +709,7 @@ describe('JournalDetailPage', () => {
 
   // ---- The stat's other trades (#500) ----
 
-  it('lists the trades of its stat in the header, the current one outlined, with their total', () => {
+  it('lists the trades of its stat in the header, the current one outlined, with their total', async () => {
     // SDEV, 29/09 : three trades on one stat, this sheet the third.
     findById = vi.fn(() => of({ ...closedTrade(), ticker: 'SDEV' }));
     statFindById = vi.fn(() =>
@@ -685,7 +724,7 @@ describe('JournalDetailPage', () => {
       ),
     );
     const fixture = setup();
-    fixture.detectChanges();
+    await settle(fixture);
 
     const tags = fixture.nativeElement.querySelectorAll('.sibling-tag');
     expect(tags).toHaveLength(3);
@@ -693,15 +732,15 @@ describe('JournalDetailPage', () => {
     expect(fixture.componentInstance.statTotal()).toBeCloseTo(-1468.26, 2);
   });
 
-  it('a stat with a single trade shows no tags', () => {
+  it('a stat with a single trade shows no tags', async () => {
     findById = vi.fn(() => of(closedTrade()));
     const fixture = setup();
-    fixture.detectChanges();
+    await settle(fixture);
 
     expect(fixture.nativeElement.querySelector('.siblings')).toBeNull();
   });
 
-  it('deleting one of several trades says the others are kept', () => {
+  it('deleting one of several trades says the others are kept', async () => {
     findById = vi.fn(() => of(closedTrade()));
     statFindById = vi.fn(() =>
       of(
@@ -714,7 +753,7 @@ describe('JournalDetailPage', () => {
       ),
     );
     const fixture = setup();
-    fixture.detectChanges();
+    await settle(fixture);
     const ask = vi.spyOn(TestBed.inject(ConfirmService), 'ask');
 
     fixture.componentInstance.delete();
@@ -725,14 +764,15 @@ describe('JournalDetailPage', () => {
     });
   });
 
-  it('removeScreenshot calls the repository and clears the flag on the entry', () => {
+  it('removeScreenshot calls the repository and clears the flag on the entry', async () => {
     // Start without a screenshot so load() doesn't reach for a blob (jsdom has no
     // URL.createObjectURL) — we're pinning the delete wiring, not the object-URL preview.
     findById = vi.fn(() => of(makeTrade()));
     const fixture = setup();
-    fixture.detectChanges();
+    await settle(fixture);
 
     fixture.componentInstance.removeScreenshot();
+    await settle(fixture);
 
     expect(deleteScreenshot).toHaveBeenCalledWith('abc-123');
     expect(fixture.componentInstance.entry()?.hasScreenshot).toBe(false);
