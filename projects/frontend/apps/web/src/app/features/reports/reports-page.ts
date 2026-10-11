@@ -17,7 +17,7 @@ import {
   StbTabsModule,
   stbLoadGate,
 } from '@portfolioai/ui';
-import { getQuarter } from 'date-fns';
+import { getQuarter, startOfDay } from 'date-fns';
 import {
   AccountMovementType,
   CashFlow,
@@ -42,6 +42,7 @@ import {
   defaultBucketSize,
   fittingBucketSize,
   nothingMoved,
+  reportWindow,
   seriesKeys,
   seriesValues,
   totals,
@@ -109,9 +110,15 @@ export class ReportsPage {
     params: () => (this.selection().period === 'all' ? { retry: this.retries() } : undefined),
     stream: () => this.repo.getCashFlow({ dateFrom: null, dateTo: null, types: null }, 'YEAR'),
   });
+  /** Today, once : the window's upper bound for the presets (#703). */
+  private readonly today = startOfDay(new Date());
+  /** What the report asks for — the selection, with a preset never running past today. */
+  private readonly window = computed(() => reportWindow(this.selection(), this.today));
   private readonly span = computed(() => {
-    const { period, dateFrom, dateTo } = this.selection();
-    if (period !== 'all') return { from: dateFrom, to: dateTo };
+    if (this.selection().period !== 'all') {
+      const { dateFrom, dateTo } = this.window();
+      return { from: dateFrom, to: dateTo };
+    }
     const all = this.allTimeResource.hasValue() ? this.allTimeResource.value() : undefined;
     return { from: all?.dateFrom ?? null, to: all?.dateTo ?? null };
   });
@@ -132,8 +139,8 @@ export class ReportsPage {
   readonly chosenSize = signal<CashFlowBucketSize | null>(null);
   /** What the page would draw : the hand-picked size, or the period's default. */
   private readonly preferredSize = computed(() => {
-    const { period, dateFrom, dateTo } = this.selection();
-    return this.chosenSize() ?? defaultBucketSize(period, dateFrom, dateTo);
+    const { dateFrom, dateTo } = this.window();
+    return this.chosenSize() ?? defaultBucketSize(this.selection().period, dateFrom, dateTo);
   });
   readonly bucketSize = computed(() =>
     // A choice that does not fit this period shows the nearest one that does, and comes back with
@@ -143,8 +150,8 @@ export class ReportsPage {
 
   private readonly flowResource = rxResource({
     params: () => ({
-      dateFrom: this.selection().dateFrom,
-      dateTo: this.selection().dateTo,
+      dateFrom: this.window().dateFrom,
+      dateTo: this.window().dateTo,
       types: this.types(),
       groupBy: this.bucketSize(),
       retry: this.retries(),
