@@ -1,11 +1,10 @@
 import { isPlatformBrowser } from '@angular/common';
-import { Component, PLATFORM_ID, computed, effect, inject } from '@angular/core';
+import { Component, PLATFORM_ID, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 
 import { TranslatePipe } from '@ngx-translate/core';
 import { StbButtonModule, StbIconModule } from '@portfolioai/ui';
-import { AuthService } from '../../core/app-state/auth.service';
 
 /**
  * `/login` page. One job : trigger the OAuth dance.
@@ -16,10 +15,7 @@ import { AuthService } from '../../core/app-state/auth.service';
  * `SESSION` cookie, and redirects to `/` — the SPA reloads, [AuthService.refresh] picks up
  * the new session, and the user lands on the dashboard.
  *
- * If [AuthService.isAuthenticated] is already true when the page mounts, we redirect to
- * `/today` immediately (the home page since #199) — typically happens when the user
- * bookmarks `/login` or hits Back after logging in. Done via an `effect()` so the redirect runs
- * after the signal is primed by the boot initializer.
+ * A visitor already signed in never reaches it : `guestGuard` sends them to `/today`.
  */
 @Component({
   selector: 'app-login-page',
@@ -28,8 +24,6 @@ import { AuthService } from '../../core/app-state/auth.service';
   styleUrl: './login-page.scss',
 })
 export class LoginPage {
-  private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
@@ -55,14 +49,6 @@ export class LoginPage {
         return null;
     }
   });
-
-  constructor() {
-    effect(() => {
-      if (this.auth.isAuthenticated()) {
-        void this.router.navigate(['/today']);
-      }
-    });
-  }
 
   signInWithGoogle(): void {
     if (!this.isBrowser) return;

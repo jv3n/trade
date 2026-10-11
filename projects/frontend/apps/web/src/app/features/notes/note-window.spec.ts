@@ -43,7 +43,10 @@ describe('NoteWindow', () => {
       providers: [
         provideZonelessChangeDetection(),
         provideTranslateService({ lang: 'en' }),
-        { provide: ThemeService, useValue: { resolved: signal('dark') } },
+        {
+          provide: ThemeService,
+          useValue: { resolved: signal('dark'), mirrorTo: vi.fn(() => vi.fn()) },
+        },
         { provide: ConfirmService, useValue: { ask } },
       ],
     });
