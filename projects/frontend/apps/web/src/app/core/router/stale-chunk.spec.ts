@@ -1,6 +1,11 @@
 import { NavigationError } from '@angular/router';
 import { describe, expect, it, vi } from 'vitest';
-import { StaleChunkEnv, isStaleChunkError, reloadOnStaleChunk } from './stale-chunk';
+import {
+  StaleChunkEnv,
+  isHealedStaleChunk,
+  isStaleChunkError,
+  reloadOnStaleChunk,
+} from './stale-chunk';
 
 /**
  * Pins the reload of a tab left open across a deploy (#644) — its next lazy route asks for a chunk
@@ -9,7 +14,9 @@ import { StaleChunkEnv, isStaleChunkError, reloadOnStaleChunk } from './stale-ch
  * - **a stale chunk loads the page it was going to**, from the new version ;
  * - **once** — a second stale chunk within ten seconds is a real failure, never a reload loop ;
  * - **any other navigation error is left alone**, and so is a browser with no storage to remember
- *   the first reload by.
+ *   the first reload by ;
+ * - **only a healed stale chunk goes unreported** (#690) — the router rethrows it after the reload,
+ *   the error tracker asks [isHealedStaleChunk] ; every error left alone is still reported.
  */
 function env(stored: string | null = null): StaleChunkEnv & { store: Map<string, string> } {
   const store = new Map<string, string>();
@@ -81,5 +88,41 @@ describe('stale chunk', () => {
     reloadOnStaleChunk(navigationError(CHROMIUM), e);
 
     expect(e.assign).not.toHaveBeenCalled();
+  });
+
+  describe('what the error tracker drops', () => {
+    it('drops the stale chunk the reload heals', () => {
+      const event = navigationError(CHROMIUM);
+
+      reloadOnStaleChunk(event, env());
+
+      expect(isHealedStaleChunk(event.error)).toBe(true);
+    });
+
+    it('keeps a second stale chunk within ten seconds — the reload did not help', () => {
+      const event = navigationError(CHROMIUM);
+
+      reloadOnStaleChunk(event, env(String(1_000_000 - 3_000)));
+
+      expect(isHealedStaleChunk(event.error)).toBe(false);
+    });
+
+    it('keeps a stale chunk with no storage to reload by', () => {
+      const event = navigationError(CHROMIUM);
+
+      reloadOnStaleChunk(event, { ...env(), storage: null });
+
+      expect(isHealedStaleChunk(event.error)).toBe(false);
+    });
+
+    it('keeps any other navigation error, and anything that is not an error object', () => {
+      const event = navigationError('NG04002: Cannot match any routes');
+
+      reloadOnStaleChunk(event, env());
+
+      expect(isHealedStaleChunk(event.error)).toBe(false);
+      expect(isHealedStaleChunk(CHROMIUM)).toBe(false);
+      expect(isHealedStaleChunk(undefined)).toBe(false);
+    });
   });
 });

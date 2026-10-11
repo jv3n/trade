@@ -3,6 +3,7 @@ import { bootstrapApplication } from '@angular/platform-browser';
 import * as Sentry from '@sentry/browser';
 import { App } from './app/app';
 import { appConfig } from './app/app.config';
+import { isHealedStaleChunk } from './app/core/router/stale-chunk';
 
 // GlitchTip / Sentry-compatible DSN — public by design (visible in browser DevTools on every
 // request). Committing it to git is the standard Sentry pattern, the DSN identifies the project
@@ -41,6 +42,8 @@ if (!isDevMode() && environment) {
     // backend's `SentryUserContextFilter` already supplies userId UUID per request via MDC →
     // Sentry scope ; we don't need browser-side PII duplicating that.
     sendDefaultPii: false,
+    // A tab left open across a deploy reloads itself on its next navigation : not worth an event.
+    beforeSend: (event, hint) => (isHealedStaleChunk(hint.originalException) ? null : event),
   });
 }
 

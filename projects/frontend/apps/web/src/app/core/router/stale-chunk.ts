@@ -3,6 +3,8 @@ import { NavigationError } from '@angular/router';
 const LAST_RELOAD_KEY = 'stale-chunk-reload';
 /** Two stale chunks this close together mean a reload did not help : let the error through. */
 const LOOP_GUARD_MS = 10_000;
+/** The errors [reloadOnStaleChunk] answered with a reload — still thrown by the router. */
+const healed = new WeakSet<object>();
 
 /** What [reloadOnStaleChunk] reads and does — the browser by default, stubs in a spec. */
 export interface StaleChunkEnv {
@@ -38,7 +40,17 @@ export function reloadOnStaleChunk(
   } catch {
     return;
   }
+  if (typeof event.error === 'object' && event.error !== null) healed.add(event.error);
   env.assign(event.url);
+}
+
+/**
+ * The router rethrows the error after its handler, so a stale chunk the reload heals would still be
+ * reported (#690) : the error tracker drops what this says was healed, and keeps the rest — a
+ * reload that did not help, a browser with no storage.
+ */
+export function isHealedStaleChunk(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && healed.has(error);
 }
 
 function browserEnv(): StaleChunkEnv {
