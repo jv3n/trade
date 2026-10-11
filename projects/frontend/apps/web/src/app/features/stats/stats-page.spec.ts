@@ -59,6 +59,9 @@ import { StatsPage } from './stats-page';
  *   unticking gives the typed push back ; the « No push » tab is its own filter axis, and its push
  *   KPI rates the no-push days over the whole period (#334).
  *
+ * The listing and the KPIs load through resources (#375), which answer a microtask after the call :
+ * `setup()` and `settle()` wait for them before a test reads the page.
+ *
  * The repository, the confirmation modal and the snackbar are stubbed so nothing touches HTTP.
  */
 
@@ -213,7 +216,7 @@ class MockStatsRepository extends StatsRepository {
   exportCsv = vi.fn((): Observable<Blob> => of(new Blob()));
 }
 
-function setup(
+async function setup(
   options: {
     rows?: StatEntry[];
     confirmed?: boolean;
@@ -223,13 +226,13 @@ function setup(
     /** The first listing answer, held back — a first load still running. */
     firstAnswer?: Observable<PagedResult<StatEntry>>;
   } = {},
-): {
+): Promise<{
   fixture: ComponentFixture<StatsPage>;
   page: StatsPage;
   repo: MockStatsRepository;
   toastShown: ReturnType<typeof vi.fn>;
   query: BehaviorSubject<ParamMap>;
-} {
+}> {
   const toastShown = vi.fn();
   const query = new BehaviorSubject(convertToParamMap(options.query ?? {}));
   TestBed.configureTestingModule({
@@ -257,8 +260,17 @@ function setup(
   if (options.byId) repo.findById.mockReturnValue(of(options.byId));
   if (options.firstAnswer) repo.findAll.mockReturnValueOnce(options.firstAnswer);
   const fixture = TestBed.createComponent(StatsPage);
-  fixture.detectChanges();
+  // A first answer held back would keep the page from ever settling.
+  if (options.firstAnswer) fixture.detectChanges();
+  else await settle(fixture);
   return { fixture, page: fixture.componentInstance, repo, toastShown, query };
+}
+
+/** Renders once the listing and the KPIs have answered — a resource resolves a tick after its call. */
+async function settle(fixture: ComponentFixture<StatsPage>): Promise<void> {
+  fixture.detectChanges();
+  await fixture.whenStable();
+  fixture.detectChanges();
 }
 
 function paged(rows: StatEntry[]): PagedResult<StatEntry> {
@@ -277,8 +289,8 @@ function fillSession(page: StatsPage): void {
 describe('StatsPage', () => {
   // ---- Listing + KPIs ----
 
-  it('loads the listing and the KPIs of the same filter on init', () => {
-    const { repo, page } = setup({ rows: [makeStat()] });
+  it('loads the listing and the KPIs of the same filter on init', async () => {
+    const { repo, page } = await setup({ rows: [makeStat()] });
 
     expect(repo.findAll).toHaveBeenCalledTimes(1);
     expect(repo.summary).toHaveBeenCalledTimes(1);
@@ -286,8 +298,8 @@ describe('StatsPage', () => {
     expect(page.summary()?.completed).toBe(10);
   });
 
-  it('derives the premarket and session percentages of each row', () => {
-    const { page } = setup({ rows: [makeStat()] });
+  it('derives the premarket and session percentages of each row', async () => {
+    const { page } = await setup({ rows: [makeStat()] });
 
     const row = page.rows()[0];
     expect(row.gap).toBeCloseTo(52.83, 2);
@@ -298,8 +310,8 @@ describe('StatsPage', () => {
   });
 
   // #499 : the scanner reads close → price right now, so the 45 % rule needs the cumulative figure.
-  it('derives the cumulative readings and the hold of each row from its prices', () => {
-    const { page } = setup({ rows: [makeStat()] });
+  it('derives the cumulative readings and the hold of each row from its prices', async () => {
+    const { page } = await setup({ rows: [makeStat()] });
 
     const row = page.rows()[0];
     // KTTA : close 2.65, PM high 4.65, open 4.20.
@@ -308,8 +320,8 @@ describe('StatsPage', () => {
     expect(row.hold).toBeCloseTo(-9.68, 2);
   });
 
-  it('has no hold and no cumulative at the open before the open is typed', () => {
-    const { page } = setup({ rows: [makePending()] });
+  it('has no hold and no cumulative at the open before the open is typed', async () => {
+    const { page } = await setup({ rows: [makePending()] });
 
     const row = page.rows()[0];
     expect(row.hold).toBeNull();
@@ -317,29 +329,29 @@ describe('StatsPage', () => {
     expect(row.cumulativePmHigh).not.toBeNull();
   });
 
-  it('shows an error banner when the listing fails', () => {
-    const { fixture, page, repo } = setup();
+  it('shows an error banner when the listing fails', async () => {
+    const { fixture, page, repo } = await setup();
     repo.findAll.mockReturnValue(throwError(() => new Error('500 from server')));
 
     page.setStatus('COMPLETED');
-    fixture.detectChanges(); // the fetch effect re-runs on change detection
+    await settle(fixture);
 
-    expect(page.error()).not.toBeNull();
+    expect(page.error()).toBe(true);
     expect(page.rows()).toEqual([]);
   });
 
   // ---- Session panel ----
 
-  it('opens the session panel on the first stat still to complete', () => {
+  it('opens the session panel on the first stat still to complete', async () => {
     const pending = makePending();
-    const { page } = setup({ rows: [makeStat(), pending] });
+    const { page } = await setup({ rows: [makeStat(), pending] });
 
     expect(page.completing()?.id).toBe(pending.id);
     expect(page.session().openPrice).toBeNull();
   });
 
-  it('previews the hold and the cumulative at the open under the open, read off the premarket', () => {
-    const { page } = setup({ rows: [makePending()] });
+  it('previews the hold and the cumulative at the open under the open, read off the premarket', async () => {
+    const { page } = await setup({ rows: [makePending()] });
 
     expect(page.openPercents()).toEqual({ hold: null, cumulative: null });
     page.setSessionPrice('openPrice', 4.2);
@@ -349,9 +361,9 @@ describe('StatsPage', () => {
     expect(page.premarketPercents().cumulativePmHigh).toBeCloseTo(75.47, 2);
   });
 
-  it('saves the whole row when a field is left — session updated, premarket untouched', () => {
+  it('saves the whole row when a field is left — session updated, premarket untouched', async () => {
     const pending = makePending();
-    const { page, repo } = setup({ rows: [pending] });
+    const { page, repo } = await setup({ rows: [pending] });
 
     // 9:30 : only the open is known.
     page.setSessionPrice('openPrice', 1.9);
@@ -372,8 +384,8 @@ describe('StatsPage', () => {
     expect(page.completing()?.id).toBe('stat-sgbx');
   });
 
-  it('saves a flag as soon as it is ticked', () => {
-    const { page, repo } = setup({ rows: [makePending()] });
+  it('saves a flag as soon as it is ticked', async () => {
+    const { page, repo } = await setup({ rows: [makePending()] });
 
     page.toggleFlag('ssr', true);
 
@@ -381,8 +393,8 @@ describe('StatsPage', () => {
   });
 
   // #349 : screened upstream on a GUS, so it rides with the other flags rather than on its own.
-  it('saves the institutions flag like the other two', () => {
-    const { page, repo } = setup({ rows: [makePending({ highInstitutions: false })] });
+  it('saves the institutions flag like the other two', async () => {
+    const { page, repo } = await setup({ rows: [makePending({ highInstitutions: false })] });
 
     page.toggleFlag('highInstitutions', true);
 
@@ -392,16 +404,16 @@ describe('StatsPage', () => {
     );
   });
 
-  it('sends nothing when a field is left unchanged', () => {
-    const { page, repo } = setup({ rows: [makePending()] });
+  it('sends nothing when a field is left unchanged', async () => {
+    const { page, repo } = await setup({ rows: [makePending()] });
 
     page.saveSession();
 
     expect(repo.update).not.toHaveBeenCalled();
   });
 
-  it('sends nothing while the HOD is below the LOD', () => {
-    const { page, repo } = setup({ rows: [makePending()] });
+  it('sends nothing while the HOD is below the LOD', async () => {
+    const { page, repo } = await setup({ rows: [makePending()] });
     fillSession(page);
 
     page.setSessionPrice('hodPrice', 3.2);
@@ -413,8 +425,8 @@ describe('StatsPage', () => {
 
   // #305 : the HOD / LOD pair was the only check, so a HOD of 1 under a push of 10 went through
   // and could even be ticked — physically impossible on a single day.
-  it('refuses a price outside the day it belongs to, and names the fields', () => {
-    const { page, repo } = setup({ rows: [makePending()] });
+  it('refuses a price outside the day it belongs to, and names the fields', async () => {
+    const { page, repo } = await setup({ rows: [makePending()] });
     fillSession(page);
 
     // The issue's own case : open 4.20, push 4.62, HOD 1 — and no LOD yet, so the HOD / LOD rule
@@ -433,8 +445,8 @@ describe('StatsPage', () => {
     expect(repo.update).not.toHaveBeenCalled();
   });
 
-  it('refuses an EOD under the LOD', () => {
-    const { page } = setup({ rows: [makePending()] });
+  it('refuses an EOD under the LOD', async () => {
+    const { page } = await setup({ rows: [makePending()] });
     fillSession(page);
 
     page.setSessionPrice('eodPrice', 1);
@@ -446,8 +458,8 @@ describe('StatsPage', () => {
   });
 
   // The ✓ answers for both reasons, and its tooltip is what the wrapper shows (#308).
-  it('keeps the ✓ out of reach while the set is impossible, and says why', () => {
-    const { page } = setup({ rows: [makePending()] });
+  it('keeps the ✓ out of reach while the set is impossible, and says why', async () => {
+    const { page } = await setup({ rows: [makePending()] });
     fillSession(page);
     expect(page.tickBlockedReason()).toBe('');
 
@@ -460,18 +472,18 @@ describe('StatsPage', () => {
 
   // A row stored before the rule existed : the table's ✓ must answer for it too, not just the
   // panel's — and the backend replays the rule when the tick lands (#305).
-  it("keeps the table ✓ out of reach on a row the day's range refuses", () => {
+  it("keeps the table ✓ out of reach on a row the day's range refuses", async () => {
     // Every price is in — a missing one would be reported first, and rightly so — but the open,
     // the push and the EOD all sit above a HOD of 1.
     const impossible = makeStat({ hodPrice: 1, lodPrice: 0.9 });
-    const { page } = setup({ rows: [impossible] });
+    const { page } = await setup({ rows: [impossible] });
 
     expect(page.rows()[0].issue).toBe('stats.save.aboveHod');
     expect(page.rowBlockedReason(page.rows()[0])).toBe('stats.save.aboveHod');
   });
 
-  it('names the HOD / LOD inversion rather than the prices it drags along', () => {
-    const { page } = setup({ rows: [makePending()] });
+  it('names the HOD / LOD inversion rather than the prices it drags along', async () => {
+    const { page } = await setup({ rows: [makePending()] });
     fillSession(page);
 
     page.setSessionPrice('hodPrice', 1);
@@ -482,8 +494,8 @@ describe('StatsPage', () => {
     });
   });
 
-  it('previews each session price against the open while typing', () => {
-    const { page } = setup({ rows: [makePending()] });
+  it('previews each session price against the open while typing', async () => {
+    const { page } = await setup({ rows: [makePending()] });
     fillSession(page);
 
     const percents = page.sessionPercents();
@@ -491,8 +503,8 @@ describe('StatsPage', () => {
     expect(percents.lod).toBeCloseTo(-18.81, 2);
   });
 
-  it('counts the prices in and names the missing ones', () => {
-    const { page } = setup({ rows: [makePending()] });
+  it('counts the prices in and names the missing ones', async () => {
+    const { page } = await setup({ rows: [makePending()] });
 
     page.setSessionPrice('openPrice', 1.9);
     page.setSessionPrice('pushOpenPrice', 2.2);
@@ -505,8 +517,8 @@ describe('StatsPage', () => {
     ]);
   });
 
-  it('Close saves the field being typed, then stops the panel re-opening on that stat', () => {
-    const { fixture, page, repo } = setup({ rows: [makePending()] });
+  it('Close saves the field being typed, then stops the panel re-opening on that stat', async () => {
+    const { fixture, page, repo } = await setup({ rows: [makePending()] });
     page.setSessionPrice('openPrice', 1.9);
 
     page.close();
@@ -518,13 +530,13 @@ describe('StatsPage', () => {
     expect(page.completing()).toBeNull();
     // A refetch (here : a filter change) must not bring the closed stat back.
     page.setStatus('TO_COMPLETE');
-    fixture.detectChanges();
+    await settle(fixture);
     expect(page.completing()).toBeNull();
   });
 
-  it('refuses to clear a price of a ticked stat and puts the value back', () => {
+  it('refuses to clear a price of a ticked stat and puts the value back', async () => {
     const ticked = makeStat({ completed: true });
-    const { page, repo, toastShown } = setup({ rows: [ticked] });
+    const { page, repo, toastShown } = await setup({ rows: [ticked] });
     page.open(ticked);
 
     page.setSessionPrice('eodPrice', null);
@@ -535,8 +547,8 @@ describe('StatsPage', () => {
     expect(toastShown.mock.calls.at(-1)?.[0]).toBe('error');
   });
 
-  it('puts the row back and toasts an error when a save fails', () => {
-    const { page, repo, toastShown } = setup({ rows: [makePending()] });
+  it('puts the row back and toasts an error when a save fails', async () => {
+    const { page, repo, toastShown } = await setup({ rows: [makePending()] });
     repo.update.mockReturnValue(throwError(() => new Error('500 from server')));
 
     page.setSessionPrice('openPrice', 1.9);
@@ -550,8 +562,8 @@ describe('StatsPage', () => {
 
   // ---- The ✓ (#263) ----
 
-  it('lists what a row misses before it can be ticked', () => {
-    const { page } = setup({ rows: [makePending({ openPrice: 1.9, pushOpenPrice: 2.2 })] });
+  it('lists what a row misses before it can be ticked', async () => {
+    const { page } = await setup({ rows: [makePending({ openPrice: 1.9, pushOpenPrice: 2.2 })] });
 
     expect(page.rows()[0].missing).toEqual([
       'stats.fields.hod',
@@ -561,72 +573,72 @@ describe('StatsPage', () => {
   });
 
   // #383 : filtered to SGBX, the panel still edited BNRG — whatever was typed landed off screen.
-  it('closes the panel when a filter change leaves its stat off the table', () => {
-    const { fixture, page, repo } = setup({ rows: [makePending()] });
+  it('closes the panel when a filter change leaves its stat off the table', async () => {
+    const { fixture, page, repo } = await setup({ rows: [makePending()] });
     expect(page.completing()?.id).toBe('stat-sgbx');
 
     repo.rows = [makeStat({ id: 'stat-bnrg', ticker: 'BNRG' })];
     page.setStatus('COMPLETED');
-    fixture.detectChanges();
+    await settle(fixture);
 
     expect(page.completing()).toBeNull();
   });
 
-  it('closes the panel when a page change takes its stat off the table', () => {
-    const { fixture, page, repo } = setup({ rows: [makePending()] });
+  it('closes the panel when a page change takes its stat off the table', async () => {
+    const { fixture, page, repo } = await setup({ rows: [makePending()] });
 
     repo.rows = [makeStat({ id: 'stat-bnrg', ticker: 'BNRG' })];
     page.onPage({ pageIndex: 1, pageSize: 25, length: 30 });
-    fixture.detectChanges();
+    await settle(fixture);
 
     expect(page.completing()).toBeNull();
   });
 
   // Asking would leave « cancel » editing a row the table no longer shows : the edit the validation
   // held back could never be saved anyway, so it goes, out loud.
-  it('drops an edit the validation held back when its stat leaves the table, and says so', () => {
+  it('drops an edit the validation held back when its stat leaves the table, and says so', async () => {
     const ktta = makeStat();
-    const { fixture, page, repo, toastShown } = setup({ rows: [ktta] });
+    const { fixture, page, repo, toastShown } = await setup({ rows: [ktta] });
     page.open(ktta);
     page.setSessionPrice('hodPrice', 3.2);
 
     repo.rows = [makeStat({ id: 'stat-bnrg', ticker: 'BNRG' })];
     page.setStatus('COMPLETED');
-    fixture.detectChanges();
+    await settle(fixture);
 
     expect(page.completing()).toBeNull();
     expect(toastShown).toHaveBeenCalledWith('error', 'stats.snackbar.editDropped');
     expect(repo.update).not.toHaveBeenCalled();
   });
 
-  it('stays on a stat just ticked, even once it leaves the tab', () => {
+  it('stays on a stat just ticked, even once it leaves the tab', async () => {
     const full = makeStat({ id: 'stat-bnrg', ticker: 'BNRG', completed: false });
-    const { fixture, page, repo } = setup({ rows: [full], query: { status: 'TO_COMPLETE' } });
+    const { fixture, page, repo } = await setup({ rows: [full], query: { status: 'TO_COMPLETE' } });
     expect(page.completing()?.id).toBe('stat-bnrg');
 
     // Ticked, it is no longer « to complete » : the reload under the same tab comes back without it.
     repo.rows = [];
     page.toggleCompleted(full);
-    fixture.detectChanges();
+    await settle(fixture);
 
     expect(page.completing()?.id).toBe('stat-bnrg');
   });
 
   // #383 : « In stats » on a candidate links here, to the stat it became.
-  it('opens the panel on the stat named in the URL, even when it is not on the page', () => {
-    const { page, repo } = setup({ rows: [makePending()], query: { stat: 'stat-ktta' } });
+  it('opens the panel on the stat named in the URL, even when it is not on the page', async () => {
+    const { page, repo } = await setup({ rows: [makePending()], query: { stat: 'stat-ktta' } });
 
     expect(repo.findById).toHaveBeenCalledWith('stat-ktta');
     expect(page.completing()?.id).toBe('stat-ktta');
   });
 
-  it('ticks a stat with its five prices, then reloads the list', () => {
+  it('ticks a stat with its five prices, then reloads the list', async () => {
     const full = makeStat({ id: 'stat-bnrg', ticker: 'BNRG', completed: false });
-    const { fixture, page, repo } = setup({ rows: [full] });
+    const { fixture, page, repo } = await setup({ rows: [full] });
     const fetchesBefore = repo.findAll.mock.calls.length;
 
     page.toggleCompleted(full);
-    fixture.detectChanges(); // the fetch effect re-runs on change detection
+    await settle(fixture); // the fetch effect re-runs on change detection
 
     expect(repo.setCompleted).toHaveBeenCalledWith('stat-bnrg', true);
     // How many times the effect fires under the test's change detection is not the point — that
@@ -634,32 +646,32 @@ describe('StatsPage', () => {
     expect(repo.findAll.mock.calls.length).toBeGreaterThan(fetchesBefore);
   });
 
-  it('unticks a completed stat', () => {
+  it('unticks a completed stat', async () => {
     const ticked = makeStat({ completed: true });
-    const { page, repo } = setup({ rows: [ticked] });
+    const { page, repo } = await setup({ rows: [ticked] });
 
     page.toggleCompleted(ticked);
 
     expect(repo.setCompleted).toHaveBeenCalledWith('stat-ktta', false);
   });
 
-  it('never ticks a stat that misses a price', () => {
+  it('never ticks a stat that misses a price', async () => {
     const pending = makePending();
-    const { page, repo } = setup({ rows: [pending] });
+    const { page, repo } = await setup({ rows: [pending] });
 
     page.toggleCompleted(pending);
 
     expect(repo.setCompleted).not.toHaveBeenCalled();
   });
 
-  it('sends the last field before the tick, one write at a time', () => {
+  it('sends the last field before the tick, one write at a time', async () => {
     const pending = makePending({
       openPrice: 4.2,
       pushOpenPrice: 4.62,
       hodPrice: 4.62,
       lodPrice: 3.41,
     });
-    const { page, repo } = setup({ rows: [pending] });
+    const { page, repo } = await setup({ rows: [pending] });
     const order: string[] = [];
     repo.update.mockImplementation((id: string, input: StatEntryInput) => {
       order.push('update');
@@ -679,16 +691,32 @@ describe('StatsPage', () => {
 
   // ---- Delete ----
 
-  it('deletes a stat once the confirmation modal is confirmed', () => {
-    const { page, repo } = setup({ rows: [makeStat()] });
+  it('deletes a stat once the confirmation modal is confirmed', async () => {
+    const { page, repo } = await setup({ rows: [makeStat()] });
 
     page.delete(makeStat());
 
     expect(repo.delete).toHaveBeenCalledWith('stat-ktta');
   });
 
-  it('asks the plain confirmation for a stat without a trade', () => {
-    const { page } = setup({ rows: [makeStat()] });
+  // #675 review : only the listing is keyed on the page — the KPIs kept counting the deleted stat.
+  it('deleting the last row of a later page steps back a page, and reloads the KPIs too', async () => {
+    const { fixture, page, repo } = await setup({ rows: [makeStat()] });
+    page.pageIndex.set(2);
+    await settle(fixture);
+    const listingsBefore = repo.findAll.mock.calls.length;
+    const summariesBefore = repo.summary.mock.calls.length;
+
+    page.delete(makeStat());
+    await settle(fixture);
+
+    expect(page.pageIndex()).toBe(1);
+    expect(repo.findAll.mock.calls.length).toBe(listingsBefore + 1);
+    expect(repo.summary.mock.calls.length).toBeGreaterThan(summariesBefore);
+  });
+
+  it('asks the plain confirmation for a stat without a trade', async () => {
+    const { page } = await setup({ rows: [makeStat()] });
     const ask = vi.spyOn(TestBed.inject(ConfirmService), 'ask');
 
     page.delete(makeStat());
@@ -700,14 +728,14 @@ describe('StatsPage', () => {
   });
 
   // #635 : the trades stay, unlinked — the warning says so before the stat goes.
-  it('warns that the trades of a traded stat stay in the journal, without it', () => {
+  it('warns that the trades of a traded stat stay in the journal, without it', async () => {
     const traded = makeStat({
       trades: [
         { tradeId: 'trade-1', direction: 'SHORT', retainedProfitDollars: -339.1 },
         { tradeId: 'trade-2', direction: 'SHORT', retainedProfitDollars: -444.2 },
       ],
     });
-    const { page, repo } = setup({ rows: [traded] });
+    const { page, repo } = await setup({ rows: [traded] });
     const ask = vi.spyOn(TestBed.inject(ConfirmService), 'ask');
 
     page.delete(traded);
@@ -719,8 +747,8 @@ describe('StatsPage', () => {
     expect(repo.delete).toHaveBeenCalledWith('stat-ktta');
   });
 
-  it('never reaches the repository when the confirmation modal is cancelled', () => {
-    const { page, repo } = setup({ rows: [makeStat()], confirmed: false });
+  it('never reaches the repository when the confirmation modal is cancelled', async () => {
+    const { page, repo } = await setup({ rows: [makeStat()], confirmed: false });
 
     page.delete(makeStat());
 
@@ -729,12 +757,12 @@ describe('StatsPage', () => {
 
   // ---- Stat → trade (#193) ----
 
-  it('« → Trade » creates the trade and lands on its page', () => {
+  it('« → Trade » creates the trade and lands on its page', async () => {
     // The whole point of the action is to go and type the executions, so the navigation is part of
     // the contract, not a nicety.
-    const { fixture, page, repo } = setup({ rows: [makeStat()] });
+    const { fixture, page, repo } = await setup({ rows: [makeStat()] });
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
-    fixture.detectChanges();
+    await settle(fixture);
 
     page.promoteToTrade(makeStat());
 
@@ -742,15 +770,15 @@ describe('StatsPage', () => {
     expect(navigate).toHaveBeenCalledWith(['/journal', 'trade-1']);
   });
 
-  it('a cancelled confirmation creates nothing', () => {
-    const { page, repo } = setup({ rows: [makeStat()], confirmed: false });
+  it('a cancelled confirmation creates nothing', async () => {
+    const { page, repo } = await setup({ rows: [makeStat()], confirmed: false });
 
     page.promoteToTrade(makeStat());
 
     expect(repo.promoteToTrade).not.toHaveBeenCalled();
   });
 
-  it('a traded stat shows one tag per trade and « + » for the next one', () => {
+  it('a traded stat shows one tag per trade and « + » for the next one', async () => {
     // KTTA, 17/09 : a GUS short and, later, a second trade on the same stat (#500).
     const traded = makeStat({
       trades: [
@@ -758,18 +786,18 @@ describe('StatsPage', () => {
         { tradeId: 'trade-8', direction: 'SHORT', retainedProfitDollars: -64 },
       ],
     });
-    const { fixture } = setup({ rows: [traded] });
-    fixture.detectChanges();
+    const { fixture } = await setup({ rows: [traded] });
+    await settle(fixture);
 
     expect(fixture.nativeElement.querySelectorAll('.trade-link')).toHaveLength(2);
     expect(fixture.nativeElement.querySelector('.trade-links button')).not.toBeNull();
   });
 
-  it('« + » on a traded stat asks for another trade, not the first one', () => {
+  it('« + » on a traded stat asks for another trade, not the first one', async () => {
     const traded = makeStat({
       trades: [{ tradeId: 'trade-7', direction: 'SHORT', retainedProfitDollars: 291.35 }],
     });
-    const { page, repo } = setup({ rows: [traded] });
+    const { page, repo } = await setup({ rows: [traded] });
     const ask = vi.spyOn(TestBed.inject(ConfirmService), 'ask');
     vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
 
@@ -782,28 +810,28 @@ describe('StatsPage', () => {
   // ---- Same ticker, another pattern (#507) ----
 
   // #648 : a stat is a GUS or a DT — the other pattern is the only one to give birth to.
-  it('opening a GUS offers its DT while the day has none', () => {
-    const { fixture, page, repo } = setup({ rows: [makeStat()] });
+  it('opening a GUS offers its DT while the day has none', async () => {
+    const { fixture, page, repo } = await setup({ rows: [makeStat()] });
     page.open(makeStat());
-    fixture.detectChanges();
+    await settle(fixture);
 
     expect(repo.freePatterns).toHaveBeenCalledWith('stat-ktta');
     expect(page.siblingPattern()).toBe('DT');
     expect(fixture.nativeElement.querySelector('.premarket-form__sibling')).not.toBeNull();
   });
 
-  it('a day whose patterns are all taken shows no « another pattern » action', () => {
-    const { fixture, page, repo } = setup({ rows: [makeStat()] });
+  it('a day whose patterns are all taken shows no « another pattern » action', async () => {
+    const { fixture, page, repo } = await setup({ rows: [makeStat()] });
     repo.freePatterns.mockReturnValue(of([]));
     page.open(makeStat());
-    fixture.detectChanges();
+    await settle(fixture);
 
     expect(fixture.nativeElement.querySelector('.premarket-form__sibling')).toBeNull();
   });
 
-  it('creates the DT of the day once confirmed, opens it in the panel and in the DT view', () => {
+  it('creates the DT of the day once confirmed, opens it in the panel and in the DT view', async () => {
     // SGBX of the mockup : a GUS in the morning, the double top it formed late in the morning.
-    const { page, repo, toastShown } = setup({ rows: [makeStat()] });
+    const { page, repo, toastShown } = await setup({ rows: [makeStat()] });
     page.setView('GUS');
     page.open(makeStat());
 
@@ -816,8 +844,8 @@ describe('StatsPage', () => {
     expect(page.view()).toBe('DT');
   });
 
-  it('a cancelled confirmation creates no stat', () => {
-    const { page, repo } = setup({ rows: [makeStat()], confirmed: false });
+  it('a cancelled confirmation creates no stat', async () => {
+    const { page, repo } = await setup({ rows: [makeStat()], confirmed: false });
     page.open(makeStat());
 
     page.createSibling();
@@ -826,18 +854,18 @@ describe('StatsPage', () => {
     expect(page.completing()?.id).toBe('stat-ktta');
   });
 
-  it('a session stat missing its push says so on its disabled tick, in the row and the panel', () => {
+  it('a session stat missing its push says so on its disabled tick, in the row and the panel', async () => {
     // Recette #517 : a stat whose row looks full but stops at 4 / 5 must say what is missing.
     const stat = makeStat({ pushOpenPrice: null, completed: false });
-    const { page } = setup({ rows: [stat] });
+    const { page } = await setup({ rows: [stat] });
     page.open(stat);
 
     expect(page.rowBlockedReason(page.rows()[0])).toBe('stats.completion.missing');
     expect(page.tickBlockedReason()).toBe('stats.completion.missing');
   });
 
-  it('a pattern taken in the meantime says so instead of a generic error', () => {
-    const { page, repo, toastShown } = setup({ rows: [makeStat()] });
+  it('a pattern taken in the meantime says so instead of a generic error', async () => {
+    const { page, repo, toastShown } = await setup({ rows: [makeStat()] });
     repo.createSibling.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 409 })));
     page.open(makeStat());
 
@@ -848,58 +876,58 @@ describe('StatsPage', () => {
 
   // ---- Filters ----
 
-  it('a custom period range filters the listing and the KPIs', () => {
-    const { fixture, page, repo } = setup({ rows: [makeStat()] });
+  it('a custom period range filters the listing and the KPIs', async () => {
+    const { fixture, page, repo } = await setup({ rows: [makeStat()] });
     const from = new Date(2026, 8, 14);
     const to = new Date(2026, 8, 18);
 
     page.setPeriod({ period: 'custom', dateFrom: from, dateTo: to });
-    fixture.detectChanges(); // the fetch effect re-runs on change detection
+    await settle(fixture); // the fetch effect re-runs on change detection
 
     expect(repo.lastFilter?.dateFrom).toEqual(from);
     expect(repo.lastFilter?.dateTo).toEqual(to);
     expect(repo.summary.mock.calls.at(-1)?.[0]).toEqual(repo.lastFilter);
   });
 
-  it('changing the status filter refetches from page 0 with that status', () => {
-    const { fixture, page, repo } = setup({ rows: [makeStat()] });
+  it('changing the status filter refetches from page 0 with that status', async () => {
+    const { fixture, page, repo } = await setup({ rows: [makeStat()] });
     page.pageIndex.set(2);
 
     page.setStatus('TO_COMPLETE');
-    fixture.detectChanges();
+    await settle(fixture);
 
     expect(page.pageIndex()).toBe(0);
     expect(repo.lastFilter?.status).toBe('TO_COMPLETE');
   });
 
   // #337 : « Complete » on the Today page lands on the stats still to complete.
-  it('opens on the tab named in the URL', () => {
-    const { page, repo } = setup({ query: { status: 'TO_COMPLETE' } });
+  it('opens on the tab named in the URL', async () => {
+    const { page, repo } = await setup({ query: { status: 'TO_COMPLETE' } });
 
     expect(page.status()).toBe('TO_COMPLETE');
     expect(repo.lastFilter?.status).toBe('TO_COMPLETE');
   });
 
-  it('falls back to every stat on a tab the URL names wrong', () => {
-    const { page } = setup({ query: { status: 'SOMEDAY' } });
+  it('falls back to every stat on a tab the URL names wrong', async () => {
+    const { page } = await setup({ query: { status: 'SOMEDAY' } });
 
     expect(page.status()).toBeNull();
   });
 
-  it('follows the URL when it changes under the same page', () => {
-    const { fixture, page, query } = setup({ query: { status: 'TO_COMPLETE' } });
+  it('follows the URL when it changes under the same page', async () => {
+    const { fixture, page, query } = await setup({ query: { status: 'TO_COMPLETE' } });
 
     query.next(convertToParamMap({ status: 'COMPLETED' }));
-    fixture.detectChanges();
+    await settle(fixture);
 
     expect(page.status()).toBe('COMPLETED');
   });
 
   // #542 : the first load showed a spinner, then the table jumped in.
-  it('shows the table skeleton on a slow first load, then the rows once they land', () => {
+  it('shows the table skeleton on a slow first load, then the rows once they land', async () => {
     vi.useFakeTimers();
     const firstAnswer = new Subject<PagedResult<StatEntry>>();
-    const { fixture } = setup({ firstAnswer });
+    const { fixture } = await setup({ firstAnswer });
     const el: HTMLElement = fixture.nativeElement;
 
     vi.advanceTimersByTime(200);
@@ -914,6 +942,8 @@ describe('StatsPage', () => {
       totalPages: 1,
     });
     firstAnswer.complete();
+    // The resource takes the answer a microtask later — flushed along with the timers.
+    await vi.advanceTimersByTimeAsync(0);
     fixture.detectChanges();
     vi.advanceTimersByTime(300);
     fixture.detectChanges();
@@ -923,8 +953,8 @@ describe('StatsPage', () => {
   });
 
   // #370 : the table was unmounted for the length of every refetch, which read as a page reload.
-  it('keeps the rows on screen, dimmed, while a filter change refetches', () => {
-    const { fixture, page, repo } = setup({ rows: [makeStat()] });
+  it('keeps the rows on screen, dimmed, while a filter change refetches', async () => {
+    const { fixture, page, repo } = await setup({ rows: [makeStat()] });
     repo.findAll.mockReturnValue(new Subject<PagedResult<StatEntry>>());
 
     page.setStatus('COMPLETED');
@@ -936,8 +966,41 @@ describe('StatsPage', () => {
     expect(page.rows().map((r) => r.ticker)).toEqual(['KTTA']);
   });
 
-  it('drops the answer of a filter changed again before it arrived', () => {
-    const { fixture, page, repo } = setup({ rows: [makeStat()] });
+  // A load in flight when a write lands answers with pre-write data : the write must supersede it.
+  it('a tick during a load refetches, rather than letting the older load win', async () => {
+    const { fixture, page, repo } = await setup({ rows: [makeStat()] });
+    repo.findAll.mockReturnValue(new Subject<PagedResult<StatEntry>>());
+    page.setStatus('COMPLETED');
+    fixture.detectChanges();
+    const callsBefore = repo.findAll.mock.calls.length;
+
+    page.toggleCompleted(makeStat());
+    fixture.detectChanges();
+
+    expect(repo.setCompleted).toHaveBeenCalledWith('stat-ktta', false);
+    expect(repo.findAll.mock.calls.length).toBe(callsBefore + 1);
+  });
+
+  // #667 review : the GET in flight may predate the save — the row would keep the old value while
+  // the panel shows the new one.
+  it('a field saved during a load asks the page again, rather than trusting the older load', async () => {
+    const { fixture, page, repo } = await setup({ rows: [makePending()] });
+    repo.findAll.mockReturnValue(new Subject<PagedResult<StatEntry>>());
+    page.setStatus('TO_COMPLETE');
+    fixture.detectChanges();
+    const callsBefore = repo.findAll.mock.calls.length;
+
+    page.toggleFlag('ssr', true);
+    fixture.detectChanges();
+
+    expect(repo.update).toHaveBeenCalledWith('stat-sgbx', expect.objectContaining({ ssr: true }));
+    // Once, after the save : the optimistic patch before it reloads nothing (#375 review).
+    expect(repo.findAll.mock.calls.length).toBe(callsBefore + 1);
+    expect(page.completing()?.ssr).toBe(true);
+  });
+
+  it('drops the answer of a filter changed again before it arrived', async () => {
+    const { fixture, page, repo } = await setup({ rows: [makeStat()] });
     const first = new Subject<PagedResult<StatEntry>>();
     const second = new Subject<PagedResult<StatEntry>>();
     repo.findAll.mockReturnValueOnce(first).mockReturnValueOnce(second);
@@ -949,6 +1012,7 @@ describe('StatsPage', () => {
     // The slower, older request answers last : it used to overwrite the newer result.
     second.next(paged([makeStat({ id: 'stat-bnrg', ticker: 'BNRG' })]));
     first.next(paged([makeStat({ id: 'stat-slnh', ticker: 'SLNH' })]));
+    await settle(fixture);
 
     expect(page.rows().map((r) => r.ticker)).toEqual(['BNRG']);
   });
@@ -956,8 +1020,8 @@ describe('StatsPage', () => {
   // ---- No push (#302) ----
 
   // GLND, 2026-09-21 : dropped straight from the open, only came back up around 11 am.
-  it('« No push » empties the push, saves it and counts four prices', () => {
-    const { page, repo } = setup({ rows: [makePending({ ticker: 'GLND' })] });
+  it('« No push » empties the push, saves it and counts four prices', async () => {
+    const { page, repo } = await setup({ rows: [makePending({ ticker: 'GLND' })] });
     page.setSessionPrice('pushOpenPrice', 3.3);
 
     page.toggleNoPush(true);
@@ -970,8 +1034,8 @@ describe('StatsPage', () => {
     expect(page.sessionMissing()).not.toContain('stats.fields.pushOpen');
   });
 
-  it('unticking « No push » gives back the push typed before', () => {
-    const { page } = setup({ rows: [makePending()] });
+  it('unticking « No push » gives back the push typed before', async () => {
+    const { page } = await setup({ rows: [makePending()] });
     page.setSessionPrice('pushOpenPrice', 3.3);
 
     page.toggleNoPush(true);
@@ -981,31 +1045,31 @@ describe('StatsPage', () => {
     expect(page.sessionPriceCount()).toBe(5);
   });
 
-  it('a no-push stat can be ticked without a push price', () => {
+  it('a no-push stat can be ticked without a push price', async () => {
     const glnd = makeStat({ noPush: true, pushOpenPrice: null, completed: false });
-    const { page } = setup({ rows: [glnd] });
+    const { page } = await setup({ rows: [glnd] });
 
     expect(page.rows()[0].missing).toEqual([]);
   });
 
-  it('the « No push » tab filters on the no-push days, whatever their status', () => {
-    const { fixture, page, repo } = setup({ rows: [makeStat()] });
+  it('the « No push » tab filters on the no-push days, whatever their status', async () => {
+    const { fixture, page, repo } = await setup({ rows: [makeStat()] });
 
     page.setStatus('NO_PUSH');
-    fixture.detectChanges();
+    await settle(fixture);
 
     expect(repo.lastFilter?.noPush).toBe(true);
     expect(repo.lastFilter?.status).toBeNull();
   });
 
   // #499 : a tab could not be combined — the flagged stats are worth reading among the completed.
-  it('the « Out of pattern » toggle combines with the status tab and rewinds to page 0', () => {
-    const { fixture, page, repo } = setup({ rows: [makeStat()] });
+  it('the « Out of pattern » toggle combines with the status tab and rewinds to page 0', async () => {
+    const { fixture, page, repo } = await setup({ rows: [makeStat()] });
     page.pageIndex.set(2);
 
     page.setStatus('COMPLETED');
     page.setDerived(['OUT_OF_PATTERN']);
-    fixture.detectChanges();
+    await settle(fixture);
 
     expect(page.pageIndex()).toBe(0);
     expect(repo.lastFilter?.status).toBe('COMPLETED');
@@ -1013,12 +1077,12 @@ describe('StatsPage', () => {
     expect(repo.summary.mock.calls.at(-1)?.[0]).toEqual(repo.lastFilter);
 
     page.setDerived([]);
-    fixture.detectChanges();
+    await settle(fixture);
     expect(repo.lastFilter?.outOfPattern).toBeNull();
   });
 
-  it('opens with the toggles named by ?derived=, the way the tab follows ?status=', () => {
-    const { page, repo } = setup({
+  it('opens with the toggles named by ?derived=, the way the tab follows ?status=', async () => {
+    const { page, repo } = await setup({
       rows: [makeStat()],
       query: { status: 'COMPLETED', derived: 'OUT_OF_PATTERN,UNKNOWN' },
     });
@@ -1028,8 +1092,8 @@ describe('StatsPage', () => {
     expect(repo.lastFilter?.status).toBe('COMPLETED');
   });
 
-  it('the « Under $1 » toggle combines with « Out of pattern », and comes from ?derived= too', () => {
-    const { page, repo } = setup({
+  it('the « Under $1 » toggle combines with « Out of pattern », and comes from ?derived= too', async () => {
+    const { page, repo } = await setup({
       rows: [makeStat()],
       query: { derived: 'UNDER_1_DOLLAR' },
     });
@@ -1044,14 +1108,14 @@ describe('StatsPage', () => {
   });
 
   it('tags a stat out of pattern, with what the recorded prices say', async () => {
-    const { fixture } = setup({
+    const { fixture } = await setup({
       rows: [
         makeStat(),
         makeStat({ id: 'stat-imnn', ticker: 'IMNN', outOfPattern: ['PRICE_OUT_OF_RANGE'] }),
       ],
     });
     await fixture.whenStable();
-    fixture.detectChanges();
+    await settle(fixture);
 
     const tags = (fixture.nativeElement as HTMLElement).querySelectorAll(
       '[data-testid="out-of-pattern"]',
@@ -1061,8 +1125,8 @@ describe('StatsPage', () => {
   });
 
   // #334 : on this tab the average push read « — » over « 0 that pushed ».
-  it('the « No push » tab rates the no-push days over every completed stat of the period', () => {
-    const { fixture, page, repo } = setup({ rows: [makeStat()] });
+  it('the « No push » tab rates the no-push days over every completed stat of the period', async () => {
+    const { fixture, page, repo } = await setup({ rows: [makeStat()] });
     repo.summary.mockImplementation((filter?: StatEntryFilter) =>
       of(
         filter?.noPush
@@ -1072,7 +1136,7 @@ describe('StatsPage', () => {
     );
 
     page.setStatus('NO_PUSH');
-    fixture.detectChanges();
+    await settle(fixture);
 
     expect(repo.summary).toHaveBeenLastCalledWith(expect.objectContaining({ noPush: null }));
     expect(page.noPushRate()?.count).toBe(1);
@@ -1082,13 +1146,13 @@ describe('StatsPage', () => {
   });
 
   // A search for SGBX made it « 1 / 1 · 100 % of the period » : one ticker over itself.
-  it('rates the no-push days over the period whatever the search box holds', () => {
+  it('rates the no-push days over the period whatever the search box holds', async () => {
     vi.useFakeTimers();
-    const { fixture, page, repo } = setup({ rows: [makeStat()] });
+    const { fixture, page, repo } = await setup({ rows: [makeStat()] });
     page.setStatus('NO_PUSH');
     page.onSearchInput('SGBX');
     vi.advanceTimersByTime(250); // the search box is debounced
-    fixture.detectChanges();
+    await settle(fixture);
     vi.useRealTimers();
 
     expect(repo.lastFilter?.query).toBe('SGBX');
@@ -1097,32 +1161,32 @@ describe('StatsPage', () => {
     );
   });
 
-  it('forgets the rate once the tab is left, so it never comes back stale', () => {
-    const { fixture, page } = setup({ rows: [makeStat()] });
+  it('forgets the rate once the tab is left, so it never comes back stale', async () => {
+    const { fixture, page } = await setup({ rows: [makeStat()] });
     page.setStatus('NO_PUSH');
-    fixture.detectChanges();
+    await settle(fixture);
     expect(page.noPushRate()).not.toBeNull();
 
     page.setStatus(null);
-    fixture.detectChanges();
+    await settle(fixture);
 
     expect(page.noPushRate()).toBeNull();
   });
 
-  it('shows a dash rather than « 0 / 0 » on a period with no completed stat', () => {
-    const { fixture, page, repo } = setup({ rows: [makeStat()] });
+  it('shows a dash rather than « 0 / 0 » on a period with no completed stat', async () => {
+    const { fixture, page, repo } = await setup({ rows: [makeStat()] });
     repo.summary.mockReturnValue(of(makeSummary({ completed: 0, noPushCount: 0 })));
 
     page.setStatus('NO_PUSH');
-    fixture.detectChanges();
+    await settle(fixture);
 
     expect(page.noPushRate()?.share).toBeNull();
     expect(fixture.nativeElement.querySelector('.kpi__value[aria-busy]')).toBeNull();
     expect(fixture.nativeElement.textContent).not.toContain('0 / 0');
   });
 
-  it('the other tabs keep the average push and fetch no period summary', () => {
-    const { repo, page } = setup({ rows: [makeStat()] });
+  it('the other tabs keep the average push and fetch no period summary', async () => {
+    const { repo, page } = await setup({ rows: [makeStat()] });
 
     expect(repo.summary).toHaveBeenCalledTimes(1);
     expect(page.noPushRate()).toBeNull();
@@ -1130,8 +1194,8 @@ describe('StatsPage', () => {
 
   // ---- Premarket card (#326) ----
 
-  it('saves a premarket fix with the whole row and marks the premarket card saved', () => {
-    const { page, repo } = setup({ rows: [makePending()] });
+  it('saves a premarket fix with the whole row and marks the premarket card saved', async () => {
+    const { page, repo } = await setup({ rows: [makePending()] });
 
     page.setPremarketPrice('pmHigh', 4.8);
     page.saveSession('premarket');
@@ -1143,8 +1207,8 @@ describe('StatsPage', () => {
     expect(page.saveStates().premarket.status).toBe('saved');
   });
 
-  it('refuses a PM high under the PM open without sending anything', () => {
-    const { page, repo } = setup({ rows: [makePending()] });
+  it('refuses a PM high under the PM open without sending anything', async () => {
+    const { page, repo } = await setup({ rows: [makePending()] });
 
     page.setPremarketPrice('pmHigh', 1.0);
     page.saveSession('premarket');
@@ -1158,9 +1222,9 @@ describe('StatsPage', () => {
   // ---- An emptied premarket price (#340) ----
 
   // Clearing a price to retype it : the field and the card both say why nothing goes out.
-  it('marks an emptied premarket price as required and sends nothing', () => {
+  it('marks an emptied premarket price as required and sends nothing', async () => {
     const ktta = makeStat();
-    const { page, repo } = setup({ rows: [ktta] });
+    const { page, repo } = await setup({ rows: [ktta] });
     page.open(ktta);
 
     page.setPremarketPrice('previousClose', null);
@@ -1174,9 +1238,9 @@ describe('StatsPage', () => {
   });
 
   // The whole row goes back on every save : a session edit would carry the empty premarket along.
-  it('holds a session edit while the premarket is incomplete, and says so', () => {
+  it('holds a session edit while the premarket is incomplete, and says so', async () => {
     const ktta = makeStat();
-    const { page, repo } = setup({ rows: [ktta] });
+    const { page, repo } = await setup({ rows: [ktta] });
     page.open(ktta);
     page.setPremarketPrice('previousClose', null);
 
@@ -1189,9 +1253,9 @@ describe('StatsPage', () => {
     );
   });
 
-  it('closes on « leave without saving », the row keeping its saved premarket', () => {
+  it('closes on « leave without saving », the row keeping its saved premarket', async () => {
     const ktta = makeStat();
-    const { page, repo } = setup({ rows: [ktta] });
+    const { page, repo } = await setup({ rows: [ktta] });
     page.open(ktta);
     page.setPremarketPrice('previousClose', null);
     page.setPremarketPrice('floatMillions', 6.0);
@@ -1206,9 +1270,9 @@ describe('StatsPage', () => {
   });
 
   // The same hole from the session side : a transposed HOD / LOD holds a float edit too.
-  it('holds a premarket edit while the HOD is below the LOD, and says so', () => {
+  it('holds a premarket edit while the HOD is below the LOD, and says so', async () => {
     const ktta = makeStat();
-    const { page, repo } = setup({ rows: [ktta] });
+    const { page, repo } = await setup({ rows: [ktta] });
     page.open(ktta);
     page.setSessionPrice('hodPrice', 3.2);
 
@@ -1222,9 +1286,9 @@ describe('StatsPage', () => {
   });
 
   // The guard reads what never left, whichever validation held it back — not the premarket alone.
-  it('asks before closing on a HOD below the LOD, and stays open when cancelled', () => {
+  it('asks before closing on a HOD below the LOD, and stays open when cancelled', async () => {
     const ktta = makeStat();
-    const { page, repo } = setup({ rows: [ktta], confirmed: false });
+    const { page, repo } = await setup({ rows: [ktta], confirmed: false });
     page.open(ktta);
     page.setSessionPrice('hodPrice', 3.2);
     page.setSessionPrice('eodPrice', 3.6);
@@ -1236,9 +1300,9 @@ describe('StatsPage', () => {
     expect(repo.update).not.toHaveBeenCalled();
   });
 
-  it('closes without asking once every edit is saved', () => {
+  it('closes without asking once every edit is saved', async () => {
     const ktta = makeStat();
-    const { page, repo } = setup({ rows: [ktta], confirmed: false });
+    const { page, repo } = await setup({ rows: [ktta], confirmed: false });
     page.open(ktta);
     page.setPremarketPrice('floatMillions', 6.0);
 
@@ -1253,9 +1317,9 @@ describe('StatsPage', () => {
   // #348, on the recovery path of #340 : the whole row goes out with the premarket, so the session
   // card is no longer waiting for anything — saying it still is, at the very moment the user checks
   // whether their edits made it, invites retyping what is already in.
-  it('releases the session card once the premarket it was waiting for is saved', () => {
+  it('releases the session card once the premarket it was waiting for is saved', async () => {
     const ktta = makeStat();
-    const { page, repo } = setup({ rows: [ktta] });
+    const { page, repo } = await setup({ rows: [ktta] });
     page.open(ktta);
     page.setPremarketPrice('previousClose', null);
     page.setSessionPrice('eodPrice', 3.6);
@@ -1273,9 +1337,9 @@ describe('StatsPage', () => {
     expect(page.saveStates().session.status).toBe('saved');
   });
 
-  it('leaves a card blocked on a reason of its own alone', () => {
+  it('leaves a card blocked on a reason of its own alone', async () => {
     const ktta = makeStat();
-    const { page } = setup({ rows: [ktta] });
+    const { page } = await setup({ rows: [ktta] });
     page.open(ktta);
     page.setSessionPrice('hodPrice', 3.2);
     page.saveSession('session');
@@ -1292,20 +1356,20 @@ describe('StatsPage', () => {
   // ---- The save cue states its day (#342) ----
 
   // NUKK last saved yesterday evening : « saved at 22:25 » read as if it had just happened.
-  it('says « yesterday » on a stat last saved the day before', () => {
+  it('says « yesterday » on a stat last saved the day before', async () => {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     yesterday.setHours(22, 25);
     const nukk = makeStat({ ticker: 'NUKK', updatedAt: yesterday });
-    const { page } = setup({ rows: [nukk] });
+    const { page } = await setup({ rows: [nukk] });
     page.open(nukk);
 
     expect(page.saveLabel(page.saveStates().premarket)).toBe('stats.save.savedYesterdayAt');
     expect(page.saveLabel(page.saveStates().session)).toBe('stats.save.savedYesterdayAt');
   });
 
-  it('gives the date on a stat last saved before yesterday, the time alone today', () => {
-    const { page } = setup({ rows: [] });
+  it('gives the date on a stat last saved before yesterday, the time alone today', async () => {
+    const { page } = await setup({ rows: [] });
 
     expect(
       page.saveLabel({ status: 'saved', at: new Date(2026, 7, 10, 18, 5), reason: null }),
@@ -1315,9 +1379,9 @@ describe('StatsPage', () => {
     );
   });
 
-  it('stays open with the pending edits when leaving is cancelled', () => {
+  it('stays open with the pending edits when leaving is cancelled', async () => {
     const ktta = makeStat();
-    const { page, repo } = setup({ rows: [ktta], confirmed: false });
+    const { page, repo } = await setup({ rows: [ktta], confirmed: false });
     page.open(ktta);
     page.setPremarketPrice('previousClose', null);
     page.setPremarketPrice('floatMillions', 6.0);
@@ -1331,8 +1395,8 @@ describe('StatsPage', () => {
 
   // ---- Views (#437) ----
 
-  it('opens on the GUS view : the listing and the KPIs read the GUS stats, with their columns', () => {
-    const { page, repo } = setup({ rows: [makeStat()] });
+  it('opens on the GUS view : the listing and the KPIs read the GUS stats, with their columns', async () => {
+    const { page, repo } = await setup({ rows: [makeStat()] });
 
     expect(page.view()).toBe('GUS');
     expect(repo.lastFilter?.pattern).toBe('GUS');
@@ -1343,9 +1407,9 @@ describe('StatsPage', () => {
 
   // #499 : one or two big movers dragged the averages by up to 7 points.
   it('the GUS view shows a hold column next to the open and a medians row', async () => {
-    const { fixture, page } = setup({ rows: [makeStat()] });
+    const { fixture, page } = await setup({ rows: [makeStat()] });
     await fixture.whenStable();
-    fixture.detectChanges();
+    await settle(fixture);
     const columns = page.columns();
 
     expect(columns.indexOf('hold')).toBe(columns.indexOf('openPrice') + 1);
@@ -1357,26 +1421,26 @@ describe('StatsPage', () => {
   });
 
   it('shows the cumulative under the gap on the GUS view only, never on the DT one', async () => {
-    const { fixture, page } = setup({ rows: [makeStat()] });
+    const { fixture, page } = await setup({ rows: [makeStat()] });
     const gapNote = (): Element | null =>
       fixture.nativeElement.querySelector('td.mat-column-gap .leg-note');
     await fixture.whenStable();
-    fixture.detectChanges();
+    await settle(fixture);
 
     expect(gapNote()?.textContent).toContain('stats.fields.cumulativePmHigh');
 
     page.setView('DT');
-    fixture.detectChanges();
+    await settle(fixture);
     await fixture.whenStable();
-    fixture.detectChanges();
+    await settle(fixture);
 
     expect(gapNote()).toBeNull();
   });
 
   it('reads the median hold card off the summary', async () => {
-    const { fixture } = setup({ rows: [makeStat()] });
+    const { fixture } = await setup({ rows: [makeStat()] });
     await fixture.whenStable();
-    fixture.detectChanges();
+    await settle(fixture);
 
     const labels = Array.from(
       (fixture.nativeElement as HTMLElement).querySelectorAll('.kpi'),
@@ -1393,10 +1457,10 @@ describe('StatsPage', () => {
   });
 
   it('the DT view reads the double tops, shows their legs and their averages row', async () => {
-    const { fixture, page, repo } = setup({ rows: [makeDoubleTop({ dtRetestPrice: 2.85 })] });
+    const { fixture, page, repo } = await setup({ rows: [makeDoubleTop({ dtRetestPrice: 2.85 })] });
 
     page.setView('DT');
-    fixture.detectChanges();
+    await settle(fixture);
     await fixture.whenStable();
 
     expect(repo.lastFilter?.pattern).toBe('DT');
@@ -1414,7 +1478,7 @@ describe('StatsPage', () => {
 
   // #469 : the question behind the times — does a double top really take half an hour ?
   it('shows the median duration of the double tops in the DT view, a dash without any', async () => {
-    const { fixture, page, repo } = setup({ rows: [makeDoubleTop()] });
+    const { fixture, page, repo } = await setup({ rows: [makeDoubleTop()] });
     const tileValue = () =>
       (fixture.nativeElement as HTMLElement)
         .querySelector('[data-testid="dt-median-duration"] .kpi__value')
@@ -1430,25 +1494,25 @@ describe('StatsPage', () => {
       ),
     );
     page.setView('DT');
-    fixture.detectChanges();
+    await settle(fixture);
     await fixture.whenStable();
-    fixture.detectChanges();
+    await settle(fixture);
     expect(tileValue()).toBe('stats.kpi.minutes');
 
     repo.summary.mockReturnValue(of(makeSummary({ medianDoubleTopMinutes: null })));
     page.setView('GUS');
     page.setView('DT');
-    fixture.detectChanges();
+    await settle(fixture);
     await fixture.whenStable();
-    fixture.detectChanges();
+    await settle(fixture);
     expect(tileValue()).toBe('—');
   });
 
   it('« All » reads every pattern, sums each stat up in its own and has no averages row', async () => {
-    const { fixture, page, repo } = setup({ rows: [makeStat(), makeDoubleTop()] });
+    const { fixture, page, repo } = await setup({ rows: [makeStat(), makeDoubleTop()] });
 
     page.setView('ALL');
-    fixture.detectChanges();
+    await settle(fixture);
     await fixture.whenStable();
 
     expect(repo.lastFilter?.pattern).toBeNull();
@@ -1460,14 +1524,14 @@ describe('StatsPage', () => {
 
   // #452 : with no column, the footer row still laid out a blank 52 px band under the table.
   it('collapses the empty footer row on « All » only', async () => {
-    const { fixture, page } = setup({ rows: [makeStat()] });
+    const { fixture, page } = await setup({ rows: [makeStat()] });
     const footer = (): Element | null =>
       fixture.nativeElement.querySelector('tr.mat-mdc-footer-row');
 
     expect(footer()?.classList).not.toContain('no-averages');
 
     page.setView('ALL');
-    fixture.detectChanges();
+    await settle(fixture);
     await fixture.whenStable();
 
     expect(footer()?.classList).toContain('no-averages');
@@ -1475,13 +1539,13 @@ describe('StatsPage', () => {
 
   it('ambers the extension of a double top under the criterion', async () => {
     // From 1,90 to 2,50 : +31,6 % from the start, under the 50 % criterion.
-    const { fixture, page } = setup({ rows: [makeDoubleTop({ dtTopPrice: 2.5 })] });
+    const { fixture, page } = await setup({ rows: [makeDoubleTop({ dtTopPrice: 2.5 })] });
     TestBed.inject(TranslateService).setTranslation('en', {
       stats: { doubleTop: { cellA: '{{leg}} %' } },
     });
 
     page.setView('DT');
-    fixture.detectChanges();
+    await settle(fixture);
     await fixture.whenStable();
 
     const note: HTMLElement = fixture.nativeElement.querySelector('td.mat-column-dtTop .leg-note');
@@ -1489,32 +1553,32 @@ describe('StatsPage', () => {
     expect(note.textContent).toContain('31.6');
   });
 
-  it('leaving the GUS view drops the « No push » tab it was on', () => {
-    const { fixture, page, repo } = setup({ rows: [makeStat()] });
+  it('leaving the GUS view drops the « No push » tab it was on', async () => {
+    const { fixture, page, repo } = await setup({ rows: [makeStat()] });
     page.setStatus('NO_PUSH');
 
     page.setView('DT');
-    fixture.detectChanges();
+    await settle(fixture);
 
     expect(page.status()).toBeNull();
     expect(repo.lastFilter?.noPush).toBeNull();
   });
 
   // A double top left to complete is one of them : the GUS view would hide it.
-  it('lands on « All » from a link naming the stats to complete', () => {
-    const { page, repo } = setup({ query: { status: 'TO_COMPLETE' } });
+  it('lands on « All » from a link naming the stats to complete', async () => {
+    const { page, repo } = await setup({ query: { status: 'TO_COMPLETE' } });
 
     expect(page.view()).toBe('ALL');
     expect(repo.lastFilter?.pattern).toBeNull();
   });
 
-  it('moves to the DT view when the URL names a double top, its panel open', () => {
-    const { fixture, page, repo } = setup({
+  it('moves to the DT view when the URL names a double top, its panel open', async () => {
+    const { fixture, page, repo } = await setup({
       rows: [makeStat()],
       query: { stat: 'stat-sgbx-dt' },
       byId: makeDoubleTop(),
     });
-    fixture.detectChanges();
+    await settle(fixture);
 
     expect(page.view()).toBe('DT');
     expect(repo.lastFilter?.pattern).toBe('DT');
@@ -1523,8 +1587,8 @@ describe('StatsPage', () => {
 
   // ---- Double top card (#437) ----
 
-  it('shows the double top card on a DT stat, its legs computed live', () => {
-    const { page } = setup({ rows: [makeDoubleTop()] });
+  it('shows the double top card on a DT stat, its legs computed live', async () => {
+    const { page } = await setup({ rows: [makeDoubleTop()] });
 
     expect(page.completing()?.id).toBe('stat-sgbx-dt');
     expect(page.isDoubleTop()).toBe(true);
@@ -1538,8 +1602,8 @@ describe('StatsPage', () => {
     expect(legs.retestToTop).toBeCloseTo(-3.39, 2);
   });
 
-  it('counts four prices and four times on a double top and names what is missing', () => {
-    const { page } = setup({ rows: [makeDoubleTop()] });
+  it('counts four prices and four times on a double top and names what is missing', async () => {
+    const { page } = await setup({ rows: [makeDoubleTop()] });
 
     expect(page.doubleTopProgress()).toEqual({ prices: 3, times: 3, total: 4 });
     expect(page.sessionMissing()).toEqual([
@@ -1553,16 +1617,16 @@ describe('StatsPage', () => {
   });
 
   // #469 : the price alone no longer ticks a double top — its time is required like it.
-  it('keeps the tick blocked on a double top with its four prices but a time missing', () => {
-    const { page } = setup({ rows: [makeDoubleTop({ dtRetestPrice: 2.85 })] });
+  it('keeps the tick blocked on a double top with its four prices but a time missing', async () => {
+    const { page } = await setup({ rows: [makeDoubleTop({ dtRetestPrice: 2.85 })] });
 
     expect(page.sessionMissing()).toEqual(['stats.fields.dtRetestTimeShort']);
     expect(page.tickBlockedReason()).not.toBe('');
   });
 
   // SGBX of the mockup : 10:02, 10:14, 10:21, 10:38.
-  it('reads how long each leg took, live, as the times are typed', () => {
-    const { page } = setup({ rows: [makeDoubleTop()] });
+  it('reads how long each leg took, live, as the times are typed', async () => {
+    const { page } = await setup({ rows: [makeDoubleTop()] });
 
     expect(page.doubleTopDurations()).toEqual({
       rise: 12,
@@ -1576,8 +1640,8 @@ describe('StatsPage', () => {
     expect(page.rows()[0].durations.rise).toBe(12);
   });
 
-  it('sends nothing while the times go back, and points at the one that does', () => {
-    const { page, repo } = setup({ rows: [makeDoubleTop()] });
+  it('sends nothing while the times go back, and points at the one that does', async () => {
+    const { page, repo } = await setup({ rows: [makeDoubleTop()] });
 
     page.setSessionTime('dtLowTime', '10:10');
     page.saveSession();
@@ -1591,8 +1655,8 @@ describe('StatsPage', () => {
 
   // #490 : the natural way out of a refusal is to put the stored value back — nothing to send, and
   // the card must stop saying « non enregistré ».
-  it('reads saved again when a refused time is typed back to the stored one', () => {
-    const { page, repo } = setup({ rows: [makeDoubleTop()] });
+  it('reads saved again when a refused time is typed back to the stored one', async () => {
+    const { page, repo } = await setup({ rows: [makeDoubleTop()] });
 
     page.setSessionTime('dtStartTime', '03:00');
     page.saveSession();
@@ -1607,8 +1671,8 @@ describe('StatsPage', () => {
     expect(repo.update).not.toHaveBeenCalled();
   });
 
-  it('refuses a time outside the extended session, and takes a premarket one', () => {
-    const { page } = setup({ rows: [makeDoubleTop()] });
+  it('refuses a time outside the extended session, and takes a premarket one', async () => {
+    const { page } = await setup({ rows: [makeDoubleTop()] });
 
     page.setSessionTime('dtStartTime', '02:10');
     expect(page.sessionIssue()?.reason).toBe('stats.save.timeOutsideSession');
@@ -1618,16 +1682,16 @@ describe('StatsPage', () => {
     expect(page.sessionIssue()).toBeNull();
   });
 
-  it('a cleared time goes back to null, not an empty string', () => {
-    const { page } = setup({ rows: [makeDoubleTop()] });
+  it('a cleared time goes back to null, not an empty string', async () => {
+    const { page } = await setup({ rows: [makeDoubleTop()] });
 
     page.setSessionTime('dtTopTime', '');
 
     expect(page.session().dtTopTime).toBeNull();
   });
 
-  it('saves a double top price with the whole row, then ticks it with its four prices and times', () => {
-    const { page, repo } = setup({ rows: [makeDoubleTop()] });
+  it('saves a double top price with the whole row, then ticks it with its four prices and times', async () => {
+    const { page, repo } = await setup({ rows: [makeDoubleTop()] });
 
     page.setSessionPrice('dtRetestPrice', 2.85);
     page.setSessionTime('dtRetestTime', '10:38');
@@ -1650,9 +1714,9 @@ describe('StatsPage', () => {
 
   // #649 : a double top is read off the session — its first card keeps float, volume and note.
   it('asks a double top for no premarket price, and saves it without one', async () => {
-    const { fixture, page, repo } = setup({ rows: [makeDoubleTop()] });
+    const { fixture, page, repo } = await setup({ rows: [makeDoubleTop()] });
     await fixture.whenStable();
-    fixture.detectChanges();
+    await settle(fixture);
 
     const labels = (fixture.nativeElement as HTMLElement).querySelector(
       '.premarket-form',
@@ -1675,8 +1739,8 @@ describe('StatsPage', () => {
     );
   });
 
-  it('sends nothing while the double top is out of shape, and names the fields', () => {
-    const { page, repo } = setup({ rows: [makeDoubleTop()] });
+  it('sends nothing while the double top is out of shape, and names the fields', async () => {
+    const { page, repo } = await setup({ rows: [makeDoubleTop()] });
 
     page.setSessionPrice('dtRetestPrice', 2.3);
     page.saveSession();
@@ -1688,18 +1752,18 @@ describe('StatsPage', () => {
   });
 
   // #648 : SIR, SIV and discretionary are trades only — no view, no pattern for a new stat.
-  it('offers the GUS and DT views and patterns only', () => {
-    const { page } = setup({ rows: [makePending()] });
+  it('offers the GUS and DT views and patterns only', async () => {
+    const { page } = await setup({ rows: [makePending()] });
 
     expect(page.views).toEqual(['GUS', 'DT', 'ALL']);
     expect(page.patterns).toEqual(['GUS', 'DT']);
   });
 
   // The discretionary stat left in production before #648 : still reachable, through « All ».
-  it('opens a stat left under another pattern in « All », the only view that lists it', () => {
+  it('opens a stat left under another pattern in « All », the only view that lists it', async () => {
     const legacy = makeStat({ id: 'stat-disc', pattern: 'DISCRETIONARY' });
-    const { fixture, page } = setup({ rows: [], query: { stat: 'stat-disc' }, byId: legacy });
-    fixture.detectChanges();
+    const { fixture, page } = await setup({ rows: [], query: { stat: 'stat-disc' }, byId: legacy });
+    await settle(fixture);
 
     expect(page.view()).toBe('ALL');
     expect(page.completing()?.id).toBe('stat-disc');
@@ -1708,8 +1772,8 @@ describe('StatsPage', () => {
   // ---- New stat (#326) ----
 
   // GLND, three days back : found on the charts, never captured as a candidate.
-  it('creates a stat typed by hand once confirmed, then carries on with it', () => {
-    const { page, repo } = setup({ rows: [] });
+  it('creates a stat typed by hand once confirmed, then carries on with it', async () => {
+    const { page, repo } = await setup({ rows: [] });
     page.startNew();
     expect(page.createMissing()).toEqual(['stats.fields.ticker', 'stats.create.premarketPrices']);
 
@@ -1732,8 +1796,8 @@ describe('StatsPage', () => {
     expect(page.completing()?.id).toBe('stat-new');
   });
 
-  it('a new stat typed as DT is created with the double top card, then shown in the DT view', () => {
-    const { page, repo } = setup({ rows: [] });
+  it('a new stat typed as DT is created with the double top card, then shown in the DT view', async () => {
+    const { page, repo } = await setup({ rows: [] });
     page.startNew();
 
     page.setIdentity({ ticker: 'nxtt', tradeDate: new Date(2026, 8, 18), pattern: 'DT' });
@@ -1760,8 +1824,8 @@ describe('StatsPage', () => {
     expect(page.completing()?.pattern).toBe('DT');
   });
 
-  it('never saves a field of a stat not created yet', () => {
-    const { page, repo } = setup({ rows: [] });
+  it('never saves a field of a stat not created yet', async () => {
+    const { page, repo } = await setup({ rows: [] });
     page.startNew();
 
     page.setPremarketPrice('previousClose', 1.96);
@@ -1770,8 +1834,8 @@ describe('StatsPage', () => {
     expect(repo.update).not.toHaveBeenCalled();
   });
 
-  it('creates nothing when the confirmation is cancelled', () => {
-    const { page, repo } = setup({ rows: [], confirmed: false });
+  it('creates nothing when the confirmation is cancelled', async () => {
+    const { page, repo } = await setup({ rows: [], confirmed: false });
     page.startNew();
     page.setIdentity({ ticker: 'GLND' });
     page.setPremarketPrice('previousClose', 1.96);

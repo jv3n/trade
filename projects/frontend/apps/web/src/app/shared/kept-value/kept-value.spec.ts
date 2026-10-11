@@ -9,11 +9,11 @@ import { keptValue } from './kept-value';
 /**
  * Pins [keptValue] — the bridge between a resource and a listing that must not blink (#370). A
  * resource drops its value as soon as its params move ; the listing keeps the rows it has until
- * the new ones land, and only a failure clears them.
+ * the new ones land ; only a failure, or no params at all, clears them.
  */
 describe('keptValue', () => {
   /** The day picked — the params. */
-  let day: ReturnType<typeof signal<string>>;
+  let day: ReturnType<typeof signal<string | undefined>>;
   /** One subject per load, answered by the test. */
   let loads: Subject<string[]>[];
   let rows: ReturnType<typeof makeRows>;
@@ -38,7 +38,7 @@ describe('keptValue', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
-    day = signal('2026-09-17');
+    day = signal<string | undefined>('2026-09-17');
     loads = [];
     TestBed.runInInjectionContext(() => {
       rows = makeRows();
@@ -80,6 +80,18 @@ describe('keptValue', () => {
     day.set('2026-09-18');
     TestBed.inject(ApplicationRef).tick();
     loads[1].error(new Error('500'));
+    await settle();
+
+    expect(kept()).toBeNull();
+  });
+
+  it('clears once the params go away', async () => {
+    TestBed.inject(ApplicationRef).tick();
+    loads[0].next(['KTTA']);
+    await settle();
+    expect(kept()).toEqual(['KTTA']);
+
+    day.set(undefined);
     await settle();
 
     expect(kept()).toBeNull();
