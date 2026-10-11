@@ -994,7 +994,8 @@ describe('StatsPage', () => {
     fixture.detectChanges();
 
     expect(repo.update).toHaveBeenCalledWith('stat-sgbx', expect.objectContaining({ ssr: true }));
-    expect(repo.findAll.mock.calls.length).toBeGreaterThan(callsBefore);
+    // Once, after the save : the optimistic patch before it reloads nothing (#375 review).
+    expect(repo.findAll.mock.calls.length).toBe(callsBefore + 1);
     expect(page.completing()?.ssr).toBe(true);
   });
 
