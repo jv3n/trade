@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { CashFlow } from '../account.model';
 import { AccountRepository } from '../account.repository';
 import { HttpAccountRepository } from './account.http';
 
@@ -140,6 +141,66 @@ describe('HttpAccountRepository', () => {
     expect(points[0].date instanceof Date).toBe(true);
     expect(points[0].date.getFullYear()).toBe(2026);
     expect(points[1].balance).toBe(4200);
+  });
+
+  // #685 : the « Flux du compte » report — the listing's filter plus the bar size.
+  it('getCashFlow sends the filter and the bar size, and parses every date', () => {
+    let flow: CashFlow | undefined;
+    repo
+      .getCashFlow(
+        {
+          dateFrom: new Date(2026, 8, 3),
+          dateTo: new Date(2026, 8, 23),
+          types: ['TRADE', 'LOCATE'],
+        },
+        'WEEK',
+      )
+      .subscribe((f) => (flow = f));
+
+    const req = httpMock.expectOne((r) => r.url === '/api/account/cash-flow');
+    expect(req.request.params.get('dateFrom')).toBe('2026-09-03');
+    expect(req.request.params.get('dateTo')).toBe('2026-09-23');
+    expect(req.request.params.getAll('type')).toEqual(['TRADE', 'LOCATE']);
+    expect(req.request.params.get('groupBy')).toBe('WEEK');
+    req.flush({
+      dateFrom: '2026-09-03',
+      dateTo: '2026-09-23',
+      openingBalance: 999,
+      closingBalance: 1869,
+      buckets: [
+        {
+          from: '2026-09-03',
+          to: '2026-09-06',
+          winningTrades: 100,
+          losingTrades: -40,
+          locates: -15,
+          deposits: 0,
+          withdrawals: 0,
+          adjustments: 0,
+          net: 45,
+        },
+      ],
+    });
+
+    expect(flow?.dateFrom).toEqual(new Date(2026, 8, 3));
+    expect(flow?.buckets[0].from).toEqual(new Date(2026, 8, 3));
+    expect(flow?.buckets[0].to).toEqual(new Date(2026, 8, 6));
+    expect(flow?.buckets[0].net).toBe(45);
+    expect(flow?.closingBalance).toBe(1869);
+  });
+
+  it('getCashFlow keeps an open period open', () => {
+    let flow: CashFlow | undefined;
+    repo
+      .getCashFlow({ dateFrom: null, dateTo: null, types: null }, 'MONTH')
+      .subscribe((f) => (flow = f));
+
+    const req = httpMock.expectOne((r) => r.url === '/api/account/cash-flow');
+    expect(req.request.params.has('dateFrom')).toBe(false);
+    req.flush({ dateFrom: null, dateTo: null, openingBalance: 0, closingBalance: 0, buckets: [] });
+
+    expect(flow?.dateFrom).toBeNull();
+    expect(flow?.buckets).toEqual([]);
   });
 
   it('addMovement posts the movement with the date formatted as yyyy-MM-dd', () => {
