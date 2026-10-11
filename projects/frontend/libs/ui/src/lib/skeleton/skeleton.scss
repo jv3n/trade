@@ -56,6 +56,11 @@
   border-radius: var(--radius-sm);
 }
 
+// A ticker shown in a `mat-chip-set` : the set adds a margin above and below each chip (#616).
+.stb-skeleton-chip-set {
+  padding-block: s.$space-xs;
+}
+
 // Holds a narrow icon column at the width of what its real cell shows.
 .stb-skeleton-spacer {
   display: inline-block;
@@ -67,10 +72,21 @@
   align-items: flex-end;
 }
 
+// A KPI ghost line carries the real line's class (`.kpi__label`, `.kpi__value`, `.kpi__sub`) : a
+// no-break space holds its line box at the text's height, the bar lies over it (#616).
+.stb-skeleton-kpi-line {
+  position: relative;
+
+  > .stb-skeleton-host {
+    position: absolute;
+    inset: 0;
+    justify-content: center;
+  }
+}
+
 .stb-skeleton-kpi-value .stb-skeleton {
   width: 70%;
   height: s.$font-2xl;
-  margin: s.$space-xs 0;
 }
 
 .stb-skeleton-title {

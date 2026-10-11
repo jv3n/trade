@@ -76,6 +76,49 @@ export const KpiRow: Story = {
   render: () => ({ template: `<ui-skeleton-kpi-row label="Loading…" />` }),
 };
 
+/**
+ * Each ghost row above the real row it stands for, at 4, 5 and 6 figures : the tiles must line up
+ * and share their height, or the page jumps when the figures land (#616). jsdom measures no
+ * heights, so this is where a regression shows.
+ */
+export const KpiRowAgainstReal: Story = {
+  render: () => ({
+    props: {
+      rows: [
+        { count: 4, modifier: '' },
+        { count: 5, modifier: 'kpi-row--five' },
+        { count: 6, modifier: 'kpi-row--six' },
+      ],
+      figures: [
+        { label: 'Realized P&L', value: '+1,240.50', sub: '12 trades' },
+        { label: 'Win rate', value: '58 %', sub: '7 winners' },
+        { label: 'Avg win', value: '+312.40', sub: 'per winning trade' },
+        { label: 'Avg loss', value: '−148.20', sub: 'per losing trade' },
+        { label: 'Profit factor', value: '1.84', sub: 'wins ÷ losses' },
+        { label: 'After 11 am', value: '−96.10', sub: '3 trades' },
+      ],
+    },
+    template: `
+      <div style="display: grid; gap: 32px">
+        @for (row of rows; track row.count) {
+          <div style="display: grid; gap: 8px">
+            <ui-skeleton-kpi-row [count]="row.count" />
+            <section class="kpi-row" [class]="row.modifier">
+              @for (f of figures.slice(0, row.count); track f.label) {
+                <div class="card kpi">
+                  <div class="kpi__label">{{ f.label }}</div>
+                  <div class="kpi__value">{{ f.value }}</div>
+                  <div class="kpi__sub">{{ f.sub }}</div>
+                </div>
+              }
+            </section>
+          </div>
+        }
+      </div>
+    `,
+  }),
+};
+
 export const Card: Story = {
   render: () => ({
     template: `<div style="max-width: 480px"><ui-skeleton-card label="Loading…" /></div>`,
