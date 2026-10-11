@@ -14,6 +14,14 @@ import { LexiconPage } from './lexicon-page';
  * offers only letters that have entries, the FR / EN toggle is local and never writes back to the
  * app locale, and the page reaches no write endpoint.
  */
+/** Renders once the glossary has answered — it loads through a resource (#672), a tick later. */
+async function render(): Promise<LexiconPage> {
+  const fixture = TestBed.createComponent(LexiconPage);
+  fixture.detectChanges();
+  await fixture.whenStable();
+  return fixture.componentInstance;
+}
+
 describe('LexiconPage', () => {
   let findAll: ReturnType<typeof vi.fn>;
   let languageSet: ReturnType<typeof vi.fn>;
@@ -48,8 +56,8 @@ describe('LexiconPage', () => {
     }).compileComponents();
   });
 
-  it('offers only the initials that have entries, and gathers the rest under one bucket', () => {
-    const page = TestBed.createComponent(LexiconPage).componentInstance;
+  it('offers only the initials that have entries, and gathers the rest under one bucket', async () => {
+    const page = await render();
 
     // B (Borrow fee), D (Double Top), G (GUS), # (« % of Total Equity »). No dead letters.
     expect(page.letters()).toEqual(['#', 'B', 'D', 'G']);
@@ -57,12 +65,12 @@ describe('LexiconPage', () => {
 
   // #314 : the grid read « Average », « EOD », « LOD », « Average Push » — sorting and the A-Z
   // index ran on the stored term while the card shows the acronym.
-  it('orders and files an acronym under the heading the card shows', () => {
+  it('orders and files an acronym under the heading the card shows', async () => {
     rows.push(
       entry({ id: '5', term: 'Average End of Day (EOD)', fr: 'Moyenne EOD', en: 'Average EOD' }),
       entry({ id: '6', term: 'Average Push', fr: 'Push moyen', en: 'Average push' }),
     );
-    const page = TestBed.createComponent(LexiconPage).componentInstance;
+    const page = await render();
 
     expect(page.visible().map((c) => c.heading)).toEqual([
       '% of Total Equity @ Risk',
@@ -76,16 +84,16 @@ describe('LexiconPage', () => {
     expect(page.letters()).toContain('E');
   });
 
-  it('finds a card by the words its acronym stands for', () => {
-    const page = TestBed.createComponent(LexiconPage).componentInstance;
+  it('finds a card by the words its acronym stands for', async () => {
+    const page = await render();
 
     page.setSearch('double top');
 
     expect(page.visible().map((c) => c.heading)).toEqual(['DT']);
   });
 
-  it('narrows to one letter, and typing widens back to every letter', () => {
-    const page = TestBed.createComponent(LexiconPage).componentInstance;
+  it('narrows to one letter, and typing widens back to every letter', async () => {
+    const page = await render();
 
     page.setLetter('B');
     expect(page.visible().map((c) => c.term)).toEqual(['Borrow fee']);
@@ -99,8 +107,8 @@ describe('LexiconPage', () => {
 
   // #365 : the other way round, a letter picked over a search emptied the grid and the empty
   // state blamed the search, which still matched.
-  it('clears the search when a letter is picked, so only one filter is ever on', () => {
-    const page = TestBed.createComponent(LexiconPage).componentInstance;
+  it('clears the search when a letter is picked, so only one filter is ever on', async () => {
+    const page = await render();
 
     page.setSearch('gus');
     page.setLetter('B');
@@ -109,8 +117,8 @@ describe('LexiconPage', () => {
     expect(page.visible().map((c) => c.term)).toEqual(['Borrow fee']);
   });
 
-  it('keeps the search when every letter is picked back', () => {
-    const page = TestBed.createComponent(LexiconPage).componentInstance;
+  it('keeps the search when every letter is picked back', async () => {
+    const page = await render();
 
     page.setSearch('gus');
     page.setLetter(page.allLetters);
@@ -118,8 +126,8 @@ describe('LexiconPage', () => {
     expect(page.search()).toBe('gus');
   });
 
-  it('starts on the app language and swaps the definitions without touching it', () => {
-    const page = TestBed.createComponent(LexiconPage).componentInstance;
+  it('starts on the app language and swaps the definitions without touching it', async () => {
+    const page = await render();
 
     expect(page.definitionLanguage()).toBe('fr');
     expect(page.visible().find((c) => c.heading === 'DT')?.definition).toBe('Deux sommets');
@@ -130,11 +138,11 @@ describe('LexiconPage', () => {
     expect(languageSet).not.toHaveBeenCalled();
   });
 
-  it('surfaces a load failure instead of showing an empty glossary', () => {
+  it('surfaces a load failure instead of showing an empty glossary', async () => {
     findAll.mockReturnValue(throwError(() => new Error('boom')));
-    const page = TestBed.createComponent(LexiconPage).componentInstance;
+    const page = await render();
 
-    expect(page.error()).toBeTruthy();
+    expect(page.error()).toBe(true);
     expect(page.loading()).toBe(false);
   });
 

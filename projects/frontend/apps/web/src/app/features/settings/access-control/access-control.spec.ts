@@ -18,7 +18,7 @@
  * - **Reset button** : explicit "wipe back to default" path, separate from saving an emptied
  *   list — the admin can keep typing without losing chips just because they wanted to revert.
  */
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideTranslateService } from '@ngx-translate/core';
 import { Observable, of, throwError } from 'rxjs';
 import { ConfigEntry, ConfigRepository } from '../../../core/api/config/config.repository';
@@ -86,36 +86,43 @@ function setup(initial: ConfigEntry | null = null): {
   return { repo };
 }
 
+/** Renders once the whitelist has answered — it loads through a resource (#672), a tick later. */
+async function settle(fixture: ComponentFixture<AccessControlPage>): Promise<void> {
+  fixture.detectChanges();
+  await fixture.whenStable();
+  fixture.detectChanges();
+}
+
 describe('AccessControlPage', () => {
-  it('renders the open-mode banner when no email is configured', () => {
+  it('renders the open-mode banner when no email is configured', async () => {
     setup();
     const fixture = TestBed.createComponent(AccessControlPage);
-    fixture.detectChanges();
+    await settle(fixture);
     const html = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(html).toContain('settings.accessControlPage.openModeNote');
     // The admin-auto-included note is always visible — that one belongs to both modes
     expect(html).toContain('settings.accessControlPage.adminNote');
   });
 
-  it('hides the open-mode banner once at least one email is configured', () => {
+  it('hides the open-mode banner once at least one email is configured', async () => {
     setup(emailsEntry('alice@example.com,bob@example.com'));
     const fixture = TestBed.createComponent(AccessControlPage);
-    fixture.detectChanges();
+    await settle(fixture);
     const html = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(html).not.toContain('settings.accessControlPage.openModeNote');
     expect(html).toContain('alice@example.com');
     expect(html).toContain('bob@example.com');
   });
 
-  it('parses, lowercases and sorts the CSV from the backend', () => {
+  it('parses, lowercases and sorts the CSV from the backend', async () => {
     setup(emailsEntry(' Bob@Example.com , ALICE@example.com , bob@example.com '));
     const fixture = TestBed.createComponent(AccessControlPage);
-    fixture.detectChanges();
+    await settle(fixture);
     const cmp = fixture.componentInstance;
     expect(cmp.emails()).toEqual(['alice@example.com', 'bob@example.com']);
   });
 
-  it('renders the load-error banner when ConfigRepository.list fails', () => {
+  it('renders the load-error banner when ConfigRepository.list fails', async () => {
     const repo = new StubConfigRepository();
     repo.listResponse = throwError(() => new Error('boom'));
     TestBed.configureTestingModule({
@@ -126,17 +133,17 @@ describe('AccessControlPage', () => {
       ],
     });
     const fixture = TestBed.createComponent(AccessControlPage);
-    fixture.detectChanges();
+    await settle(fixture);
     const html = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(html).toContain('settings.accessControlPage.errors.load');
   });
 
   // ------------------------------------------------------------------------ add / remove
 
-  it('adds a valid email and returns true so the template can clear the input', () => {
+  it('adds a valid email and returns true so the template can clear the input', async () => {
     const { repo } = setup();
     const fixture = TestBed.createComponent(AccessControlPage);
-    fixture.detectChanges();
+    await settle(fixture);
     const cmp = fixture.componentInstance;
 
     const added = cmp.addCandidate('alice@example.com');
@@ -148,10 +155,10 @@ describe('AccessControlPage', () => {
     expect(repo.setCalls).toEqual([]);
   });
 
-  it('rejects an email that does not contain @ and surfaces an inline error', () => {
+  it('rejects an email that does not contain @ and surfaces an inline error', async () => {
     const { repo } = setup();
     const fixture = TestBed.createComponent(AccessControlPage);
-    fixture.detectChanges();
+    await settle(fixture);
     const cmp = fixture.componentInstance;
 
     const added = cmp.addCandidate('not-an-email');
@@ -164,10 +171,10 @@ describe('AccessControlPage', () => {
     expect(repo.setCalls).toEqual([]);
   });
 
-  it('deduplicates when the same email is added twice (case-insensitive)', () => {
+  it('deduplicates when the same email is added twice (case-insensitive)', async () => {
     setup(emailsEntry('alice@example.com'));
     const fixture = TestBed.createComponent(AccessControlPage);
-    fixture.detectChanges();
+    await settle(fixture);
     const cmp = fixture.componentInstance;
 
     cmp.addCandidate('ALICE@Example.com');
@@ -175,10 +182,10 @@ describe('AccessControlPage', () => {
     expect(cmp.emails()).toEqual(['alice@example.com']);
   });
 
-  it('returns true on a blank value without mutating the list (template no-op clear)', () => {
+  it('returns true on a blank value without mutating the list (template no-op clear)', async () => {
     setup(emailsEntry('alice@example.com'));
     const fixture = TestBed.createComponent(AccessControlPage);
-    fixture.detectChanges();
+    await settle(fixture);
     const cmp = fixture.componentInstance;
 
     const added = cmp.addCandidate('   ');
@@ -194,10 +201,10 @@ describe('AccessControlPage', () => {
   // refactor that flips the condition (e.g. clearing unconditionally) doesn't silently start
   // wiping the admin's typo before they can read the inline error.
 
-  it('onAddClick clears the input element when addCandidate accepts the value', () => {
+  it('onAddClick clears the input element when addCandidate accepts the value', async () => {
     setup();
     const fixture = TestBed.createComponent(AccessControlPage);
-    fixture.detectChanges();
+    await settle(fixture);
     const cmp = fixture.componentInstance;
 
     const input = { value: 'alice@example.com' } as HTMLInputElement;
@@ -207,12 +214,12 @@ describe('AccessControlPage', () => {
     expect(cmp.emails()).toEqual(['alice@example.com']);
   });
 
-  it('onAddClick keeps the typed value when addCandidate rejects (no @)', () => {
+  it('onAddClick keeps the typed value when addCandidate rejects (no @)', async () => {
     // Critical UX invariant : an admin who fat-fingers `alice@@@example.com` or types just `alice`
     // must see their typo + the inline error, not a blank input with a vanished value.
     setup();
     const fixture = TestBed.createComponent(AccessControlPage);
-    fixture.detectChanges();
+    await settle(fixture);
     const cmp = fixture.componentInstance;
 
     const input = { value: 'not-an-email' } as HTMLInputElement;
@@ -223,10 +230,10 @@ describe('AccessControlPage', () => {
     expect(cmp.invalidInput()).toBe('not-an-email');
   });
 
-  it('onAddKeydown clears the input and calls preventDefault on success', () => {
+  it('onAddKeydown clears the input and calls preventDefault on success', async () => {
     setup();
     const fixture = TestBed.createComponent(AccessControlPage);
-    fixture.detectChanges();
+    await settle(fixture);
     const cmp = fixture.componentInstance;
 
     let prevented = false;
@@ -248,10 +255,10 @@ describe('AccessControlPage', () => {
     expect(cmp.emails()).toEqual(['alice@example.com']);
   });
 
-  it('onAddKeydown keeps the typed value and still calls preventDefault on a rejected value', () => {
+  it('onAddKeydown keeps the typed value and still calls preventDefault on a rejected value', async () => {
     setup();
     const fixture = TestBed.createComponent(AccessControlPage);
-    fixture.detectChanges();
+    await settle(fixture);
     const cmp = fixture.componentInstance;
 
     let prevented = false;
@@ -270,10 +277,10 @@ describe('AccessControlPage', () => {
     expect(cmp.invalidInput()).toBe('not-an-email');
   });
 
-  it('removes an email from the local list when removeEmail is called', () => {
+  it('removes an email from the local list when removeEmail is called', async () => {
     setup(emailsEntry('alice@example.com,bob@example.com'));
     const fixture = TestBed.createComponent(AccessControlPage);
-    fixture.detectChanges();
+    await settle(fixture);
     const cmp = fixture.componentInstance;
 
     cmp.removeEmail('alice@example.com');
@@ -283,10 +290,10 @@ describe('AccessControlPage', () => {
 
   // ------------------------------------------------------------------------ save / reset
 
-  it('save with a non-empty list PUTs the CSV via ConfigRepository.set', () => {
+  it('save with a non-empty list PUTs the CSV via ConfigRepository.set', async () => {
     const { repo } = setup(emailsEntry('alice@example.com,bob@example.com'));
     const fixture = TestBed.createComponent(AccessControlPage);
-    fixture.detectChanges();
+    await settle(fixture);
     const cmp = fixture.componentInstance;
 
     cmp.save();
@@ -299,13 +306,13 @@ describe('AccessControlPage', () => {
     expect(cmp.saveError()).toBe(false);
   });
 
-  it('save with an empty list goes through ConfigRepository.reset instead of set', () => {
+  it('save with an empty list goes through ConfigRepository.reset instead of set', async () => {
     // The backend rejects PUT with a blank value (use DELETE to clear) — clicking Save on an
     // emptied chip list must therefore route to reset. Pinning this so a future refactor that
     // unifies the two paths doesn't silently 400 on an admin trying to clear the list.
     const { repo } = setup();
     const fixture = TestBed.createComponent(AccessControlPage);
-    fixture.detectChanges();
+    await settle(fixture);
     const cmp = fixture.componentInstance;
 
     cmp.save();
@@ -314,11 +321,11 @@ describe('AccessControlPage', () => {
     expect(repo.resetCalls).toEqual([ALLOWED_EMAILS_KEY]);
   });
 
-  it('surfaces an inline save error when the backend rejects the save', () => {
+  it('surfaces an inline save error when the backend rejects the save', async () => {
     const { repo } = setup(emailsEntry('alice@example.com'));
     repo.setShouldError = true;
     const fixture = TestBed.createComponent(AccessControlPage);
-    fixture.detectChanges();
+    await settle(fixture);
     const cmp = fixture.componentInstance;
 
     cmp.save();
@@ -327,16 +334,17 @@ describe('AccessControlPage', () => {
     expect(cmp.saved()).toBe(false);
   });
 
-  it('reset button always calls ConfigRepository.reset and reloads the list', () => {
+  it('reset button always calls ConfigRepository.reset and reloads the list', async () => {
     const { repo } = setup(emailsEntry('alice@example.com,bob@example.com'));
     // Reset should reload the entry — so the new listResponse returned post-reset must be the
     // empty state to simulate "fell back to YAML default = empty"
     const fixture = TestBed.createComponent(AccessControlPage);
-    fixture.detectChanges();
+    await settle(fixture);
 
     // Swap the listResponse so the post-reset reload returns empty
     repo.listResponse = of([emailsEntry('')]);
     fixture.componentInstance.reset();
+    await settle(fixture);
 
     expect(repo.resetCalls).toEqual([ALLOWED_EMAILS_KEY]);
     expect(fixture.componentInstance.emails()).toEqual([]);

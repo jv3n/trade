@@ -1,5 +1,14 @@
 import { DatePipe } from '@angular/common';
-import { Component, ElementRef, Injector, afterNextRender, inject, signal } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  Injector,
+  afterNextRender,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import {
@@ -10,7 +19,7 @@ import {
   StbTabsModule,
   stbLoadGate,
 } from '@portfolioai/ui';
-import { catchError, forkJoin, map, of } from 'rxjs';
+import { catchError, forkJoin, map, of, tap } from 'rxjs';
 
 import { PatternsRepository } from '../../core/api/patterns/patterns.repository';
 import { LanguageService } from '../../core/app-state/language.service';
@@ -48,12 +57,36 @@ export class PatternsPage {
   private readonly linked = inject(ActivatedRoute, { optional: true })?.snapshot.fragment ?? null;
 
   readonly tabs = TABS;
-  readonly loading = signal(true);
+  /**
+   * Both shelves, read once : a change of language reloads the app (`LanguageService`). Arriving on
+   * a sheet's anchor opens it once they land.
+   */
+  private readonly shelves = rxResource({
+    stream: () => {
+      const lang = this.language.lang();
+      const load = (shelf: Shelf) =>
+        forkJoin(
+          SHELVES[shelf].map((file) =>
+            this.repo.markdown(shelf, file, lang).pipe(
+              map((source) => parseSheet({ shelf, file }, source)),
+              // One file missing costs its own panel, not the page : it is read mid-session.
+              catchError(() => of(unreadableSheet({ shelf, file }))),
+            ),
+          ),
+        );
+      return forkJoin({ pattern: load('pattern'), notes: load('notes') }).pipe(
+        tap(() => this.openLinked()),
+      );
+    },
+  });
+  readonly loading = this.shelves.isLoading;
 
   /** First load only (#539) : a refetch keeps the content on screen. */
   readonly gate = stbLoadGate(this.loading);
   readonly skeletonSheets = [0, 1, 2, 3];
-  readonly sheets = signal<Record<Shelf, Sheet[]>>({ pattern: [], notes: [] });
+  readonly sheets = computed<Record<Shelf, Sheet[]>>(() =>
+    this.shelves.hasValue() ? this.shelves.value() : { pattern: [], notes: [] },
+  );
   readonly tab = signal(0);
   /** Anchors of the open panels ; GUS open on arrival, the sheet the day starts with. */
   readonly open = signal<ReadonlySet<string>>(
@@ -67,26 +100,6 @@ export class PatternsPage {
    * when the link switches tab, the panel's own when it opens one on the current tab.
    */
   private pendingScroll: { anchor: string; after: 'tab' | 'panel' } | null = null;
-
-  constructor() {
-    // A change of language reloads the app (`LanguageService`), so the language is read once.
-    const lang = this.language.lang();
-    const load = (shelf: Shelf) =>
-      forkJoin(
-        SHELVES[shelf].map((file) =>
-          this.repo.markdown(shelf, file, lang).pipe(
-            map((source) => parseSheet({ shelf, file }, source)),
-            // One file missing costs its own panel, not the page : it is read mid-session.
-            catchError(() => of(unreadableSheet({ shelf, file }))),
-          ),
-        ),
-      );
-    forkJoin({ pattern: load('pattern'), notes: load('notes') }).subscribe((sheets) => {
-      this.sheets.set(sheets);
-      this.loading.set(false);
-      this.openLinked();
-    });
-  }
 
   /** Arrived on a sheet's anchor : its tab, its panel open, in view once rendered. */
   private openLinked(): void {

@@ -1,5 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { rxResource } from '@angular/core/rxjs-interop';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
   StbButtonToggleModule,
   StbFormFieldModule,
@@ -45,16 +46,18 @@ export const ALL_LETTERS = '';
 })
 export class LexiconPage {
   private readonly repo = inject(LexiconRepository);
-  private readonly translate = inject(TranslateService);
   private readonly language = inject(LanguageService);
 
-  readonly loading = signal(true);
+  private readonly listing = rxResource({ stream: () => this.repo.findAll() });
+  readonly loading = this.listing.isLoading;
 
   /** First load only (#539) : a refetch keeps the content on screen. */
   readonly gate = stbLoadGate(this.loading);
   readonly skeletonCards = [0, 1, 2, 3, 4, 5];
-  readonly error = signal<string | null>(null);
-  readonly entries = signal<LexiconEntry[]>([]);
+  readonly error = computed(() => this.listing.status() === 'error');
+  readonly entries = computed<LexiconEntry[]>(() =>
+    this.listing.hasValue() ? this.listing.value() : [],
+  );
 
   readonly search = signal('');
   readonly letter = signal(ALL_LETTERS);
@@ -100,20 +103,6 @@ export class LexiconPage {
           (c.expansion?.toLowerCase().includes(needle) ?? false)),
     );
   });
-
-  constructor() {
-    this.loading.set(true);
-    this.repo.findAll().subscribe({
-      next: (rows) => {
-        this.entries.set(rows);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.error.set(this.translate.instant('lexicon.errors.load'));
-        this.loading.set(false);
-      },
-    });
-  }
 
   setSearch(value: string): void {
     this.search.set(value);

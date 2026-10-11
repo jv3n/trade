@@ -1,5 +1,5 @@
 import { provideZonelessChangeDetection } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideTranslateService } from '@ngx-translate/core';
 import { MatDialogRef, provideNativeDateAdapter } from '@portfolioai/ui';
 import { Observable, of } from 'rxjs';
@@ -19,7 +19,16 @@ import { NewLocateDialog } from './new-locate-dialog';
  * - **Closes with the locate to save**, on the day picked, its ticker upper-cased and a blank note
  *   dropped ; cancelling closes with nothing.
  */
-function setup(dayCandidates: Partial<Candidate>[] = []) {
+let current: ComponentFixture<NewLocateDialog>;
+
+/** Renders once the day's candidates have answered — a resource (#672), a tick later. */
+async function settle(): Promise<void> {
+  current.detectChanges();
+  await current.whenStable();
+  current.detectChanges();
+}
+
+async function setup(dayCandidates: Partial<Candidate>[] = []) {
   const close = vi.fn();
   const listForDate = vi.fn((_date: Date): Observable<Candidate[]> =>
     of(dayCandidates as Candidate[]),
@@ -35,7 +44,8 @@ function setup(dayCandidates: Partial<Candidate>[] = []) {
     ],
   });
   const fixture = TestBed.createComponent(NewLocateDialog);
-  fixture.detectChanges();
+  current = fixture;
+  await settle();
   return { dialog: fixture.componentInstance, close, listForDate };
 }
 
@@ -46,8 +56,8 @@ function fillAtxg(dialog: NewLocateDialog): void {
 }
 
 describe('NewLocateDialog', () => {
-  it('waits for a ticker, shares and a price before saving', () => {
-    const { dialog } = setup();
+  it('waits for a ticker, shares and a price before saving', async () => {
+    const { dialog } = await setup();
     expect(dialog.canSave()).toBe(false);
 
     dialog.shares.set(1000);
@@ -58,18 +68,19 @@ describe('NewLocateDialog', () => {
     expect(dialog.canSave()).toBe(true);
   });
 
-  it('previews the cost live', () => {
-    const { dialog } = setup();
+  it('previews the cost live', async () => {
+    const { dialog } = await setup();
 
     fillAtxg(dialog);
 
     expect(dialog.cost()).toBe(50);
   });
 
-  it('closes with the locate on the day picked, its ticker upper-cased', () => {
-    const { dialog, close } = setup();
+  it('closes with the locate on the day picked, its ticker upper-cased', async () => {
+    const { dialog, close } = await setup();
     fillAtxg(dialog);
     dialog.setDate(new Date(2026, 8, 18, 15, 30));
+    await settle();
 
     dialog.submit();
 
@@ -83,8 +94,8 @@ describe('NewLocateDialog', () => {
     });
   });
 
-  it("weighs the locate against the share's price, and keeps that price with it", () => {
-    const { dialog, close } = setup();
+  it("weighs the locate against the share's price, and keeps that price with it", async () => {
+    const { dialog, close } = await setup();
     fillAtxg(dialog);
     dialog.setStockPrice(2.5);
 
@@ -95,8 +106,8 @@ describe('NewLocateDialog', () => {
   });
 
   // The rule needs the share's price : it starts from that day's candidate, matched by ticker.
-  it("starts the share's price from the PM open of that day's candidate on the ticker", () => {
-    const { dialog } = setup([{ ticker: 'SGBX', pmOpen: 1.85 }]);
+  it("starts the share's price from the PM open of that day's candidate on the ticker", async () => {
+    const { dialog } = await setup([{ ticker: 'SGBX', pmOpen: 1.85 }]);
 
     dialog.textForm.ticker().value.set('sgbx');
     dialog.price.set(0.04);
@@ -105,9 +116,10 @@ describe('NewLocateDialog', () => {
     expect(dialog.breach()).toBe(true); // 0.04 on 1.85 = 2.16 %
   });
 
-  it("reads the candidates of the day picked, and keeps a share's price typed", () => {
-    const { dialog, listForDate } = setup([{ ticker: 'SGBX', pmOpen: 1.85 }]);
+  it("reads the candidates of the day picked, and keeps a share's price typed", async () => {
+    const { dialog, listForDate } = await setup([{ ticker: 'SGBX', pmOpen: 1.85 }]);
     dialog.setDate(new Date(2026, 8, 18, 15, 30));
+    await settle();
     expect(listForDate).toHaveBeenLastCalledWith(new Date(2026, 8, 18));
 
     dialog.textForm.ticker().value.set('SGBX');
@@ -116,8 +128,8 @@ describe('NewLocateDialog', () => {
     expect(dialog.stockPrice()).toBe(2.4);
   });
 
-  it('closes with nothing on cancel', () => {
-    const { dialog, close } = setup();
+  it('closes with nothing on cancel', async () => {
+    const { dialog, close } = await setup();
 
     dialog.cancel();
 

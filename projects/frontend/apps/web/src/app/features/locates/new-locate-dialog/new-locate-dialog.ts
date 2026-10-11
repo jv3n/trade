@@ -1,5 +1,6 @@
 import { DecimalPipe } from '@angular/common';
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { FormField, form, maxLength, required } from '@angular/forms/signals';
 import { TranslatePipe } from '@ngx-translate/core';
 import {
@@ -12,7 +13,6 @@ import {
   StbInputModule,
 } from '@portfolioai/ui';
 import { startOfDay } from 'date-fns';
-import { Subscription } from 'rxjs';
 import { CandidatesRepository } from '../../../core/api/candidates/candidates.repository';
 import { LocateInput } from '../../../core/api/locates/locates.model';
 import { locateBreach, locateCost, locatePercent } from '../../../shared/locate-cost/locate-cost';
@@ -57,9 +57,23 @@ export class NewLocateDialog {
   });
   readonly shares = signal<number | null>(null);
   readonly price = signal<number | null>(null);
-  /** The PM opens of the day's candidates, by ticker. */
-  private readonly pmOpens = signal<ReadonlyMap<string, number>>(new Map());
-  private pmOpensCall?: Subscription;
+  /** The day's candidates — a day picked again drops the answer of the one left. */
+  private readonly dayCandidates = rxResource({
+    params: () => this.tradingDate(),
+    stream: ({ params }) => this.candidates.listForDate(params),
+  });
+  /**
+   * The PM opens of the day's candidates, by ticker. No candidate that day, or no answer : the
+   * share's price is typed by hand.
+   */
+  private readonly pmOpens = computed<ReadonlyMap<string, number>>(
+    () =>
+      new Map(
+        this.dayCandidates.hasValue()
+          ? this.dayCandidates.value().map((c) => [c.ticker, c.pmOpen])
+          : [],
+      ),
+  );
   /** `undefined` until typed : the day's PM open on the ticker fills it meanwhile. */
   private readonly typedStockPrice = signal<number | null | undefined>(undefined);
   /** The share's price when the locate is bought — what the locate is weighed against. */
@@ -76,15 +90,9 @@ export class NewLocateDialog {
     () => this.textForm().valid() && this.text().ticker.trim() !== '' && this.cost() !== null,
   );
 
-  constructor() {
-    inject(DestroyRef).onDestroy(() => this.pmOpensCall?.unsubscribe());
-    this.loadPmOpens();
-  }
-
   setDate(date: Date | null): void {
     if (!date) return;
     this.tradingDate.set(startOfDay(date));
-    this.loadPmOpens();
   }
 
   setStockPrice(stockPrice: number | null): void {
@@ -107,14 +115,5 @@ export class NewLocateDialog {
 
   cancel(): void {
     this.dialogRef.close(undefined);
-  }
-
-  /** No candidate that day, or no answer : the share's price is typed by hand. */
-  private loadPmOpens(): void {
-    this.pmOpensCall?.unsubscribe();
-    this.pmOpensCall = this.candidates.listForDate(this.tradingDate()).subscribe({
-      next: (list) => this.pmOpens.set(new Map(list.map((c) => [c.ticker, c.pmOpen]))),
-      error: () => this.pmOpens.set(new Map()),
-    });
   }
 }
