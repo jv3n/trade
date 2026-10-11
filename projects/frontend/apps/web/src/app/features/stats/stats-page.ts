@@ -1,16 +1,7 @@
 import { DatePipe, DecimalPipe, formatDate } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import {
-  Component,
-  DestroyRef,
-  LOCALE_ID,
-  computed,
-  effect,
-  inject,
-  linkedSignal,
-  signal,
-} from '@angular/core';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { Component, LOCALE_ID, computed, inject, linkedSignal, signal } from '@angular/core';
+import { rxResource, takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
@@ -39,7 +30,6 @@ import {
   EMPTY,
   Observable,
   Subject,
-  Subscription,
   catchError,
   concatMap,
   debounceTime,
@@ -58,14 +48,15 @@ import {
 } from '../../core/api/shared/pattern.model';
 import {
   OutOfPatternReason,
+  PageRequest,
   StatEntry,
   StatEntryFilter,
   StatEntryInput,
   StatStatus,
-  StatSummary,
 } from '../../core/api/stats/stat-entry.model';
 import { StatsRepository } from '../../core/api/stats/stats.repository';
 import { ConfirmService } from '../../core/app-state/confirm.service';
+import { keptValue } from '../../shared/kept-value/kept-value';
 import { NumberMaskDirective } from '../../shared/number-mask/number-mask.directive';
 import { PeriodFilter } from '../../shared/period-filter/period-filter';
 import { PeriodSelection } from '../../shared/period-preset/period-preset';
@@ -548,6 +539,9 @@ const SKELETON_COLUMNS: SkeletonColumnDefs = {
  * Stats are born from a candidate (#189) or typed by hand (« New stat », #326). The « → Trade »
  * column (#193) is the **only** way a trade comes into existence : one per stat, confirmed, and the
  * row shows a link to that trade from then on.
+ *
+ * The listing and its summaries are resources keyed on the filters, sort and page : any change
+ * refetches, cancelling the request it supersedes (#370) ; a write reloads them.
  */
 @Component({
   selector: 'app-stats-page',
@@ -588,39 +582,10 @@ export class StatsPage {
   private readonly route = inject(ActivatedRoute);
   private readonly locale = inject(LOCALE_ID);
 
-  // ---- Data state ----
-  readonly loading = signal(true);
-  readonly error = signal<string | null>(null);
-  readonly entries = signal<StatEntry[]>([]);
-  readonly totalElements = signal(0);
-  readonly summary = signal<StatSummary | null>(null);
-  /**
-   * The « No push » tab's KPI (#334) : how often a day goes without a push, over every completed
-   * stat of the period — the tab's own summary only holds the no-push days, so the rate needs the
-   * summary without that filter.
-   */
-  private readonly periodSummary = signal<StatSummary | null>(null);
-  readonly noPushRate = computed(() => {
-    const period = this.periodSummary();
-    if (period === null) return null;
-    return {
-      count: period.noPushCount,
-      total: period.completed,
-      share: period.completed > 0 ? (period.noPushCount / period.completed) * 100 : null,
-    };
-  });
-  // A superseded request is dropped, or the slower of two quick filter changes wins (#370).
-  private listing?: Subscription;
-  private summaryFetch?: Subscription;
-  private periodSummaryFetch?: Subscription;
-
   // ---- Pagination ----
   readonly pageIndex = signal(0);
   readonly pageSize = signal(DEFAULT_PAGE_SIZE);
   readonly pageSizeOptions = [10, 25, 50, 100];
-
-  // ---- Refetch nudge (a save / delete bumps it to re-fire the fetch effect) ----
-  private readonly refetchTrigger = signal(0);
 
   // ---- Search (debounced 250 ms) ----
   private readonly searchInput$ = new Subject<string>();
@@ -672,6 +637,82 @@ export class StatsPage {
   readonly sort = signal<SortRequest>({ columnName: '', isAscending: true });
 
   readonly columns = computed(() => COLUMNS[this.view()]);
+
+  // ---- Data, loaded from the signals above ----
+  /**
+   * Bumped by a write, and part of the resources' params : a new key supersedes a load in flight,
+   * where `reload()` is a no-op while one runs — its pre-write answer would win. A field saved on a
+   * ticked stat only moves the KPIs, hence their own counter.
+   */
+  private readonly listingWrites = signal(0);
+  private readonly kpiWrites = signal(0);
+  private readonly criteria = computed<StatEntryFilter>(() => {
+    const range = this.period();
+    const tab = this.status();
+    const view = this.view();
+    return {
+      query: this.searchTerm() || null,
+      dateFrom: range.dateFrom,
+      dateTo: range.dateTo,
+      pattern: view === 'ALL' ? null : view,
+      status: tab === 'NO_PUSH' ? null : tab,
+      noPush: tab === 'NO_PUSH' || null,
+      outOfPattern: this.derived().includes('OUT_OF_PATTERN') || null,
+      under1Dollar: this.derived().includes('UNDER_1_DOLLAR') || null,
+    };
+  });
+
+  private readonly listing = rxResource({
+    params: () => {
+      const sort = this.sort();
+      const page: PageRequest = {
+        pageIndex: this.pageIndex(),
+        pageSize: this.pageSize(),
+        sortField: sort.columnName || undefined,
+        sortDirection: sort.columnName ? (sort.isAscending ? 'asc' : 'desc') : undefined,
+      };
+      return { filter: this.criteria(), page, writes: this.listingWrites() };
+    },
+    stream: ({ params }) =>
+      this.repo
+        .findAll(params.filter, params.page)
+        .pipe(tap(({ content }) => this.listed(content))),
+  });
+  private readonly page = keptValue(this.listing);
+  readonly loading = this.listing.isLoading;
+  readonly error = computed(() => this.listing.status() === 'error');
+  readonly entries = computed<StatEntry[]>(() => this.page()?.content ?? []);
+  readonly totalElements = computed(() => this.page()?.totalElements ?? 0);
+
+  private readonly summaryResource = rxResource({
+    params: () => ({ filter: this.criteria(), writes: this.kpiWrites() }),
+    stream: ({ params }) => this.repo.summary(params.filter),
+  });
+  readonly summary = keptValue(this.summaryResource);
+  /**
+   * The « No push » tab's KPI (#334) : how often a day goes without a push, over every completed
+   * stat of the period — the tab's own summary only holds the no-push days, so the rate needs the
+   * summary without that filter. The whole period, whatever the search box holds : one ticker over
+   * itself is not a rate. No request outside that tab.
+   */
+  private readonly periodSummaryResource = rxResource({
+    params: () => {
+      const criteria = this.criteria();
+      if (!criteria.noPush) return undefined;
+      return { filter: { ...criteria, noPush: null, query: null }, writes: this.kpiWrites() };
+    },
+    stream: ({ params }) => this.repo.summary(params.filter),
+  });
+  private readonly periodSummary = keptValue(this.periodSummaryResource);
+  readonly noPushRate = computed(() => {
+    const period = this.periodSummary();
+    if (period === null) return null;
+    return {
+      count: period.noPushCount,
+      total: period.completed,
+      share: period.completed > 0 ? (period.noPushCount / period.completed) * 100 : null,
+    };
+  });
 
   /** First load only (#539) : a refetch dims the table instead. */
   readonly gate = stbLoadGate(this.loading);
@@ -872,26 +913,7 @@ export class StatsPage {
   private typedPush: number | null = null;
 
   constructor() {
-    inject(DestroyRef).onDestroy(() => {
-      this.listing?.unsubscribe();
-      this.summaryFetch?.unsubscribe();
-      this.periodSummaryFetch?.unsubscribe();
-    });
     this.writes.pipe(concatMap((write) => write)).subscribe();
-
-    effect(() => {
-      const filterValue = this.currentFilter();
-      const sort = this.sort();
-      const pageIndex = this.pageIndex();
-      const pageSize = this.pageSize();
-      this.refetchTrigger();
-      this.fetch(filterValue, {
-        pageIndex,
-        pageSize,
-        sortField: sort.columnName || undefined,
-        sortDirection: sort.columnName ? (sort.isAscending ? 'asc' : 'desc') : undefined,
-      });
-    });
 
     // « In stats » on a candidate lands here with `?stat=` (#383) : that stat, its panel open, even
     // when it is not on the first page.
@@ -1377,51 +1399,12 @@ export class StatsPage {
     this.setView(view);
   }
 
-  private currentFilter(): StatEntryFilter {
-    const range = this.period();
-    const tab = this.status();
-    const view = this.view();
-    return {
-      query: this.searchTerm() || null,
-      dateFrom: range.dateFrom,
-      dateTo: range.dateTo,
-      pattern: view === 'ALL' ? null : view,
-      status: tab === 'NO_PUSH' ? null : tab,
-      noPush: tab === 'NO_PUSH' || null,
-      outOfPattern: this.derived().includes('OUT_OF_PATTERN') || null,
-      under1Dollar: this.derived().includes('UNDER_1_DOLLAR') || null,
-    };
-  }
-
-  private fetch(
-    filterValue: StatEntryFilter,
-    page: {
-      pageIndex: number;
-      pageSize: number;
-      sortField?: string;
-      sortDirection?: 'asc' | 'desc';
-    },
-  ): void {
-    this.listing?.unsubscribe();
-    this.loading.set(true);
-    this.error.set(null);
-    this.listing = this.repo.findAll(filterValue, page).subscribe({
-      next: (result) => {
-        const keepPanel = this.keepPanelOnNextLoad;
-        this.keepPanelOnNextLoad = false;
-        this.entries.set(result.content);
-        this.totalElements.set(result.totalElements);
-        this.loading.set(false);
-        if (!keepPanel) this.closeOffScreen(result.content);
-        this.autoOpenPending(result.content);
-      },
-      error: () => {
-        this.entries.set([]);
-        this.error.set(this.translate.instant('stats.errors.load'));
-        this.loading.set(false);
-      },
-    });
-    this.loadSummary(filterValue);
+  /** A page just landed : the panel follows it — closed if its stat left, opened on a pending one. */
+  private listed(rows: StatEntry[]): void {
+    const keepPanel = this.keepPanelOnNextLoad;
+    this.keepPanelOnNextLoad = false;
+    if (!keepPanel) this.closeOffScreen(rows);
+    this.autoOpenPending(rows);
   }
 
   /**
@@ -1454,38 +1437,35 @@ export class StatsPage {
     this.writes.next(write);
   }
 
-  /** Replaces a row of the page — and the panel's stat when it is that one — with [entry]. */
+  /**
+   * Replaces a row of the page — and the panel's stat when it is that one — with [entry]. While a
+   * page loads, writing the resource would cancel that load, and its GET may predate the save : the
+   * page is asked again instead, so the row and the panel end up agreeing.
+   */
   private patchRow(entry: StatEntry): void {
-    this.entries.update((list) => list.map((s) => (s.id === entry.id ? entry : s)));
+    if (this.listing.isLoading()) {
+      this.keepPanelOnNextLoad = true;
+      this.listingWrites.update((n) => n + 1);
+    } else {
+      this.listing.value.update(
+        (page) =>
+          page && {
+            ...page,
+            content: page.content.map((s) => (s.id === entry.id ? entry : s)),
+          },
+      );
+    }
     if (this.completing()?.id === entry.id) this.completing.set(entry);
   }
 
   private refreshSummary(): void {
-    this.loadSummary(this.currentFilter());
-  }
-
-  private loadSummary(filterValue: StatEntryFilter): void {
-    this.summaryFetch?.unsubscribe();
-    this.summaryFetch = this.repo.summary(filterValue).subscribe({
-      next: (summary) => this.summary.set(summary),
-      error: () => this.summary.set(null),
-    });
-    this.periodSummaryFetch?.unsubscribe();
-    if (!filterValue.noPush) {
-      this.periodSummary.set(null);
-      return;
-    }
-    // The whole period, whatever the search box holds : one ticker over itself is not a rate.
-    const period: StatEntryFilter = { ...filterValue, noPush: null, query: null };
-    this.periodSummaryFetch = this.repo.summary(period).subscribe({
-      next: (summary) => this.periodSummary.set(summary),
-      error: () => this.periodSummary.set(null),
-    });
+    this.kpiWrites.update((n) => n + 1);
   }
 
   private refetch(): void {
     this.keepPanelOnNextLoad = true;
-    this.refetchTrigger.update((n) => n + 1);
+    this.listingWrites.update((n) => n + 1);
+    this.refreshSummary();
   }
 
   /**
