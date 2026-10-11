@@ -1,15 +1,18 @@
 package com.portfolioai.account.infrastructure.http
 
+import com.portfolioai.account.application.AccountCashFlowService
 import com.portfolioai.account.application.AccountReconciliationService
 import com.portfolioai.account.application.AccountService
 import com.portfolioai.account.application.dto.AccountMovementDto
 import com.portfolioai.account.application.dto.AccountSummaryDto
 import com.portfolioai.account.application.dto.BalancePointDto
+import com.portfolioai.account.application.dto.CashFlowDto
 import com.portfolioai.account.application.dto.MovementRequest
 import com.portfolioai.account.application.dto.ReconciliationDto
 import com.portfolioai.account.application.dto.ReconciliationRequest
 import com.portfolioai.account.domain.AccountMovementFilter
 import com.portfolioai.account.domain.AccountMovementType
+import com.portfolioai.account.domain.CashFlowBucketSize
 import com.portfolioai.shared.PageResponse
 import com.portfolioai.shared.toPageResponse
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -41,6 +44,7 @@ import org.springframework.web.bind.annotation.RestController
 class AccountController(
   private val service: AccountService,
   private val reconciliationService: AccountReconciliationService,
+  private val cashFlowService: AccountCashFlowService,
 ) {
 
   /**
@@ -80,6 +84,25 @@ class AccountController(
     dateTo: LocalDate? = null,
     @RequestParam(required = false) type: List<AccountMovementType>? = null,
   ): AccountSummaryDto = service.summary(AccountMovementFilter(dateFrom, dateTo, type))
+
+  /**
+   * The « Flux du compte » report (#685) : one bucket per day / week / month / quarter / year of
+   * the period, every bucket present (an empty one at zero), trades split into winners and losers,
+   * and the balance before and after the period. Same filter vocabulary as `/movements` ; `groupBy`
+   * is `DAY`, `WEEK`, `MONTH`, `QUARTER` or `YEAR`. An open bound starts or ends at the user's
+   * first or last movement.
+   */
+  @GetMapping("/cash-flow")
+  fun cashFlow(
+    @RequestParam(required = false)
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    dateFrom: LocalDate? = null,
+    @RequestParam(required = false)
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    dateTo: LocalDate? = null,
+    @RequestParam(required = false) type: List<AccountMovementType>? = null,
+    @RequestParam groupBy: CashFlowBucketSize,
+  ): CashFlowDto = cashFlowService.cashFlow(AccountMovementFilter(dateFrom, dateTo, type), groupBy)
 
   /** Cumulative end-of-day balance series (ascending) for the evolution chart. */
   @GetMapping("/balance-series")
