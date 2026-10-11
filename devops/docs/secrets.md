@@ -15,6 +15,7 @@ its readers are declared in Terraform ([`../terraform/`](../terraform/README.md)
 | `app-admin-emails` / `-staging` | GCP Secret Manager | its runtime | ADMIN role at first login | no — personal data |
 | `sentry-dsn-backend` | GCP Secret Manager | both runtimes | backend → GlitchTip | no — a DSN only ingests |
 | `GLITCHTIP_AUTH_TOKEN` | GitHub, repo secret | `deploy.yml` (image build) | frontend source-map upload | **yes** |
+| `CLOUDFLARE_PURGE_TOKEN` | GitHub, repo secret | `deploy.yml` (after the Cloud Run deploy) | purges the `tickerstory.org` edge cache — API token scoped to that zone, permission *Zone › Cache Purge › Purge* only | **yes** |
 | `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` | GitHub, repo secret | `backup-postgres.yml` | write to the R2 backup bucket | **yes** |
 | `R2_ACCOUNT_ID` | GitHub, repo secret | `backup-postgres.yml` | R2 endpoint | no |
 | `GRADLE_ENCRYPTION_KEY` | GitHub — **not set** | `backend.yml` | encrypts the Gradle configuration cache | **yes** |
@@ -22,7 +23,7 @@ its readers are declared in Terraform ([`../terraform/`](../terraform/README.md)
 | `.env` | your machine | Tilt | local Google OAuth client, admin emails | **yes** |
 
 No long-lived GCP key exists : GitHub reaches GCP through Workload Identity Federation, Cloud Run
-reads Secret Manager as its runtime account. The GitHub *variables* (`GCP_*`, `GLITCHTIP_ORG`) hold
+reads Secret Manager as its runtime account. The GitHub *variables* (`GCP_*`, `GLITCHTIP_ORG`, `CLOUDFLARE_ZONE_ID`) hold
 identifiers, not secrets.
 
 **Rotating** — Secret Manager : `gcloud secrets versions add <name> --data-file=-`, then a deploy
