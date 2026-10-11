@@ -25,7 +25,8 @@ const DARK_QUERY = '(prefers-color-scheme: dark)';
  * **DOM mirroring** — the resolved value is written onto `<html data-theme="…">` so the global SCSS
  * can branch on it. Applied once synchronously at construction (before first paint) and via an
  * `effect()` on every subsequent change (login, preference update, OS switch). The write is
- * idempotent so the double-apply on boot is harmless.
+ * idempotent so the double-apply on boot is harmless. A detached Picture-in-Picture window
+ * (calculator widget, note) is a document of its own : [mirrorTo] has it follow too.
  *
  * **SSR safety** — `document` / `matchMedia` are browser-only ; both are gated on
  * [isPlatformBrowser] so the server can construct the service without throwing.
@@ -49,10 +50,28 @@ export class ThemeService {
     return this.systemPrefersDark() ? 'dark' : 'light';
   });
 
+  /** The detached windows' documents — themed along with the page's own. */
+  private readonly mirrors = signal<ReadonlySet<Document>>(new Set());
+
   constructor() {
     this.watchSystemPreference();
-    this.applyDom(this.resolved());
-    effect(() => this.applyDom(this.resolved()));
+    this.applyDom(this.resolved(), []);
+    effect(() => this.applyDom(this.resolved(), this.mirrors()));
+  }
+
+  /**
+   * Has [doc] — a detached window's — follow the theme, from now on : themed right away, before its
+   * first paint. Call the returned function once the window closes.
+   */
+  mirrorTo(doc: Document): () => void {
+    doc.documentElement.setAttribute('data-theme', this.resolved());
+    this.mirrors.update((docs) => new Set(docs).add(doc));
+    return () =>
+      this.mirrors.update((docs) => {
+        const next = new Set(docs);
+        next.delete(doc);
+        return next;
+      });
   }
 
   /** Persists the choice on the user ; [theme] + the effect re-apply once `currentUser` updates. */
@@ -76,8 +95,10 @@ export class ThemeService {
       .addEventListener('change', (event) => this.systemPrefersDark.set(event.matches));
   }
 
-  private applyDom(theme: ResolvedTheme): void {
+  private applyDom(theme: ResolvedTheme, mirrors: Iterable<Document>): void {
     if (!this.isBrowser) return;
-    document.documentElement.setAttribute('data-theme', theme);
+    for (const doc of [document, ...mirrors]) {
+      doc.documentElement.setAttribute('data-theme', theme);
+    }
   }
 }

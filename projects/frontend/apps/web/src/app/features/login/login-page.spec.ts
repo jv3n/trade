@@ -6,9 +6,7 @@
  * - **Button click triggers the OAuth redirect** — sets `window.location.href` to
  *   `/oauth2/authorization/google`. The proxy forwards that to the backend which redirects to
  *   Google. We assert on the `href` write directly via a stub on `window.location`.
- * - **Already-authenticated users get redirected to /journal** — the `effect()` reads
- *   [AuthService.isAuthenticated] and routes away from `/login` when true. Covers the
- *   "user bookmarked /login and came back logged in" case.
+ * - A signed-in visitor never reaches the page : `guestGuard` turns them away (its own spec).
  * - **SSR safety** — `window` access is gated on `isPlatformBrowser` ; we don't test this branch
  *   explicitly because the production code path is "click on a button", which only runs in a
  *   browser. The guard exists for defensive depth, not as a tested code path.
@@ -16,7 +14,7 @@
 import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { DomSanitizer } from '@angular/platform-browser';
-import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
 import { MatIconRegistry } from '@portfolioai/ui';
 import { of } from 'rxjs';
@@ -90,20 +88,6 @@ describe('LoginPage', () => {
     button.click();
 
     expect(window.location.href).toBe('/oauth2/authorization/google');
-  });
-
-  it('redirects already-authenticated users to /account on mount', async () => {
-    setup({ email: 'admin@example.com', displayName: 'Admin', role: 'ADMIN' });
-    const router = TestBed.inject(Router);
-    const navigateSpy = vi.spyOn(router, 'navigate');
-
-    const fixture = TestBed.createComponent(LoginPage);
-    fixture.detectChanges();
-    // Effects flush on the next microtask in the test fixture. `await whenStable()` is enough to
-    // let the constructor's effect() run its first iteration.
-    await fixture.whenStable();
-
-    expect(navigateSpy).toHaveBeenCalledWith(['/today']);
   });
 
   it('renders the title, tagline, feature copy and disclaimer i18n keys when not authenticated', () => {

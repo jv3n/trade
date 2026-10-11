@@ -21,6 +21,12 @@ import { CalculatorWidgets } from './calculator-widgets';
  */
 describe('CalculatorWidget', () => {
   const theme = signal<'dark' | 'light'>('dark');
+  /** The theme of the detached window is [ThemeService]'s to keep (its own spec) : here, the hand-over. */
+  const unmirror = vi.fn();
+  const mirrorTo = vi.fn((doc: Document) => {
+    doc.documentElement.setAttribute('data-theme', theme());
+    return unmirror;
+  });
 
   afterEach(() => {
     delete (window as unknown as Record<string, unknown>)['documentPictureInPicture'];
@@ -36,7 +42,7 @@ describe('CalculatorWidget', () => {
         provideZonelessChangeDetection(),
         provideTranslateService({ lang: 'en' }),
         { provide: Clipboard, useValue: { copy: vi.fn() } },
-        { provide: ThemeService, useValue: { resolved: theme } },
+        { provide: ThemeService, useValue: { resolved: theme, mirrorTo } },
         provideRouter([]),
         { provide: AccountRepository, useValue: { getSummary: () => EMPTY } },
         { provide: PatternsRepository, useValue: { markdown: () => EMPTY } },
@@ -117,17 +123,29 @@ describe('CalculatorWidget', () => {
     await fixture.whenStable();
 
     expect(host.parentNode).toBe(pipDocument.body);
+    expect(mirrorTo).toHaveBeenCalledWith(pipDocument);
     expect(pipDocument.documentElement.getAttribute('data-theme')).toBe('dark');
     expect(fixture.componentInstance.detached()).toBe(true);
 
-    theme.set('light');
-    await fixture.whenStable();
-    expect(pipDocument.documentElement.getAttribute('data-theme')).toBe('light');
-
     pip.pagehide();
     await fixture.whenStable();
+    expect(unmirror).toHaveBeenCalled();
     expect(host.parentNode).toBe(home);
     expect(fixture.componentInstance.detached()).toBe(false);
+  });
+
+  // #674 review : a window whose `pagehide` never fires (bfcache, an abrupt close) would stay themed
+  // by the service forever.
+  it('releases the window it detached into when destroyed, whatever `pagehide` does', async () => {
+    givenPipWindow();
+    const { fixture } = await setup();
+    button(fixture, 'calculator.widget.detach')!.click();
+    await fixture.whenStable();
+    unmirror.mockClear();
+
+    fixture.destroy();
+
+    expect(unmirror).toHaveBeenCalled();
   });
 
   // A click in the window brought the widget forward, and its page position then translated the

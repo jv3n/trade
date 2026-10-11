@@ -4,7 +4,6 @@ import {
   DestroyRef,
   ElementRef,
   computed,
-  effect,
   inject,
   input,
   signal,
@@ -105,14 +104,13 @@ export class NoteWindow {
     };
   });
   private destroyed = false;
+  /** Releases the detached window's theme — on `pagehide`, and on destroy should that never fire. */
+  private unmirror: (() => void) | null = null;
 
   constructor() {
-    effect(() => {
-      const theme = this.theme.resolved();
-      this.pipWindow()?.document.documentElement.setAttribute('data-theme', theme);
-    });
     inject(DestroyRef).onDestroy(() => {
       this.destroyed = true;
+      this.unmirror?.();
       this.pipWindow()?.close();
     });
   }
@@ -172,8 +170,7 @@ export class NoteWindow {
         return;
       }
       copyStyles(document, win.document);
-      // Set now, not left to the effect : it would run after the first paint, unthemed.
-      win.document.documentElement.setAttribute('data-theme', this.theme.resolved());
+      this.unmirror = this.theme.mirrorTo(win.document);
       win.document.documentElement.setAttribute('lang', document.documentElement.lang);
       const placeholder = document.createComment('note-window');
       element.before(placeholder);
@@ -183,6 +180,8 @@ export class NoteWindow {
       win.addEventListener(
         'pagehide',
         () => {
+          this.unmirror?.();
+          this.unmirror = null;
           this.pipWindow.set(null);
           if (!this.destroyed) {
             placeholder.replaceWith(element);
