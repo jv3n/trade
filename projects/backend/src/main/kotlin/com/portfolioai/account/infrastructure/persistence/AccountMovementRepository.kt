@@ -2,6 +2,7 @@ package com.portfolioai.account.infrastructure.persistence
 
 import com.portfolioai.account.domain.AccountMovement
 import java.math.BigDecimal
+import java.time.LocalDate
 import java.util.UUID
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -33,4 +34,17 @@ interface AccountMovementRepository : JpaRepository<AccountMovement, UUID> {
    */
   @Query("SELECT COALESCE(SUM(m.amount), 0) FROM AccountMovement m WHERE m.user.id = :userId")
   fun balanceFor(userId: UUID): BigDecimal
+
+  /** The balance at the end of [date] — every movement dated on or before it. */
+  @Query(
+    "SELECT COALESCE(SUM(m.amount), 0) FROM AccountMovement m " +
+      "WHERE m.user.id = :userId AND m.valueDate <= :date"
+  )
+  fun balanceAt(userId: UUID, date: LocalDate): BigDecimal
+
+  @Query("SELECT MIN(m.valueDate) FROM AccountMovement m WHERE m.user.id = :userId")
+  fun firstValueDate(userId: UUID): LocalDate?
+
+  @Query("SELECT MAX(m.valueDate) FROM AccountMovement m WHERE m.user.id = :userId")
+  fun lastValueDate(userId: UUID): LocalDate?
 }
