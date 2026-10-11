@@ -9,6 +9,7 @@ import {
   output,
   signal,
 } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   StbButtonModule,
@@ -80,7 +81,19 @@ export class MorningReconciliation {
   readonly brokerBalance = signal<number | null>(null);
   readonly submitting = signal(false);
   readonly cancelling = signal(false);
-  readonly history = signal<Reconciliation[]>([]);
+  /** Bumped once a morning is settled or cancelled : the history is read again. */
+  private readonly writes = signal(0);
+  /**
+   * The history is a recap, not the reason the host page exists : a failure empties the line rather
+   * than raising an error banner over the balance.
+   */
+  private readonly historyResource = rxResource({
+    params: () => ({ writes: this.writes() }),
+    stream: () => this.repo.reconciliations(),
+  });
+  readonly history = computed<Reconciliation[]>(() =>
+    this.historyResource.hasValue() ? this.historyResource.value() : [],
+  );
 
   /** Live gap between the typed broker balance and the app's — null while nothing is typed. */
   readonly gap = computed(() => {
@@ -109,10 +122,6 @@ export class MorningReconciliation {
     const day = format(new Date(), 'yyyy-MM-dd');
     return this.history().find((r) => format(r.valueDate, 'yyyy-MM-dd') === day) ?? null;
   });
-
-  constructor() {
-    this.loadHistory();
-  }
 
   setBrokerBalance(value: number | null): void {
     this.brokerBalance.set(value);
@@ -222,14 +231,7 @@ export class MorningReconciliation {
       .subscribe();
   }
 
-  /**
-   * The history is a recap, not the reason the host page exists : a failure empties the line rather
-   * than raising an error banner over the balance.
-   */
   private loadHistory(): void {
-    this.repo.reconciliations().subscribe({
-      next: (rows) => this.history.set(rows),
-      error: () => this.history.set([]),
-    });
+    this.writes.update((n) => n + 1);
   }
 }

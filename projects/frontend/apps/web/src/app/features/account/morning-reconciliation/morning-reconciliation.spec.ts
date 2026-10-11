@@ -31,7 +31,7 @@ describe('MorningReconciliation', () => {
   let cancelReconciliation: ReturnType<typeof vi.fn>;
   let confirmed: boolean;
   let confirmAsk: ReturnType<typeof vi.fn>;
-  /** What the history endpoint answers — set by a test **before** `setup()`. */
+  /** What the history endpoint answers — set by a test **before** `await setup()`. */
   let historyRows: Reconciliation[];
 
   beforeEach(() => {
@@ -73,15 +73,24 @@ describe('MorningReconciliation', () => {
   });
 
   /** Mounts the block with the app balance its host would pass (1 000 $ unless told otherwise). */
-  function setup(appBalance: number | null = 1000): ComponentFixture<MorningReconciliation> {
+  async function setup(
+    appBalance: number | null = 1000,
+  ): Promise<ComponentFixture<MorningReconciliation>> {
     const fixture = TestBed.createComponent(MorningReconciliation);
     fixture.componentRef.setInput('appBalance', appBalance);
-    fixture.detectChanges();
+    await settle(fixture);
     return fixture;
   }
 
-  it('shows no gap until a broker balance is typed, then computes it live', () => {
-    const page = setup().componentInstance;
+  /** The history loads through a resource (#672) : it answers a tick after the call. */
+  async function settle(fixture: ComponentFixture<MorningReconciliation>): Promise<void> {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+
+  it('shows no gap until a broker balance is typed, then computes it live', async () => {
+    const page = (await setup()).componentInstance;
 
     expect(page.gap()).toBeNull();
 
@@ -92,27 +101,27 @@ describe('MorningReconciliation', () => {
     expect(page.gap()).toBe(0);
   });
 
-  it('says why it waits when the host could not load the balance', () => {
+  it('says why it waits when the host could not load the balance', async () => {
     const fixture = TestBed.createComponent(MorningReconciliation);
     fixture.componentRef.setInput('appBalance', null);
     fixture.componentRef.setInput('balanceUnavailable', true);
-    fixture.detectChanges();
+    await settle(fixture);
 
     const el: HTMLElement = fixture.nativeElement;
     expect(el.querySelector('[data-testid="balance-unavailable"]')).not.toBeNull();
     expect(el.textContent).not.toContain('account.reconciliation.note');
   });
 
-  it('waits for the host balance before computing anything', () => {
-    const page = setup(null).componentInstance;
+  it('waits for the host balance before computing anything', async () => {
+    const page = (await setup(null)).componentInstance;
 
     page.setBrokerBalance(987.6);
 
     expect(page.gap()).toBeNull();
   });
 
-  it('a clean morning is settled without a confirmation — nothing is created', () => {
-    const page = setup().componentInstance;
+  it('a clean morning is settled without a confirmation — nothing is created', async () => {
+    const page = (await setup()).componentInstance;
 
     page.setBrokerBalance(1000);
     page.submit();
@@ -122,8 +131,8 @@ describe('MorningReconciliation', () => {
     expect((reconcile.mock.calls[0][0] as ReconciliationInput).brokerBalance).toBe(1000);
   });
 
-  it('« Aucun écart » reconciles at the computed balance without asking', () => {
-    const page = setup().componentInstance;
+  it('« Aucun écart » reconciles at the computed balance without asking', async () => {
+    const page = (await setup()).componentInstance;
 
     page.reconcileNoGap();
 
@@ -131,16 +140,16 @@ describe('MorningReconciliation', () => {
     expect((reconcile.mock.calls[0][0] as ReconciliationInput).brokerBalance).toBe(1000);
   });
 
-  it('« Aucun écart » sends nothing while the app balance has not landed', () => {
-    const page = setup(null).componentInstance;
+  it('« Aucun écart » sends nothing while the app balance has not landed', async () => {
+    const page = (await setup(null)).componentInstance;
 
     page.reconcileNoGap();
 
     expect(reconcile).not.toHaveBeenCalled();
   });
 
-  it('a gap asks for confirmation before creating the correction', () => {
-    const page = setup().componentInstance;
+  it('a gap asks for confirmation before creating the correction', async () => {
+    const page = (await setup()).componentInstance;
 
     page.setBrokerBalance(987.6);
     page.submit();
@@ -153,8 +162,8 @@ describe('MorningReconciliation', () => {
   });
 
   // Typed on staging : -999999999 gave a gap of -1,000,045,754 $ and the button stayed enabled.
-  it('refuses a negative broker balance — no gap, no call, button blocked', () => {
-    const component = setup(1000).componentInstance;
+  it('refuses a negative broker balance — no gap, no call, button blocked', async () => {
+    const component = (await setup(1000)).componentInstance;
 
     component.setBrokerBalance(-999999999);
 
@@ -164,8 +173,8 @@ describe('MorningReconciliation', () => {
     expect(reconcile).not.toHaveBeenCalled();
   });
 
-  it('warns before writing a gap past a fifth of the computed balance', () => {
-    const component = setup(1000).componentInstance;
+  it('warns before writing a gap past a fifth of the computed balance', async () => {
+    const component = (await setup(1000)).componentInstance;
 
     component.setBrokerBalance(1300);
 
@@ -180,8 +189,8 @@ describe('MorningReconciliation', () => {
     expect(reconcile).toHaveBeenCalled();
   });
 
-  it('an ordinary gap keeps the plain confirmation', () => {
-    const component = setup(1000).componentInstance;
+  it('an ordinary gap keeps the plain confirmation', async () => {
+    const component = (await setup(1000)).componentInstance;
 
     component.setBrokerBalance(1050);
 
@@ -196,8 +205,8 @@ describe('MorningReconciliation', () => {
 
   // The Today page mounts the block before its summary lands : on a cold start that window is
   // seconds long, and a submit then slipped past the confirmation entirely (#307).
-  it('sends nothing while the app balance has not landed', () => {
-    const component = setup(null).componentInstance;
+  it('sends nothing while the app balance has not landed', async () => {
+    const component = (await setup(null)).componentInstance;
 
     component.setBrokerBalance(1300);
     component.submit();
@@ -206,9 +215,9 @@ describe('MorningReconciliation', () => {
     expect(reconcile).not.toHaveBeenCalled();
   });
 
-  it('cancelling the confirmation never reaches the repository', () => {
+  it('cancelling the confirmation never reaches the repository', async () => {
     confirmed = false;
-    const page = setup().componentInstance;
+    const page = (await setup()).componentInstance;
 
     page.setBrokerBalance(987.6);
     page.submit();
@@ -216,8 +225,8 @@ describe('MorningReconciliation', () => {
     expect(reconcile).not.toHaveBeenCalled();
   });
 
-  it('tells the host and clears the input once the morning is settled', () => {
-    const fixture = setup();
+  it('tells the host and clears the input once the morning is settled', async () => {
+    const fixture = await setup();
     const page = fixture.componentInstance;
     const settled = vi.fn();
     page.settled.subscribe(settled);
@@ -230,27 +239,27 @@ describe('MorningReconciliation', () => {
     expect(page.submitting()).toBe(false);
   });
 
-  it('recognises this morning as already settled', () => {
+  it('recognises this morning as already settled', async () => {
     historyRows = [makeReconciliation({ valueDate: new Date() })];
 
-    expect(setup().componentInstance.today()).not.toBeNull();
+    expect((await setup()).componentInstance.today()).not.toBeNull();
   });
 
-  it("yesterday's reconciliation doesn't count as this morning's", () => {
+  it("yesterday's reconciliation doesn't count as this morning's", async () => {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     historyRows = [makeReconciliation({ valueDate: yesterday })];
 
-    expect(setup().componentInstance.today()).toBeNull();
+    expect((await setup()).componentInstance.today()).toBeNull();
   });
   // ---------------------------------------------------------------------------
   // Cancelling a morning (#249)
   // ---------------------------------------------------------------------------
 
-  it('always confirms before cancelling, even a clean morning', () => {
+  it('always confirms before cancelling, even a clean morning', async () => {
     const today = makeReconciliation({ gap: 0, correctionId: null });
     historyRows = [today];
-    const page = setup().componentInstance;
+    const page = (await setup()).componentInstance;
 
     page.cancel(today);
 
@@ -261,11 +270,11 @@ describe('MorningReconciliation', () => {
     expect(cancelReconciliation).toHaveBeenCalledWith(today.id);
   });
 
-  it('reaches no endpoint when the confirmation is declined', () => {
+  it('reaches no endpoint when the confirmation is declined', async () => {
     const today = makeReconciliation();
     historyRows = [today];
     confirmed = false;
-    const page = setup().componentInstance;
+    const page = (await setup()).componentInstance;
 
     page.cancel(today);
 
@@ -273,10 +282,10 @@ describe('MorningReconciliation', () => {
   });
 
   /** The correction that just went moved the balance — the host has to refetch. */
-  it('tells the host once the morning is cancelled', () => {
+  it('tells the host once the morning is cancelled', async () => {
     const today = makeReconciliation();
     historyRows = [today];
-    const fixture = setup();
+    const fixture = await setup();
     const settled = vi.fn();
     fixture.componentInstance.settled.subscribe(settled);
 
@@ -285,11 +294,11 @@ describe('MorningReconciliation', () => {
     expect(settled).toHaveBeenCalledWith(today);
   });
 
-  it('clears the in-flight flag when the cancellation fails', () => {
+  it('clears the in-flight flag when the cancellation fails', async () => {
     const today = makeReconciliation();
     historyRows = [today];
     cancelReconciliation.mockReturnValue(throwError(() => new Error('boom')));
-    const page = setup().componentInstance;
+    const page = (await setup()).componentInstance;
 
     page.cancel(today);
 
