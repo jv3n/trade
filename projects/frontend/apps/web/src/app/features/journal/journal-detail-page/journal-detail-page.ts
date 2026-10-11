@@ -466,7 +466,10 @@ export class JournalDetailPage implements HasUnsavedChanges {
     stream: ({ params }) => this.locatesRepo.listForDate(params.day, params.ticker),
   });
   /** The day's locates on the ticker — `null` until read ; [locatesFailed] when they could not be. */
-  readonly dayLocates = keptValue<Locate[]>(this.locatesResource);
+  readonly dayLocates = keptValue<Locate[]>(this.locatesResource, {
+    // Another ticker's locates would weigh the 2 % rule against the wrong share.
+    question: this.locatesKey,
+  });
   readonly locatesFailed = computed(() => this.locatesResource.status() === 'error');
   readonly locatesTotal = computed(() => sumCents((this.dayLocates() ?? []).map((l) => l.cost)));
   /** The day's weight on the ticker, across top-ups — the 2 % rule checked for the day. */
