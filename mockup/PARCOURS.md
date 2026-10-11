@@ -886,7 +886,8 @@ Reachable from the bottom of the menu (under Lexicon). A secondary menu on the l
 - **The morning entry** : validated as is (inline form + live gap / push preview).
 - **The stats table** : every column stays, horizontal scrolling is not a problem.
 - **Colours** : green / red for outcomes (P&L, amounts, gaps) — plus one status, the green check of
-  a completed stat ; amber for warnings (SSR, < $1, to complete, locates paid for nothing) ;
+  a completed stat ; amber for warnings (SSR, < $1, to complete, locates paid for nothing) and for
+  **costs** on a chart (locates, fees and corrections in the reports, #685) ;
   indigo for statuses and categories (pattern, "in stats") ; the rest neutral, price moves and
   tickers included.
 - **Icons** : Material Symbols Rounded — the mapping is in `README.md`.
@@ -1059,6 +1060,88 @@ a failing backend is not hammered, and the user decides when to try again.
 **Screen** : [`compte.html`](compte.html) — USD / CAD balance, the morning reconciliation panel
 (live gap), the history of the last reconciliations, the balance curve, the movements list ; a
 mockup-only switch shows the page with its calls failing.
+
+---
+
+## Reports — « Flux du compte » (#685)
+
+The account page answers *how much do I have* (the balance, its curve) and *what did this period do*
+(one total per KPI tile). Neither says **how it got there, period by period** : a month at
++3 000 / −2 800 and a month at +200 draw nearly the same balance line, and a single total cannot
+say which week carried it. A **« Rapports »** nav entry, below « Compte », answers it. It reads the
+account as it stands — **nothing new is recorded**, and the trading's « what works » questions stay
+with the stats page (#205).
+
+**One tab for now, « Flux du compte »** — the tab bar is there for a second report, not designed
+for it.
+
+**The chart** : one **stacked bar per bucket around a zero line**, over the chosen period.
+
+| Series | Side | Colour |
+|---|---|---|
+| Winning trades | above | green |
+| Losing trades | below | red |
+| Fees — locates and corrections | below (a credited-back correction above) | amber — a cost, not a loss |
+| Deposits | above | neutral grey |
+| Withdrawals | below | neutral grey |
+
+The colours follow the interface rule : green and red are **outcomes** only — a 5 000 $ deposit
+drawn in the winners' green would read as a good week. **Locates and corrections share one amber
+series** : corrections are roundings and fees, a few dollars against thousands of flows — a sixth
+series of their own would be a fraction of a pixel tall. They stay **apart in the hover and in the
+breakdown**, where their amount reads. Each bar carries its **net as a dot**
+(above or below zero), so a week whose winners and losers almost cancel out still says where it
+landed. **Hovering a bar** lists the types that week moved — the empty ones are left out — and its
+net. **A bucket with no movement is drawn at zero**, a flat tick on the line, never skipped : a week
+without a trade is information.
+
+**Two controls, separate** :
+
+- **The period** — the shared period filter with its presets as they stand (« Ce mois » …
+  « Année dernière », « Plage personnalisée », « Toutes périodes ») — no second vocabulary.
+- **« Une barre par »** jour / semaine / mois / trimestre / année — defaulted from the period (a
+  month → days, three or six months → weeks, a year → months, all time → months) and overridable ;
+  « Année » reads a multi-year history at a glance. A bucket is disabled **both ways** : wider than
+  the period (a single bar), or so narrow it would draw **more than 400 bars** (« Jour » over a
+  multi-year « Toutes périodes ») — the endpoint refuses those, and a greyed-out choice beats an
+  error.
+- **The bars are labelled with the days they cover within the period** : the first and the last are
+  clipped to it, so a week cut by the period's start reads from its first day (18/06), never from a
+  day outside it. A bucket
+  **wider than the period** is disabled rather than drawn as a single bar.
+
+**The page opens on the whole account** — it is called « Flux du compte », and a deposit is part
+of why the balance moved — even though a large one flattens the trading on the shared axis (the
+mockup's week of 15/06 : about five times shorter than under « Trading seul »). **The chips last
+chosen are remembered in the browser**, so a user who reads the trading first lands on it.
+
+**The type chips** — Trades, Locates, Dépôts, Retraits, Corrections, all on by default, filter the
+chart, the KPI row and the breakdown **together**, never one without the others. **« Trading
+seul »** turns on Trades + Locates only, in one click : without it, a deposit in the same weeks
+flattens the trading to nothing on the shared axis — the whole-account view cannot answer « what
+did my trading do ».
+
+**The KPI row**, over the filtered period :
+
+- **Net de la période** — the sum of what the chips let through ;
+- **Résultat de trading** — trades + locates, with both on its sub-line : the trades can be up while
+  the locates take more (the mockup's three months : trades +2 216,85 $, locates −2 467,40 $) ;
+- **Apports nets** — deposits − withdrawals ; « — » when the chips leave both out ;
+- **Solde au <end of period>** — the balance on the period's last day, its sub-line the balance on
+  its first. It answers the open question of #685 : on the current period it equals the account's
+  « Solde courant », on a past one it does not, and the start → end pair is what the account page
+  never shows. It ignores the chips — a balance is the whole account.
+
+**The breakdown**, beside the chart : one line per type the chips let through (trades split into
+winners and losers), its amount, its count, and its **share of the period's gross flows** (the sum
+of the amounts without their sign), then the net.
+
+**A period with no movement** shows an empty state — « Aucun mouvement sur cette période » and a
+way back to « Toutes périodes » — never an empty chart frame. Changing a filter keeps the previous
+chart on screen until the new one lands, no skeleton flash.
+
+**Screen** : [`rapports.html`](rapports.html) — the whole account over three months by week, a
+mockup-only switch for « Trading seul » and for a period without movement.
 
 ---
 
