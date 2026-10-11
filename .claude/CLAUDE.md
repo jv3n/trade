@@ -139,7 +139,7 @@ read top to bottom is the point there.
 - Config in **YAML** (`application.yml` base + `application-local.yml` dev profile + `application-prod.yml` Cloud Run profile — all committed, no secrets).
 - Spring proxies (`@Transactional`, `@Async`, `@Cacheable`) are bypassed on self-calls (`this.method()`) — put the annotated method on another bean.
 - Integration tests on a **real PostgreSQL**, no DB mocks. Testcontainers singleton via JUnit Platform listener (`testsupport/PostgresContainer.kt`).
-- **Never log user emails** or other PII (`displayName`, `providerId`). Log `userId={}` (the UUID) — reference pattern in `CustomOAuth2UserService.findOrCreateUser`. The UUID is enough to correlate with `app_user` in the DB without exposing PII to log aggregators.
+- **Never log user emails** or other PII (`displayName`, `providerId`). Log `userId={}` (the UUID) — reference pattern in `UserProvisioningService.findOrCreateUser`. The UUID is enough to correlate with `app_user` in the DB without exposing PII to log aggregators.
 
 ### Frontend (Angular 22)
 

@@ -13,7 +13,7 @@ import java.util.UUID
  * One authenticated user. Maps 1:1 to `app_user` (V9).
  *
  * Created lazily on the OAuth2 callback : the first time a Google identity successfully completes
- * the redirect dance, `CustomOAuth2UserService` inserts the row with [role] computed from the
+ * the redirect dance, `UserProvisioningService` inserts the row with [role] computed from the
  * `app.admin.emails` whitelist (matching email → [Role.ADMIN], otherwise [Role.USER]). On
  * subsequent logins the row is updated in place ([lastLoginAt] refreshed, [displayName] re-sync'd
  * if Google returns a different name). The role itself is **not** re-evaluated on subsequent logins

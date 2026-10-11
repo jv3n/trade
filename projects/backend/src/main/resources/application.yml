@@ -81,7 +81,7 @@ management:
 info:
   environment: ${SENTRY_ENVIRONMENT:local}
 
-# Consumed by `CustomOAuth2UserService` on **first** user creation to assign ADMIN vs USER ;
+# Consumed by `UserProvisioningService` on **first** user creation to assign ADMIN vs USER ;
 # existing rows keep the role they got at first login. The set checked at login is
 # `admins ∪ allowed_emails`, so an admin cannot lock themselves out from the UI. An empty
 # `allowed.emails` means open mode — the state a fresh deploy starts in.

@@ -1,11 +1,11 @@
 package com.portfolioai.auth.infrastructure.security
 
+import com.portfolioai.auth.application.UserProvisioningService
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService
 import org.springframework.security.oauth2.core.oidc.user.OidcUser
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 
 /**
  * OIDC counterpart of [CustomOAuth2UserService]. Spring Security uses a **distinct** user service
@@ -16,16 +16,15 @@ import org.springframework.transaction.annotation.Transactional
  * `AuthService.getCurrentUser` would then crash on the unexpected principal type.
  *
  * Implementation delegates the userinfo HTTP fetch to the parent class (so we inherit the standard
- * OIDC claim validation, ID token parsing and refresh handling), then reuses
- * [CustomOAuth2UserService.findOrCreateUser] for the DB-side find-or-create. The returned principal
- * is an [AppOidcUser] which carries our `userId` UUID alongside the standard `DefaultOidcUser`
- * fields.
+ * OIDC claim validation, ID token parsing and refresh handling), then hands the DB-side
+ * find-or-create to [UserProvisioningService] — no `@Transactional` here, the parent's `final`
+ * setters cannot be proxied (#590). The returned principal is an [AppOidcUser] which carries our
+ * `userId` UUID alongside the standard `DefaultOidcUser` fields.
  */
 @Service
-class CustomOidcUserService(private val customOAuth2UserService: CustomOAuth2UserService) :
+class CustomOidcUserService(private val userProvisioning: UserProvisioningService) :
   OidcUserService() {
 
-  @Transactional
   override fun loadUser(userRequest: OidcUserRequest): OidcUser {
     val oidcUser = super.loadUser(userRequest)
     val email =
@@ -36,7 +35,7 @@ class CustomOidcUserService(private val customOAuth2UserService: CustomOAuth2Use
     val name = oidcUser.fullName ?: oidcUser.givenName
 
     val user =
-      customOAuth2UserService.findOrCreateUser(
+      userProvisioning.findOrCreateUser(
         email = email,
         sub = sub,
         name = name,

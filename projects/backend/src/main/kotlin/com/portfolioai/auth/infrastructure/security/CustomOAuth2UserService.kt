@@ -1,79 +1,28 @@
 package com.portfolioai.auth.infrastructure.security
 
-import com.portfolioai.auth.application.UserCreatedEvent
-import com.portfolioai.auth.domain.Role
-import com.portfolioai.auth.domain.User
-import com.portfolioai.auth.infrastructure.persistence.UserRepository
-import com.portfolioai.config.application.AppConfigService
-import java.time.Instant
-import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Value
-import org.springframework.context.ApplicationEventPublisher
+import com.portfolioai.auth.application.UserProvisioningService
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest
-import org.springframework.security.oauth2.core.OAuth2AuthenticationException
-import org.springframework.security.oauth2.core.OAuth2Error
 import org.springframework.security.oauth2.core.user.OAuth2User
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 
 /**
- * Bridges Google's OAuth2 user-info response to our [User] DB row.
+ * Bridges Google's OAuth2 user-info response to our `User` DB row.
  *
  * Flow : Spring Security finishes the OAuth redirect dance → calls this service with the userInfo
- * returned by Google. We look up (or create) the matching [User] row, refresh [User.lastLoginAt],
- * assign the role from the `app.admin.emails` whitelist on first creation, and return an
- * [AppOAuth2User] carrying the DB id so [com.portfolioai.auth.application.AuthService] can resolve
- * it on later requests without a second DB lookup on the principal.
- *
- * **Role assignment is one-shot** — at user creation only. Re-applying the whitelist on every login
- * would erase a manual demotion (`UPDATE app_user SET role='USER'`) and would only apply promotions
- * on the *next* login of someone newly added to the whitelist, which is surprising. The DB is the
- * source of truth post-creation ; the whitelist only seeds.
+ * returned by Google. [UserProvisioningService] gates the email, finds or creates the row, and we
+ * return an [AppOAuth2User] carrying the DB id so [com.portfolioai.auth.application.AuthService]
+ * can resolve it on later requests without a second DB lookup on the principal.
  *
  * The class extends Spring's [DefaultOAuth2UserService] rather than implementing the interface
- * because we still want the standard userinfo HTTP fetch — only the post-fetch handling differs.
+ * because we still want the standard userinfo HTTP fetch — only the post-fetch handling differs. So
+ * it carries no `@Transactional` : the parent's `final` setters cannot be proxied (#590).
  */
 @Service
-class CustomOAuth2UserService(
-  private val userRepository: UserRepository,
-  @Value("\${app.admin.emails:}") private val adminEmailsRaw: String,
-  private val appConfigService: AppConfigService,
-  private val events: ApplicationEventPublisher,
-) : DefaultOAuth2UserService() {
+class CustomOAuth2UserService(private val userProvisioning: UserProvisioningService) :
+  DefaultOAuth2UserService() {
 
-  private val log = LoggerFactory.getLogger(javaClass)
-
-  private val adminEmails: Set<String> by lazy {
-    adminEmailsRaw.split(",").map { it.trim().lowercase() }.filter { it.isNotEmpty() }.toSet()
-  }
-
-  /**
-   * Allowed-emails gate. Reads the live whitelist from [AppConfigService] (DB override > YAML
-   * default > empty), unions with [adminEmails] so the operator is auto-included, and rejects with
-   * an [OAuth2AuthenticationException] carrying the `not_authorized` error code if the inbound
-   * email is not in the effective set. [SecurityConfig] reads that code and redirects the user to
-   * `/login?error=not_authorized` for an inline message.
-   *
-   * Empty whitelist = open mode (laxiste) — anyone with a Google account is let in. Backward-compat
-   * for a fresh deploy before the admin posts the first list via `/settings/access-control`.
-   *
-   * Check happens at the **very top** of [findOrCreateUser] — covers both new logins (no row to
-   * create) and existing users (a row created under open mode should no longer log in once the
-   * admin gates the app). Pin this so a future refactor that moves the check below the
-   * existing-user lookup doesn't silently let pre-gated users bypass the whitelist.
-   */
-  private fun assertAuthorized(email: String) {
-    val allowed = appConfigService.getAllowedEmails()
-    if (allowed.isEmpty()) return
-    val emailLower = email.lowercase()
-    if (emailLower in allowed) return
-    if (emailLower in adminEmails) return
-    throw OAuth2AuthenticationException(OAuth2Error("not_authorized"))
-  }
-
-  @Transactional
   override fun loadUser(userRequest: OAuth2UserRequest): OAuth2User =
     processOAuth2User(super.loadUser(userRequest), userRequest.clientRegistration.registrationId)
 
@@ -94,7 +43,8 @@ class CustomOAuth2UserService(
         ?: error("Google userinfo missing sub claim — Google response shape changed")
     val name = googleUser.getAttribute<String>("name")
 
-    val user = findOrCreateUser(email = email, sub = sub, name = name, provider = provider)
+    val user =
+      userProvisioning.findOrCreateUser(email = email, sub = sub, name = name, provider = provider)
 
     return AppOAuth2User(
       userId = user.id,
@@ -102,49 +52,5 @@ class CustomOAuth2UserService(
       attributes = googleUser.attributes,
       authorities = listOf(SimpleGrantedAuthority("ROLE_${user.role.name}")),
     )
-  }
-
-  /**
-   * Shared find-or-create logic — extracted so [CustomOidcUserService] can reuse it for the Google
-   * OIDC path (which uses `OidcUserService`, not `OAuth2UserService`, and produces a different
-   * principal type). Mutates the row in place when found ; saves a fresh row when not, applying the
-   * admin-email whitelist at creation only.
-   *
-   * **Logs only the user `id` (UUID) — never the email.** The email is PII ; for prod audit /
-   * debug, the `id` is enough to correlate a login event with the row in `app_user` via SQL. The
-   * provider + role are logged because they're not PII and they're useful for "who landed in ADMIN
-   * this morning" type queries. Same convention applies anywhere else in the codebase : log
-   * `user.id`, never `user.email`.
-   */
-  internal fun findOrCreateUser(email: String, sub: String, name: String?, provider: String): User {
-    assertAuthorized(email)
-    val existing = userRepository.findByEmail(email)
-    if (existing != null) {
-      if (!name.isNullOrBlank()) existing.displayName = name
-      existing.providerId = sub
-      existing.lastLoginAt = Instant.now()
-      log.info("OAuth login (existing user) — id={} provider={}", existing.id, provider)
-      return existing
-    }
-    val assignedRole = if (email.lowercase() in adminEmails) Role.ADMIN else Role.USER
-    val created =
-      userRepository.save(
-        User(
-          email = email,
-          displayName = name,
-          provider = provider,
-          providerId = sub,
-          role = assignedRole,
-          lastLoginAt = Instant.now(),
-        )
-      )
-    log.info(
-      "OAuth login (new user created) — id={} provider={} role={}",
-      created.id,
-      provider,
-      assignedRole,
-    )
-    events.publishEvent(UserCreatedEvent(created.id))
-    return created
   }
 }
