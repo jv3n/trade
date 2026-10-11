@@ -1,6 +1,6 @@
 import { DatePipe, DecimalPipe, formatNumber } from '@angular/common';
-import { Component, DestroyRef, LOCALE_ID, computed, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, LOCALE_ID, computed, inject, linkedSignal, signal } from '@angular/core';
+import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -20,7 +20,18 @@ import {
   StbTooltipModule,
   stbLoadGate,
 } from '@portfolioai/ui';
-import { EMPTY, catchError, filter, finalize, from, of, switchMap, tap } from 'rxjs';
+import {
+  EMPTY,
+  Observable,
+  catchError,
+  filter,
+  finalize,
+  from,
+  map,
+  of,
+  switchMap,
+  tap,
+} from 'rxjs';
 import { JournalRepository } from '../../../core/api/journal/journal.repository';
 import {
   PositionAggregates,
@@ -43,6 +54,7 @@ import { StatsRepository } from '../../../core/api/stats/stats.repository';
 import { ConfirmService } from '../../../core/app-state/confirm.service';
 import { HasUnsavedChanges } from '../../../core/router/unsaved-changes.guard';
 import { compressImage } from '../../../shared/image/compress-image';
+import { keptValue } from '../../../shared/kept-value/kept-value';
 import {
   blendedLocatePercent,
   locateBreach,
@@ -131,6 +143,42 @@ function draftOf(entry: TradeEntry): TradeDraft {
  */
 const LATE_ENTRY = '11:00';
 
+/** The stat's day context, with the percentages the stats sheet derives. */
+function contextOf(stat: StatEntry): DayContext {
+  return {
+    stat,
+    gap: gapPercent(stat.previousClose, stat.pmOpen),
+    pmPush: pmPushPercent(stat.pmOpen, stat.pmHigh),
+    pushOpenPercent: percentVsOpen(stat.openPrice, stat.pushOpenPrice),
+    hodPercent: percentVsOpen(stat.openPrice, stat.hodPrice),
+    lodPercent: percentVsOpen(stat.openPrice, stat.lodPrice),
+    eodPercent: percentVsOpen(stat.openPrice, stat.eodPrice),
+  };
+}
+
+/**
+ * The screenshot's blob as an object URL, revoked when the load ends — superseded by another one,
+ * the screenshot removed, the page left. The blob's completion is not passed on : it would revoke
+ * the URL while the image shows.
+ */
+function objectUrlOf(blob$: Observable<Blob>): Observable<string> {
+  return new Observable<string>((subscriber) => {
+    let url: string | null = null;
+    const subscription = blob$.subscribe({
+      next: (blob) => {
+        if (url) URL.revokeObjectURL(url);
+        url = URL.createObjectURL(blob);
+        subscriber.next(url);
+      },
+      error: (err: unknown) => subscriber.error(err),
+    });
+    return () => {
+      subscription.unsubscribe();
+      if (url) URL.revokeObjectURL(url);
+    };
+  });
+}
+
 /** Minutes between the first and the last timed fill — null as soon as one end has no time. */
 function spanMinutes(executions: ExecRow[]): number | null {
   const minutes = executions
@@ -167,6 +215,11 @@ function spanMinutes(executions: ExecRow[]): number | null {
  * Everything is edited **in the page** (no dialog but the day's locates) : the
  * draft lives in [draft], [dirty] drives the save bar, and Save sends the whole trade back. Leaving
  * with the draft unsaved asks first (`unsavedChangesGuard`, and the browser prompt on tab close).
+ *
+ * The trade, its stat, the day's locates and the screenshot are resources : the trade keyed on the
+ * route id, the others on what they read off it. A switch between the trades of one stat cancels
+ * the previous load ; a write that the trade's answer doesn't carry back bumps a counter folded
+ * into the params of what it moved.
  */
 @Component({
   selector: 'app-journal-detail-page',
@@ -212,14 +265,20 @@ export class JournalDetailPage implements HasUnsavedChanges {
   private readonly sanitizer = inject(DomSanitizer);
 
   /** Follows the route : the header's tags move between the trades of one stat on this page. */
-  private id = '';
-
-  readonly entry = signal<TradeEntry | null>(null);
-  readonly loading = signal(true);
+  private readonly id = toSignal(this.route.paramMap.pipe(map((p) => p.get('id') ?? '')), {
+    requireSync: true,
+  });
+  private readonly tradeResource = rxResource({
+    params: () => this.id(),
+    stream: ({ params }) => this.repo.findById(params),
+  });
+  /** The trade as last loaded or saved — kept on screen while the next one of the stat loads. */
+  readonly entry = keptValue(this.tradeResource);
+  readonly loading = this.tradeResource.isLoading;
+  readonly error = computed(() => this.tradeResource.status() === 'error');
 
   /** First load only (#539) : a refetch keeps the content on screen. */
   readonly gate = stbLoadGate(this.loading);
-  readonly error = signal(false);
   readonly saving = signal(false);
 
   readonly directions = TRADE_DIRECTIONS;
@@ -228,12 +287,19 @@ export class JournalDetailPage implements HasUnsavedChanges {
 
   // ---- Edit buffer ----------------------------------------------------------------------------
   // The whole page edits one draft ; the save bar shows up as soon as it drifts from the last
-  // persisted state (kept in [pristine] as a JSON snapshot — the draft is a plain data tree).
-  readonly draft = signal<TradeDraft | null>(null);
-  private readonly pristine = signal('');
+  // persisted state. Compared as JSON — the draft is a plain data tree — so a trade answer that
+  // moves nothing the draft holds (a screenshot added) leaves what is being typed alone.
+  private readonly baseline = computed(
+    () => {
+      const e = this.entry();
+      return e && { id: e.id, draft: draftOf(e) };
+    },
+    { equal: (a, b) => JSON.stringify(a) === JSON.stringify(b) },
+  );
+  readonly draft = linkedSignal<TradeDraft | null>(() => this.baseline()?.draft ?? null);
   readonly dirty = computed(() => {
     const d = this.draft();
-    return d !== null && JSON.stringify(d) !== this.pristine();
+    return d !== null && JSON.stringify(d) !== JSON.stringify(this.baseline()?.draft);
   });
   /** Set once the trade is deleted : its draft has nowhere to go, leaving must not ask. */
   private deleted = false;
@@ -341,7 +407,26 @@ export class JournalDetailPage implements HasUnsavedChanges {
   });
 
   // ---- Day context (the stat the trade was born from) -----------------------------------------
-  readonly context = signal<DayContext | null>(null);
+  /** Bumped by a save : the header's tags read the stat — this trade's P&L, the total (#517). */
+  private readonly contextWrites = signal(0);
+  private readonly statEntryId = computed(() => this.entry()?.statEntryId ?? undefined);
+  /**
+   * Read off the trade's stat. A trade on its own (#634) has none : nothing is asked, and the card
+   * says so. With a stat, a failure is a transient one : the card stays empty rather than breaking
+   * the whole page.
+   */
+  private readonly contextResource = rxResource({
+    params: () => {
+      const id = this.statEntryId();
+      return id ? { id, writes: this.contextWrites() } : undefined;
+    },
+    stream: ({ params }) => this.statsRepo.findById(params.id),
+  });
+  private readonly stat = keptValue(this.contextResource);
+  readonly context = computed<DayContext | null>(() => {
+    const stat = this.stat();
+    return stat && contextOf(stat);
+  });
 
   /** The trades of the same stat, this one included, in the day's order (#500). */
   readonly statTrades = computed(() => this.context()?.stat.trades ?? []);
@@ -361,9 +446,28 @@ export class JournalDetailPage implements HasUnsavedChanges {
     percentVsOpen(this.context()?.stat.openPrice ?? null, this.preview().avgExit),
   );
 
+  /** Bumped once the day's locates were edited in their dialog. */
+  private readonly locateWrites = signal(0);
+  private readonly locatesKey = computed(
+    () => {
+      const e = this.entry();
+      return e && { day: e.tradeDate, ticker: e.ticker };
+    },
+    {
+      equal: (a, b) =>
+        a === b || (!!a && !!b && a.ticker === b.ticker && a.day.getTime() === b.day.getTime()),
+    },
+  );
+  private readonly locatesResource = rxResource({
+    params: () => {
+      const key = this.locatesKey();
+      return key ? { ...key, writes: this.locateWrites() } : undefined;
+    },
+    stream: ({ params }) => this.locatesRepo.listForDate(params.day, params.ticker),
+  });
   /** The day's locates on the ticker — `null` until read ; [locatesFailed] when they could not be. */
-  readonly dayLocates = signal<Locate[] | null>(null);
-  readonly locatesFailed = signal(false);
+  readonly dayLocates = keptValue<Locate[]>(this.locatesResource);
+  readonly locatesFailed = computed(() => this.locatesResource.status() === 'error');
   readonly locatesTotal = computed(() => sumCents((this.dayLocates() ?? []).map((l) => l.cost)));
   /** The day's weight on the ticker, across top-ups — the 2 % rule checked for the day. */
   readonly locatesPercent = computed(() => blendedLocatePercent(this.dayLocates() ?? []));
@@ -409,89 +513,39 @@ export class JournalDetailPage implements HasUnsavedChanges {
       })
       .afterClosed()
       .pipe(filter(Boolean))
-      .subscribe(() => this.loadLocates(entry.tradeDate, entry.ticker));
+      .subscribe(() => this.locateWrites.update((n) => n + 1));
   }
 
   // ---- Screenshot (issue #110) ----
-  readonly screenshotUrl = signal<SafeUrl | null>(null);
+  /** Bumped by an upload : a new screenshot under the same trade id. */
+  private readonly screenshotWrites = signal(0);
+  private readonly screenshotId = computed(() => {
+    const e = this.entry();
+    return e?.hasScreenshot ? e.id : undefined;
+  });
+  private readonly screenshotResource = rxResource({
+    params: () => {
+      const id = this.screenshotId();
+      return id ? { id, writes: this.screenshotWrites() } : undefined;
+    },
+    stream: ({ params }) => objectUrlOf(this.repo.getScreenshotBlob(params.id)),
+  });
+  readonly screenshotUrl = computed<SafeUrl | null>(() =>
+    this.screenshotResource.hasValue()
+      ? this.sanitizer.bypassSecurityTrustUrl(this.screenshotResource.value())
+      : null,
+  );
   readonly screenshotUploading = signal(false);
   readonly dragging = signal(false);
   /** Fullscreen preview overlay (click the thumbnail to open, click / Escape to close). */
   readonly lightboxOpen = signal(false);
-  /** Kept raw so we can revoke it — the signal holds the sanitized wrapper the template binds to. */
-  private objectUrl: string | null = null;
-
-  constructor() {
-    // Revoke the object URL when the view is torn down — otherwise the blob leaks.
-    inject(DestroyRef).onDestroy(() => this.clearObjectUrl());
-    // The header's tags move between the trades of one stat on this page : `unsavedChangesGuard`
-    // runs on a parameter-only change too, so leaving an unsaved draft is asked once, by the router.
-    this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
-      this.id = params.get('id') ?? '';
-      this.clearObjectUrl();
-      this.context.set(null);
-      this.dayLocates.set(null);
-      this.load();
-    });
-  }
-
-  private load(): void {
-    this.loading.set(true);
-    this.error.set(false);
-    this.repo.findById(this.id).subscribe({
-      next: (e) => {
-        this.accept(e);
-        this.loading.set(false);
-        if (e.hasScreenshot) this.loadScreenshot(e.id);
-        this.loadContext(e.statEntryId);
-        this.loadLocates(e.tradeDate, e.ticker);
-      },
-      error: () => {
-        this.error.set(true);
-        this.loading.set(false);
-      },
-    });
-  }
-
-  /** Adopts a freshly persisted trade as the new baseline — the save bar goes away with it. */
-  private accept(entry: TradeEntry): void {
-    const draft = draftOf(entry);
-    this.entry.set(entry);
-    this.draft.set(draft);
-    this.pristine.set(JSON.stringify(draft));
-  }
 
   /**
-   * Day context, read off the trade's stat. A trade on its own (#634) has none : nothing is asked,
-   * and the card says so. With a stat, a failure is a transient one : the card stays empty rather
-   * than breaking the whole page.
+   * Adopts a trade the server answered with as the new baseline — the save bar goes away with it.
+   * Unless the route moved on meanwhile : it would cancel the load of the trade now shown.
    */
-  private loadContext(statEntryId: string | null): void {
-    if (!statEntryId) return;
-    this.statsRepo.findById(statEntryId).subscribe({
-      next: (stat) =>
-        this.context.set({
-          stat,
-          gap: gapPercent(stat.previousClose, stat.pmOpen),
-          pmPush: pmPushPercent(stat.pmOpen, stat.pmHigh),
-          pushOpenPercent: percentVsOpen(stat.openPrice, stat.pushOpenPrice),
-          hodPercent: percentVsOpen(stat.openPrice, stat.hodPrice),
-          lodPercent: percentVsOpen(stat.openPrice, stat.lodPrice),
-          eodPercent: percentVsOpen(stat.openPrice, stat.eodPrice),
-        }),
-      error: () => this.context.set(null),
-    });
-  }
-
-  private loadLocates(day: Date, ticker: string): void {
-    this.locatesFailed.set(false);
-    this.locatesRepo.listForDate(day, ticker).subscribe({
-      next: (locates) => this.dayLocates.set(locates),
-      error: () => {
-        this.dayLocates.set(null);
-        this.locatesFailed.set(true);
-      },
-    });
+  private adopt(entry: TradeEntry): void {
+    if (entry.id === this.id()) this.tradeResource.value.set(entry);
   }
 
   // ---- Draft edition --------------------------------------------------------------------------
@@ -615,9 +669,11 @@ export class JournalDetailPage implements HasUnsavedChanges {
         tap(() => this.saving.set(true)),
         switchMap(() => this.repo.update(entry.id, input)),
         tap((saved) => {
-          this.accept(saved);
-          // The header's tags read the stat : this trade's P&L, the total and the day's order (#517).
-          this.loadContext(saved.statEntryId);
+          this.adopt(saved);
+          // The answer is the new baseline even when it equals the last one : what was typed went
+          // out, the draft goes back to what the server kept (half-typed fills dropped).
+          if (saved.id === this.id()) this.draft.set(draftOf(saved));
+          this.contextWrites.update((n) => n + 1);
           this.toasts.success(
             this.translate.instant('journal.snackbar.updateSuccess', { ticker: saved.ticker }),
           );
@@ -632,8 +688,7 @@ export class JournalDetailPage implements HasUnsavedChanges {
   }
 
   cancel(): void {
-    const entry = this.entry();
-    if (entry) this.accept(entry);
+    this.draft.set(this.baseline()?.draft ?? null);
   }
 
   delete(): void {
@@ -720,8 +775,7 @@ export class JournalDetailPage implements HasUnsavedChanges {
       .deleteScreenshot(entry.id)
       .pipe(
         tap((updated) => {
-          this.entry.set(updated);
-          this.clearObjectUrl();
+          this.adopt(updated);
           this.toasts.success(this.translate.instant('journal.detail.screenshot.deleteSuccess'));
         }),
         catchError(() => {
@@ -741,8 +795,8 @@ export class JournalDetailPage implements HasUnsavedChanges {
       .pipe(
         switchMap((compressed) => this.repo.uploadScreenshot(entry.id, compressed)),
         tap((updated) => {
-          this.entry.set(updated);
-          this.loadScreenshot(updated.id);
+          this.adopt(updated);
+          this.screenshotWrites.update((n) => n + 1);
           this.toasts.success(this.translate.instant('journal.detail.screenshot.uploadSuccess'));
         }),
         catchError(() => {
@@ -752,26 +806,5 @@ export class JournalDetailPage implements HasUnsavedChanges {
         finalize(() => this.screenshotUploading.set(false)),
       )
       .subscribe();
-  }
-
-  private loadScreenshot(id: string): void {
-    this.repo.getScreenshotBlob(id).subscribe({
-      next: (blob) => this.setObjectUrl(blob),
-      error: () => this.clearObjectUrl(),
-    });
-  }
-
-  private setObjectUrl(blob: Blob): void {
-    this.clearObjectUrl();
-    this.objectUrl = URL.createObjectURL(blob);
-    this.screenshotUrl.set(this.sanitizer.bypassSecurityTrustUrl(this.objectUrl));
-  }
-
-  private clearObjectUrl(): void {
-    if (this.objectUrl) {
-      URL.revokeObjectURL(this.objectUrl);
-      this.objectUrl = null;
-    }
-    this.screenshotUrl.set(null);
   }
 }
