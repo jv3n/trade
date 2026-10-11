@@ -16,7 +16,7 @@ import { HttpStatsRepository } from './stats.http';
  *  - **No params when no PageRequest** — relies on the backend `@PageableDefault`.
  *  - **Filter axes** — search / period / pattern / status travel as query params, and the summary
  *    endpoint reuses the very same ones.
- *  - **Spring `Page<T>` unwrap** — `number` is renamed to `pageIndex` on the way back.
+ *  - **`PageResponse` unwrap** — `number` is renamed to `pageIndex` on the way back.
  *  - **Date parsing preserves the local day** — `tradeDate: '2026-09-17'` comes back as midnight
  *    local (September 17), not UTC-shifted ; timestamps become `Date` instances.
  *  - **Update payload** — the date is serialised as a plain `yyyy-MM-dd`, the ticker upper-cased,
@@ -120,7 +120,7 @@ describe('HttpStatsRepository', () => {
     });
   });
 
-  it('unwraps the Spring page and parses the dates on the local day', () => {
+  it('unwraps the page envelope and parses the dates on the local day', () => {
     let result: StatEntry[] = [];
     repo.findAll().subscribe((page) => {
       result = page.content;

@@ -6,7 +6,7 @@ import { HttpAccountRepository } from './account.http';
 
 /**
  * Adapter contract test for [HttpAccountRepository] — pins the HTTP surface and the wire ↔ domain
- * mapping (ISO date parsing/formatting, signed amount pass-through, Spring `Page` unwrap) without a
+ * mapping (ISO date parsing/formatting, signed amount pass-through, `PageResponse` unwrap) without a
  * running backend. The page / dialogs only ever see the domain types this adapter produces.
  */
 describe('HttpAccountRepository', () => {
@@ -48,7 +48,7 @@ describe('HttpAccountRepository', () => {
     };
   }
 
-  it('findMovements forwards page coordinates and maps the Spring page + ISO dates', () => {
+  it('findMovements forwards page coordinates and maps the page envelope + ISO dates', () => {
     let result: { content: { valueDate: Date; amount: number }[]; totalElements: number } | null =
       null;
     repo.findMovements(undefined, { pageIndex: 1, pageSize: 25 }).subscribe((r) => (result = r));

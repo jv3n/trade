@@ -149,10 +149,9 @@ function toWire(input: TradeEntryInput): TradeEntryWireRequest {
   };
 }
 
-// Spring's `Page<T>` JSON shape — keeps the fields we actually use (`content`, `number`,
-// `size`, `totalElements`, `totalPages`). Spring serialises the page index as `number` ;
-// we rename to `pageIndex` in the domain type so the consumer doesn't grep the wrong field.
-interface SpringPageWireDto<T> {
+// The backend's `PageResponse` envelope (#591). The page index travels as `number` ; we rename it
+// `pageIndex` in the domain type so the consumer doesn't grep the wrong field.
+interface PageWireDto<T> {
   content: T[];
   number: number;
   size: number;
@@ -160,7 +159,7 @@ interface SpringPageWireDto<T> {
   totalPages: number;
 }
 
-function fromPageWire(p: SpringPageWireDto<TradeEntryWireDto>): PagedResult<TradeEntry> {
+function fromPageWire(p: PageWireDto<TradeEntryWireDto>): PagedResult<TradeEntry> {
   return {
     content: p.content.map(tradeEntryFromWire),
     pageIndex: p.number,
@@ -239,17 +238,15 @@ export class HttpJournalRepository extends JournalRepository {
         params = params.set('sort', `${page.sortField},${page.sortDirection}`);
       }
     }
-    return this.http
-      .get<SpringPageWireDto<JournalDayWireDto>>(`${this.base}/days`, { params })
-      .pipe(
-        map((p) => ({
-          content: p.content.map(journalDayFromWire),
-          pageIndex: p.number,
-          pageSize: p.size,
-          totalElements: p.totalElements,
-          totalPages: p.totalPages,
-        })),
-      );
+    return this.http.get<PageWireDto<JournalDayWireDto>>(`${this.base}/days`, { params }).pipe(
+      map((p) => ({
+        content: p.content.map(journalDayFromWire),
+        pageIndex: p.number,
+        pageSize: p.size,
+        totalElements: p.totalElements,
+        totalPages: p.totalPages,
+      })),
+    );
   }
 
   findAll(filter?: TradeEntryFilter, page?: PageRequest): Observable<PagedResult<TradeEntry>> {
@@ -272,7 +269,7 @@ export class HttpJournalRepository extends JournalRepository {
       }
     }
     return this.http
-      .get<SpringPageWireDto<TradeEntryWireDto>>(this.base, { params })
+      .get<PageWireDto<TradeEntryWireDto>>(this.base, { params })
       .pipe(map((p) => fromPageWire(p)));
   }
 

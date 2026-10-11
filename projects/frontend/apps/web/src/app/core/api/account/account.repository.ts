@@ -57,7 +57,7 @@ export interface PageRequest {
   pageSize: number;
 }
 
-/** Subset of Spring's `Page<T>` shape the UI cares about. */
+/** A page of the listing, read from the backend's `PageResponse` envelope. */
 export interface PagedResult<T> {
   content: T[];
   pageIndex: number;

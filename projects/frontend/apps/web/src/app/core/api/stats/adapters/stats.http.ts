@@ -101,9 +101,9 @@ function toWire(input: StatEntryInput): StatEntryWireRequest {
   };
 }
 
-// Spring's `Page<T>` JSON shape — only the fields the UI uses. Spring serialises the page index as
-// `number` ; the domain type renames it `pageIndex` so consumers don't grep the wrong field.
-interface SpringPageWireDto<T> {
+// The backend's `PageResponse` envelope (#591). The page index travels as `number` ; the domain
+// type renames it `pageIndex` so consumers don't grep the wrong field.
+interface PageWireDto<T> {
   content: T[];
   number: number;
   size: number;
@@ -111,7 +111,7 @@ interface SpringPageWireDto<T> {
   totalPages: number;
 }
 
-function fromPageWire(p: SpringPageWireDto<StatEntryWireDto>): PagedResult<StatEntry> {
+function fromPageWire(p: PageWireDto<StatEntryWireDto>): PagedResult<StatEntry> {
   return {
     content: p.content.map(fromWire),
     pageIndex: p.number,
@@ -160,7 +160,7 @@ export class HttpStatsRepository extends StatsRepository {
       }
     }
     return this.http
-      .get<SpringPageWireDto<StatEntryWireDto>>(this.base, { params })
+      .get<PageWireDto<StatEntryWireDto>>(this.base, { params })
       .pipe(map((p) => fromPageWire(p)));
   }
 

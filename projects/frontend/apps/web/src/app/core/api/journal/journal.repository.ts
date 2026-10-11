@@ -79,7 +79,7 @@ export interface PageRequest {
   sortDirection?: 'asc' | 'desc';
 }
 
-/** Subset of Spring's `Page<T>` shape that the UI cares about. */
+/** A page of the listing, read from the backend's `PageResponse` envelope. */
 export interface PagedResult<T> {
   content: T[];
   pageIndex: number;

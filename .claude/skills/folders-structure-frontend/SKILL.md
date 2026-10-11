@@ -84,7 +84,7 @@ projects/frontend/
 - **Domain types** = `<name>.model.ts` (`account.model.ts`, `trade-entry.model.ts`, `stat-entry.model.ts`), or inline in the port when small (`auth.repository.ts`).
 - **Bucket-local pure helpers** at the root of the bucket (`core/api/journal/position-aggregates.ts`). The `adapters/` subfolder only contains adapters.
 - **Tests** = HTTP behaviour tested in `adapters/<name>.http.spec.ts` against the adapter (`provideHttpClientTesting()`).
-- For **Spring `Page<T>`** responses, the adapter unwraps to a `PagedResult<T>` (`{ content, pageIndex, pageSize, totalElements, totalPages }`) declared in the port — Spring's `number` becomes `pageIndex`. See `journal.repository.ts` / `account.repository.ts` and `fromPageWire` in `adapters/account.http.ts`.
+- For **paged** responses (the backend's `PageResponse` envelope), the adapter unwraps to a `PagedResult<T>` (`{ content, pageIndex, pageSize, totalElements, totalPages }`) declared in the port — the wire `number` becomes `pageIndex`. See `journal.repository.ts` / `account.repository.ts` and `fromPageWire` in `adapters/account.http.ts`.
 
 ### `core/app-state/`
 

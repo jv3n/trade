@@ -22,7 +22,7 @@ import { HttpJournalRepository } from './journal.http';
  *    sent as `?q=&dateFrom=` (which the backend would parse as empty-string filter and
  *    return nothing).
  *  - **Pagination wire shape** — page coordinates land as `?page=N&size=N&sort=field,direction`
- *    on the way out, and Spring's `Page<T>` body unwraps into our `PagedResult<T>` shape with
+ *    on the way out, and the `PageResponse` body unwraps into our `PagedResult<T>` shape with
  *    `number` renamed to `pageIndex`.
  */
 describe('HttpJournalRepository', () => {
@@ -135,7 +135,7 @@ describe('HttpJournalRepository', () => {
     req.flush(wirePageFixture([]));
   });
 
-  it('findAll renames Spring `number` to `pageIndex` on the way back', () => {
+  it('findAll renames the page `number` to `pageIndex` on the way back', () => {
     repo.findAll(undefined, { pageIndex: 1, pageSize: 10 }).subscribe((result) => {
       expect(result.pageIndex).toBe(1);
       expect(result.pageSize).toBe(10);
@@ -458,7 +458,7 @@ function wireFixture(overrides: Partial<Record<string, unknown>> = {}) {
 }
 
 /**
- * Spring `Page<T>` wire shape. Default pageIndex 0 / size 10 / totalElements derived from the
+ * The backend's `PageResponse` wire shape. Default pageIndex 0 / size 10 / totalElements derived from the
  * content length — overrideable when a test wants to assert a specific paging contract.
  */
 function wirePageFixture(content: ReturnType<typeof wireFixture>[]) {

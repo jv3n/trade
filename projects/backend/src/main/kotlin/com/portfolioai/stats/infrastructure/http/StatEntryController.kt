@@ -1,7 +1,9 @@
 package com.portfolioai.stats.infrastructure.http
 
 import com.portfolioai.journal.application.dto.TradeEntryDto
+import com.portfolioai.shared.PageResponse
 import com.portfolioai.shared.Pattern
+import com.portfolioai.shared.toPageResponse
 import com.portfolioai.stats.application.StatEntryService
 import com.portfolioai.stats.application.dto.StatCompletionRequest
 import com.portfolioai.stats.application.dto.StatEntryDto
@@ -12,7 +14,6 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import java.time.LocalDate
 import java.util.UUID
 import org.springdoc.core.annotations.ParameterObject
-import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpHeaders
@@ -49,7 +50,7 @@ class StatEntryController(private val service: StatEntryService) {
   fun findAll(
     @ParameterObject query: StatListingQuery,
     @ParameterObject @PageableDefault(size = 50) pageable: Pageable,
-  ): Page<StatEntryDto> = service.findAllPaged(query.toFilter(), pageable)
+  ): PageResponse<StatEntryDto> = service.findAllPaged(query.toFilter(), pageable).toPageResponse()
 
   /**
    * KPIs over the same filter as the listing, computed on the whole filtered set (not the page).

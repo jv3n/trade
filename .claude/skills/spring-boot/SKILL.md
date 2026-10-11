@@ -91,7 +91,7 @@ Paginated listings use Spring's `Pageable` (`?page=N&size=N&sort=field,direction
 fun findAll(
   /* filter params … */
   @PageableDefault(size = 50) pageable: Pageable,
-): Page<TradeEntryDto> = service.findAllPaged(/* filter, */ pageable)
+): PageResponse<TradeEntryDto> = service.findAllPaged(/* filter, */ pageable).toPageResponse()
 
 // TradeEntryService — apply the default sort iff the client sent none.
 @Transactional(readOnly = true)
@@ -108,6 +108,8 @@ companion object {
   private val DEFAULT_SORT: Sort = Sort.by(Sort.Order.desc("tradeDate"), Sort.Order.desc("createdAt"))
 }
 ```
+
+The service returns Spring's `Page<T>` ; the controller maps it to `shared/PageResponse` (`toPageResponse()`) — never `Page<T>` in a response body. Spring Data does not commit to `PageImpl`'s JSON shape (it warns at every call), so the envelope is ours : `content`, `number`, `size`, `totalElements`, `totalPages` (#591).
 
 **Frontend pairing** — the journal page appends a tie-breaker (`.append('sort', 'createdAt,desc')`) after the user's primary sort, so rows tied on a low-cardinality column stay deterministic across pages. Spring honours multiple `?sort=` params in declaration order.
 
