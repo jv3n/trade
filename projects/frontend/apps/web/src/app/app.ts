@@ -1,5 +1,5 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, inject, linkedSignal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -109,23 +109,22 @@ export class App {
     { initialValue: false },
   );
 
-  /** The drawer's state on a narrow viewport ; a docked sidenav ignores it. */
-  readonly menuOpen = signal(false);
+  /**
+   * The drawer's state on a narrow viewport ; a docked sidenav ignores it. Picking a page closes it
+   * — it sits over the page it just opened. Crossing the breakpoint does too : a drawer left open
+   * would otherwise pop up over the page on the way down.
+   */
+  readonly menuOpen = linkedSignal(() => {
+    // Read for the dependency only : either one moving resets the drawer to closed.
+    this.currentUrl();
+    this.isNarrow();
+    return false;
+  });
 
   readonly isStandaloneRoute = computed(() => {
     const url = this.currentUrl();
     return url.startsWith('/login') || url.startsWith('/error');
   });
-
-  constructor() {
-    // Picking a page closes the drawer — it sits over the page it just opened. Crossing the
-    // breakpoint does too : a drawer left open would otherwise pop up over the page on the way down.
-    effect(() => {
-      this.currentUrl();
-      this.isNarrow();
-      this.menuOpen.set(false);
-    });
-  }
 
   /** Displayed in the user menu trigger ; falls back to email if Google didn't return a name. */
   readonly userDisplay = computed(() => {

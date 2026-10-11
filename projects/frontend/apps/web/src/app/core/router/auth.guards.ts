@@ -15,12 +15,22 @@ import { AuthService } from '../app-state/auth.service';
  * `/journal` (the v1.0 landing page post-pivot). We deliberately don't show a "403 forbidden"
  * page — silently redirecting matches the toolbar gating (USER never sees the settings cog in
  * the first place), so the only way to land here is a typed URL or a stale bookmark.
+ *
+ * **`guestGuard`** — on `/login` only : a signed-in visitor (a bookmarked `/login`, Back after
+ * signing in) goes to `/today`, the home page since #199.
  */
 export const authGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   const router = inject(Router);
   if (auth.isAuthenticated()) return true;
   return router.createUrlTree(['/login']);
+};
+
+export const guestGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  if (!auth.isAuthenticated()) return true;
+  return router.createUrlTree(['/today']);
 };
 
 export const adminGuard: CanActivateFn = () => {

@@ -1,6 +1,6 @@
 /**
  * Tests on [authGuard] and [adminGuard] — the canActivate functions that protect every route
- * except `/login`.
+ * except `/login` — and on [guestGuard], the one that keeps a signed-in visitor off `/login`.
  *
  * The guards are tiny but load-bearing : they're the second line of defence behind the navbar
  * gating. The tests pin the logical contracts :
@@ -18,7 +18,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router, UrlTree } from '@angular/router';
 import { AuthService } from '../app-state/auth.service';
-import { adminGuard, authGuard } from './auth.guards';
+import { adminGuard, authGuard, guestGuard } from './auth.guards';
 
 // Mocking ActivatedRouteSnapshot + RouterStateSnapshot — both are unused by our guards, so we
 // pass `undefined as never`. If a future guard reads them, the test compiler error will surface
@@ -53,6 +53,23 @@ describe('authGuard', () => {
     expect(result).toBeInstanceOf(UrlTree);
     const router = TestBed.inject(Router);
     expect(router.serializeUrl(result as UrlTree)).toBe('/login');
+  });
+});
+
+// A bookmarked /login, or Back after signing in : the page has nothing to offer a signed-in user.
+describe('guestGuard', () => {
+  it('lets an anonymous visitor reach /login', () => {
+    setup(null);
+    const result = TestBed.runInInjectionContext(() => guestGuard(unusedSnapshot, unusedSnapshot));
+    expect(result).toBe(true);
+  });
+
+  it('sends a signed-in visitor to /today, the home page', () => {
+    setup({ role: 'USER' });
+    const result = TestBed.runInInjectionContext(() => guestGuard(unusedSnapshot, unusedSnapshot));
+    expect(result).toBeInstanceOf(UrlTree);
+    const router = TestBed.inject(Router);
+    expect(router.serializeUrl(result as UrlTree)).toBe('/today');
   });
 });
 
