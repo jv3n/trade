@@ -1,5 +1,5 @@
 import { provideZonelessChangeDetection } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
 import { Observable, of, Subject, throwError } from 'rxjs';
@@ -33,6 +33,8 @@ import { JournalPage } from './journal-page';
  *    user backs out of the confirmation modal (`ConfirmService`, stubbed here).
  *  - **One row per ticker and day** (#500) — a single-trade row opens its sheet in one click, a
  *    row of several opens onto them ; deleting one of several says the others stay.
+ *  - **Loading through resources** (#375) — the rows stay on screen while the next filter loads
+ *    (#370), and a failing listing shows its banner rather than an empty journal.
  *  - **Filters and KPIs** (#195) — the page opens on the running month, the toolbar filters apply
  *    on click and rewind to page 0, the two summaries follow the same period as the listing, and a
  *    failing summary never takes the table down with it.
@@ -112,13 +114,25 @@ describe('JournalPage', () => {
 
   afterEach(() => vi.restoreAllMocks());
 
+  /** Renders the page once its resources have answered — they resolve a tick after the call. */
+  async function render() {
+    const fixture = TestBed.createComponent(JournalPage);
+    await settle(fixture);
+    return fixture;
+  }
+
+  async function settle(fixture: ComponentFixture<JournalPage>) {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+
   // ---------------------------------------------------------------------------
   // Filters + KPIs (#195)
   // ---------------------------------------------------------------------------
 
-  it('opens on the running month and asks the two summaries for that same period', () => {
-    const fixture = TestBed.createComponent(JournalPage);
-    fixture.detectChanges();
+  it('opens on the running month and asks the two summaries for that same period', async () => {
+    const fixture = await render();
     const page = fixture.componentInstance;
 
     expect(page.appliedFilter().period).toBe('thisMonth');
@@ -133,9 +147,8 @@ describe('JournalPage', () => {
     expect(page.statCount()).toBe(10);
   });
 
-  it('picking a pattern refetches on that single pattern and rewinds to page 0', () => {
-    const fixture = TestBed.createComponent(JournalPage);
-    fixture.detectChanges();
+  it('picking a pattern refetches on that single pattern and rewinds to page 0', async () => {
+    const fixture = await render();
     const page = fixture.componentInstance;
     page.pageIndex.set(3);
     fixture.detectChanges();
@@ -148,9 +161,8 @@ describe('JournalPage', () => {
     expect(last.patterns).toEqual(['DT']);
   });
 
-  it('the winners segment narrows the listing AND the KPIs to PROFITABLE', () => {
-    const fixture = TestBed.createComponent(JournalPage);
-    fixture.detectChanges();
+  it('the winners segment narrows the listing AND the KPIs to PROFITABLE', async () => {
+    const fixture = await render();
     const page = fixture.componentInstance;
 
     page.setStatus('PROFITABLE');
@@ -160,9 +172,8 @@ describe('JournalPage', () => {
     expect((summary.mock.calls.at(-1)?.[0] as TradeEntryFilter).status).toBe('PROFITABLE');
   });
 
-  it('the stats KPI ignores the pattern and outcome — « traded / all » compares one period', () => {
-    const fixture = TestBed.createComponent(JournalPage);
-    fixture.detectChanges();
+  it('the stats KPI ignores the pattern and outcome — « traded / all » compares one period', async () => {
+    const fixture = await render();
     const page = fixture.componentInstance;
 
     page.setStatus('LOSING');
@@ -178,10 +189,7 @@ describe('JournalPage', () => {
     summary.mockReturnValue(
       of(makeSummary({ outOfPatternCount: 1, outOfPatternPnl: -233.55, inRulesPnl: 985.4 })),
     );
-    const fixture = TestBed.createComponent(JournalPage);
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
+    const fixture = await render();
 
     const card = (fixture.nativeElement as HTMLElement).querySelector(
       '[data-testid="out-of-pattern"]',
@@ -192,9 +200,8 @@ describe('JournalPage', () => {
 
   // ---- Entered after 11 am (#651) ----
 
-  it('the entry segment narrows the listing AND the KPIs, and rewinds to page 0', () => {
-    const fixture = TestBed.createComponent(JournalPage);
-    fixture.detectChanges();
+  it('the entry segment narrows the listing AND the KPIs, and rewinds to page 0', async () => {
+    const fixture = await render();
     const page = fixture.componentInstance;
 
     page.setEntry('AFTER_11');
@@ -214,10 +221,7 @@ describe('JournalPage', () => {
         }),
       ),
     );
-    const fixture = TestBed.createComponent(JournalPage);
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
+    const fixture = await render();
 
     const card = (fixture.nativeElement as HTMLElement).querySelector(
       '[data-testid="late-entries"]',
@@ -227,14 +231,13 @@ describe('JournalPage', () => {
   });
 
   // SDEV, 29/09 : shorted at 10:33, then again at 11:08 — the row says it, and so does trade 2.
-  it('tags a row with a late trade, and that trade once the row is open', () => {
+  it('tags a row with a late trade, and that trade once the row is open', async () => {
     const day = makeDay([
       makeTrade({ id: 't1', ticker: 'SDEV', enteredLate: false }),
       makeTrade({ id: 't2', ticker: 'SDEV', enteredLate: true }),
     ]);
     nextPage = makePage([day], 1);
-    const fixture = TestBed.createComponent(JournalPage);
-    fixture.detectChanges();
+    const fixture = await render();
     const el = fixture.nativeElement as HTMLElement;
 
     expect(el.querySelector('[data-testid="day-late-entry"]')).not.toBeNull();
@@ -244,36 +247,81 @@ describe('JournalPage', () => {
     expect(el.querySelectorAll('[data-testid="trade-late-entry"]')).toHaveLength(1);
   });
 
-  it('a row with no late trade carries no tag', () => {
+  it('a row with no late trade carries no tag', async () => {
     nextPage = makePage([makeDay([makeTrade({ enteredLate: false })])], 1);
-    const fixture = TestBed.createComponent(JournalPage);
-    fixture.detectChanges();
+    const fixture = await render();
 
     expect(fixture.nativeElement.querySelector('[data-testid="day-late-entry"]')).toBeNull();
   });
 
-  it('a failing summary empties its cards without taking the listing down', () => {
+  it('a failing summary empties its cards without taking the listing down', async () => {
     summary.mockReturnValue(throwError(() => new Error('500')));
     nextPage = makePage([makeDay([makeTrade()])], 1);
 
-    const fixture = TestBed.createComponent(JournalPage);
-    fixture.detectChanges();
+    const fixture = await render();
     const page = fixture.componentInstance;
 
     expect(page.summary()).toBeNull();
     expect(page.days()).toHaveLength(1);
-    expect(page.error()).toBeNull();
+    expect(page.error()).toBe(false);
+  });
+
+  // #370 : the table used to blink empty on every filter click.
+  it('keeps the rows on screen, dimmed, while the next filter loads', async () => {
+    nextPage = makePage([makeDay([makeTrade()])], 1);
+    const fixture = await render();
+    const page = fixture.componentInstance;
+    const pending = new Subject<PagedResult<JournalDay>>();
+    findDays.mockReturnValue(pending);
+
+    page.setPattern('DT');
+    fixture.detectChanges();
+
+    expect(page.loading()).toBe(true);
+    expect(page.days()).toHaveLength(1);
+    expect(fixture.nativeElement.querySelectorAll('tr.journal-row')).toHaveLength(1);
+
+    pending.next(makePage([], 0));
+    await settle(fixture);
+    expect(page.days()).toHaveLength(0);
+  });
+
+  // A load in flight when a write lands answers with pre-write data : the write must supersede it.
+  it('a delete during a load refetches, rather than letting the older load win', async () => {
+    nextPage = makePage([makeDay([makeTrade()]), makeDay([makeTrade({ id: 'id-2' })])], 2);
+    const fixture = await render();
+    const page = fixture.componentInstance;
+    findDays.mockReturnValue(new Subject<PagedResult<JournalDay>>());
+    page.setPattern('GUS');
+    fixture.detectChanges();
+    const callsBefore = findDays.mock.calls.length;
+
+    page.delete(makeTrade(), makeDay([makeTrade()]));
+    deleteSubject.next();
+    deleteSubject.complete();
+    fixture.detectChanges();
+
+    expect(findDays.mock.calls.length).toBe(callsBefore + 1);
+  });
+
+  it('a failing listing says so, without claiming the journal is empty', async () => {
+    findDays.mockReturnValue(throwError(() => new Error('500')));
+    const fixture = await render();
+    const el = fixture.nativeElement as HTMLElement;
+
+    expect(fixture.componentInstance.error()).toBe(true);
+    expect(el.querySelector('.error-banner')?.textContent).toContain('journal.errors.load');
+    expect(el.textContent).not.toContain('journal.empty');
   });
 
   // ---------------------------------------------------------------------------
   // One row per ticker and day (#500)
   // ---------------------------------------------------------------------------
 
-  it('a single-trade row opens its trade sheet in one click', () => {
+  it('a single-trade row opens its trade sheet in one click', async () => {
     const day = makeDay([makeTrade()]);
     nextPage = makePage([day], 1);
-    const fixture = TestBed.createComponent(JournalPage);
-    fixture.detectChanges();
+    const fixture = await render();
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
 
     fixture.componentInstance.openRow(day);
@@ -281,7 +329,7 @@ describe('JournalPage', () => {
     expect(navigate).toHaveBeenCalledWith(['/journal', 'id-1']);
   });
 
-  it('a row of several trades opens onto them, and a second click closes it', () => {
+  it('a row of several trades opens onto them, and a second click closes it', async () => {
     // SDEV, 29/09 : three trades on one name, one row.
     const day = makeDay([
       makeTrade({ id: 't1', ticker: 'SDEV' }),
@@ -289,8 +337,7 @@ describe('JournalPage', () => {
       makeTrade({ id: 't3', ticker: 'SDEV' }),
     ]);
     nextPage = makePage([day], 1);
-    const fixture = TestBed.createComponent(JournalPage);
-    fixture.detectChanges();
+    const fixture = await render();
     const page = fixture.componentInstance;
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
 
@@ -305,10 +352,9 @@ describe('JournalPage', () => {
     expect(fixture.nativeElement.querySelectorAll('.day-trade')).toHaveLength(0);
   });
 
-  it('deleting one of several trades says the others are kept', () => {
+  it('deleting one of several trades says the others are kept', async () => {
     const trades = [makeTrade({ id: 't1' }), makeTrade({ id: 't2' })];
-    const fixture = TestBed.createComponent(JournalPage);
-    fixture.detectChanges();
+    const fixture = await render();
 
     fixture.componentInstance.delete(trades[1], makeDay(trades));
 
@@ -319,10 +365,9 @@ describe('JournalPage', () => {
   });
 
   // #642 : « La stat du jour est conservée » on a trade that never had one.
-  it('deleting a trade on its own promises no stat', () => {
+  it('deleting a trade on its own promises no stat', async () => {
     const alone = makeTrade({ id: 't1', statEntryId: null });
-    const fixture = TestBed.createComponent(JournalPage);
-    fixture.detectChanges();
+    const fixture = await render();
 
     fixture.componentInstance.delete(alone, makeDay([alone]));
 
@@ -332,7 +377,7 @@ describe('JournalPage', () => {
     });
   });
 
-  it('a row whose sums leave trades out says how many, and a complete row says nothing', () => {
+  it('a row whose sums leave trades out says how many, and a complete row says nothing', async () => {
     // ZEO-like day (#515) : one trade still open, one with no fill times — the sums stay.
     const partial = makeDay([
       makeTrade({ id: 't1', retainedProfitDollars: -120, durationMinutes: 12 }),
@@ -343,8 +388,7 @@ describe('JournalPage', () => {
       makeTrade({ id: 't4', ticker: 'KTTA', retainedProfitDollars: 291.85, durationMinutes: 214 }),
     ]);
     nextPage = makePage([partial, complete], 2);
-    const fixture = TestBed.createComponent(JournalPage);
-    fixture.detectChanges();
+    const fixture = await render();
     const page = fixture.componentInstance;
 
     expect(page.missingPnl(partial)).toBe(1);
@@ -368,16 +412,15 @@ describe('JournalPage', () => {
   // delete() — edge case : last row of a non-zero page
   // ---------------------------------------------------------------------------
 
-  it('delete on the last row of a non-zero page decrements pageIndex instead of refetching', () => {
+  it('delete on the last row of a non-zero page decrements pageIndex instead of refetching', async () => {
     // 21 trades total, 10 per page → page 2 carries the single 21st row. Deleting it would
     // leave page 2 with zero rows after a naive refetch.
     nextPage = makePage([makeDay([makeTrade()])], 21);
 
-    const fixture = TestBed.createComponent(JournalPage);
-    fixture.detectChanges();
+    const fixture = await render();
     const page = fixture.componentInstance;
     page.pageIndex.set(2);
-    fixture.detectChanges();
+    await settle(fixture);
 
     const callsBefore = findDays.mock.calls.length;
     page.delete(makeTrade(), makeDay([makeTrade()]));
@@ -386,18 +429,17 @@ describe('JournalPage', () => {
     fixture.detectChanges();
 
     expect(page.pageIndex()).toBe(1);
-    // pageIndex change itself triggers the effect → exactly one additional fetch.
+    // The page change itself refetches → exactly one additional fetch.
     expect(findDays.mock.calls.length).toBe(callsBefore + 1);
     expect(toastShown).toHaveBeenCalledWith('success', expect.any(String));
   });
 
-  it('delete on the last row of page 0 does NOT decrement pageIndex (refetches in place)', () => {
+  it('delete on the last row of page 0 does NOT decrement pageIndex (refetches in place)', async () => {
     // Only one trade, on page 0. The naive refetch is correct here — we don't want to bump
     // pageIndex into negative territory.
     nextPage = makePage([makeDay([makeTrade()])], 1);
 
-    const fixture = TestBed.createComponent(JournalPage);
-    fixture.detectChanges();
+    const fixture = await render();
     const page = fixture.componentInstance;
 
     const callsBefore = findDays.mock.calls.length;
@@ -414,17 +456,16 @@ describe('JournalPage', () => {
   // delete() — multi-row standard path
   // ---------------------------------------------------------------------------
 
-  it('delete on a multi-row page refetches the current page (no pageIndex change)', () => {
+  it('delete on a multi-row page refetches the current page (no pageIndex change)', async () => {
     nextPage = makePage(
       [makeDay([makeTrade()]), makeDay([makeTrade({ id: 'id-2', ticker: 'AAPL' })])],
       12,
     );
 
-    const fixture = TestBed.createComponent(JournalPage);
-    fixture.detectChanges();
+    const fixture = await render();
     const page = fixture.componentInstance;
     page.pageIndex.set(1);
-    fixture.detectChanges();
+    await settle(fixture);
 
     const callsBefore = findDays.mock.calls.length;
     page.delete(makeTrade(), makeDay([makeTrade()]));
@@ -440,11 +481,10 @@ describe('JournalPage', () => {
   // delete() — error path
   // ---------------------------------------------------------------------------
 
-  it('delete error fires an error snackbar', () => {
+  it('delete error fires an error snackbar', async () => {
     nextPage = makePage([makeDay([makeTrade()])], 1);
 
-    const fixture = TestBed.createComponent(JournalPage);
-    fixture.detectChanges();
+    const fixture = await render();
     const page = fixture.componentInstance;
 
     page.delete(makeTrade(), makeDay([makeTrade()]));
@@ -458,9 +498,8 @@ describe('JournalPage', () => {
   // delete() — confirmation modal cancelled
   // ---------------------------------------------------------------------------
 
-  it('user cancelling the confirmation modal never reaches the repository', () => {
-    const fixture = TestBed.createComponent(JournalPage);
-    fixture.detectChanges();
+  it('user cancelling the confirmation modal never reaches the repository', async () => {
+    const fixture = await render();
     const page = fixture.componentInstance;
 
     const deleteSpy = vi.spyOn(deleteSubject, 'subscribe');
@@ -476,7 +515,7 @@ describe('JournalPage', () => {
   // « + Trade » — a trade on its own (#634)
   // ---------------------------------------------------------------------------
 
-  it('saves the trade typed in the « new trade » dialog, then opens its sheet', () => {
+  it('saves the trade typed in the « new trade » dialog, then opens its sheet', async () => {
     const input: NewTradeInput = {
       tradeDate: new Date(2026, 5, 12),
       ticker: 'SGBX',
@@ -485,8 +524,7 @@ describe('JournalPage', () => {
     };
     dialogOpen.mockReturnValue({ afterClosed: () => of(input) });
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
-    const fixture = TestBed.createComponent(JournalPage);
-    fixture.detectChanges();
+    const fixture = await render();
 
     fixture.componentInstance.openNewTrade();
 
@@ -495,25 +533,23 @@ describe('JournalPage', () => {
     expect(navigate).toHaveBeenCalledWith(['/journal', 'new-1']);
   });
 
-  it('saves nothing when the dialog is dismissed', () => {
+  it('saves nothing when the dialog is dismissed', async () => {
     dialogOpen.mockReturnValue({ afterClosed: () => of(undefined) });
-    const fixture = TestBed.createComponent(JournalPage);
-    fixture.detectChanges();
+    const fixture = await render();
 
     fixture.componentInstance.openNewTrade();
 
     expect(create).not.toHaveBeenCalled();
   });
 
-  it('says so when the trade cannot be saved, and stays on the journal', () => {
+  it('says so when the trade cannot be saved, and stays on the journal', async () => {
     dialogOpen.mockReturnValue({
       afterClosed: () =>
         of({ tradeDate: new Date(), ticker: 'SGBX', pattern: 'GUS', direction: 'SHORT' }),
     });
     create.mockReturnValue(throwError(() => new Error('400')));
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigate');
-    const fixture = TestBed.createComponent(JournalPage);
-    fixture.detectChanges();
+    const fixture = await render();
 
     fixture.componentInstance.openNewTrade();
 
