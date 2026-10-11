@@ -16,7 +16,7 @@ module.exports = defineConfig([
 
   // ======== ALL PROJECTS (TS) ========
   {
-    files: ['apps/**/*.ts', 'libs/**/*.ts'],
+    files: ['apps/**/*.ts', 'libs/**/*.ts', 'test-setup.ts'],
     extends: [
       eslint.configs.recommended,
       tseslint.configs.recommended,
