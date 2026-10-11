@@ -45,7 +45,7 @@ class AppConfigService(
   /**
    * Parsed view of [ConfigKeys.ALLOWED_EMAILS] — the CSV stored as a single string is split,
    * trimmed, lowercased, deduplicated, and empty tokens dropped. Consumed by
-   * `CustomOAuth2UserService` at each login. Empty set = open mode (no gating ; let everyone in).
+   * `UserProvisioningService` at each login. Empty set = open mode (no gating ; let everyone in).
    */
   fun getAllowedEmails(): Set<String> = parseEmailList(getString(ConfigKeys.ALLOWED_EMAILS))
 

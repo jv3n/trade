@@ -34,7 +34,7 @@ class AppConfigServiceTest {
   @Test
   fun `getAllowedEmails returns an empty set when no override and yaml default is empty`() {
     // Open mode — backward compat for a fresh deploy before the admin posts the first list.
-    // `CustomOAuth2UserService` short-circuits the gate when the set is empty.
+    // `UserProvisioningService` short-circuits the gate when the set is empty.
     val service = newService()
     assertTrue(service.getAllowedEmails().isEmpty())
     assertFalse(service.isOverridden(ConfigKeys.ALLOWED_EMAILS))

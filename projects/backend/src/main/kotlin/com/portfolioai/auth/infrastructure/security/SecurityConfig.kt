@@ -140,7 +140,7 @@ class SecurityConfig(
         login.defaultSuccessUrl(frontendUrl, true)
         // Translate OAuth2 failures into a clean redirect with a query param the SPA reads to
         // render an inline message on `/login`. The `not_authorized` code is what
-        // `CustomOAuth2UserService.assertAuthorized` throws when an inbound email isn't in the
+        // `UserProvisioningService.assertAuthorized` throws when an inbound email isn't in the
         // effective whitelist — gives the user a clear "access denied" message instead of an
         // opaque 500 page. Any other OAuth2 failure (network, malformed token, Google misconfig)
         // falls through to `oauth_failed` — useful for operator debugging via the URL bar.

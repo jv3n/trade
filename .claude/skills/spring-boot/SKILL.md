@@ -49,13 +49,13 @@ No `@Lazy self` injection — a split is what you actually want. `@EnableAsync` 
 
 ### `@Value("\${key:default}")` — boot-time-fixed config
 
-Always provide a default after `:` — a missing key without default fails the context at startup. Real uses: `FrankfurterForexClient` (`forex.frankfurter.base-url:https://api.frankfurter.dev/v1`), `SecurityConfig` (`app.frontend-url:/`), `CustomOAuth2UserService` (`app.admin.emails:`). An empty default is fine for optional values.
+Always provide a default after `:` — a missing key without default fails the context at startup. Real uses: `FrankfurterForexClient` (`forex.frankfurter.base-url:https://api.frankfurter.dev/v1`), `SecurityConfig` (`app.frontend-url:/`), `UserProvisioningService` (`app.admin.emails:`). An empty default is fine for optional values.
 
 Use `@ConfigurationProperties` only if a group of keys sharing one prefix appears ; today every consumer needs one or two keys, so plain `@Value` stays.
 
 ### `AppConfigService` — runtime-editable config
 
-Anything the user can change from the settings page without a reboot reads through `AppConfigService` **per call**, not at construction. Today there is exactly one key: `ConfigKeys.ALLOWED_EMAILS` (`app.allowed.emails`, the login whitelist, read by `CustomOAuth2UserService` via `getAllowedEmails()`).
+Anything the user can change from the settings page without a reboot reads through `AppConfigService` **per call**, not at construction. Today there is exactly one key: `ConfigKeys.ALLOWED_EMAILS` (`app.allowed.emails`, the login whitelist, read by `UserProvisioningService` via `getAllowedEmails()`).
 
 - YAML default injected by `@Value` into `AppConfigService`, DB override (`app_config` table) layered on top, primed into a `ConcurrentHashMap` at `@PostConstruct`.
 - Adding a key = the three steps in the `ConfigKeys` KDoc: constant + `KNOWN_KEYS`, `@Value` default in `AppConfigService.defaultFor`, consumer reads through the service.

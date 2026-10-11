@@ -1,5 +1,6 @@
 package com.portfolioai.auth.infrastructure.security
 
+import com.portfolioai.auth.application.UserProvisioningService
 import com.portfolioai.auth.domain.Role
 import com.portfolioai.auth.domain.User
 import com.portfolioai.auth.infrastructure.persistence.UserRepository
@@ -24,7 +25,8 @@ import org.springframework.security.oauth2.core.user.DefaultOAuth2User
 
 /**
  * Tests on [CustomOAuth2UserService.processOAuth2User] — the post-fetch handling that bridges a
- * Google userinfo response to our [User] DB row.
+ * Google userinfo response to our [User] DB row, through the real [UserProvisioningService] over a
+ * mocked repository.
  *
  * We deliberately don't exercise [CustomOAuth2UserService.loadUser] because it delegates HTTP to
  * Spring's `DefaultOAuth2UserService.loadUser` ; the refactor that extracted
@@ -61,7 +63,9 @@ class CustomOAuth2UserServiceTest {
     // contract.
     val appConfigService: AppConfigService = mock()
     given(appConfigService.getAllowedEmails()).willReturn(allowedEmails)
-    return CustomOAuth2UserService(userRepository, adminEmails, appConfigService, mock())
+    return CustomOAuth2UserService(
+      UserProvisioningService(userRepository, adminEmails, appConfigService, mock())
+    )
   }
 
   // ---------------------------------------------------------------------- creation

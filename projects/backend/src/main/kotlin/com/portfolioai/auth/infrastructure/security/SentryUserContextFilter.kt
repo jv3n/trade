@@ -17,12 +17,12 @@ import org.springframework.web.filter.OncePerRequestFilter
  * scope so captured events are attributed to the right user in the dashboard ("users affected"
  * metric + filter-by-user).
  *
- * **Why a separate filter rather than wiring inside `CustomOAuth2UserService`** —
+ * **Why a separate filter rather than wiring inside `UserProvisioningService`** —
  * `findOrCreateUser` runs only at *login*, but we want the MDC tag on every authenticated request,
  * not just the OAuth callback. A `OncePerRequestFilter` registered downstream of Spring Security's
  * auth filters sees `SecurityContextHolder` already populated and applies on every request.
  *
- * **Never logs the email**. Same convention as `CustomOAuth2UserService.findOrCreateUser` — the
+ * **Never logs the email**. Same convention as `UserProvisioningService.findOrCreateUser` — the
  * UUID is the join key for prod audit, the email is PII and stays out of logs and Sentry
  * breadcrumbs.
  *
