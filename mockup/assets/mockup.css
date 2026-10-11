@@ -71,6 +71,8 @@
   --gain-soft: color-mix(in oklch, var(--gain) var(--soft), transparent);
   --loss-soft: color-mix(in oklch, var(--loss) var(--soft), transparent);
   --warn-soft: color-mix(in oklch, var(--warn) var(--soft), transparent);
+  /* #685 : dépôts / retraits — un mouvement de fonds, ni un gain ni une perte. */
+  --neutral-bar: color-mix(in oklch, var(--text-muted) 55%, transparent);
 
   --radius: 12px;
   --radius-sm: 8px;
@@ -1130,4 +1132,180 @@ dialog.locate-dialog {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   align-items: end;
+}
+
+/* ---------------------------------------------------------------- Rapports (#685) */
+
+.report-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+
+.report-tab {
+  padding: 8px 14px;
+  font-weight: 550;
+  color: var(--text-muted);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.report-tab.active {
+  color: var(--text);
+  border-bottom-color: var(--accent);
+}
+
+.report-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 28px;
+  align-items: center;
+}
+
+.report-controls .control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.control-label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.type-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.type-chip {
+  font: inherit;
+  font-size: 12.5px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.type-chip.on {
+  background: var(--accent-soft);
+  border-color: transparent;
+  color: var(--accent);
+}
+
+.type-chip.shortcut {
+  font-weight: 600;
+}
+
+.chip-sep {
+  width: 1px;
+  height: 18px;
+  background: var(--border);
+  margin: 0 4px;
+}
+
+.report-body {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.flow-chart {
+  position: relative;
+}
+
+.flow-tooltip {
+  position: absolute;
+  top: 4px;
+  width: 220px;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-pop);
+  font-size: 12px;
+}
+
+.flow-tooltip .tt-title {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.flow-tooltip .tt-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 2px 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.flow-tooltip .tt-row i,
+.legend-item i {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  margin-right: 6px;
+  vertical-align: baseline;
+}
+
+.flow-tooltip .tt-net {
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+  padding-top: 6px;
+  font-weight: 600;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.legend-item i.net-dot {
+  border-radius: 50%;
+  border: 1.5px solid var(--text);
+  background: var(--surface);
+}
+
+table.breakdown {
+  width: 100%;
+}
+
+table.breakdown tr.total td {
+  border-top: 1px solid var(--border-strong);
+  font-weight: 600;
+}
+
+.empty-state {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 48px 16px;
+  text-align: center;
+}
+
+.empty-state > .icon {
+  font-size: 36px;
+  color: var(--text-faint);
+}
+
+.empty-state p {
+  margin: 0;
+}
+
+@media (max-width: 960px) {
+  .report-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
