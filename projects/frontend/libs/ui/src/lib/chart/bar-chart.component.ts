@@ -41,8 +41,31 @@ export interface BarBucket {
   imports: [StbChart],
   template: `
     @if (buckets().length) {
-      <ui-chart [optionFactory]="option()" [height]="height()" />
-      <ul class="stb-bar-legend">
+      <!-- A canvas says nothing to a screen reader : the table below is the chart, in text. -->
+      <ui-chart aria-hidden="true" [optionFactory]="option()" [height]="height()" />
+      <table class="cdk-visually-hidden" data-testid="bar-chart-data">
+        <thead>
+          <tr>
+            <td></td>
+            @for (s of series(); track s.key) {
+              <th scope="col">{{ s.label }}</th>
+            }
+            <th scope="col">{{ netLabel() }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows(); track $index) {
+            <tr>
+              <th scope="row">{{ row.title }}</th>
+              @for (cell of row.cells; track $index) {
+                <td>{{ cell }}</td>
+              }
+              <td>{{ row.net }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      <ul class="stb-bar-legend" aria-hidden="true">
         @for (s of series(); track s.key) {
           <li><i [class]="'stb-bar-swatch stb-bar-swatch--' + s.tone"></i>{{ s.label }}</li>
         }
@@ -68,6 +91,22 @@ export class StbBarChart {
   /** The tooltip's and the legend's name for the net — translated by the consumer. */
   readonly netLabel = input('Net');
   readonly height = input(240);
+
+  /**
+   * The chart as text, one row per bar : its title, the amount of each series (empty where it did
+   * not move) and the net. What a screen reader reads — and what an e2e test can (#702).
+   */
+  readonly rows = computed(() => {
+    const format = this.format();
+    return this.buckets().map((b) => {
+      const values = this.series().map((s) => b.values[s.key] ?? 0);
+      return {
+        title: b.title,
+        cells: values.map((v) => (v === 0 ? '' : format(v))),
+        net: format(values.reduce((sum, v) => sum + v, 0)),
+      };
+    });
+  });
 
   readonly option = computed<StbChartOptionFactory>(() => {
     const series = this.series();
