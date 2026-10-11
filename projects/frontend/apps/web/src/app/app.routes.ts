@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { adminGuard, authGuard } from './core/router/auth.guards';
+import { adminGuard, authGuard, guestGuard } from './core/router/auth.guards';
 import { unsavedChangesGuard } from './core/router/unsaved-changes.guard';
 
 /**
@@ -17,6 +17,7 @@ export const routes: Routes = [
   // interceptor does **not** auto-redirect on 5xx, components handle local error UI in-band.
   {
     path: 'login',
+    canActivate: [guestGuard],
     loadComponent: () => import('./features/login/login-page').then((m) => m.LoginPage),
   },
   {

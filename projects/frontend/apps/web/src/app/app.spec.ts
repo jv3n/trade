@@ -122,6 +122,18 @@ describe('App', () => {
       expect(drawer().classList).toContain('mat-drawer-opened');
     });
 
+    // Left open on the way down a breakpoint, the drawer would pop up over the page.
+    it('closes when the screen crosses the breakpoint', async () => {
+      narrow.next(true);
+      const { fixture } = await render();
+      fixture.componentInstance.menuOpen.set(true);
+
+      narrow.next(false);
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance.menuOpen()).toBe(false);
+    });
+
     // The drawer sits over the page it just opened : left open, it would hide that page.
     it('closes once a page is picked', async () => {
       narrow.next(true);

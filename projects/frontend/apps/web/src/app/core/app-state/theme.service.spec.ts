@@ -10,6 +10,8 @@
  *   paint) from the resolved value.
  * - **set()** — delegates to [AuthService.updatePreferences] (no localStorage) and the resolved
  *   theme reflects the change once the (stubbed) backend round-trip updates `currentUser`.
+ * - **Detached windows** — a document handed to `mirrorTo` is themed at once, follows every change
+ *   until released, and is left alone after.
  * - **SSR safety** — on the server platform no DOM write happens.
  */
 import { PLATFORM_ID, signal } from '@angular/core';
@@ -135,6 +137,25 @@ describe('ThemeService', () => {
 
     expect(calls).toEqual([{ theme: 'light' }]);
     expect(service.theme()).toBe('light');
+  });
+
+  // A calculator widget or a note detached into a Picture-in-Picture window is a document of its own.
+  it('themes a detached window at once, keeps it in step, and lets it go once released', () => {
+    const { service } = setup(makeUser('dark'));
+    const pip = document.implementation.createHTMLDocument('pip');
+
+    const release = service.mirrorTo(pip);
+    expect(pip.documentElement.getAttribute('data-theme')).toBe('dark');
+
+    service.set('light');
+    TestBed.tick();
+    expect(pip.documentElement.getAttribute('data-theme')).toBe('light');
+
+    release();
+    service.set('dark');
+    TestBed.tick();
+    expect(pip.documentElement.getAttribute('data-theme')).toBe('light');
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
   });
 
   it('does not touch the DOM on the server platform', () => {
