@@ -412,7 +412,7 @@ describe('JournalPage', () => {
   // delete() — edge case : last row of a non-zero page
   // ---------------------------------------------------------------------------
 
-  it('delete on the last row of a non-zero page decrements pageIndex instead of refetching', async () => {
+  it('delete on the last row of a non-zero page steps back a page, and reloads the KPIs too', async () => {
     // 21 trades total, 10 per page → page 2 carries the single 21st row. Deleting it would
     // leave page 2 with zero rows after a naive refetch.
     nextPage = makePage([makeDay([makeTrade()])], 21);
@@ -423,14 +423,17 @@ describe('JournalPage', () => {
     await settle(fixture);
 
     const callsBefore = findDays.mock.calls.length;
+    const summariesBefore = summary.mock.calls.length;
     page.delete(makeTrade(), makeDay([makeTrade()]));
     deleteSubject.next();
     deleteSubject.complete();
     fixture.detectChanges();
 
     expect(page.pageIndex()).toBe(1);
-    // The page change itself refetches → exactly one additional fetch.
+    // The page change and the write land in one tick → exactly one additional fetch.
     expect(findDays.mock.calls.length).toBe(callsBefore + 1);
+    // #675 review : only the listing is keyed on the page — the KPIs kept the deleted trade.
+    expect(summary.mock.calls.length).toBe(summariesBefore + 1);
     expect(toastShown).toHaveBeenCalledWith('success', expect.any(String));
   });
 

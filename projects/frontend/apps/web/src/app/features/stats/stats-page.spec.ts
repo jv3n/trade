@@ -699,6 +699,22 @@ describe('StatsPage', () => {
     expect(repo.delete).toHaveBeenCalledWith('stat-ktta');
   });
 
+  // #675 review : only the listing is keyed on the page — the KPIs kept counting the deleted stat.
+  it('deleting the last row of a later page steps back a page, and reloads the KPIs too', async () => {
+    const { fixture, page, repo } = await setup({ rows: [makeStat()] });
+    page.pageIndex.set(2);
+    await settle(fixture);
+    const listingsBefore = repo.findAll.mock.calls.length;
+    const summariesBefore = repo.summary.mock.calls.length;
+
+    page.delete(makeStat());
+    await settle(fixture);
+
+    expect(page.pageIndex()).toBe(1);
+    expect(repo.findAll.mock.calls.length).toBe(listingsBefore + 1);
+    expect(repo.summary.mock.calls.length).toBeGreaterThan(summariesBefore);
+  });
+
   it('asks the plain confirmation for a stat without a trade', async () => {
     const { page } = await setup({ rows: [makeStat()] });
     const ask = vi.spyOn(TestBed.inject(ConfirmService), 'ask');
