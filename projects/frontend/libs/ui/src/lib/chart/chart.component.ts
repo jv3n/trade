@@ -9,7 +9,7 @@ import {
   input,
   viewChild,
 } from '@angular/core';
-import { LineChart } from 'echarts/charts';
+import { BarChart, LineChart, ScatterChart } from 'echarts/charts';
 import { GridComponent, TooltipComponent } from 'echarts/components';
 import * as echarts from 'echarts/core';
 import { CanvasRenderer } from 'echarts/renderers';
@@ -20,7 +20,7 @@ import { ChartPalette, onThemeChange, readChartPalette } from './chart-theme';
  * `echarts` bundle is about a megabyte, and most of it would never render here. A new chart type
  * adds its import to this list.
  */
-echarts.use([LineChart, GridComponent, TooltipComponent, CanvasRenderer]);
+echarts.use([BarChart, LineChart, ScatterChart, GridComponent, TooltipComponent, CanvasRenderer]);
 
 /**
  * ECharts animates over a second by default, which reads as lag when a filter redraws the curve.

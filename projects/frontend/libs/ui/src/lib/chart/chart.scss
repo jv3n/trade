@@ -1,0 +1,47 @@
+// The legend under a bar chart (#685) — HTML rather than ECharts' own, whose clicks toggle series :
+// on the reports the type chips do that, and two ways to hide a series would disagree.
+
+@use '../../../styles/sizes' as s;
+
+.stb-bar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: s.$space-xs s.$space-lg;
+  margin: s.$space-sm 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: s.$font-xs;
+  color: var(--color-text-muted);
+}
+
+.stb-bar-swatch {
+  display: inline-block;
+  width: s.$space-sm;
+  height: s.$space-sm;
+  margin-right: s.$space-xs;
+  border-radius: s.$space-hairline;
+  vertical-align: baseline;
+}
+
+.stb-bar-swatch--gain {
+  background: var(--color-success);
+}
+
+.stb-bar-swatch--loss {
+  background: var(--color-danger);
+}
+
+.stb-bar-swatch--cost {
+  background: var(--color-warning);
+}
+
+.stb-bar-swatch--neutral {
+  background: color-mix(in oklch, var(--color-text-muted) 55%, transparent);
+}
+
+// The net's dot : a hole, as on the chart.
+.stb-bar-swatch--net {
+  border: 1.5px solid var(--color-text);
+  border-radius: 50%;
+  background: var(--color-surface);
+}
