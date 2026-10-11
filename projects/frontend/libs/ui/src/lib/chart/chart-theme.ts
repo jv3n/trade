@@ -23,6 +23,14 @@ export interface ChartPalette {
   border: string;
   surface: string;
   fontFamily: string;
+  /** Outcomes — a winning amount. Green and red are for outcomes only (`CLAUDE.md`, colour rule). */
+  gain: string;
+  /** Outcomes — a losing amount. */
+  loss: string;
+  /** Costs — fees, locates : amber, neither a gain nor a loss. */
+  cost: string;
+  /** Fund movements — a deposit or a withdrawal is no outcome, so no outcome colour. */
+  neutral: string;
 }
 
 /** Resolves one CSS colour expression against the document, through a throwaway probe. */
@@ -62,6 +70,15 @@ function token(name: string): string {
   return channels ? rgba(channels, channels[3] / 255) : resolved;
 }
 
+/** A token at [ratio] opacity, keeping its own channels — see `accentFade` below. */
+function faded(name: string, ratio: number): string {
+  const resolved = resolveColor(`var(${name})`);
+  const channels = paint(resolved);
+  return channels
+    ? rgba(channels, ratio)
+    : resolveColor(`color-mix(in srgb, var(${name}) ${ratio * 100}%, transparent)`);
+}
+
 export function readChartPalette(): ChartPalette {
   const fontFamily = getComputedStyle(document.documentElement)
     .getPropertyValue('--font-family')
@@ -81,6 +98,10 @@ export function readChartPalette(): ChartPalette {
     border: token('--color-border'),
     surface: token('--color-surface'),
     fontFamily: fontFamily || 'sans-serif',
+    gain: token('--color-success'),
+    loss: token('--color-danger'),
+    cost: token('--color-warning'),
+    neutral: faded('--color-text-muted', 0.55),
   };
 }
 
