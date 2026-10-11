@@ -31,9 +31,9 @@
 
   <!-- KPI row — balance is the live one, the others are scoped to the active filter (the gap tile
        to its dates only). -->
+  <!-- Always five tiles, whatever loads (#687) : the skeleton draws five, so nothing reflows. -->
   @if (summaryFailed()) {
-    <!-- The gap tile is left out : whether the period had a reconciled morning is not known. -->
-    <section class="kpi-row" data-testid="kpi-unavailable">
+    <section class="kpi-row kpi-row--five" data-testid="kpi-unavailable">
       @for (label of unavailableKpis; track label) {
         <mat-card class="kpi" appearance="outlined">
           <div class="kpi__label">{{ label | translate }}</div>
@@ -43,7 +43,7 @@
       }
     </section>
   } @else if (summary(); as s) {
-    <section class="stb-fade-in kpi-row" [class.kpi-row--five]="reconciliationGap() !== null">
+    <section class="stb-fade-in kpi-row kpi-row--five">
       <mat-card class="kpi" appearance="outlined" data-testid="account-balance">
         <div class="kpi__label">
           <span>{{ 'account.currentBalance' | translate }}</span>
@@ -122,14 +122,14 @@
         </div>
       </mat-card>
 
-      @if (reconciliationGap(); as g) {
-        <mat-card
-          class="kpi"
-          appearance="outlined"
-          data-testid="reconciliation-gap"
-          [matTooltip]="'account.kpi.reconciliationGapHint' | translate"
-        >
-          <div class="kpi__label">{{ 'account.kpi.reconciliationGap' | translate }}</div>
+      <mat-card
+        class="kpi"
+        appearance="outlined"
+        data-testid="reconciliation-gap"
+        [matTooltip]="'account.kpi.reconciliationGapHint' | translate"
+      >
+        <div class="kpi__label">{{ 'account.kpi.reconciliationGap' | translate }}</div>
+        @if (reconciliationGap(); as g) {
           <div class="kpi__value">
             {{ g.credit ? '+' : '' }}{{ g.amount | number: '1.2-2'
             }}{{ 'account.usdSuffix' | translate }}
@@ -146,8 +146,12 @@
               }}
             }
           </div>
-        </mat-card>
-      }
+        } @else {
+          <!-- No reconciled morning in the period : nothing was measured, and a 0 would lie. -->
+          <div class="kpi__value kpi__value--unavailable">—</div>
+          <div class="kpi__sub">{{ 'account.kpi.reconciliationGapNone' | translate }}</div>
+        }
+      </mat-card>
 
       @let l = locatesOf(s);
       <mat-card
@@ -174,7 +178,7 @@
       </mat-card>
     </section>
   } @else if (gate.skeleton()) {
-    <ui-skeleton-kpi-row />
+    <ui-skeleton-kpi-row [count]="5" />
   }
 
   <!-- Morning reconciliation (#198) — the same block as step 1 of the Today page. -->

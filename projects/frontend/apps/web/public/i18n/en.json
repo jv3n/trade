@@ -421,6 +421,7 @@
       "reconciliationGapShare": "{{share}} % of the P&L",
       "reconciliationGapCredit": "net credit",
       "reconciliationGapNoShare": "— · flat or losing P&L",
+      "reconciliationGapNone": "No reconciled morning",
       "reconciliationGapHint": "What the broker took outside the trades — locates, subscription, rounding. Read at the period's reconciled mornings : a row fixed since does not change it. Follows the dates, not the type filter.",
       "locates": "Locates for the period",
       "locatesPaidForNothing": "including {{amount}} paid for nothing",

@@ -421,6 +421,7 @@
       "reconciliationGapShare": "{{share}} % du P&L",
       "reconciliationGapCredit": "crédit net",
       "reconciliationGapNoShare": "— · P&L nul ou en perte",
+      "reconciliationGapNone": "Aucun matin rapproché",
       "reconciliationGapHint": "Ce que le courtier a pris hors trades — locates, abonnement, arrondis. Lu aux matins rapprochés de la période : une ligne corrigée depuis ne le change pas. Suit les dates, pas le filtre de type.",
       "locates": "Locates de la période",
       "locatesPaidForNothing": "dont {{amount}} payés pour rien",
