@@ -1,5 +1,5 @@
 import { provideZonelessChangeDetection } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 import { MatDialog, StbToast } from '@portfolioai/ui';
@@ -37,7 +37,9 @@ import { TodayPage, marketStatusAt } from './today-page';
  * - « Passer les N en GUS » **confirms** before creating stats ;
  * - a failing call leaves the page standing — it is the home page, it can't go blank.
  *
- * The clock is frozen on a Friday premarket so the states don't depend on when the suite runs.
+ * The clock is frozen on a Friday premarket so the states don't depend on when the suite runs. The
+ * sources load through resources (#670), which answer a tick after the call : `setup()` and
+ * `settle()` wait for them.
  */
 describe('TodayPage', () => {
   /** Friday 18 September 2026, 08:30 in New York (12:30 UTC, EDT) — premarket. */
@@ -133,13 +135,22 @@ describe('TodayPage', () => {
     TestBed.resetTestingModule();
   });
 
-  function setup(): TodayPage {
+  let fixture: ComponentFixture<TodayPage>;
+
+  /** Renders once every source has answered — a resource resolves a tick after its call. */
+  async function setup(): Promise<TodayPage> {
     TestBed.inject(TranslateService).setTranslation('en', {
       patterns: { short: { GUS: 'GUS', DT: 'DT' } },
     });
-    const fixture = TestBed.createComponent(TodayPage);
-    fixture.detectChanges();
+    fixture = TestBed.createComponent(TodayPage);
+    await settle();
     return fixture.componentInstance;
+  }
+
+  async function settle(): Promise<void> {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
   }
 
   // ---------------------------------------------------------------------------
@@ -162,8 +173,8 @@ describe('TodayPage', () => {
   // ---------------------------------------------------------------------------
 
   // #531 : the app is opened in the morning, so the stats of a session are completed the next day.
-  it("opens the morning on yesterday's stats, the five other steps in their order", () => {
-    const page = setup();
+  it("opens the morning on yesterday's stats, the five other steps in their order", async () => {
+    const page = await setup();
 
     expect(page.steps).toEqual([
       'stats',
@@ -175,8 +186,8 @@ describe('TodayPage', () => {
     ]);
   });
 
-  it('a morning with nothing left from before today is done, and the reconciliation comes next', () => {
-    const page = setup();
+  it('a morning with nothing left from before today is done, and the reconciliation comes next', async () => {
+    const page = await setup();
 
     expect(page.stepStates().stats).toBe('done');
     expect(page.stepStates().reconciliation).toBe('current');
@@ -185,43 +196,45 @@ describe('TodayPage', () => {
     expect(page.doneCount()).toBe(1);
   });
 
-  it('once the morning is reconciled, the candidates become the current step', () => {
+  it('once the morning is reconciled, the candidates become the current step', async () => {
     reconciledToday = true;
-    const page = setup();
+    const page = await setup();
 
     expect(page.stepStates().reconciliation).toBe('done');
     expect(page.stepStates().candidates).toBe('current');
   });
 
-  it('reconciling from step 1 turns it done, as read back from the server', () => {
-    const page = setup();
+  it('reconciling from step 1 turns it done, as read back from the server', async () => {
+    const page = await setup();
 
     reconciledToday = true;
     page.onSettled();
+    await settle();
 
     expect(page.stepStates().reconciliation).toBe('done');
   });
 
   // The block emits the same `settled` for a cancel : taking it as « reconciled » left step 1
   // green with nothing reconciled (#425).
-  it('cancelling the morning reconciliation puts step 1 back as the current one', () => {
+  it('cancelling the morning reconciliation puts step 1 back as the current one', async () => {
     reconciledToday = true;
-    const page = setup();
+    const page = await setup();
 
     reconciledToday = false;
     page.onSettled();
+    await settle();
 
     expect(page.stepStates().reconciliation).toBe('current');
     expect(page.doneCount()).toBe(1);
   });
 
-  it('captured candidates, all in the sheet, move the day on — the session is still ahead', () => {
+  it('captured candidates, all in the sheet, move the day on — the session is still ahead', async () => {
     reconciledToday = true;
     candidates = [
       makeCandidate({ stats: IN_STATS }),
       makeCandidate({ id: 'c2', ticker: 'BNRG', stats: IN_STATS }),
     ];
-    const page = setup();
+    const page = await setup();
 
     expect(page.stepStates().candidates).toBe('done');
     expect(page.stepStates().session).toBe('current');
@@ -232,43 +245,43 @@ describe('TodayPage', () => {
   // Locates (#625)
   // ---------------------------------------------------------------------------
 
-  it('a locate taken ticks the locates step', () => {
+  it('a locate taken ticks the locates step', async () => {
     reconciledToday = true;
     candidates = [makeCandidate({ stats: IN_STATS })];
     dayLocates = [makeLocate()];
-    const page = setup();
+    const page = await setup();
 
     expect(page.stepStates().locates).toBe('done');
   });
 
   // A locate is a cost recorded when it happens, not something owed every day.
-  it('the locates step is never the current one, nor counted in the progress', () => {
+  it('the locates step is never the current one, nor counted in the progress', async () => {
     reconciledToday = true;
     candidates = [makeCandidate({ stats: IN_STATS })];
-    const page = setup();
+    const page = await setup();
 
     expect(page.stepStates().locates).toBe('todo');
     expect(page.stepStates().session).toBe('current');
     expect(page.requiredStepCount).toBe(5);
   });
 
-  it('a locate taken does not move the progress', () => {
+  it('a locate taken does not move the progress', async () => {
     reconciledToday = true;
     candidates = [makeCandidate({ stats: IN_STATS })];
     dayLocates = [makeLocate()];
-    const page = setup();
+    const page = await setup();
 
     // Yesterday's stats, the reconciliation and the candidates — not the locates.
     expect(page.doneCount()).toBe(3);
   });
 
-  it("adds the day's locates up per ticker, a top-up on the same row", () => {
+  it("adds the day's locates up per ticker, a top-up on the same row", async () => {
     dayLocates = [
       makeLocate(),
       makeLocate({ id: 'l-2', shares: 1000, pricePerShare: 0.15, cost: 150 }),
       makeLocate({ id: 'l-3', ticker: 'MLGO', shares: 2000, pricePerShare: 0.08, cost: 160 }),
     ];
-    const page = setup();
+    const page = await setup();
 
     expect(page.locatesByTicker()).toEqual([
       { ticker: 'SGBX', shares: 3000, lastPrice: 0.15 },
@@ -277,23 +290,23 @@ describe('TodayPage', () => {
     expect(page.locatesTotal()).toBe(550);
   });
 
-  it('says nothing was located on a day with no candidate', () => {
+  it('says nothing was located on a day with no candidate', async () => {
     tradingDay = { ...tradingDay, noCandidateAt: new Date() };
-    const page = setup();
+    const page = await setup();
 
     expect(page.nothingLocated()).toBe(true);
   });
 
-  it('says nothing was located once the session closed without a locate', () => {
+  it('says nothing was located once the session closed without a locate', async () => {
     candidates = [makeCandidate({ stats: IN_STATS })];
     vi.setSystemTime(new Date('2026-09-18T21:00:00Z')); // 17:00 NY
-    const page = setup();
+    const page = await setup();
 
     expect(page.nothingLocated()).toBe(true);
     expect(page.stepStates().locates).toBe('todo');
   });
 
-  it('« Louer » saves the locate typed, then reads the day again', () => {
+  it('« Louer » saves the locate typed, then reads the day again', async () => {
     const input: LocateInput = {
       tradingDate: new Date(),
       ticker: 'ATXG',
@@ -303,20 +316,22 @@ describe('TodayPage', () => {
       note: null,
     };
     dialogOpen.mockReturnValue({ afterClosed: () => of(input) });
-    const page = setup();
+    const page = await setup();
     dayLocates = [makeLocate({ ticker: 'ATXG' })];
 
     page.addLocate();
+    await settle();
 
     expect(createLocate).toHaveBeenCalledWith(input);
     expect(page.dayLocates().map((l) => l.ticker)).toEqual(['ATXG']);
   });
 
-  it("a ticker of the step opens its locates at the last price paid, on the day's PM open", () => {
+  it("a ticker of the step opens its locates at the last price paid, on the day's PM open", async () => {
     candidates = [makeCandidate({ ticker: 'SGBX', pmOpen: 1.85 })];
-    const page = setup();
+    const page = await setup();
 
     page.openLocates({ ticker: 'SGBX', shares: 3000, lastPrice: 0.15 });
+    await settle();
 
     expect(dialogOpen).toHaveBeenCalledWith(
       expect.anything(),
@@ -327,35 +342,35 @@ describe('TodayPage', () => {
   });
 
   // #337 : capturing one candidate was enough, and the promotion hid under step 4.
-  it('the candidates step stays current while a candidate has not reached the sheet', () => {
+  it('the candidates step stays current while a candidate has not reached the sheet', async () => {
     reconciledToday = true;
     candidates = [makeCandidate({ stats: IN_STATS }), makeCandidate({ id: 'c2' })];
-    const page = setup();
+    const page = await setup();
 
     expect(page.pendingCandidates()).toHaveLength(1);
     expect(page.stepStates().candidates).toBe('current');
   });
 
   // NXTT of the mockup : captured at 11:20 for a double top, it never needs a GUS stat.
-  it('a candidate with only a DT stat counts as promoted', () => {
+  it('a candidate with only a DT stat counts as promoted', async () => {
     reconciledToday = true;
     candidates = [makeCandidate({ ticker: 'NXTT', stats: [{ pattern: 'DT', statId: 's-dt' }] })];
-    const page = setup();
+    const page = await setup();
 
     expect(page.pendingCandidates()).toHaveLength(0);
     expect(page.stepStates().candidates).toBe('done');
   });
 
-  it('a stat of yesterday still to complete is the first thing of the morning', () => {
+  it('a stat of yesterday still to complete is the first thing of the morning', async () => {
     statsToComplete = [makeStat({ tradeDate: YESTERDAY })];
-    const page = setup();
+    const page = await setup();
 
     expect(page.stepStates().stats).toBe('current');
     expect(page.stepStates().reconciliation).toBe('todo');
   });
 
   // #337 : BNRG (17/09) and SLNH (18/09) sat half-filled with nothing on this page pointing at them.
-  it('keeps the stats step open on a stat left from an earlier day, and dates it', () => {
+  it('keeps the stats step open on a stat left from an earlier day, and dates it', async () => {
     reconciledToday = true;
     candidates = [makeCandidate({ stats: IN_STATS })];
     // Yesterday is the normal case (#531) : only the day before it is overdue.
@@ -363,7 +378,7 @@ describe('TodayPage', () => {
       makeStat({ id: 's-sgbx', ticker: 'SGBX', tradeDate: YESTERDAY }),
       makeStat({ id: 's-bnrg', ticker: 'BNRG', tradeDate: new Date(2026, 8, 16) }),
     ];
-    const page = setup();
+    const page = await setup();
 
     expect(page.yesterdayStats().map((s) => s.ticker)).toEqual(['SGBX']);
     expect(page.overdueStats().map((s) => s.ticker)).toEqual(['BNRG']);
@@ -371,12 +386,12 @@ describe('TodayPage', () => {
     expect(page.stepStates().stats).not.toBe('done');
   });
 
-  it("asks for the stats to complete of every day before today — the day's own are not in it", () => {
+  it("asks for the stats to complete of every day before today — the day's own are not in it", async () => {
     const findAll = vi.fn((_filter: StatEntryFilter, _page: unknown) => of(page([])));
     TestBed.overrideProvider(StatsRepository, {
       useValue: { findAll, summary: () => of(makeStatSummary()) } as unknown as StatsRepository,
     });
-    setup();
+    await setup();
 
     const [filter, paging] = findAll.mock.calls[0];
     expect(filter.status).toBe('TO_COMPLETE');
@@ -387,27 +402,27 @@ describe('TodayPage', () => {
     );
   });
 
-  it('on a Monday, Friday is yesterday and Thursday is overdue', () => {
+  it('on a Monday, Friday is yesterday and Thursday is overdue', async () => {
     vi.setSystemTime(new Date('2026-09-21T12:30:00Z')); // Monday 08:30 NY
     statsToComplete = [
       makeStat({ id: 's-fri', ticker: 'SGBX', tradeDate: new Date(2026, 8, 18) }),
       makeStat({ id: 's-thu', ticker: 'BNRG', tradeDate: YESTERDAY }),
     ];
-    const page = setup();
+    const page = await setup();
 
     expect(page.yesterdayStats().map((s) => s.ticker)).toEqual(['SGBX']);
     expect(page.overdueStats().map((s) => s.ticker)).toEqual(['BNRG']);
   });
 
   // Back from two weeks off, the page said « 50 to complete » when there were 63.
-  it('counts every stat to complete, not the length of the page it received', () => {
+  it('counts every stat to complete, not the length of the page it received', async () => {
     const findAll = vi.fn(() =>
       of({ ...page([makeStat({ tradeDate: YESTERDAY })]), totalElements: 63 }),
     );
     TestBed.overrideProvider(StatsRepository, {
       useValue: { findAll, summary: () => of(makeStatSummary()) } as unknown as StatsRepository,
     });
-    const today = setup();
+    const today = await setup();
 
     expect(today.statsToCompleteTotal()).toBe(63);
     expect(today.overdueTotal()).toBe(62);
@@ -415,7 +430,7 @@ describe('TodayPage', () => {
 
   // A failed call, or stats slower than the candidates, read as « nothing left » and ticked step 4.
   // #544 : the page rendered off empty data, so a false « to do » / « nothing today » flashed.
-  it('shows no step state while a source is on its way, then the steps once it answers', () => {
+  it('shows no step state while a source is on its way, then the steps once it answers', async () => {
     vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] });
     vi.setSystemTime(FRIDAY_PREMARKET);
     const answer = new Subject<Candidate[]>();
@@ -436,6 +451,8 @@ describe('TodayPage', () => {
 
     answer.next([]);
     answer.complete();
+    // The resource takes the answer a microtask later — flushed along with the timers.
+    await vi.advanceTimersByTimeAsync(0);
     fixture.detectChanges();
     vi.advanceTimersByTime(300);
     fixture.detectChanges();
@@ -443,19 +460,19 @@ describe('TodayPage', () => {
     expect(el.querySelector('.step--current')).not.toBeNull();
   });
 
-  it('a source that fails still lets the steps show — it is answered, not pending', () => {
+  it('a source that fails still lets the steps show — it is answered, not pending', async () => {
     TestBed.overrideProvider(TradingDayRepository, {
       useValue: {
         get: () => throwError(() => new Error('500')),
         put: putTradingDay,
       } as unknown as TradingDayRepository,
     });
-    const page = setup();
+    const page = await setup();
 
     expect(page.stepsLoaded()).toBe(true);
   });
 
-  it('keeps the stats step open while the stats to complete are unknown', () => {
+  it('keeps the stats step open while the stats to complete are unknown', async () => {
     reconciledToday = true;
     candidates = [makeCandidate({ stats: IN_STATS })];
     TestBed.overrideProvider(StatsRepository, {
@@ -464,7 +481,7 @@ describe('TodayPage', () => {
         summary: () => of(makeStatSummary()),
       } as unknown as StatsRepository,
     });
-    const page = setup();
+    const page = await setup();
 
     expect(page.statsToCompleteTotal()).toBeNull();
     expect(page.stepStates().stats).not.toBe('done');
@@ -472,57 +489,57 @@ describe('TodayPage', () => {
 
   // #451 : on the rc3 recette, « FRESH1, FRESH2, FRESH1 » read as a duplicate row — it was
   // FRESH1's GUS and its DT, split apart by the date order of the page.
-  it('names each stat of the day with its pattern, the stats of one ticker side by side', () => {
+  it('names each stat of the day with its pattern, the stats of one ticker side by side', async () => {
     statsToComplete = [
       makeStat({ id: 's1', ticker: 'FRESH1', pattern: 'DT', tradeDate: YESTERDAY }),
       makeStat({ id: 's2', ticker: 'FRESH2', pattern: 'GUS', tradeDate: YESTERDAY }),
       makeStat({ id: 's3', ticker: 'FRESH1', pattern: 'GUS', tradeDate: YESTERDAY }),
     ];
-    const page = setup();
+    const page = await setup();
 
     expect(page.statsOf(page.yesterdayStats())).toBe('FRESH1 GUS, FRESH1 DT, FRESH2 GUS');
   });
 
-  it('keeps the overdue stats newest first, the stats of one ticker side by side within a day', () => {
+  it('keeps the overdue stats newest first, the stats of one ticker side by side within a day', async () => {
     statsToComplete = [
       makeStat({ id: 's1', ticker: 'VERB', pattern: 'DT', tradeDate: new Date(2026, 8, 16) }),
       makeStat({ id: 's2', ticker: 'BNRG', pattern: 'GUS', tradeDate: new Date(2026, 8, 16) }),
       makeStat({ id: 's3', ticker: 'VERB', pattern: 'GUS', tradeDate: new Date(2026, 8, 16) }),
       makeStat({ id: 's4', ticker: 'CENN', pattern: 'GUS', tradeDate: new Date(2026, 7, 19) }),
     ];
-    const page = setup();
+    const page = await setup();
 
     expect(page.overdueLine().tickers).toBe(
       'BNRG GUS (09/16), VERB GUS (09/16), VERB DT (09/16), CENN GUS (08/19)',
     );
   });
 
-  it('names five overdue stats and counts the rest', () => {
+  it('names five overdue stats and counts the rest', async () => {
     statsToComplete = ['GLND', 'KTTA', 'SLNH', 'BNRG', 'MLGO', 'ATXG', 'VERB'].map((ticker, i) =>
       makeStat({ id: `s-${ticker}`, ticker, tradeDate: new Date(2026, 8, 16 - i) }),
     );
-    const page = setup();
+    const page = await setup();
 
     expect(page.overdueLine().tickers.split(', ')).toHaveLength(5);
     expect(page.overdueLine().more).toBe(2);
   });
 
   // #531 : the day's candidates become stats completed tomorrow — they no longer hold step 1.
-  it("the stats step does not wait on the day's candidates, promoted or not", () => {
+  it("the stats step does not wait on the day's candidates, promoted or not", async () => {
     reconciledToday = true;
     candidates = [makeCandidate({ stats: IN_STATS }), makeCandidate({ id: 'c2' })];
-    const page = setup();
+    const page = await setup();
 
     expect(page.stepStates().stats).toBe('done');
     expect(page.stepStates().candidates).toBe('current');
   });
 
-  it('the day is fully walked once a trade is in and nothing is left pending', () => {
+  it('the day is fully walked once a trade is in and nothing is left pending', async () => {
     reconciledToday = true;
     candidates = [makeCandidate({ stats: IN_STATS })];
     todayTrades = [makeTrade()];
     vi.setSystemTime(new Date('2026-09-18T21:00:00Z')); // 17:00 NY — the session is over
-    const page = setup();
+    const page = await setup();
 
     expect(page.doneCount()).toBe(5);
     expect(Object.values(page.stepStates())).not.toContain('current');
@@ -532,10 +549,10 @@ describe('TodayPage', () => {
   // Nothing today (#407)
   // ---------------------------------------------------------------------------
 
-  it('« no candidate today » settles the candidates step and moves the day on to the session', () => {
+  it('« no candidate today » settles the candidates step and moves the day on to the session', async () => {
     reconciledToday = true;
     tradingDay = { ...tradingDay, noCandidateAt: new Date() };
-    const page = setup();
+    const page = await setup();
 
     expect(page.stepStates().candidates).toBe('none');
     expect(page.stepStates().stats).toBe('done');
@@ -543,58 +560,59 @@ describe('TodayPage', () => {
   });
 
   // #531 : the mark is about today, the stats step about the days before it.
-  it("« no candidate today » says nothing of yesterday's stats", () => {
+  it("« no candidate today » says nothing of yesterday's stats", async () => {
     reconciledToday = true;
     tradingDay = { ...tradingDay, noCandidateAt: new Date() };
     statsToComplete = [makeStat({ tradeDate: YESTERDAY })];
-    const page = setup();
+    const page = await setup();
 
     expect(page.stepStates().candidates).toBe('none');
     expect(page.stepStates().stats).toBe('current');
   });
 
-  it('a candidate captured after the mark puts step 2 back on its normal state', () => {
+  it('a candidate captured after the mark puts step 2 back on its normal state', async () => {
     reconciledToday = true;
     tradingDay = { ...tradingDay, noCandidateAt: new Date() };
     candidates = [makeCandidate()];
-    const page = setup();
+    const page = await setup();
 
     expect(page.noCandidateToday()).toBe(false);
     expect(page.stepStates().candidates).toBe('current');
   });
 
   // The common case : stats captured and completed, and no trade taken.
-  it('« no trade today » settles step 5 alone', () => {
+  it('« no trade today » settles step 5 alone', async () => {
     tradingDay = { ...tradingDay, noTradeAt: new Date() };
-    const page = setup();
+    const page = await setup();
 
     expect(page.stepStates().trades).toBe('none');
     expect(page.stepStates().candidates).not.toBe('none');
   });
 
-  it('a trade entered after the mark wins over it', () => {
+  it('a trade entered after the mark wins over it', async () => {
     tradingDay = { ...tradingDay, noTradeAt: new Date() };
     todayTrades = [makeTrade()];
-    const page = setup();
+    const page = await setup();
 
     expect(page.stepStates().trades).toBe('done');
   });
 
-  it('a quiet day reads 5 of 5 once reconciled and New York has closed', () => {
+  it('a quiet day reads 5 of 5 once reconciled and New York has closed', async () => {
     reconciledToday = true;
     tradingDay = { ...tradingDay, noCandidateAt: new Date(), noTradeAt: new Date() };
     vi.setSystemTime(new Date('2026-09-18T21:00:00Z')); // 17:00 NY
-    const page = setup();
+    const page = await setup();
 
     expect(page.doneCount()).toBe(5);
     expect(Object.values(page.stepStates())).not.toContain('current');
   });
 
-  it('setting one mark writes the other back as stored', () => {
+  it('setting one mark writes the other back as stored', async () => {
     tradingDay = { ...tradingDay, noCandidateAt: new Date() };
-    const page = setup();
+    const page = await setup();
 
     page.setMark('noTrade', true);
+    await settle();
 
     expect(putTradingDay).toHaveBeenCalledWith(expect.any(Date), {
       noCandidate: true,
@@ -603,12 +621,13 @@ describe('TodayPage', () => {
     expect(page.stepStates().trades).toBe('none');
   });
 
-  it('undoing a mark puts the step back to do', () => {
+  it('undoing a mark puts the step back to do', async () => {
     reconciledToday = true;
     tradingDay = { ...tradingDay, noCandidateAt: new Date() };
-    const page = setup();
+    const page = await setup();
 
     page.setMark('noCandidate', false);
+    await settle();
 
     expect(putTradingDay).toHaveBeenCalledWith(expect.any(Date), {
       noCandidate: false,
@@ -617,7 +636,7 @@ describe('TodayPage', () => {
     expect(page.stepStates().candidates).toBe('current');
   });
 
-  it('a failing read of the marks leaves the day on its data alone', () => {
+  it('a failing read of the marks leaves the day on its data alone', async () => {
     TestBed.overrideProvider(TradingDayRepository, {
       useValue: {
         get: () => throwError(() => new Error('500')),
@@ -625,23 +644,24 @@ describe('TodayPage', () => {
       } as TradingDayRepository,
     });
     reconciledToday = true;
-    const page = setup();
+    const page = await setup();
 
     expect(page.tradingDay()).toBeNull();
     expect(page.stepStates().candidates).toBe('current');
   });
 
   // Rebuilt from an unknown state, the PUT would have cleared a mark stored on the server.
-  it('writes no mark while the stored ones are unknown', () => {
+  it('writes no mark while the stored ones are unknown', async () => {
     TestBed.overrideProvider(TradingDayRepository, {
       useValue: {
         get: () => throwError(() => new Error('500')),
         put: putTradingDay,
       } as TradingDayRepository,
     });
-    const page = setup();
+    const page = await setup();
 
     page.setMark('noTrade', true);
+    await settle();
 
     expect(putTradingDay).not.toHaveBeenCalled();
   });
@@ -650,30 +670,33 @@ describe('TodayPage', () => {
   // Promote the remaining candidates
   // ---------------------------------------------------------------------------
 
-  it('« promote the remaining » confirms before creating the stats', () => {
+  it('« promote the remaining » confirms before creating the stats', async () => {
     candidates = [makeCandidate()];
-    const page = setup();
+    const page = await setup();
 
     page.promoteRemaining();
+    await settle();
 
     expect(promoteDay).toHaveBeenCalledTimes(1);
   });
 
-  it('cancelling that confirmation creates nothing', () => {
+  it('cancelling that confirmation creates nothing', async () => {
     confirmed = false;
     candidates = [makeCandidate()];
-    const page = setup();
+    const page = await setup();
 
     page.promoteRemaining();
+    await settle();
 
     expect(promoteDay).not.toHaveBeenCalled();
   });
 
-  it('nothing pending, nothing asked — the action is a no-op', () => {
+  it('nothing pending, nothing asked — the action is a no-op', async () => {
     candidates = [makeCandidate({ stats: IN_STATS })];
-    const page = setup();
+    const page = await setup();
 
     page.promoteRemaining();
+    await settle();
 
     expect(promoteDay).not.toHaveBeenCalled();
   });
@@ -682,7 +705,7 @@ describe('TodayPage', () => {
   // Resilience — it is the home page
   // ---------------------------------------------------------------------------
 
-  it('a failing account summary leaves the rest of the day readable', () => {
+  it('a failing account summary leaves the rest of the day readable', async () => {
     TestBed.overrideProvider(AccountRepository, {
       useValue: {
         getSummary: () => throwError(() => new Error('500')),
@@ -692,7 +715,7 @@ describe('TodayPage', () => {
     });
     candidates = [makeCandidate({ stats: IN_STATS })];
 
-    const page = setup();
+    const page = await setup();
 
     expect(page.accountSummary()).toBeNull();
     expect(page.candidates()).toHaveLength(1);
