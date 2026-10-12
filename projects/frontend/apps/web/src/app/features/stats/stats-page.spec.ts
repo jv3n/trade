@@ -1529,6 +1529,28 @@ describe('StatsPage', () => {
     expect(fixture.nativeElement.querySelector('tr.averages-row')).toBeNull();
   });
 
+  // #706 recette : the D leg read « -3,3 %  · D+20,7 % » — Angular dropped the blank between its two
+  // spans and kept the one on each side of the separator.
+  it('spaces the D leg of the brief like A, B and C', async () => {
+    const { fixture, page } = await setup({
+      rows: [
+        makeDoubleTop({
+          dtRetestPrice: 2.85,
+          dtRetestTime: '10:38',
+          dtDropPrice: 2.3,
+          dtDropTime: '11:03',
+        }),
+      ],
+    });
+
+    page.setView('ALL');
+    await settle(fixture);
+    await fixture.whenStable();
+
+    const brief = (fixture.nativeElement as HTMLElement).querySelector('td.brief')?.textContent;
+    expect(brief?.trim()).toMatch(/briefToTop · D \+19\.3 %$/);
+  });
+
   // #452 : with no column, the footer row still laid out a blank 52 px band under the table.
   it('collapses the empty footer row on « All » only', async () => {
     const { fixture, page } = await setup({ rows: [makeStat()] });
