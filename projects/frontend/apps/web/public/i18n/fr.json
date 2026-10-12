@@ -703,7 +703,16 @@
       "medianLod": "LOD médian",
       "medianHold": "Tenue médiane",
       "holdSub": "high PM → open · cumul à l'open {{open}} · au high PM {{pmHigh}}",
-      "holdHint": "Ce qui reste du premarket à la cloche. Pas encore de seuil : c'est cette carte qui dira, sur la durée, sous quelle tenue on ne prend plus."
+      "holdHint": "Ce qui reste du premarket à la cloche. Pas encore de seuil : c'est cette carte qui dira, sur la durée, sous quelle tenue on ne prend plus.",
+      "drop": "Chute après le retest (D)",
+      "dropSub": "médiane · retest → plus bas · n = {{count}} sur {{total}} DT complétées",
+      "dropFromEntry": "À l'entrée de la fiche",
+      "dropFromEntrySub": "médiane · depuis top −5 % → plus bas",
+      "dropDuration": "Durée de D",
+      "dropDurationSub": "médiane · retest → plus bas",
+      "dropTarget": "{{target}} % atteints",
+      "dropTargetSub": "chutes d'au moins {{target}} % depuis l'entrée de la fiche",
+      "dropHint": "Ce que le mouvement offrait, pas un backtest : le stop a pu sauter avant le plus bas"
     },
     "complete": {
       "title": "Séance",
@@ -785,7 +794,10 @@
       "openHint": "En dessous, le cumul depuis la clôture de la veille — ce que le scanner montrait à la cloche",
       "cumulative": "cumul {{value}} %",
       "cumulativePmHigh": "cumul {{value}} % au high PM",
-      "pushedCount": "{{count}} avec push"
+      "pushedCount": "{{count}} avec push",
+      "dtDrop": "Plus bas après le retest",
+      "dtDropPrice": "Plus bas après le retest ($)",
+      "dtDropTime": "Heure du plus bas"
     },
     "actions": {
       "edit": "Modifier la séance",
@@ -865,8 +877,11 @@
       "topBelowStart": "le top est sous le départ",
       "lowAboveTop": "le bas du rejet est au-dessus du top",
       "retestBelowLow": "le retest est sous le bas du rejet",
-      "timeOutOfOrder": "les heures vont dans l'ordre : départ, top, bas, retest",
-      "timeOutsideSession": "une heure entre 04:00 et 20:00"
+      "timeOutOfOrder": "les heures vont dans l'ordre : départ, top, bas, retest, plus bas",
+      "timeOutsideSession": "une heure entre 04:00 et 20:00",
+      "dropAboveRetest": "le plus bas est au-dessus du retest",
+      "dropTimeRequired": "l'heure du plus bas, avec son prix",
+      "dropPriceRequired": "le prix du plus bas, avec son heure"
     },
     "confirmCreate": {
       "title": "Créer la stat {{ticker}} ?",
@@ -887,7 +902,7 @@
     },
     "doubleTop": {
       "title": "Double top",
-      "hint": "en fin de matinée, quand il se forme · chaque prix avec son heure · chaque champ s'enregistre à la sortie · A ≥ 50 %, B 17-20 %",
+      "hint": "en fin de matinée, quand il se forme · chaque prix avec son heure · chaque champ s'enregistre à la sortie · A ≥ 50 %, B 17-20 % · la chute D se complète à la clôture",
       "startHint": "l'open (9h30) par défaut — le bas d'où part la poussée",
       "legA": "A {{leg}} %",
       "legB": "B {{leg}} % depuis le top",
@@ -915,7 +930,18 @@
       "durationC": "C · {{minutes}} min · total {{total}} min",
       "durationLegs": "A {{rise}} · B {{rejection}} · C {{retest}}",
       "medianDuration": "méd. {{minutes}} min",
-      "progress": "{{prices}} / {{total}} prix · {{times}} / {{total}} heures"
+      "progress": "{{prices}} / {{total}} prix · {{times}} / {{total}} heures",
+      "dropHint": "facultatif — le plus bas après le retest, avant la clôture ; vide si le top est repris et que ça continue",
+      "legD": "D {{gain}} % pour le short · {{entry}} % à l'entrée de la fiche",
+      "durationD": "D · {{minutes}} min",
+      "columnD": "D — chute",
+      "columnDHint": "Le plus bas après le retest ; en dessous, ce que le short en tire depuis le retest et depuis l'entrée de la fiche (top −5 %), puis la durée",
+      "cellD": "{{gain}} % · entrée {{entry}} %",
+      "dropToFill": "chute à saisir",
+      "dropToFillHint": "Le retest est resté sous le top : il y a eu une chute à noter. Facultative pour l'instant, elle alimente les KPIs de ce que rapporte le DT.",
+      "dropDone": "chute ✓",
+      "medianDrop": "méd.",
+      "averageD": "n = {{count}} · entrée {{entry}} % · {{minutes}} min"
     },
     "sibling": {
       "label": "Même ticker, autre pattern",

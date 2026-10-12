@@ -32,6 +32,15 @@
   color: var(--color-warning);
 }
 
+// Green / red = outcome : what a double top's drop paid the short (#706), never the price move.
+.gain {
+  color: var(--color-success);
+}
+
+.loss {
+  color: var(--color-danger);
+}
+
 // ---- Completion panel ----
 
 .complete-card {
@@ -193,6 +202,10 @@
   .warn,
   &.warn {
     color: var(--color-warning);
+  }
+
+  &.gain {
+    color: var(--color-success);
   }
 }
 

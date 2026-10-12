@@ -20,7 +20,7 @@ object StatEntryCsvEncoder {
 
   /**
    * Export layout, order-locked : premarket block, GUS session, double top prices then their times
-   * (#469), the flags, then the status.
+   * (#469), the drop low and its time (#706), the flags, then the status.
    */
   val HEADERS: List<String> =
     listOf(
@@ -46,6 +46,8 @@ object StatEntryCsvEncoder {
       "DT top time",
       "DT rejection low time",
       "DT retest time",
+      "DT drop low",
+      "DT drop low time",
       "SSR?",
       "<\$1 stock?",
       "No push?",
@@ -89,6 +91,8 @@ object StatEntryCsvEncoder {
         e.dtTopTime?.toString().orEmpty(),
         e.dtLowTime?.toString().orEmpty(),
         e.dtRetestTime?.toString().orEmpty(),
+        e.dtDropPrice?.toPlainString().orEmpty(),
+        e.dtDropTime?.toString().orEmpty(),
         e.ssr.toString(),
         e.under1Dollar.toString(),
         e.noPush.toString(),

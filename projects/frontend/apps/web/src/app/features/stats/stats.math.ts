@@ -50,6 +50,10 @@ export function percentVsOpen(open: number | null, level: number | null): number
 export const DT_EXTENSION_CRITERION = 50;
 /** The rejection that makes a double top — under it, a normal breath rather than a rejection. */
 export const DT_REJECTION_CRITERION = 17;
+/** The DT sheet's entry, −5 % from the top (#706) — the price the sheet says to short at. */
+export const DT_ENTRY_FROM_TOP = 0.95;
+/** What the sheet promises from its entry — a drop that gave less missed it. */
+export const DT_DROP_TARGET = 10;
 
 /** The three legs of a double top (`docs/pattern/DT.md`), each null until its two prices are in. */
 export interface DoubleTopLegs {
@@ -61,6 +65,13 @@ export interface DoubleTopLegs {
   retest: number | null;
   /** Where the retest ended against the top — negative under it, zero or more = the top taken back. */
   retestToTop: number | null;
+  /**
+   * D, the drop (#706) : retest → the lowest print after it. Negative — the price fell, which is
+   * the short's gain : the screen shows it flipped, never as a red loss.
+   */
+  drop: number | null;
+  /** The sheet's entry (top −5 %) → the drop low — what the entry rule captured. */
+  dropFromEntry: number | null;
 }
 
 /**
@@ -80,6 +91,8 @@ export interface DoubleTopDurations {
   retest: number | null;
   /** Start → retest. */
   total: number | null;
+  /** D : retest → drop low (#706). */
+  drop: number | null;
 }
 
 /** Minutes from one `HH:mm` to another — null when either is missing or [to] comes first. */
@@ -94,6 +107,7 @@ export function doubleTopDurations(times: {
   dtTopTime: string | null;
   dtLowTime: string | null;
   dtRetestTime: string | null;
+  dtDropTime: string | null;
 }): DoubleTopDurations {
   const { dtStartTime: start, dtTopTime: top, dtLowTime: low, dtRetestTime: retest } = times;
   return {
@@ -101,6 +115,7 @@ export function doubleTopDurations(times: {
     rejection: minutesBetween(top, low),
     retest: minutesBetween(low, retest),
     total: minutesBetween(start, retest),
+    drop: minutesBetween(retest, times.dtDropTime),
   };
 }
 
@@ -114,13 +129,17 @@ export function doubleTopLegs(prices: {
   dtTopPrice: number | null;
   dtLowPrice: number | null;
   dtRetestPrice: number | null;
+  dtDropPrice: number | null;
 }): DoubleTopLegs {
   const { dtStartPrice: start, dtTopPrice: top, dtLowPrice: low } = prices;
   const retest = prices.dtRetestPrice;
+  const drop = prices.dtDropPrice;
   return {
     extension: percentChange(start, top),
     rejection: percentChange(top, low),
     retest: percentChange(low, retest),
     retestToTop: percentChange(top, retest),
+    drop: percentChange(retest, drop),
+    dropFromEntry: top === null ? null : percentChange(top * DT_ENTRY_FROM_TOP, drop),
   };
 }

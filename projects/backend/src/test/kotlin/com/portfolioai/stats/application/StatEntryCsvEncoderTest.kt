@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test
  * Unit spec for [StatEntryCsvEncoder] — the CSV export behind the download button.
  *
  * Pins the format contract a spreadsheet relies on : the BOM + CRLF Excel affordances, the
- * **27-column layout** (premarket block, GUS session, double top prices and times, flags — no
+ * **29-column layout** (premarket block, GUS session, double top prices, times and drop, flags — no
  * derived percentage), `toPlainString` numbers, `true` / `false` flags, empty cells for every
  * absent value — including the session prices of a stat still to complete and the prices of the
  * other pattern — and RFC 4180 quoting of free-text notes.
@@ -31,7 +31,7 @@ class StatEntryCsvEncoderTest {
     val header = csv.removePrefix("﻿").substringBefore("\r\n")
 
     assertEquals(StatEntryCsvEncoder.HEADERS, header.split(","))
-    assertEquals(27, StatEntryCsvEncoder.HEADERS.size)
+    assertEquals(29, StatEntryCsvEncoder.HEADERS.size)
   }
 
   @Test
@@ -43,12 +43,12 @@ class StatEntryCsvEncoderTest {
   }
 
   @Test
-  fun `a completed stat renders the 27 columns in order, numbers in plain form`() {
+  fun `a completed stat renders the 29 columns in order, numbers in plain form`() {
     val csv = StatEntryCsvEncoder.encode(listOf(makeEntry()))
 
     assertEquals(
       "2026-09-17,GUS,KTTA,2.65,4.05,4.65,8.2,3.1,Push rejeté sous 4.65," +
-        "4.20,4.62,4.62,3.41,3.52,,,,,,,,,false,false,false,false,true",
+        "4.20,4.62,4.62,3.41,3.52,,,,,,,,,,,false,false,false,false,true",
       dataRowOf(csv),
     )
   }
@@ -60,7 +60,7 @@ class StatEntryCsvEncoderTest {
 
     assertEquals(
       "2026-09-18,GUS,SGBX,2.65,4.05,4.65,8.2,3.1,Push rejeté sous 4.65," +
-        ",,,,,,,,,,,,,false,false,false,false,false",
+        ",,,,,,,,,,,,,,,false,false,false,false,false",
       dataRowOf(csv),
     )
   }
@@ -80,9 +80,9 @@ class StatEntryCsvEncoderTest {
     val csv = StatEntryCsvEncoder.encode(listOf(makeEntry(ssr = true, highInstitutions = true)))
     val cells = dataRowOf(csv).split(",")
 
-    // SSR / < $1 / no push sit at 22-24 and « institutions > 20 % » at 25.
-    assertEquals(listOf("true", "false", "false"), cells.subList(22, 25))
-    assertEquals("true", cells[25])
+    // SSR / < $1 / no push sit at 24-26 and « institutions > 20 % » at 27.
+    assertEquals(listOf("true", "false", "false"), cells.subList(24, 27))
+    assertEquals("true", cells[27])
   }
 
   @Test
@@ -92,11 +92,11 @@ class StatEntryCsvEncoderTest {
 
     val cells = dataRowOf(StatEntryCsvEncoder.encode(listOf(muln))).split(",")
 
-    assertEquals("true", cells[23])
+    assertEquals("true", cells[25])
   }
 
   @Test
-  fun `a double top fills its four prices and times and leaves the premarket and session empty`() {
+  fun `a double top fills its prices and times and leaves the premarket and session empty`() {
     val dt =
       makeEntry(completed = false).apply {
         pattern = Pattern.DT
@@ -111,6 +111,8 @@ class StatEntryCsvEncoderTest {
         dtTopTime = LocalTime.of(10, 14)
         dtLowTime = LocalTime.of(10, 21)
         dtRetestTime = LocalTime.of(10, 38)
+        dtDropPrice = BigDecimal("2.30")
+        dtDropTime = LocalTime.of(11, 3)
       }
     val cells = dataRowOf(StatEntryCsvEncoder.encode(listOf(dt))).split(",")
 
@@ -122,6 +124,8 @@ class StatEntryCsvEncoderTest {
     assertEquals(listOf("1.90", "2.95", "2.36", "2.85"), cells.subList(14, 18))
     // Their times, to the minute, at 18-21 (#469).
     assertEquals(listOf("10:02", "10:14", "10:21", "10:38"), cells.subList(18, 22))
+    // The drop low and its time at 22-23 (#706).
+    assertEquals(listOf("2.30", "11:03"), cells.subList(22, 24))
   }
 
   @Test

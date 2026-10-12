@@ -703,7 +703,16 @@
       "medianLod": "Median LOD",
       "medianHold": "Median hold",
       "holdSub": "PM high → open · cumulative at the open {{open}} · at the PM high {{pmHigh}}",
-      "holdHint": "What is left of the premarket at the bell. No threshold yet : over time, this card will tell below which hold a candidate is dropped."
+      "holdHint": "What is left of the premarket at the bell. No threshold yet : over time, this card will tell below which hold a candidate is dropped.",
+      "drop": "Drop after the retest (D)",
+      "dropSub": "median · retest → low · n = {{count}} of {{total}} completed DTs",
+      "dropFromEntry": "At the sheet's entry",
+      "dropFromEntrySub": "median · from top −5 % → low",
+      "dropDuration": "Duration of D",
+      "dropDurationSub": "median · retest → low",
+      "dropTarget": "{{target}} % reached",
+      "dropTargetSub": "drops of at least {{target}} % from the sheet's entry",
+      "dropHint": "What the move offered, not a backtest : the stop may have been hit before the low"
     },
     "complete": {
       "title": "Session",
@@ -785,7 +794,10 @@
       "openHint": "Under it, the cumulative from the previous close — what the scanner still showed at the bell",
       "cumulative": "cumulative {{value}} %",
       "cumulativePmHigh": "cumulative {{value}} % at the PM high",
-      "pushedCount": "{{count}} with a push"
+      "pushedCount": "{{count}} with a push",
+      "dtDrop": "Drop low",
+      "dtDropPrice": "Drop low ($)",
+      "dtDropTime": "Drop low time"
     },
     "actions": {
       "edit": "Edit the session",
@@ -865,8 +877,11 @@
       "topBelowStart": "the top is under the start",
       "lowAboveTop": "the rejection low is above the top",
       "retestBelowLow": "the retest is under the rejection low",
-      "timeOutOfOrder": "the times go in order : start, top, low, retest",
-      "timeOutsideSession": "a time between 04:00 and 20:00"
+      "timeOutOfOrder": "the times go in order : start, top, low, retest, drop low",
+      "timeOutsideSession": "a time between 04:00 and 20:00",
+      "dropAboveRetest": "the drop low is above the retest",
+      "dropTimeRequired": "the drop low time, with its price",
+      "dropPriceRequired": "the drop low price, with its time"
     },
     "confirmCreate": {
       "title": "Create the {{ticker}} stat?",
@@ -887,7 +902,7 @@
     },
     "doubleTop": {
       "title": "Double top",
-      "hint": "late in the morning, when it forms · each price with its time · each field saves when you leave it · A ≥ 50 %, B 17-20 %",
+      "hint": "late in the morning, when it forms · each price with its time · each field saves when you leave it · A ≥ 50 %, B 17-20 % · the drop D is filled at the close",
       "startHint": "the 9:30 open by default — the low the push starts from",
       "legA": "A {{leg}} %",
       "legB": "B {{leg}} % from the top",
@@ -915,7 +930,18 @@
       "durationC": "C · {{minutes}} min · total {{total}} min",
       "durationLegs": "A {{rise}} · B {{rejection}} · C {{retest}}",
       "medianDuration": "med. {{minutes}} min",
-      "progress": "{{prices}} / {{total}} prices · {{times}} / {{total}} times"
+      "progress": "{{prices}} / {{total}} prices · {{times}} / {{total}} times",
+      "dropHint": "optional — the lowest print after the retest, before the close ; empty when the top is taken back and it keeps going",
+      "legD": "D {{gain}} % for the short · {{entry}} % at the sheet's entry",
+      "durationD": "D · {{minutes}} min",
+      "columnD": "D — drop",
+      "columnDHint": "The lowest print after the retest ; below, what the short makes from the retest and from the sheet's entry (top −5 %), then the duration",
+      "cellD": "{{gain}} % · entry {{entry}} %",
+      "dropToFill": "drop to fill",
+      "dropToFillHint": "The retest stayed under the top : there was a drop to record. Optional for now, it feeds the KPIs of what the DT pays.",
+      "dropDone": "drop ✓",
+      "medianDrop": "med.",
+      "averageD": "n = {{count}} · entry {{entry}} % · {{minutes}} min"
     },
     "sibling": {
       "label": "Same ticker, another pattern",

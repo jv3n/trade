@@ -92,6 +92,8 @@ function makeStat(overrides: Partial<StatEntry> = {}): StatEntry {
     dtTopTime: null,
     dtLowTime: null,
     dtRetestTime: null,
+    dtDropPrice: null,
+    dtDropTime: null,
     ssr: false,
     under1Dollar: false,
     highInstitutions: true,
@@ -166,6 +168,11 @@ function makeSummary(overrides: Partial<StatSummary> = {}): StatSummary {
     retestTookTopCount: 0,
     medianDoubleTopMinutes: null,
     medianRejectionMinutes: null,
+    doubleTopsWithDrop: 0,
+    medianDropPercent: null,
+    medianDropFromEntryPercent: null,
+    medianDropMinutes: null,
+    dropReachedTargetCount: 0,
     traded: 8,
     untraded: 2,
     ...overrides,
@@ -1605,7 +1612,7 @@ describe('StatsPage', () => {
   it('counts four prices and four times on a double top and names what is missing', async () => {
     const { page } = await setup({ rows: [makeDoubleTop()] });
 
-    expect(page.doubleTopProgress()).toEqual({ prices: 3, times: 3, total: 4 });
+    expect(page.doubleTopProgress()).toEqual({ prices: 3, times: 3, total: 4, drop: false });
     expect(page.sessionMissing()).toEqual([
       'stats.fields.dtRetest',
       'stats.fields.dtRetestTimeShort',
@@ -1633,11 +1640,143 @@ describe('StatsPage', () => {
       rejection: 7,
       retest: null,
       total: null,
+      drop: null,
     });
     page.setSessionTime('dtRetestTime', '10:38');
 
-    expect(page.doubleTopDurations()).toEqual({ rise: 12, rejection: 7, retest: 17, total: 36 });
+    expect(page.doubleTopDurations()).toEqual({
+      rise: 12,
+      rejection: 7,
+      retest: 17,
+      total: 36,
+      drop: null,
+    });
     expect(page.rows()[0].durations.rise).toBe(12);
+  });
+
+  // #706 : the drop is the fifth point, optional — the history has none, the ✓ must not wait.
+  it('ticks a double top without its drop, and counts the drop apart', async () => {
+    const { page } = await setup({
+      rows: [makeDoubleTop({ dtRetestPrice: 2.85, dtRetestTime: '10:38' })],
+    });
+
+    expect(page.tickBlockedReason()).toBe('');
+    expect(page.doubleTopProgress().drop).toBe(false);
+
+    page.setSessionPrice('dtDropPrice', 2.3);
+    page.setSessionTime('dtDropTime', '11:03');
+
+    expect(page.doubleTopProgress().drop).toBe(true);
+    expect(page.doubleTopLegs().drop).toBeCloseTo(-19.3, 2);
+    expect(page.doubleTopDurations().drop).toBe(25);
+  });
+
+  it('refuses a drop above the retest or before it in time, pointing at both fields', async () => {
+    const { page, repo } = await setup({
+      rows: [makeDoubleTop({ dtRetestPrice: 2.85, dtRetestTime: '10:38' })],
+    });
+
+    page.setSessionPrice('dtDropPrice', 2.9);
+    page.saveSession();
+    expect(repo.update).not.toHaveBeenCalled();
+    expect(page.sessionIssue()?.reason).toBe('stats.save.dropAboveRetest');
+    expect(page.atFault('dtDropPrice')).toBe(true);
+    expect(page.atFault('dtRetestPrice')).toBe(true);
+
+    page.setSessionPrice('dtDropPrice', 2.3);
+    page.setSessionTime('dtDropTime', '10:30');
+    expect(page.sessionIssue()?.reason).toBe('stats.save.timeOutOfOrder');
+    expect(page.atFault('dtDropTime')).toBe(true);
+  });
+
+  // Half a drop counted in the KPI's n but not in its duration : the save waits for the pair.
+  it('holds a drop price until its time is typed, pointing at the time', async () => {
+    const { page, repo } = await setup({
+      rows: [makeDoubleTop({ dtRetestPrice: 2.85, dtRetestTime: '10:38' })],
+    });
+
+    page.setSessionPrice('dtDropPrice', 2.3);
+    page.saveSession();
+    expect(repo.update).not.toHaveBeenCalled();
+    expect(page.sessionIssue()?.reason).toBe('stats.save.dropTimeRequired');
+    expect(page.atFault('dtDropTime')).toBe(true);
+
+    page.setSessionTime('dtDropTime', '11:03');
+    page.saveSession();
+    expect(page.sessionIssue()).toBeNull();
+    expect(repo.update).toHaveBeenCalledWith(
+      'stat-sgbx-dt',
+      expect.objectContaining({ dtDropPrice: 2.3, dtDropTime: '11:03' }),
+    );
+  });
+
+  it('holds a drop time typed without its price, pointing at the price', async () => {
+    const { page } = await setup({
+      rows: [makeDoubleTop({ dtRetestPrice: 2.85, dtRetestTime: '10:38' })],
+    });
+
+    page.setSessionTime('dtDropTime', '11:03');
+
+    expect(page.sessionIssue()?.reason).toBe('stats.save.dropPriceRequired');
+    expect(page.atFault('dtDropPrice')).toBe(true);
+  });
+
+  // A completed DT whose retest stayed under its top had a drop to record ; one that took the top
+  // back and kept going had none, and must not be nagged about it.
+  it('asks for the drop on a completed double top only when the retest stayed under the top', async () => {
+    const { page } = await setup({
+      rows: [
+        makeDoubleTop({
+          id: 'prso',
+          dtRetestPrice: 2.85,
+          dtRetestTime: '10:38',
+          completed: true,
+        }),
+        makeDoubleTop({
+          id: 'imnn',
+          dtRetestPrice: 3.0,
+          dtRetestTime: '10:38',
+          completed: true,
+        }),
+        makeDoubleTop({ id: 'grin', dtRetestPrice: 2.85, dtRetestTime: '10:38' }),
+      ],
+    });
+
+    expect(page.rows().map((r) => r.dropToFill)).toEqual([true, false, false]);
+  });
+
+  it("shows what the double tops paid as the short's gain, never as a red fall", async () => {
+    const { fixture, page, repo } = await setup({ rows: [makeDoubleTop()] });
+    repo.summary.mockReturnValue(
+      of(
+        makeSummary({
+          completedDoubleTops: 3,
+          doubleTopsWithDrop: 2,
+          medianDropPercent: -17.29,
+          medianDropFromEntryPercent: -15.33,
+          medianDropMinutes: 39,
+          dropReachedTargetCount: 2,
+        }),
+      ),
+    );
+    page.setView('DT');
+    await settle(fixture);
+    await fixture.whenStable();
+    await settle(fixture);
+
+    const values = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll(
+        '[data-testid="dt-drop-kpis"] .kpi__value',
+      ),
+    );
+    expect(values.map((v) => v.textContent?.trim())).toEqual([
+      '+17.3 %',
+      '+15.3 %',
+      'stats.kpi.minutes',
+      '2 / 2',
+    ]);
+    expect(values[0].classList).toContain('gain');
+    expect(values[0].classList).not.toContain('loss');
   });
 
   it('sends nothing while the times go back, and points at the one that does', async () => {
