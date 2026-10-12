@@ -40,6 +40,9 @@ interface StatEntryWireDto {
   hodPrice: number | null;
   lodPrice: number | null;
   eodPrice: number | null;
+  pushOpenTime: string | null;
+  gusDropPrice: number | null;
+  gusDropTime: string | null;
   dtStartPrice: number | null;
   dtTopPrice: number | null;
   dtLowPrice: number | null;
@@ -81,6 +84,8 @@ function fromWire(w: StatEntryWireDto): StatEntry {
   return {
     ...w,
     tradeDate: parseISO(w.tradeDate),
+    pushOpenTime: toMinute(w.pushOpenTime),
+    gusDropTime: toMinute(w.gusDropTime),
     dtStartTime: toMinute(w.dtStartTime),
     dtTopTime: toMinute(w.dtTopTime),
     dtLowTime: toMinute(w.dtLowTime),

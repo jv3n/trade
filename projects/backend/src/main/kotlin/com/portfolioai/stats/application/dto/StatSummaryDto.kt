@@ -52,6 +52,17 @@ import java.math.BigDecimal
  * @param medianDropMinutes Median duration of leg D, retest → drop low.
  * @param dropReachedTargetCount Drops that gave at least the 10 % the sheet promises from its entry
  *   — read against [doubleTopsWithDrop].
+ * @param sessionsWithDrop Completed GUS whose drop is typed (#713) — the `n` of the GUS drop
+ *   figures, read against the completed GUS : the drop is optional.
+ * @param medianGusDropPercent Median drop from the push's top — the open on a no-push day — to the
+ *   drop. Negative : the price fell, the short's gain ; the front flips the sign.
+ * @param gusDropReachedTargetCount Drops of at least 15 % — the low end of the GUS sheet's R / R —
+ *   read against [sessionsWithDrop].
+ * @param sessionsWithPushTime Completed GUS whose push time is typed — the `n` of
+ *   [medianPushMinutes], apart from [sessionsWithDrop] : the history has push prices and no times.
+ * @param medianPushMinutes Median time from the bell to the push's top, in minutes.
+ * @param medianGusDropMinutes Median duration of the drop, from the push's top (the bell on a
+ *   no-push day).
  * @param traded Stats of the filtered set that gave birth to a trade — the journal reads this pair
  *   as « 8 / 10 » and links to the ones left untraded (#195).
  * @param untraded Stats of the filtered set with no trade yet.
@@ -84,6 +95,12 @@ data class StatSummaryDto(
   val medianDropFromEntryPercent: BigDecimal?,
   val medianDropMinutes: BigDecimal?,
   val dropReachedTargetCount: Int,
+  val sessionsWithDrop: Int,
+  val medianGusDropPercent: BigDecimal?,
+  val gusDropReachedTargetCount: Int,
+  val sessionsWithPushTime: Int,
+  val medianPushMinutes: BigDecimal?,
+  val medianGusDropMinutes: BigDecimal?,
   val traded: Int,
   val untraded: Int,
 )

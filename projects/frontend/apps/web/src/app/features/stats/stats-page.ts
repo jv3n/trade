@@ -76,10 +76,14 @@ import {
   DT_SESSION_OPENS,
   DoubleTopDurations,
   DoubleTopLegs,
+  GUS_DROP_TARGET,
+  GusSequence,
+  MARKET_OPEN,
   cumulativePercent,
   doubleTopDurations,
   doubleTopLegs,
   gapPercent,
+  gusSequence,
   holdPercent,
   percentVsOpen,
   pmPushPercent,
@@ -101,6 +105,10 @@ interface SessionModel {
   hodPrice: number | null;
   lodPrice: number | null;
   eodPrice: number | null;
+  /** The GUS sequence (#713) : the push's time, and the drop with its time — optional. */
+  pushOpenTime: string | null;
+  gusDropPrice: number | null;
+  gusDropTime: string | null;
   dtStartPrice: number | null;
   dtTopPrice: number | null;
   dtLowPrice: number | null;
@@ -175,6 +183,10 @@ export interface StatRow extends StatEntry {
    * drop is optional, but there was one to record. Empty when the top was taken back : no drop.
    */
   dropToFill: boolean;
+  /** The GUS's push time and drop (#713) — null on a DT, or until typed. */
+  gus: GusSequence;
+  /** A completed GUS with no drop typed (#713) : optional, but there was one to record. */
+  gusDropToFill: boolean;
   /** Label keys of the session prices still missing — the ✓ stays disabled until it's empty. */
   missing: string[];
   /** Why the day's range refuses this row (#305) — null when it holds. Blocks the ✓ too. */
@@ -241,6 +253,7 @@ const SESSION_FOOTER_COLUMNS: readonly string[] = [
   'hod',
   'lod',
   'eod',
+  'gusDrop',
   'sessionMediansEnd',
 ];
 const SESSION_COLUMNS: readonly string[] = [
@@ -251,6 +264,7 @@ const SESSION_COLUMNS: readonly string[] = [
   'hod',
   'lod',
   'eod',
+  'gusDrop',
   ...TRAILING_COLUMNS,
 ];
 const COLUMNS: Record<StatView, readonly string[]> = {
@@ -288,6 +302,9 @@ const BLANK_SESSION: SessionModel = {
   hodPrice: null,
   lodPrice: null,
   eodPrice: null,
+  pushOpenTime: null,
+  gusDropPrice: null,
+  gusDropTime: null,
   dtStartPrice: null,
   dtTopPrice: null,
   dtLowPrice: null,
@@ -315,6 +332,9 @@ const BLANK_PREMARKET: PremarketModel = {
 
 const IDLE: SaveState = { status: 'idle', at: null, reason: null };
 
+/** No push typed before « no push » was ticked — nothing to give back (#713 : the time goes too). */
+const NO_TYPED_PUSH: { price: number | null; time: string | null } = { price: null, time: null };
+
 /** Errors that say « the other card is holding this one » — the only ones a save settles (#348). */
 const HELD_REASONS: readonly string[] = [
   'stats.save.waitingPremarket',
@@ -327,14 +347,22 @@ type SessionPrice =
   | 'hodPrice'
   | 'lodPrice'
   | 'eodPrice'
+  | 'gusDropPrice'
   | 'dtStartPrice'
   | 'dtTopPrice'
   | 'dtLowPrice'
   | 'dtRetestPrice'
   | 'dtDropPrice';
 
-/** The four times of a double top (#469), and the drop's (#706). */
-type SessionTime = 'dtStartTime' | 'dtTopTime' | 'dtLowTime' | 'dtRetestTime' | 'dtDropTime';
+/** The four times of a double top (#469) and its drop's (#706) ; the GUS push's and drop's (#713). */
+type SessionTime =
+  | 'dtStartTime'
+  | 'dtTopTime'
+  | 'dtLowTime'
+  | 'dtRetestTime'
+  | 'dtDropTime'
+  | 'pushOpenTime'
+  | 'gusDropTime';
 
 /** A field the session card can point at when something is wrong with it. */
 type SessionField = SessionPrice | SessionTime;
@@ -428,11 +456,47 @@ export function sessionProblem(
   if (hod !== null && lod !== null && hod < lod) {
     return { reason: 'stats.save.hodBelowLod', fields: ['hodPrice', 'lodPrice'] };
   }
-  const inside: SessionPrice[] = ['openPrice', 'pushOpenPrice', 'eodPrice'];
+  const inside: SessionPrice[] = ['openPrice', 'pushOpenPrice', 'eodPrice', 'gusDropPrice'];
   const above = inside.filter((f) => hod !== null && session[f] !== null && session[f]! > hod);
   if (above.length > 0) return { reason: 'stats.save.aboveHod', fields: [...above, 'hodPrice'] };
   const below = inside.filter((f) => lod !== null && session[f] !== null && session[f]! < lod);
   if (below.length > 0) return { reason: 'stats.save.belowLod', fields: [...below, 'lodPrice'] };
+  return gusDropProblem(session);
+}
+
+/**
+ * The drop of a GUS (#713) : not above where it is read from — the push, or the open on a no-push
+ * day — its time not before the push's, both times inside the extended session, price and time
+ * together, and a push time to time it from. The backend refuses the same.
+ */
+function gusDropProblem(session: SessionModel): { reason: string; fields: SessionField[] } | null {
+  const from: SessionPrice = session.noPush ? 'openPrice' : 'pushOpenPrice';
+  const drop = session.gusDropPrice;
+  if (drop !== null && session[from] !== null && drop > session[from]!) {
+    return {
+      reason: session.noPush ? 'stats.save.gusDropAboveOpen' : 'stats.save.gusDropAbovePush',
+      fields: [from, 'gusDropPrice'],
+    };
+  }
+  for (const field of ['pushOpenTime', 'gusDropTime'] as const) {
+    const time = session[field];
+    if (time && (time < DT_SESSION_OPENS || time > DT_SESSION_CLOSES)) {
+      return { reason: 'stats.save.timeOutsideSession', fields: [field] };
+    }
+  }
+  const { pushOpenTime: pushTime, gusDropTime: dropTime } = session;
+  if (pushTime && dropTime && dropTime < pushTime) {
+    return { reason: 'stats.save.gusDropBeforePush', fields: ['pushOpenTime', 'gusDropTime'] };
+  }
+  if (drop !== null && !dropTime) {
+    return { reason: 'stats.save.gusDropTimeRequired', fields: ['gusDropTime'] };
+  }
+  if (drop === null && dropTime) {
+    return { reason: 'stats.save.gusDropPriceRequired', fields: ['gusDropPrice'] };
+  }
+  if (drop !== null && !session.noPush && !pushTime) {
+    return { reason: 'stats.save.gusPushTimeRequired', fields: ['pushOpenTime'] };
+  }
   return null;
 }
 
@@ -505,6 +569,9 @@ function sessionOf(entry: StatEntry): SessionModel {
     hodPrice: entry.hodPrice,
     lodPrice: entry.lodPrice,
     eodPrice: entry.eodPrice,
+    pushOpenTime: entry.pushOpenTime,
+    gusDropPrice: entry.gusDropPrice,
+    gusDropTime: entry.gusDropTime,
     dtStartPrice: entry.dtStartPrice,
     dtTopPrice: entry.dtTopPrice,
     dtLowPrice: entry.dtLowPrice,
@@ -536,6 +603,7 @@ const SKELETON_COLUMNS: SkeletonColumnDefs = {
   hod: { key: 'stats.fields.hod', variant: 'numeric' },
   lod: { key: 'stats.fields.lod', variant: 'numeric' },
   eod: { key: 'stats.fields.eod', variant: 'numeric' },
+  gusDrop: { key: 'stats.gus.column', variant: 'numeric' },
   dtStart: { key: 'stats.fields.dtStart', variant: 'numeric' },
   dtTop: { key: 'stats.doubleTop.columnA', variant: 'numeric' },
   dtLow: { key: 'stats.doubleTop.columnB', variant: 'numeric' },
@@ -775,10 +843,16 @@ export class StatsPage {
   readonly extensionCriterion = DT_EXTENSION_CRITERION;
   readonly rejectionCriterion = DT_REJECTION_CRITERION;
   readonly dropTarget = DT_DROP_TARGET;
+  readonly gusDropTarget = GUS_DROP_TARGET;
+  readonly marketOpen = MARKET_OPEN;
 
-  /** The day's rows with their derived percentages. */
-  readonly rows = computed<StatRow[]>(() =>
-    this.entries().map((e) => ({
+  /**
+   * The day's rows with their derived percentages. The GUS drop's « to fill » waits for a period :
+   * over the whole history every completed GUS lacks it, and an all-amber column nudges no one.
+   */
+  readonly rows = computed<StatRow[]>(() => {
+    const bounded = this.period().period !== 'all';
+    return this.entries().map((e) => ({
       ...e,
       gap: gapPercent(e.previousClose, e.pmOpen),
       pmPush: pmPushPercent(e.pmOpen, e.pmHigh),
@@ -798,12 +872,14 @@ export class StatsPage {
         e.dtTopPrice !== null &&
         e.dtRetestPrice !== null &&
         e.dtRetestPrice < e.dtTopPrice,
+      gus: gusSequence(e),
+      gusDropToFill: bounded && e.completed && e.pattern !== 'DT' && e.gusDropPrice === null,
       missing: missingPrices(e, e.pattern),
       // A row written before the range rule existed can still hold an impossible set : the ✓ of
       // the table answers for it like the panel's does, and the backend replays it on the tick.
       issue: sessionProblem(sessionOf(e), e.pattern)?.reason ?? null,
-    })),
-  );
+    }));
+  });
 
   // ---- Session panel ----
   /** The stat open in the panel — null = the panel is closed. */
@@ -905,6 +981,14 @@ export class StatsPage {
     };
   });
 
+  /** The GUS being typed (#713), live : its drop, the push's minutes after the bell and the drop's. */
+  readonly gusSequence = computed(() => gusSequence(this.session()));
+  /** The optional drop is whole — the count says « drop ✓ » rather than « drop à saisir ». */
+  readonly gusDropDone = computed(() => {
+    const m = this.session();
+    return isPositive(m.gusDropPrice) && !!m.gusDropTime && (m.noPush || !!m.pushOpenTime);
+  });
+
   /** Live % vs the open for each session input, as the user types. */
   readonly sessionPercents = computed(() => {
     const m = this.session();
@@ -959,8 +1043,8 @@ export class StatsPage {
     () => expectedPrices(this.session(), this.panelPattern()).length,
   );
   readonly sessionFilled = computed(() => this.sessionPriceCount() - this.sessionMissing().length);
-  /** The push typed before « no push » was ticked — given back if it is unticked. */
-  private typedPush: number | null = null;
+  /** The push typed before « no push » was ticked, and its time — given back if it is unticked. */
+  private typedPush = NO_TYPED_PUSH;
 
   constructor() {
     this.writes.pipe(concatMap((write) => write)).subscribe();
@@ -1041,7 +1125,7 @@ export class StatsPage {
     this.completing.set(entry);
     this.premarket.set(premarketOf(entry));
     this.session.set(sessionOf(entry));
-    this.typedPush = null;
+    this.typedPush = NO_TYPED_PUSH;
     // Both cards open on what is already in : saved at the stat's last update.
     const saved: SaveState = { status: 'saved', at: entry.updatedAt, reason: null };
     this.saveStates.set({ premarket: saved, session: saved });
@@ -1121,8 +1205,13 @@ export class StatsPage {
   /** « No push » greys the push field out and empties it ; unticking gives the typed value back. */
   toggleNoPush(noPush: boolean): void {
     const current = this.session();
-    if (noPush) this.typedPush = current.pushOpenPrice;
-    this.session.set({ ...current, noPush, pushOpenPrice: noPush ? null : this.typedPush });
+    if (noPush) this.typedPush = { price: current.pushOpenPrice, time: current.pushOpenTime };
+    this.session.set({
+      ...current,
+      noPush,
+      pushOpenPrice: noPush ? null : this.typedPush.price,
+      pushOpenTime: noPush ? null : this.typedPush.time,
+    });
     this.saveSession('session');
   }
 
@@ -1237,7 +1326,7 @@ export class StatsPage {
     this.identity.set({ tradeDate: this.maxDate, pattern: DEFAULT_PATTERN, ticker: '' });
     this.premarket.set(BLANK_PREMARKET);
     this.session.set(BLANK_SESSION);
-    this.typedPush = null;
+    this.typedPush = NO_TYPED_PUSH;
     this.saveStates.set({ premarket: IDLE, session: IDLE });
   }
 

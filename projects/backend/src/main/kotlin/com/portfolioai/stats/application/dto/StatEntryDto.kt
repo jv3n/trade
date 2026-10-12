@@ -42,6 +42,10 @@ data class StatEntryDto(
   val hodPrice: BigDecimal?,
   val lodPrice: BigDecimal?,
   val eodPrice: BigDecimal?,
+  /** The GUS sequence (#713) — the push's time, and the drop with its time ; null on a DT. */
+  val pushOpenTime: LocalTime?,
+  val gusDropPrice: BigDecimal?,
+  val gusDropTime: LocalTime?,
   // ---- Double top (#428) — null on any other pattern ----
   val dtStartPrice: BigDecimal?,
   val dtTopPrice: BigDecimal?,
@@ -86,6 +90,9 @@ fun StatEntry.toDto(trades: List<TradeLinkDto> = emptyList()) =
     hodPrice = hodPrice,
     lodPrice = lodPrice,
     eodPrice = eodPrice,
+    pushOpenTime = pushOpenTime,
+    gusDropPrice = gusDropPrice,
+    gusDropTime = gusDropTime,
     dtStartPrice = dtStartPrice,
     dtTopPrice = dtTopPrice,
     dtLowPrice = dtLowPrice,

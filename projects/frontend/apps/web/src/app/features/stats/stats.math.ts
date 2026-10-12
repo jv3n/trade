@@ -46,6 +46,40 @@ export function percentVsOpen(open: number | null, level: number | null): number
   return percentChange(open, level);
 }
 
+/** The bell — where a GUS's push, and its drop on a no-push day, are timed from (#713). */
+export const MARKET_OPEN = '09:30';
+/** The drop a GUS needs to have worked : the low end of the GUS sheet's 15-20 % R / R (#713). */
+export const GUS_DROP_TARGET = 15;
+
+/** What a GUS paid (#713), each figure null until its prices or times are in. */
+export interface GusSequence {
+  /**
+   * The push's top — the open on a no-push day — to the drop. Negative : the price fell, which is
+   * the short's gain ; the screen flips it.
+   */
+  drop: number | null;
+  /** Minutes from the bell to the push's top. */
+  pushMinutes: number | null;
+  /** Minutes from the push's top (the bell on a no-push day) to the drop. */
+  dropMinutes: number | null;
+}
+
+export function gusSequence(stat: {
+  openPrice: number | null;
+  pushOpenPrice: number | null;
+  noPush: boolean;
+  pushOpenTime: string | null;
+  gusDropPrice: number | null;
+  gusDropTime: string | null;
+}): GusSequence {
+  const from = stat.noPush ? stat.openPrice : stat.pushOpenPrice;
+  return {
+    drop: percentChange(from, stat.gusDropPrice),
+    pushMinutes: minutesBetween(MARKET_OPEN, stat.pushOpenTime),
+    dropMinutes: minutesBetween(stat.noPush ? MARKET_OPEN : stat.pushOpenTime, stat.gusDropTime),
+  };
+}
+
 /** The extension a double top needs, per `docs/pattern/DT.md` — under it, the leg is amber. */
 export const DT_EXTENSION_CRITERION = 50;
 /** The rejection that makes a double top — under it, a normal breath rather than a rejection. */

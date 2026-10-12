@@ -29,12 +29,12 @@ import org.hibernate.type.SqlTypes
  *   off the session, so its three premarket prices stay null. [candidateId] keeps the trace
  *   (deleting the candidate later nulls the link without touching the stat).
  * - **Session** — typed field by field during the day, any subset may be in. A GUS (and the
- *   patterns measured like it) fills [openPrice] … [eodPrice] ; a DT fills its four prices instead,
- *   [dtStartPrice] … [dtRetestPrice] (#428), each with its time (#469), and optionally the drop
- *   that follows ([dtDropPrice], #706). [completedAt] is the status : set when the owner ticks the
- *   stat, which needs the whole session of its pattern ([hasFullSession]) — the
- *   `ck_stat_entry_completed_whole` CHECK backs it up. A [noPush] stat has no push price, and is
- *   whole with the four others (#302).
+ *   patterns measured like it) fills [openPrice] … [eodPrice], the push's time and optionally its
+ *   drop ([gusDropPrice], #713) ; a DT fills its four prices instead, [dtStartPrice] …
+ *   [dtRetestPrice] (#428), each with its time (#469), and optionally the drop that follows
+ *   ([dtDropPrice], #706). [completedAt] is the status : set when the owner ticks the stat, which
+ *   needs the whole session of its pattern ([hasFullSession]) — the `ck_stat_entry_completed_whole`
+ *   CHECK backs it up. A [noPush] stat has no push price, and is whole with the four others (#302).
  *
  * No percentage is stored : gap, premarket push, push at open, HOD / LOD / EOD are all derived from
  * the prices ([StatMetrics] server-side for the KPIs, `stats.math` on the front).
@@ -71,6 +71,14 @@ class StatEntry(
   @Column(name = "hod_price", precision = 18, scale = 4) var hodPrice: BigDecimal? = null,
   @Column(name = "lod_price", precision = 18, scale = 4) var lodPrice: BigDecimal? = null,
   @Column(name = "eod_price", precision = 18, scale = 4) var eodPrice: BigDecimal? = null,
+  /** When the push at the open topped (#713), on [tradeDate] — none on a [noPush] day. */
+  @Column(name = "push_open_time") var pushOpenTime: LocalTime? = null,
+  /**
+   * The drop (#713) : the lowest print after the push — after the open on a [noPush] day — before
+   * the close, and its time. What the GUS paid ; optional, out of [hasFullSession].
+   */
+  @Column(name = "gus_drop_price", precision = 18, scale = 4) var gusDropPrice: BigDecimal? = null,
+  @Column(name = "gus_drop_time") var gusDropTime: LocalTime? = null,
 
   // ---- Double top (DT only — `ck_stat_entry_dt_prices_on_dt`) ----
   /** Where the push starts — the open by default, a later low when the push starts from there. */

@@ -295,7 +295,15 @@ class StatEntryService(
           "Open" to entry.openPrice,
           "Push at open" to entry.pushOpenPrice,
           "EOD" to entry.eodPrice,
+          "Drop" to entry.gusDropPrice,
         ),
+      )
+      requireGusDrop(
+        entry.noPush,
+        if (entry.noPush) entry.openPrice else entry.pushOpenPrice,
+        entry.pushOpenTime,
+        entry.gusDropPrice,
+        entry.gusDropTime,
       )
     }
     entry.completedAt = if (completed) entry.completedAt ?: Instant.now() else null

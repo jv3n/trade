@@ -442,6 +442,42 @@ push once it has happened, the flags as they come — and the rest after the 4 p
 at the open (4.62 − 4.20) ÷ 4.20 = +10.0 % ; and from the premarket, the **hold** and the two
 **cumulative** readings of the scanner (#499, below).
 
+### The GUS as a sequence, down to its drop (#713)
+
+The five session prices said how far the stock went, not **in what order nor when** — so not whether
+the GUS worked. The « Séance » card becomes a **vertical list, one row per point**, like the double
+top (#428) : point, time, price, then the % vs the open or the leg it closes.
+
+| Point | Time | Price | Note |
+|-------|------|-------|------|
+| Open | 9:30 | 1.90 | Fixed time — pre-filled from the candidate |
+| Push at the open | 9:41 | 2.20 | **Now with its time** — « no push » greys both out |
+| Drop | 10:25 | 1.52 | **New, optional** — the lowest print after the push, before the close |
+| HOD / LOD / EOD | — | | Unchanged, no time : day-wide references, the KPIs and the history read them as before |
+
+- **The drop is often the LOD** — it differs when the LOD came before the push (a dip at the bell,
+  then the push). Empty when the stock kept going up.
+- **Read as the short, from the top of the push** — the fall is the gain, `+30.9 %` in green
+  (`ShortGainPipe`, #706), never a red price move. On a **no-push** day the drop reads **from the
+  open**. Not a backtest : the stop may have been hit first.
+- **It worked** when the drop reached **15 %** — the low end of the GUS sheet's 15-20 % R / R.
+- **Rules** : the drop not above the push (the open on a no-push day), its time not before the
+  push's ; the push's time and the drop's inside the extended session. Price and time of the drop go
+  together, half of it is held back (#706) ; and a drop needs the push's time (the bell on a no-push
+  day), so every drop in the `n` has a duration.
+- **Optional for now** : the ticked GUS have no times and no drop ; the ✓ still needs the five prices,
+  the count reads « 5 / 5 prix saisis · chute à saisir », and a completed GUS without its drop shows
+  an amber « à saisir » in the table **once a period is chosen** — over « Tout » every completed GUS
+  lacks it, and an all-amber column nudges no one. Requiring it once the history is filled is a
+  follow-up.
+- **The GUS view** gains a second KPI row, medians with their own `n` : the drop from the push (« Drop depuis le push »),
+  « 15 % atteints » x / n, the push's time after the bell (its own `n` : the push times typed), and the
+  drop's duration. The table gains
+  a « Drop » column (price, gain, time and duration) with its median in the footer ; the push cell
+  shows its minutes after the open ; « Tous » adds the drop to the GUS summary. The CSV export gains
+  the push time, the drop low and its time.
+- It gives #205 the ordering it lacked : a mechanical-rule score can read a real sequence.
+
 **Institutional ownership** came back as a flag (#349) — « Institutions > 20 % », ticked by hand
 like the other two (#369 fixed a label that read the other way round). Low ownership is a GUS entry
 criterion filtered upstream (`docs/pattern/GUS.md`, #7), so the flag is expected to stay unticked

@@ -58,7 +58,15 @@ internal fun StatEntry.fillFrom(request: StatEntryRequest, cleanTicker: String) 
   val push =
     if (noPush) null else request.pushOpenPrice?.takeIf { gus }?.requirePositive("Push at open")
   val eod = request.eodPrice?.takeIf { gus }?.requirePositive("EOD")
-  requireInsideTheDay(hod, lod, listOf("Open" to open, "Push at open" to push, "EOD" to eod))
+  val gusDrop = request.gusDropPrice?.takeIf { gus }?.requirePositive("Drop")
+  requireInsideTheDay(
+    hod,
+    lod,
+    listOf("Open" to open, "Push at open" to push, "EOD" to eod, "Drop" to gusDrop),
+  )
+  val pushTime = if (noPush) null else request.pushOpenTime?.takeIf { gus }?.inSession("Push time")
+  val gusDropTime = request.gusDropTime?.takeIf { gus }?.inSession("Drop time")
+  requireGusDrop(noPush, if (noPush) open else push, pushTime, gusDrop, gusDropTime)
   val dtStart = request.dtStartPrice?.takeIf { doubleTop }?.requirePositive("Start")
   val dtTop = request.dtTopPrice?.takeIf { doubleTop }?.requirePositive("Top")
   val dtLow = request.dtLowPrice?.takeIf { doubleTop }?.requirePositive("Rejection low")
@@ -88,6 +96,9 @@ internal fun StatEntry.fillFrom(request: StatEntryRequest, cleanTicker: String) 
   hodPrice = hod
   lodPrice = lod
   eodPrice = eod
+  pushOpenTime = pushTime
+  gusDropPrice = gusDrop
+  this.gusDropTime = gusDropTime
   dtStartPrice = dtStart
   dtTopPrice = dtTop
   dtLowPrice = dtLow
@@ -192,6 +203,31 @@ internal fun requireDoubleTopTimesInOrder(
 internal fun requireDropPaired(price: BigDecimal?, time: LocalTime?) {
   if (price != null && time == null) throw badRequest("Drop low time is required with the drop low")
   if (price == null && time != null) throw badRequest("Drop low is required with its time")
+}
+
+/**
+ * The drop of a GUS (#713) : not above where it is read from — the push, or the open on a no-push
+ * day — its time not before the push's, price and time together, and timed from a push time : a
+ * drop without one would count in the drop's `n` and not in its duration.
+ */
+internal fun requireGusDrop(
+  noPush: Boolean,
+  from: BigDecimal?,
+  pushTime: LocalTime?,
+  drop: BigDecimal?,
+  dropTime: LocalTime?,
+) {
+  if (from != null && drop != null && drop > from) {
+    throw badRequest("Drop must not be above the ${if (noPush) "open" else "push"}")
+  }
+  if (pushTime != null && dropTime != null && dropTime < pushTime) {
+    throw badRequest("Drop time must not be before the push time")
+  }
+  if (drop != null && dropTime == null) throw badRequest("Drop time is required with the drop")
+  if (drop == null && dropTime != null) throw badRequest("Drop is required with its time")
+  if (drop != null && !noPush && pushTime == null) {
+    throw badRequest("Push time is required with the drop")
+  }
 }
 
 /** To the minute, inside TradeZero's extended session — a premarket DT is real, 02:10 a typo. */
