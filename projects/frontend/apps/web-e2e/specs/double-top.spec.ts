@@ -31,6 +31,7 @@ interface Stat {
   dtStartPrice: number | null;
   dtRetestPrice: number | null;
   dtRetestTime: string | null;
+  dtDropPrice: number | null;
   completed: boolean;
 }
 
@@ -77,7 +78,7 @@ test('a candidate promoted in GUS then in DT is filled and ticked as a double to
   await expect(card.getByText('A 55,3 %', { exact: true })).toBeVisible();
   await typeNumber(card.getByLabel('Bas du rejet ($)'), '2.36');
   await expect(card.getByText(/B [-−]20,0 % depuis le top/)).toBeVisible();
-  await typeNumber(card.getByLabel('Retest ($)'), '2.85');
+  await typeNumber(card.getByLabel('Retest ($)', { exact: true }), '2.85');
   await expect(card.getByText(/C 20,8 % · [-−]3,4 % du top/)).toBeVisible();
   await expect(card.getByText('4 / 4 prix · 0 / 4 heures')).toBeVisible();
   await expect
@@ -96,6 +97,15 @@ test('a candidate promoted in GUS then in DT is filled and ticked as a double to
   await expect
     .poll(async () => (await api.get<Stat>(`/api/stats/${dtId}`)).dtRetestTime)
     .toMatch(/^10:38/);
+
+  // ---- The drop after the retest (#706) : optional, read as the short's gain ----
+  await typeTime(card.getByLabel('Heure du plus bas'), '11:03');
+  await typeNumber(card.getByLabel('Plus bas après le retest ($)'), '2.30');
+  await expect(
+    card.getByText(/D \+19,3 % pour le short · \+17,9 % à l'entrée de la fiche/),
+  ).toBeVisible();
+  await expect(card.getByText('D · 25 min')).toBeVisible();
+  await expect.poll(async () => (await api.get<Stat>(`/api/stats/${dtId}`)).dtDropPrice).toBe(2.3);
 
   // ---- Ticked with its four prices and times ----
   await card.getByRole('button', { name: 'Marquer complétée' }).click();
