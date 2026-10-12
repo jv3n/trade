@@ -63,12 +63,15 @@ internal fun StatEntry.fillFrom(request: StatEntryRequest, cleanTicker: String) 
   val dtTop = request.dtTopPrice?.takeIf { doubleTop }?.requirePositive("Top")
   val dtLow = request.dtLowPrice?.takeIf { doubleTop }?.requirePositive("Rejection low")
   val dtRetest = request.dtRetestPrice?.takeIf { doubleTop }?.requirePositive("Retest")
-  requireDoubleTopShape(dtStart, dtTop, dtLow, dtRetest)
+  val dtDrop = request.dtDropPrice?.takeIf { doubleTop }?.requirePositive("Drop low")
+  requireDoubleTopShape(dtStart, dtTop, dtLow, dtRetest, dtDrop)
   val dtStartTime = request.dtStartTime?.takeIf { doubleTop }?.inSession("Start time")
   val dtTopTime = request.dtTopTime?.takeIf { doubleTop }?.inSession("Top time")
   val dtLowTime = request.dtLowTime?.takeIf { doubleTop }?.inSession("Rejection low time")
   val dtRetestTime = request.dtRetestTime?.takeIf { doubleTop }?.inSession("Retest time")
-  requireDoubleTopTimesInOrder(dtStartTime, dtTopTime, dtLowTime, dtRetestTime)
+  val dtDropTime = request.dtDropTime?.takeIf { doubleTop }?.inSession("Drop low time")
+  requireDoubleTopTimesInOrder(dtStartTime, dtTopTime, dtLowTime, dtRetestTime, dtDropTime)
+  requireDropPaired(dtDrop, dtDropTime)
 
   tradeDate = request.tradeDate
   pattern = request.pattern
@@ -89,10 +92,12 @@ internal fun StatEntry.fillFrom(request: StatEntryRequest, cleanTicker: String) 
   dtTopPrice = dtTop
   dtLowPrice = dtLow
   dtRetestPrice = dtRetest
+  dtDropPrice = dtDrop
   this.dtStartTime = dtStartTime
   this.dtTopTime = dtTopTime
   this.dtLowTime = dtLowTime
   this.dtRetestTime = dtRetestTime
+  this.dtDropTime = dtDropTime
 
   ssr = request.ssr
   this.noPush = noPush
@@ -125,13 +130,15 @@ internal fun requireInsideTheDay(
 
 /**
  * The shape of a double top (`docs/pattern/DT.md`) : the top not under the start, the rejection low
- * not above the top, the retest not under the low. Each pair is checked once both are in.
+ * not above the top, the retest not under the low, the drop not above the retest (#706). Each pair
+ * is checked once both are in.
  */
 internal fun requireDoubleTopShape(
   start: BigDecimal?,
   top: BigDecimal?,
   low: BigDecimal?,
   retest: BigDecimal?,
+  drop: BigDecimal?,
 ) {
   if (start != null && top != null && top < start) {
     throw badRequest("Top must not be below the start")
@@ -142,21 +149,32 @@ internal fun requireDoubleTopShape(
   if (low != null && retest != null && retest < low) {
     throw badRequest("Retest must not be below the rejection low")
   }
+  if (retest != null && drop != null && drop > retest) {
+    throw badRequest("Drop low must not be above the retest")
+  }
 }
 
 /**
- * The four moments of a double top go in order (#469) : start ≤ top ≤ low ≤ retest. Each time is
- * checked against the latest one typed before it, so a gap in the middle still orders the rest.
+ * The moments of a double top go in order (#469) : start ≤ top ≤ low ≤ retest ≤ drop (#706). Each
+ * time is checked against the latest one typed before it, so a gap in the middle still orders the
+ * rest.
  */
 internal fun requireDoubleTopTimesInOrder(
   start: LocalTime?,
   top: LocalTime?,
   low: LocalTime?,
   retest: LocalTime?,
+  drop: LocalTime?,
 ) {
   var previous: Pair<String, LocalTime>? = null
   for ((label, time) in
-    listOf("Start" to start, "Top" to top, "Rejection low" to low, "Retest" to retest)) {
+    listOf(
+      "Start" to start,
+      "Top" to top,
+      "Rejection low" to low,
+      "Retest" to retest,
+      "Drop low" to drop,
+    )) {
     if (time == null) continue
     previous?.let { (previousLabel, previousTime) ->
       if (time < previousTime) {
@@ -165,6 +183,15 @@ internal fun requireDoubleTopTimesInOrder(
     }
     previous = label to time
   }
+}
+
+/**
+ * The drop is optional, but whole (#706) : its price and its time go together, or the KPIs would
+ * count a drop in their `n` that their median duration leaves out.
+ */
+internal fun requireDropPaired(price: BigDecimal?, time: LocalTime?) {
+  if (price != null && time == null) throw badRequest("Drop low time is required with the drop low")
+  if (price == null && time != null) throw badRequest("Drop low is required with its time")
 }
 
 /** To the minute, inside TradeZero's extended session — a premarket DT is real, 02:10 a typo. */

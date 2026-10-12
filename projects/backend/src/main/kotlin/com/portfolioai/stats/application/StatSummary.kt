@@ -13,6 +13,10 @@ private val THIRD_QUARTILE = BigDecimal("0.75")
 /** The rejection that makes a double top, per `docs/pattern/DT.md` — below, a normal breath. */
 private val DT_REJECTION_CRITERION = BigDecimal("17")
 
+/** The DT sheet's entry, −5 % from the top, and the 10 % it promises from there (#706). */
+private val DT_ENTRY_FROM_TOP = BigDecimal("0.95")
+private val DT_DROP_TARGET = BigDecimal("10")
+
 /**
  * The KPIs of [StatEntryService.summarise] over the filtered [rows] ; [traded] is how many of them
  * carry a trade. Averages are measured on [pattern]'s stats only, none without one.
@@ -22,6 +26,7 @@ internal fun statSummaryOf(rows: List<StatEntry>, pattern: Pattern?, traded: Int
   val measured = if (pattern == null) emptyList() else completed
   val sessions = measured.filterNot { it.isDoubleTop }
   val doubleTops = measured.filter { it.isDoubleTop }
+  val drops = doubleTops.filter { it.dtDropPrice != null && it.dtRetestPrice != null }
   val pushes = sessions.mapNotNull { StatMetrics.percentVsOpen(it.openPrice, it.pushOpenPrice) }
   return StatSummaryDto(
     completed = completed.size,
@@ -60,10 +65,22 @@ internal fun statSummaryOf(rows: List<StatEntry>, pattern: Pattern?, traded: Int
       doubleTops.medianMinutes { StatMetrics.minutesBetween(it.dtStartTime, it.dtRetestTime) },
     medianRejectionMinutes =
       doubleTops.medianMinutes { StatMetrics.minutesBetween(it.dtTopTime, it.dtLowTime) },
+    doubleTopsWithDrop = drops.size,
+    medianDropPercent =
+      drops.medianOf { StatMetrics.percentChange(it.dtRetestPrice, it.dtDropPrice) },
+    medianDropFromEntryPercent = drops.medianOf(::dropFromEntry),
+    medianDropMinutes =
+      drops.medianMinutes { StatMetrics.minutesBetween(it.dtRetestTime, it.dtDropTime) },
+    dropReachedTargetCount =
+      drops.count { dropFromEntry(it)?.let { change -> change <= -DT_DROP_TARGET } == true },
     traded = traded,
     untraded = rows.size - traded,
   )
 }
+
+/** The sheet's entry (top −5 %) → the drop low ; negative when the short gained. */
+private fun dropFromEntry(entry: StatEntry): BigDecimal? =
+  StatMetrics.percentChange(entry.dtTopPrice?.multiply(DT_ENTRY_FROM_TOP), entry.dtDropPrice)
 
 /** Average of a derived percentage over the rows that yield one ; null when none does. */
 private fun List<StatEntry>.averageOf(metric: (StatEntry) -> BigDecimal?): BigDecimal? {

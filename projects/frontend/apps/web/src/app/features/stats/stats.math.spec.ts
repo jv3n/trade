@@ -82,12 +82,13 @@ describe('percentVsOpen', () => {
 });
 
 describe('doubleTopLegs', () => {
-  /** SGBX : start 1.90, top 2.95, rejection low 2.36, retest 2.85. */
+  /** SGBX : start 1.90, top 2.95, rejection low 2.36, retest 2.85, then the drop to 2.30. */
   const sgbx = {
     dtStartPrice: 1.9,
     dtTopPrice: 2.95,
     dtLowPrice: 2.36,
     dtRetestPrice: 2.85,
+    dtDropPrice: 2.3,
   };
 
   it('measures A from the start to the top', () => {
@@ -112,6 +113,23 @@ describe('doubleTopLegs', () => {
     expect(legs.retestToTop).toBeNull();
     expect(legs.rejection).not.toBeNull();
   });
+
+  // #706 : the stored change keeps its sign — the price fell ; the screen reads it as the gain.
+  it('measures D as a negative move from the retest to the drop low', () => {
+    expect(doubleTopLegs(sgbx).drop).toBeCloseTo(-19.3, 2);
+  });
+
+  // The sheet shorts at the top − 5 % (2.8025), not at the retest high nobody gets filled at.
+  it("measures the drop from the sheet's entry too", () => {
+    expect(doubleTopLegs(sgbx).dropFromEntry).toBeCloseTo(-17.93, 2);
+  });
+
+  it('leaves the drop null while it is not typed — it is optional', () => {
+    const legs = doubleTopLegs({ ...sgbx, dtDropPrice: null });
+
+    expect(legs.drop).toBeNull();
+    expect(legs.dropFromEntry).toBeNull();
+  });
 });
 
 // #469 — how long a double top takes, leg by leg : the SGBX of the mockup, 10:02 → 10:38.
@@ -121,10 +139,17 @@ describe('doubleTopDurations', () => {
     dtTopTime: '10:14',
     dtLowTime: '10:21',
     dtRetestTime: '10:38',
+    dtDropTime: '11:03',
   };
 
-  it('reads each leg and the total in minutes', () => {
-    expect(doubleTopDurations(sgbx)).toEqual({ rise: 12, rejection: 7, retest: 17, total: 36 });
+  it('reads each leg, the total and the drop in minutes', () => {
+    expect(doubleTopDurations(sgbx)).toEqual({
+      rise: 12,
+      rejection: 7,
+      retest: 17,
+      total: 36,
+      drop: 25,
+    });
   });
 
   it('leaves a leg null until both its times are in', () => {

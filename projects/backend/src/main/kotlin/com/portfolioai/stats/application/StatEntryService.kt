@@ -278,12 +278,14 @@ class StatEntryService(
         entry.dtTopPrice,
         entry.dtLowPrice,
         entry.dtRetestPrice,
+        entry.dtDropPrice,
       )
       requireDoubleTopTimesInOrder(
         entry.dtStartTime,
         entry.dtTopTime,
         entry.dtLowTime,
         entry.dtRetestTime,
+        entry.dtDropTime,
       )
     } else if (completed) {
       requireInsideTheDay(

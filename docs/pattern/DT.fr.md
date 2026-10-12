@@ -3,7 +3,7 @@
 > **Shorter** un titre qui a fortement monté en intraday, s'est fait rejeter, et revient tester son
 > high. Le pari : le deuxième test échoue, parce que le rejet a convaincu le marché que le top est fait.
 
-*Dernière révision : 2026-09-25, d'après la séance du Trading Desk du 14 septembre, « Les Patterns ».*
+*Dernière révision : 2026-10-12 (la chute mesurée, #706) ; 2026-09-25, d'après la séance du Trading Desk du 14 septembre, « Les Patterns ».*
 
 ---
 
@@ -36,6 +36,10 @@ cette croyance qui crée la vente sur le retest (voir les [quatre vendeurs](../n
 **Probabilité** — entrer à **−5 % du top** : un top à 3,00 $ → entrée à 2,85 $. Lui laisser ~10 %
 d'air au-dessus du top → stop vers 3,30 $ → risquer ~15 % pour aller chercher 10-15 %. Un bon R / R avec
 un bon win rate, tant que le double top remplit les critères ci-dessus.
+
+Les 10-15 % viennent de l'expérience. La page Stats les mesure désormais (#706) : la **chute après
+le retest**, lue depuis cette entrée à −5 %, et combien de chutes atteignent 10 % — après quelques
+mois de données, cette ligne devra citer le chiffre mesuré.
 
 **Attendre la cassure** du high initial donne plus de confirmation sur sa réaction, et de meilleures
 entrées — mais en fait rater beaucoup : un double top **frôle souvent le high initial sans le prendre**.

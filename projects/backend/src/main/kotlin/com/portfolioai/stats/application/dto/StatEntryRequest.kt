@@ -44,6 +44,9 @@ data class StatEntryRequest(
   val dtTopTime: LocalTime? = null,
   val dtLowTime: LocalTime? = null,
   val dtRetestTime: LocalTime? = null,
+  /** The lowest print after the retest (#706) : not above the retest, not before it in time. */
+  val dtDropPrice: BigDecimal? = null,
+  val dtDropTime: LocalTime? = null,
   // ---- Flags ----
   val ssr: Boolean = false,
   /** The stock never pushed after the open — [pushOpenPrice] is then ignored and stored empty. */

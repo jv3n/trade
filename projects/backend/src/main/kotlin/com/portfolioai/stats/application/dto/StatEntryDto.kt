@@ -51,6 +51,9 @@ data class StatEntryDto(
   val dtTopTime: LocalTime?,
   val dtLowTime: LocalTime?,
   val dtRetestTime: LocalTime?,
+  /** The lowest print after the retest (#706) — optional, out of the completion check. */
+  val dtDropPrice: BigDecimal?,
+  val dtDropTime: LocalTime?,
   // ---- Flags ----
   val ssr: Boolean,
   /** Derived from the open (#499) — read-only, no longer a box. */
@@ -91,6 +94,8 @@ fun StatEntry.toDto(trades: List<TradeLinkDto> = emptyList()) =
     dtTopTime = dtTopTime,
     dtLowTime = dtLowTime,
     dtRetestTime = dtRetestTime,
+    dtDropPrice = dtDropPrice,
+    dtDropTime = dtDropTime,
     ssr = ssr,
     under1Dollar = under1Dollar,
     noPush = noPush,

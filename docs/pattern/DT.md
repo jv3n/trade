@@ -3,7 +3,7 @@
 > **Short** a stock that ran hard intraday, got rejected, and comes back to test its high. The bet :
 > the second test fails, because the rejection convinced the market the top is in.
 
-*Last revised : 2026-09-25, from the Trading Desk session of 14 September, « Les Patterns ».*
+*Last revised : 2026-10-12 (the measured drop, #706) ; 2026-09-25, from the Trading Desk session of 14 September, « Les Patterns ».*
 
 ---
 
@@ -35,6 +35,10 @@ selling on the retest (see the [four sellers](../notes/four-sellers.md)).
 **Probability** — enter at **−5 % from the top** : a top at $3.00 → entry at $2.85. Give it ~10 % of
 breathing room above the top → stop around $3.30 → risking ~15 % to take 10-15 %. A good R / R with
 a good win rate, as long as the double top meets the criteria above.
+
+The 10-15 % comes from experience. The stats page now measures it (#706) : the **drop after the
+retest**, read from this −5 % entry, and how many drops reached 10 % — once a few months are in,
+this line should quote the measured figure.
 
 **Waiting for the break** of the initial high gives more confirmation of how it reacts, and better
 entries — but misses a lot : a double top often **grazes the initial high without taking it**.

@@ -63,6 +63,9 @@ import org.springframework.web.server.ResponseStatusException
  * - **Double top times (#469)** — each price has its time, to the minute, inside the extended
  *   session and in order ; the four are required to tick, and the KPIs give the median duration and
  *   the median rejection — a median, so one slow DT does not move the typical figure.
+ * - **Double top drop (#706)** — the lowest print after the retest, optional (a DT ticks without
+ *   it) but whole (price and time together), not above the retest nor before it ; the KPIs give its
+ *   medians with their own `n`.
  * - **KPIs** — [StatEntryService.summarise] counts completed / to complete over the whole filtered
  *   set and averages the derived percentages (never stored) of the completed rows only, plus the
  *   median / 3rd quartile / max push at open behind the candidates' « À l'open » card (#261).
@@ -957,6 +960,135 @@ class StatsListingIntegrationTest {
   }
 
   // ---------------------------------------------------------------------------
+  // Double top drop (#706) — « what does a DT pay ? »
+  // ---------------------------------------------------------------------------
+
+  // Optional on purpose : the history has no drop, and requiring it would untick every DT.
+  @Test
+  fun `a double top is ticked without its drop, and the drop is typed afterwards`() {
+    val stat = createCompleted(doubleTopRequest(ticker = "SGBX"))
+
+    val withDrop = service.update(stat.id, sgbxWithDrop())
+
+    assertTrue(stat.completed)
+    assertTrue(withDrop.completed)
+    assertEquals(0, BigDecimal("2.30").compareTo(withDrop.dtDropPrice))
+    assertEquals(LocalTime.of(11, 3), withDrop.dtDropTime)
+  }
+
+  @Test
+  fun `a drop above the retest or before it in time is a 400`() {
+    listOf(
+        sgbxWithDrop().copy(dtDropPrice = BigDecimal("2.90")) to
+          "Drop low must not be above the retest",
+        sgbxWithDrop().copy(dtDropTime = LocalTime.of(10, 30)) to
+          "Drop low time must not be before the retest time",
+      )
+      .forEach { (request, reason) ->
+        val ex = assertThrows(ResponseStatusException::class.java) { service.create(request) }
+        assertEquals(400, ex.statusCode.value())
+        assertEquals(reason, ex.reason)
+      }
+    assertEquals(0, repo.count())
+  }
+
+  // A price alone counted in the drop's n but not in its median duration : the card mixed two
+  // samples (PR #707 review).
+  @Test
+  fun `a drop price without its time, or a time without its price, is a 400`() {
+    listOf(
+        sgbxWithDrop().copy(dtDropTime = null) to "Drop low time is required with the drop low",
+        sgbxWithDrop().copy(dtDropPrice = null) to "Drop low is required with its time",
+      )
+      .forEach { (request, reason) ->
+        val ex = assertThrows(ResponseStatusException::class.java) { service.create(request) }
+        assertEquals(400, ex.statusCode.value())
+        assertEquals(reason, ex.reason)
+      }
+    assertEquals(0, repo.count())
+  }
+
+  @Test
+  fun `the database refuses half a drop`() {
+    val stat =
+      makeStat(testUser, ticker = "SGBX", tradeDate = DAY).apply {
+        pattern = Pattern.DT
+        clearPremarket()
+        dtDropPrice = BigDecimal("2.30")
+      }
+
+    assertThrows(DataIntegrityViolationException::class.java) { repo.saveAndFlush(stat) }
+  }
+
+  @Test
+  fun `a GUS ignores the drop`() {
+    val gus =
+      service.create(
+        fullSessionRequest(ticker = "SGBX")
+          .copy(dtDropPrice = BigDecimal("2.30"), dtDropTime = LocalTime.of(11, 3))
+      )
+
+    assertNull(gus.dtDropPrice)
+    assertNull(gus.dtDropTime)
+  }
+
+  @Test
+  fun `the database refuses a drop on a GUS, and a drop time before the retest`() {
+    val onGus =
+      makeStat(testUser, ticker = "KTTA", tradeDate = DAY).apply {
+        dtDropPrice = BigDecimal("3.10")
+      }
+    assertThrows(DataIntegrityViolationException::class.java) { repo.saveAndFlush(onGus) }
+
+    val backwards =
+      makeStat(testUser, ticker = "SGBX", tradeDate = DAY).apply {
+        pattern = Pattern.DT
+        clearPremarket()
+        dtRetestTime = LocalTime.of(10, 38)
+        dtDropPrice = BigDecimal("2.30")
+        dtDropTime = LocalTime.of(10, 30)
+      }
+    assertThrows(DataIntegrityViolationException::class.java) { repo.saveAndFlush(backwards) }
+  }
+
+  @Test
+  fun `summarise measures the drop on the completed double tops that have one`() {
+    // SGBX retest 2.85 -> 2.30 = -19.30, from the sheet's entry 2.8025 = -17.93, 25 min ;
+    // MULN 2.85 -> 2.60 = -8.77, from the entry -7.23, 20 min.
+    createCompleted(sgbxWithDrop())
+    createCompleted(
+      doubleTopRequest(ticker = "MULN")
+        .copy(dtDropPrice = BigDecimal("2.60"), dtDropTime = LocalTime.of(10, 58))
+    )
+    // Took its top back and kept going : no drop, out of the drop figures but still a DT.
+    createCompleted(nxttDoubleTop())
+    // In progress : its drop must weigh nothing.
+    service.create(sgbxWithDrop().copy(ticker = "GRI", dtRetestPrice = null))
+
+    val summary = service.summarise(dtOnly)
+
+    assertEquals(3, summary.completedDoubleTops)
+    assertEquals(2, summary.doubleTopsWithDrop)
+    assertEquals(0, BigDecimal("-14.04").compareTo(summary.medianDropPercent))
+    assertEquals(0, BigDecimal("-12.58").compareTo(summary.medianDropFromEntryPercent))
+    assertEquals(0, BigDecimal("22.50").compareTo(summary.medianDropMinutes))
+    assertEquals(1, summary.dropReachedTargetCount, "only SGBX gave 10 % from the entry")
+  }
+
+  @Test
+  fun `no drop typed means no drop figure, not a zero`() {
+    createCompleted(doubleTopRequest(ticker = "SGBX"))
+
+    val summary = service.summarise(dtOnly)
+
+    assertEquals(0, summary.doubleTopsWithDrop)
+    assertNull(summary.medianDropPercent)
+    assertNull(summary.medianDropFromEntryPercent)
+    assertNull(summary.medianDropMinutes)
+    assertEquals(0, summary.dropReachedTargetCount)
+  }
+
+  // ---------------------------------------------------------------------------
   // Out of pattern (#499)
   // ---------------------------------------------------------------------------
 
@@ -1334,6 +1466,11 @@ class StatsListingIntegrationTest {
         dtLowTime = LocalTime.of(10, 21),
         dtRetestTime = LocalTime.of(10, 38),
       )
+
+  /** SGBX's double top and the drop that followed : 2.30 at 11:03, 25 min after the retest. */
+  private fun sgbxWithDrop() =
+    doubleTopRequest(ticker = "SGBX")
+      .copy(dtDropPrice = BigDecimal("2.30"), dtDropTime = LocalTime.of(11, 3))
 
   /**
    * A shallow double top whose retest took the top back : 2.00, 3.00, 2.70, 3.10 — and a slow one,

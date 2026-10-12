@@ -30,10 +30,11 @@ import org.hibernate.type.SqlTypes
  *   (deleting the candidate later nulls the link without touching the stat).
  * - **Session** — typed field by field during the day, any subset may be in. A GUS (and the
  *   patterns measured like it) fills [openPrice] … [eodPrice] ; a DT fills its four prices instead,
- *   [dtStartPrice] … [dtRetestPrice] (#428), each with its time (#469). [completedAt] is the status
- *   : set when the owner ticks the stat, which needs the whole session of its pattern
- *   ([hasFullSession]) — the `ck_stat_entry_completed_whole` CHECK backs it up. A [noPush] stat has
- *   no push price, and is whole with the four others (#302).
+ *   [dtStartPrice] … [dtRetestPrice] (#428), each with its time (#469), and optionally the drop
+ *   that follows ([dtDropPrice], #706). [completedAt] is the status : set when the owner ticks the
+ *   stat, which needs the whole session of its pattern ([hasFullSession]) — the
+ *   `ck_stat_entry_completed_whole` CHECK backs it up. A [noPush] stat has no push price, and is
+ *   whole with the four others (#302).
  *
  * No percentage is stored : gap, premarket push, push at open, HOD / LOD / EOD are all derived from
  * the prices ([StatMetrics] server-side for the KPIs, `stats.math` on the front).
@@ -86,6 +87,13 @@ class StatEntry(
   @Column(name = "dt_top_time") var dtTopTime: LocalTime? = null,
   @Column(name = "dt_low_time") var dtLowTime: LocalTime? = null,
   @Column(name = "dt_retest_time") var dtRetestTime: LocalTime? = null,
+  /**
+   * The lowest print after the retest, before the close, and its time (#706) — what the pattern
+   * paid. Optional : left out of [hasFullSession], and empty when the retest took the top and the
+   * stock kept going.
+   */
+  @Column(name = "dt_drop_price", precision = 18, scale = 4) var dtDropPrice: BigDecimal? = null,
+  @Column(name = "dt_drop_time") var dtDropTime: LocalTime? = null,
 
   // ---- Flags ----
   @Column(nullable = false) var ssr: Boolean = false,

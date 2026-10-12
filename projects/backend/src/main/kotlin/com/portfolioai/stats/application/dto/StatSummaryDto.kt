@@ -43,6 +43,15 @@ import java.math.BigDecimal
  *   and say nothing about the typical one. Read against [completedDoubleTops].
  * @param medianRejectionMinutes Median of leg B, top → rejection low — how fast the rejection
  *   comes, the leg the entry depends on.
+ * @param doubleTopsWithDrop Completed double tops whose drop after the retest is typed (#706) — the
+ *   `n` of the four drop figures, read against [completedDoubleTops] : the drop is optional.
+ * @param medianDropPercent Median leg D, retest → drop low. Negative : the price fell, which is the
+ *   short's gain — the front flips the sign to show it as one.
+ * @param medianDropFromEntryPercent Median drop from the DT sheet's entry (top −5 %) → drop low —
+ *   what the entry rule captured. Not a backtest : the stop may have been hit first.
+ * @param medianDropMinutes Median duration of leg D, retest → drop low.
+ * @param dropReachedTargetCount Drops that gave at least the 10 % the sheet promises from its entry
+ *   — read against [doubleTopsWithDrop].
  * @param traded Stats of the filtered set that gave birth to a trade — the journal reads this pair
  *   as « 8 / 10 » and links to the ones left untraded (#195).
  * @param untraded Stats of the filtered set with no trade yet.
@@ -70,6 +79,11 @@ data class StatSummaryDto(
   val retestTookTopCount: Int,
   val medianDoubleTopMinutes: BigDecimal?,
   val medianRejectionMinutes: BigDecimal?,
+  val doubleTopsWithDrop: Int,
+  val medianDropPercent: BigDecimal?,
+  val medianDropFromEntryPercent: BigDecimal?,
+  val medianDropMinutes: BigDecimal?,
+  val dropReachedTargetCount: Int,
   val traded: Int,
   val untraded: Int,
 )

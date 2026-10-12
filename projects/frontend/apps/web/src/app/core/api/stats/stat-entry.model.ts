@@ -55,6 +55,12 @@ export interface StatEntry {
   dtTopTime: string | null;
   dtLowTime: string | null;
   dtRetestTime: string | null;
+  /**
+   * The lowest print after the retest, before the close, and its time (#706) — what the pattern
+   * paid. Optional : a DT ticks without it, and it stays empty when the retest took the top.
+   */
+  dtDropPrice: number | null;
+  dtDropTime: string | null;
 
   // ---- Flags ----
   ssr: boolean;
@@ -178,6 +184,16 @@ export interface StatSummary {
   medianDoubleTopMinutes: number | null;
   /** Median of leg B, top → rejection low, in minutes — how fast the rejection comes. */
   medianRejectionMinutes: number | null;
+  /** Completed double tops whose drop is typed (#706) — the `n` of the drop figures below. */
+  doubleTopsWithDrop: number;
+  /** Median leg D, retest → drop low — negative : the price fell, which is the short's gain. */
+  medianDropPercent: number | null;
+  /** Median drop from the DT sheet's entry (top −5 %) — what the entry rule captured. */
+  medianDropFromEntryPercent: number | null;
+  /** Median duration of leg D, retest → drop low, in minutes. */
+  medianDropMinutes: number | null;
+  /** Drops that gave the 10 % the sheet promises from its entry — read against [doubleTopsWithDrop]. */
+  dropReachedTargetCount: number;
   /** Stats of the filtered set that gave birth to a trade — the journal reads « traded / all ». */
   traded: number;
   untraded: number;

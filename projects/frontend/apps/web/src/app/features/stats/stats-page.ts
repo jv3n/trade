@@ -67,7 +67,9 @@ import {
   toSkeletonColumns,
   type SkeletonColumnDefs,
 } from '../../shared/skeleton-columns/skeleton-columns';
+import { ShortGainPipe } from './short-gain.pipe';
 import {
+  DT_DROP_TARGET,
   DT_EXTENSION_CRITERION,
   DT_REJECTION_CRITERION,
   DT_SESSION_CLOSES,
@@ -108,6 +110,9 @@ interface SessionModel {
   dtTopTime: string | null;
   dtLowTime: string | null;
   dtRetestTime: string | null;
+  /** The lowest print after the retest (#706) — optional, out of the tick. */
+  dtDropPrice: number | null;
+  dtDropTime: string | null;
   ssr: boolean;
   noPush: boolean;
   highInstitutions: boolean;
@@ -165,6 +170,11 @@ export interface StatRow extends StatEntry {
   legs: DoubleTopLegs;
   /** How long each leg took (#469) — null on any other pattern, or until its times are in. */
   durations: DoubleTopDurations;
+  /**
+   * A completed double top with no drop typed, whose retest stayed under the top (#706) — the
+   * drop is optional, but there was one to record. Empty when the top was taken back : no drop.
+   */
+  dropToFill: boolean;
   /** Label keys of the session prices still missing — the ✓ stays disabled until it's empty. */
   missing: string[];
   /** Why the day's range refuses this row (#305) — null when it holds. Blocks the ✓ too. */
@@ -219,6 +229,7 @@ const DOUBLE_TOP_FOOTER_COLUMNS: readonly string[] = [
   'dtLow',
   'dtRetest',
   'dtDuration',
+  'dtDrop',
   'dtAveragesEnd',
 ];
 const NO_COLUMNS: readonly string[] = [];
@@ -252,6 +263,7 @@ const COLUMNS: Record<StatView, readonly string[]> = {
     'dtLow',
     'dtRetest',
     'dtDuration',
+    'dtDrop',
     ...TRAILING_COLUMNS,
   ],
   ALL: [...LEADING_COLUMNS, 'brief', ...TRAILING_COLUMNS],
@@ -284,6 +296,8 @@ const BLANK_SESSION: SessionModel = {
   dtTopTime: null,
   dtLowTime: null,
   dtRetestTime: null,
+  dtDropPrice: null,
+  dtDropTime: null,
   ssr: false,
   noPush: false,
   highInstitutions: false,
@@ -316,10 +330,11 @@ type SessionPrice =
   | 'dtStartPrice'
   | 'dtTopPrice'
   | 'dtLowPrice'
-  | 'dtRetestPrice';
+  | 'dtRetestPrice'
+  | 'dtDropPrice';
 
-/** The four times of a double top (#469). */
-type SessionTime = 'dtStartTime' | 'dtTopTime' | 'dtLowTime' | 'dtRetestTime';
+/** The four times of a double top (#469), and the drop's (#706). */
+type SessionTime = 'dtStartTime' | 'dtTopTime' | 'dtLowTime' | 'dtRetestTime' | 'dtDropTime';
 
 /** A field the session card can point at when something is wrong with it. */
 type SessionField = SessionPrice | SessionTime;
@@ -423,7 +438,8 @@ export function sessionProblem(
 
 /**
  * The shape of a double top (`docs/pattern/DT.md`) : the top not under the start, the rejection
- * low not above the top, the retest not under the low — the backend refuses the same.
+ * low not above the top, the retest not under the low, the drop not above the retest (#706) — the
+ * backend refuses the same.
  */
 function doubleTopProblem(
   session: SessionModel,
@@ -438,19 +454,37 @@ function doubleTopProblem(
   if (low !== null && retest !== null && retest < low) {
     return { reason: 'stats.save.retestBelowLow', fields: ['dtLowPrice', 'dtRetestPrice'] };
   }
-  return doubleTopTimesProblem(session);
+  const drop = session.dtDropPrice;
+  if (retest !== null && drop !== null && drop > retest) {
+    return { reason: 'stats.save.dropAboveRetest', fields: ['dtRetestPrice', 'dtDropPrice'] };
+  }
+  return doubleTopTimesProblem(session) ?? dropPairProblem(session);
 }
 
 /**
- * The four times of a double top (#469) : inside the extended session, and in order — each against
- * the latest one typed before it, so a gap in the middle still orders the rest. The backend refuses
- * the same ; a negative leg would poison the median.
+ * The drop is optional but whole (#706) : its price and its time go together, or the KPIs would
+ * count it in their `n` and leave it out of the median duration. The backend refuses the same.
+ */
+function dropPairProblem(session: SessionModel): { reason: string; fields: SessionField[] } | null {
+  const hasPrice = session.dtDropPrice !== null;
+  const hasTime = !!session.dtDropTime;
+  if (hasPrice && !hasTime)
+    return { reason: 'stats.save.dropTimeRequired', fields: ['dtDropTime'] };
+  if (hasTime && !hasPrice)
+    return { reason: 'stats.save.dropPriceRequired', fields: ['dtDropPrice'] };
+  return null;
+}
+
+/**
+ * The times of a double top (#469), the drop's last (#706) : inside the extended session, and in
+ * order — each against the latest one typed before it, so a gap in the middle still orders the
+ * rest. The backend refuses the same ; a negative leg would poison the median.
  */
 function doubleTopTimesProblem(
   session: SessionModel,
 ): { reason: string; fields: SessionField[] } | null {
   let previous: SessionTime | null = null;
-  for (const { field } of DOUBLE_TOP_TIMES) {
+  for (const field of [...DOUBLE_TOP_TIMES.map((t) => t.field), 'dtDropTime' as const]) {
     const time = session[field];
     if (!time) continue;
     if (time < DT_SESSION_OPENS || time > DT_SESSION_CLOSES) {
@@ -479,6 +513,8 @@ function sessionOf(entry: StatEntry): SessionModel {
     dtTopTime: entry.dtTopTime,
     dtLowTime: entry.dtLowTime,
     dtRetestTime: entry.dtRetestTime,
+    dtDropPrice: entry.dtDropPrice,
+    dtDropTime: entry.dtDropTime,
     ssr: entry.ssr,
     noPush: entry.noPush,
     highInstitutions: entry.highInstitutions,
@@ -505,6 +541,7 @@ const SKELETON_COLUMNS: SkeletonColumnDefs = {
   dtLow: { key: 'stats.doubleTop.columnB', variant: 'numeric' },
   dtRetest: { key: 'stats.doubleTop.columnC', variant: 'numeric' },
   dtDuration: { key: 'stats.fields.dtDuration', variant: 'numeric' },
+  dtDrop: { key: 'stats.doubleTop.columnD', variant: 'numeric' },
   brief: { key: 'stats.fields.brief' },
   flags: { key: 'stats.fields.flags' },
   // The completion tick : an icon button — `$icon-button-size`.
@@ -568,6 +605,7 @@ const SKELETON_COLUMNS: SkeletonColumnDefs = {
     StbTableModule,
     StbTooltipModule,
     PluralPipe,
+    ShortGainPipe,
     TranslatePipe,
   ],
   templateUrl: './stats-page.html',
@@ -736,6 +774,7 @@ export class StatsPage {
   });
   readonly extensionCriterion = DT_EXTENSION_CRITERION;
   readonly rejectionCriterion = DT_REJECTION_CRITERION;
+  readonly dropTarget = DT_DROP_TARGET;
 
   /** The day's rows with their derived percentages. */
   readonly rows = computed<StatRow[]>(() =>
@@ -752,6 +791,13 @@ export class StatsPage {
       eodPercent: percentVsOpen(e.openPrice, e.eodPrice),
       legs: doubleTopLegs(e),
       durations: doubleTopDurations(e),
+      dropToFill:
+        e.completed &&
+        e.pattern === 'DT' &&
+        e.dtDropPrice === null &&
+        e.dtTopPrice !== null &&
+        e.dtRetestPrice !== null &&
+        e.dtRetestPrice < e.dtTopPrice,
       missing: missingPrices(e, e.pattern),
       // A row written before the range rule existed can still hold an impossible set : the ✓ of
       // the table answers for it like the panel's does, and the backend replays it on the tick.
@@ -845,13 +891,17 @@ export class StatsPage {
   /** How long each leg of the double top being typed took, live (#469). */
   readonly doubleTopDurations = computed(() => doubleTopDurations(this.session()));
 
-  /** « 3 / 4 prix · 2 / 4 heures » — the prices and the times a double top needs to tick. */
+  /**
+   * « 3 / 4 prix · 2 / 4 heures » — the prices and the times a double top needs to tick — and
+   * whether its optional drop is in (#706).
+   */
   readonly doubleTopProgress = computed(() => {
     const m = this.session();
     return {
       prices: DOUBLE_TOP_PRICES.filter(({ field }) => isPositive(m[field])).length,
       times: DOUBLE_TOP_TIMES.filter(({ field }) => !!m[field]).length,
       total: DOUBLE_TOP_PRICES.length,
+      drop: isPositive(m.dtDropPrice) && !!m.dtDropTime,
     };
   });
 

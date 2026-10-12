@@ -49,6 +49,8 @@ interface StatEntryWireDto {
   dtTopTime: string | null;
   dtLowTime: string | null;
   dtRetestTime: string | null;
+  dtDropPrice: number | null;
+  dtDropTime: string | null;
   ssr: boolean;
   under1Dollar: boolean;
   noPush: boolean;
@@ -83,6 +85,7 @@ function fromWire(w: StatEntryWireDto): StatEntry {
     dtTopTime: toMinute(w.dtTopTime),
     dtLowTime: toMinute(w.dtLowTime),
     dtRetestTime: toMinute(w.dtRetestTime),
+    dtDropTime: toMinute(w.dtDropTime),
     createdAt: parseISO(w.createdAt),
     updatedAt: parseISO(w.updatedAt),
   };

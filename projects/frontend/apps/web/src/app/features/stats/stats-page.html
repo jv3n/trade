@@ -123,6 +123,68 @@
           </div>
         </div>
       </section>
+      <!-- What a double top pays (#706) : the drop after the retest, read as the short's gain. Its
+           own n — the drop is optional, and empty when the retest took the top. -->
+      <section
+        class="stb-fade-in kpi-row"
+        data-testid="dt-drop-kpis"
+        [matTooltip]="'stats.kpi.dropHint' | translate"
+      >
+        <div class="card kpi">
+          <div class="kpi__label">{{ 'stats.kpi.drop' | translate }}</div>
+          <div
+            class="kpi__value"
+            [class.gain]="(kpi.medianDropPercent ?? 0) < 0"
+            [class.loss]="(kpi.medianDropPercent ?? 0) > 0"
+          >
+            {{ kpi.medianDropPercent !== null ? (kpi.medianDropPercent | shortGain) + ' %' : '—' }}
+          </div>
+          <div class="kpi__sub">
+            {{
+              'stats.kpi.dropSub'
+                | translate: { count: kpi.doubleTopsWithDrop, total: kpi.completedDoubleTops }
+            }}
+          </div>
+        </div>
+        <div class="card kpi">
+          <div class="kpi__label">{{ 'stats.kpi.dropFromEntry' | translate }}</div>
+          <div
+            class="kpi__value"
+            [class.gain]="(kpi.medianDropFromEntryPercent ?? 0) < 0"
+            [class.loss]="(kpi.medianDropFromEntryPercent ?? 0) > 0"
+          >
+            {{
+              kpi.medianDropFromEntryPercent !== null
+                ? (kpi.medianDropFromEntryPercent | shortGain) + ' %'
+                : '—'
+            }}
+          </div>
+          <div class="kpi__sub">{{ 'stats.kpi.dropFromEntrySub' | translate }}</div>
+        </div>
+        <div class="card kpi">
+          <div class="kpi__label">{{ 'stats.kpi.dropDuration' | translate }}</div>
+          <div class="kpi__value">
+            {{
+              kpi.medianDropMinutes !== null
+                ? ('stats.kpi.minutes'
+                  | translate: { minutes: (kpi.medianDropMinutes | number: '1.0-0') })
+                : '—'
+            }}
+          </div>
+          <div class="kpi__sub">{{ 'stats.kpi.dropDurationSub' | translate }}</div>
+        </div>
+        <div class="card kpi">
+          <div class="kpi__label">
+            {{ 'stats.kpi.dropTarget' | translate: { target: dropTarget } }}
+          </div>
+          <div class="kpi__value">
+            {{ kpi.dropReachedTargetCount }} / {{ kpi.doubleTopsWithDrop }}
+          </div>
+          <div class="kpi__sub">
+            {{ 'stats.kpi.dropTargetSub' | translate: { target: dropTarget } }}
+          </div>
+        </div>
+      </section>
     } @else if (view() === 'ALL') {
       <section class="stb-fade-in kpi-row">
         <div class="card kpi">
@@ -741,6 +803,63 @@
                   : '—'
             }}</mat-hint>
           </mat-form-field>
+
+          <!-- The fifth point (#706) : optional, the ✓ does not wait for it. -->
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="time-field">
+            <mat-label>{{ 'stats.fields.dtDropTime' | translate }}</mat-label>
+            <input
+              matInput
+              type="time"
+              [value]="session().dtDropTime ?? ''"
+              (input)="setSessionTime('dtDropTime', $any($event.target).value)"
+              (blur)="saveSession()"
+              (keydown.enter)="$any($event.target).blur()"
+            />
+            <mat-hint [class.warn]="atFault('dtDropTime')">{{
+              atFault('dtDropTime')
+                ? (sessionIssue()!.reason | translate)
+                : durations.drop !== null
+                  ? ('stats.doubleTop.durationD' | translate: { minutes: durations.drop })
+                  : ''
+            }}</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'stats.fields.dtDropPrice' | translate }}</mat-label>
+            <input
+              #dtDropField
+              matInput
+              appNumberMask
+              [decimals]="4"
+              [min]="0"
+              [number]="session().dtDropPrice"
+              (numberChange)="setSessionPrice('dtDropPrice', $event)"
+              (blur)="saveSession()"
+              (keydown.enter)="$any($event.target).blur()"
+            />
+            <ui-form-field-reset matIconSuffix [for]="dtDropField" />
+            <mat-hint
+              [class.warn]="atFault('dtDropPrice')"
+              [class.gain]="
+                !atFault('dtDropPrice') &&
+                legs.drop !== null &&
+                (legs.dropFromEntry === null || legs.dropFromEntry < 0)
+              "
+              >{{
+                atFault('dtDropPrice')
+                  ? (sessionIssue()!.reason | translate)
+                  : legs.drop !== null
+                    ? ('stats.doubleTop.legD'
+                      | translate
+                        : {
+                            gain: (legs.drop | shortGain),
+                            entry:
+                              legs.dropFromEntry !== null ? (legs.dropFromEntry | shortGain) : '—',
+                          })
+                    : ('stats.doubleTop.dropHint' | translate)
+              }}</mat-hint
+            >
+          </mat-form-field>
         </form>
       } @else {
         <form class="session-form" (submit)="$event.preventDefault()">
@@ -896,6 +1015,11 @@
               'stats.doubleTop.progress'
                 | translate
                   : { prices: progress.prices, times: progress.times, total: progress.total }
+            }}
+            ·
+            {{
+              (progress.drop ? 'stats.doubleTop.dropDone' : 'stats.doubleTop.dropToFill')
+                | translate
             }}
           } @else {
             {{
@@ -1386,6 +1510,75 @@
             </td>
           </ng-container>
 
+          <!-- What the double top paid (#706) : the drop low, and the short's gain under it. -->
+          <ng-container matColumnDef="dtDrop">
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              stbCol="numeric"
+              class="group-start"
+              [matTooltip]="'stats.doubleTop.columnDHint' | translate"
+            >
+              {{ 'stats.doubleTop.columnD' | translate }}
+            </th>
+            <td mat-cell *matCellDef="let s" stbCol="numeric" class="group-start">
+              @if (s.dtDropPrice !== null) {
+                {{ s.dtDropPrice | price: s.dtStartPrice }}
+                @if (s.legs.drop !== null) {
+                  <small
+                    class="leg-note"
+                    [class.gain]="s.legs.dropFromEntry === null || s.legs.dropFromEntry < 0"
+                    >{{
+                      'stats.doubleTop.cellD'
+                        | translate
+                          : {
+                              gain: (s.legs.drop | shortGain),
+                              entry:
+                                s.legs.dropFromEntry !== null
+                                  ? (s.legs.dropFromEntry | shortGain)
+                                  : '—',
+                            }
+                    }}</small
+                  >
+                }
+                @if (s.durations.drop !== null) {
+                  <small class="leg-note">{{
+                    'stats.kpi.minutes' | translate: { minutes: s.durations.drop }
+                  }}</small>
+                }
+              } @else if (s.dropToFill) {
+                <span class="warn" [matTooltip]="'stats.doubleTop.dropToFillHint' | translate">{{
+                  'stats.doubleTop.dropToFill' | translate
+                }}</span>
+              } @else {
+                <span class="muted">—</span>
+              }
+            </td>
+            <td mat-footer-cell *matFooterCellDef stbCol="numeric" class="group-start">
+              @if (summary(); as kpi) {
+                @if (kpi.medianDropPercent !== null) {
+                  {{ 'stats.doubleTop.medianDrop' | translate }}
+                  <span class="gain">{{ kpi.medianDropPercent | shortGain }} %</span>
+                  <small class="leg-note">{{
+                    'stats.doubleTop.averageD'
+                      | translate
+                        : {
+                            count: kpi.doubleTopsWithDrop,
+                            entry:
+                              kpi.medianDropFromEntryPercent !== null
+                                ? (kpi.medianDropFromEntryPercent | shortGain)
+                                : '—',
+                            minutes:
+                              kpi.medianDropMinutes !== null
+                                ? (kpi.medianDropMinutes | number: '1.0-0')
+                                : '—',
+                          }
+                  }}</small>
+                }
+              }
+            </td>
+          </ng-container>
+
           <ng-container matColumnDef="dtAveragesEnd">
             <td mat-footer-cell *matFooterCellDef colspan="4"></td>
           </ng-container>
@@ -1429,6 +1622,10 @@
                         : 'stats.doubleTop.briefToTop'
                       ) | translate: { toTop: (s.legs.retestToTop | number: '1.1-1') })
                 }}
+                @if (s.legs.drop !== null) {
+                  · <span class="leg">D</span>
+                  <span class="gain">{{ s.legs.drop | shortGain }} %</span>
+                }
               } @else {
                 @if (s.noPush) {
                   <span class="flag-tag">{{ 'stats.fields.noPushTag' | translate }}</span>
