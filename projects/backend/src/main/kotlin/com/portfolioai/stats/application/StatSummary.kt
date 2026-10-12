@@ -6,6 +6,7 @@ import com.portfolioai.stats.domain.StatEntry
 import com.portfolioai.stats.domain.StatMetrics
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.time.LocalTime
 
 private val MEDIAN = BigDecimal("0.5")
 private val THIRD_QUARTILE = BigDecimal("0.75")
@@ -17,6 +18,12 @@ private val DT_REJECTION_CRITERION = BigDecimal("17")
 private val DT_ENTRY_FROM_TOP = BigDecimal("0.95")
 private val DT_DROP_TARGET = BigDecimal("10")
 
+/** The bell — where a GUS's push and, on a no-push day, its drop are timed from (#713). */
+private val MARKET_OPEN: LocalTime = LocalTime.of(9, 30)
+
+/** The drop a GUS needs to have worked : the low end of the sheet's 15-20 % R / R (#713). */
+private val GUS_DROP_TARGET = BigDecimal("15")
+
 /**
  * The KPIs of [StatEntryService.summarise] over the filtered [rows] ; [traded] is how many of them
  * carry a trade. Averages are measured on [pattern]'s stats only, none without one.
@@ -27,6 +34,8 @@ internal fun statSummaryOf(rows: List<StatEntry>, pattern: Pattern?, traded: Int
   val sessions = measured.filterNot { it.isDoubleTop }
   val doubleTops = measured.filter { it.isDoubleTop }
   val drops = doubleTops.filter { it.dtDropPrice != null && it.dtRetestPrice != null }
+  val gusDrops = sessions.filter { gusDrop(it) != null }
+  val timedPushes = sessions.filter { it.pushOpenTime != null }
   val pushes = sessions.mapNotNull { StatMetrics.percentVsOpen(it.openPrice, it.pushOpenPrice) }
   return StatSummaryDto(
     completed = completed.size,
@@ -73,6 +82,14 @@ internal fun statSummaryOf(rows: List<StatEntry>, pattern: Pattern?, traded: Int
       drops.medianMinutes { StatMetrics.minutesBetween(it.dtRetestTime, it.dtDropTime) },
     dropReachedTargetCount =
       drops.count { dropFromEntry(it)?.let { change -> change <= -DT_DROP_TARGET } == true },
+    sessionsWithDrop = gusDrops.size,
+    medianGusDropPercent = gusDrops.medianOf(::gusDrop),
+    gusDropReachedTargetCount =
+      gusDrops.count { gusDrop(it)?.let { change -> change <= -GUS_DROP_TARGET } == true },
+    sessionsWithPushTime = timedPushes.size,
+    medianPushMinutes =
+      timedPushes.medianMinutes { StatMetrics.minutesBetween(MARKET_OPEN, it.pushOpenTime) },
+    medianGusDropMinutes = gusDrops.medianMinutes { gusDropMinutes(it) },
     traded = traded,
     untraded = rows.size - traded,
   )
@@ -81,6 +98,20 @@ internal fun statSummaryOf(rows: List<StatEntry>, pattern: Pattern?, traded: Int
 /** The sheet's entry (top −5 %) → the drop low ; negative when the short gained. */
 private fun dropFromEntry(entry: StatEntry): BigDecimal? =
   StatMetrics.percentChange(entry.dtTopPrice?.multiply(DT_ENTRY_FROM_TOP), entry.dtDropPrice)
+
+/** The push's top — the open on a no-push day — → the drop ; negative when the short gained. */
+private fun gusDrop(entry: StatEntry): BigDecimal? =
+  StatMetrics.percentChange(
+    if (entry.noPush) entry.openPrice else entry.pushOpenPrice,
+    entry.gusDropPrice,
+  )
+
+/** How long the drop took, from the push's top — from the bell on a no-push day. */
+private fun gusDropMinutes(entry: StatEntry): Long? =
+  StatMetrics.minutesBetween(
+    if (entry.noPush) MARKET_OPEN else entry.pushOpenTime,
+    entry.gusDropTime,
+  )
 
 /** Average of a derived percentage over the rows that yield one ; null when none does. */
 private fun List<StatEntry>.averageOf(metric: (StatEntry) -> BigDecimal?): BigDecimal? {

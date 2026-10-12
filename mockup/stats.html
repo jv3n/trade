@@ -313,6 +313,31 @@
           <span>les KPIs, les colonnes du tableau et les moyennes suivent le pattern — les stats ne mesurent que le GUS et le DT (#648) ; un trade SIR, SIV ou discrétionnaire se note au journal, sans stat</span>
         </div>
 
+        <!-- GUS : ce que le pattern rapporte (#713) — la chute après le push, lue côté short, comme la chute D du DT (#706). -->
+        <!-- Son propre n : le drop est facultatif, l'historique ne l'a pas (KTTA, NUWE, AEHL « à saisir »). -->
+        <section class="grid grid-4" style="margin-bottom: 16px" data-group="pattern" data-value="gus" title="Ce que le mouvement offrait, pas un backtest : le stop a pu sauter avant le plus bas">
+          <div class="card kpi">
+            <div class="label">Drop depuis le push</div>
+            <div class="value gain">+20,0 %</div>
+            <div class="sub">médiane · haut du push → plus bas · <b>n = 9</b> sur 12 GUS complétées</div>
+          </div>
+          <div class="card kpi">
+            <div class="label">15 % atteints</div>
+            <div class="value">6 / 9</div>
+            <div class="sub">drops d'au moins 15 % depuis le push — le bas de la fourchette de la fiche</div>
+          </div>
+          <div class="card kpi">
+            <div class="label">Heure du push</div>
+            <div class="value">9,5 min</div>
+            <div class="sub">médiane · 9h30 → haut du push · n = 8</div>
+          </div>
+          <div class="card kpi">
+            <div class="label">Durée du drop</div>
+            <div class="value">47 min</div>
+            <div class="sub">médiane · haut du push → plus bas</div>
+          </div>
+        </section>
+
         <!-- DT : les trois jambes du double top, sur les stats DT cochées (docs/pattern/DT.md). -->
         <section class="grid grid-5" style="margin-bottom: 16px" data-group="pattern" data-value="dt" hidden>
           <div class="card kpi">
@@ -518,24 +543,67 @@
         <section class="card" style="margin-bottom: 16px; border-color: var(--warn)" id="session-panel" data-group="panel" data-value="gus">
           <h2>
             <span>Séance<span class="save-state" id="session-state">✓ enregistré à 09:42</span></span>
-            <span class="hint">à remplir au fil de la journée · chaque champ s'enregistre à la sortie · les % se calculent vs l'open</span>
+            <span class="hint">à remplir au fil de la journée · chaque champ s'enregistre à la sortie · les % se calculent vs l'open · le drop se complète à la clôture</span>
           </h2>
-          <form class="complete" onsubmit="return false">
-            <div class="field"><label>Open ($)</label><input class="input" id="c-open" data-price value="1,90" /><span class="pct muted">repris du candidat (9h30) · tenue −22,8 % · cumul +69,6 %</span></div>
-            <div class="field">
-              <label>Push à l'open ($)</label>
-              <input class="input" id="c-push" data-pct data-price value="2,20" /><span class="pct muted">—</span>
-              <label class="no-push" title="Le titre n'a pas poussé dans les ~10 minutes après l'open"><input type="checkbox" id="c-no-push" /> Pas de push</label>
-            </div>
-            <div class="field"><label>HOD ($)</label><input class="input" data-pct data-price placeholder="2,35" /><span class="pct muted">—</span></div>
-            <div class="field"><label>LOD ($)</label><input class="input" data-pct data-price placeholder="1,52" /><span class="pct muted">—</span></div>
-            <div class="field"><label>EOD ($)</label><input class="input" data-pct data-price placeholder="1,61" /><span class="pct muted">—</span></div>
+          <!-- Une ligne par point, comme le double top (#713) : le push et la chute ont une heure ; HOD, LOD, EOD restent des repères de la journée, sans heure. -->
+          <form onsubmit="return false">
+            <table class="dt-rows">
+              <thead>
+                <tr>
+                  <th>Point</th>
+                  <th>Heure</th>
+                  <th class="num">Prix ($)</th>
+                  <th>% vs open · étape</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Open</td>
+                  <td class="muted">09:30</td>
+                  <td><input class="input" id="c-open" data-price value="1,90" /></td>
+                  <td><span class="pct muted">repris du candidat · tenue −22,8 % · cumul +69,6 %</span></td>
+                </tr>
+                <tr>
+                  <td>Push à l'open</td>
+                  <td><input class="input" type="time" id="c-push-time" value="09:41" title="L'heure du haut du push" /></td>
+                  <td>
+                    <input class="input" id="c-push" data-pct data-price value="2,20" />
+                    <label class="no-push" title="Le titre n'a pas poussé dans les ~10 minutes après l'open : le drop se lit alors depuis l'open"><input type="checkbox" id="c-no-push" /> Pas de push</label>
+                  </td>
+                  <td><span class="pct muted">—</span><small class="muted" id="c-push-span"></small></td>
+                </tr>
+                <tr>
+                  <td title="Le plus bas après le push, avant la clôture — facultatif pour l'instant : la coche ne l'attend pas">Drop</td>
+                  <td><input class="input" type="time" id="c-drop-time" /></td>
+                  <td><input class="input" id="c-drop" placeholder="1,52" /></td>
+                  <td><span class="pct muted" id="c-drop-leg">—</span></td>
+                </tr>
+                <tr>
+                  <td>HOD</td>
+                  <td class="muted">—</td>
+                  <td><input class="input" data-pct data-price placeholder="2,35" /></td>
+                  <td><span class="pct muted">—</span></td>
+                </tr>
+                <tr>
+                  <td>LOD</td>
+                  <td class="muted">—</td>
+                  <td><input class="input" data-pct data-price placeholder="1,52" /></td>
+                  <td><span class="pct muted">—</span></td>
+                </tr>
+                <tr>
+                  <td>EOD</td>
+                  <td class="muted">—</td>
+                  <td><input class="input" data-pct data-price placeholder="1,61" /></td>
+                  <td><span class="pct muted">—</span></td>
+                </tr>
+              </tbody>
+            </table>
           </form>
           <div class="flags-row">
             <label><input type="checkbox" data-flag /> SSR</label>
             <label title="Plus de 20 % du float détenu par des institutions"><input type="checkbox" data-flag /> Institutions &gt; 20 %</label>
             <span style="flex: 1"></span>
-            <span class="progress" id="panel-progress">2 / 5 prix saisis</span>
+            <span class="progress" id="panel-progress">2 / 5 prix saisis · drop à saisir</span>
             <button class="btn" id="panel-close">Fermer</button>
             <button class="btn btn-check" id="panel-check" disabled title="Il manque HOD, LOD, EOD"><span class="icon">check_circle</span> <span data-label>Marquer complétée</span></button>
           </div>
@@ -700,7 +768,7 @@
                 <tr>
                   <td>21/09</td><td><span class="ticker">GLND</span></td><td><span class="tag tag-accent">GUS</span></td>
                   <td class="num sep">+58,4 %</td><td class="num">+12,1 %</td><td class="num">5,2 M</td><td class="num">6,1 M</td>
-                  <td class="sep"><span class="tag">pas de push</span> · LOD −22,3 %</td>
+                  <td class="sep"><span class="tag">pas de push</span> · LOD −22,3 % · drop <span class="gain">+22,3 %</span></td>
                   <td class="sep"></td>
                   <td><button class="check done"><span class="icon">check_circle</span></button></td>
                   <td><button class="btn btn-sm"><span class="icon">arrow_forward</span> Trade</button></td>
@@ -773,6 +841,7 @@
                   <th colspan="3"></th>
                   <th colspan="4" class="sep">Premarket — repris du candidat</th>
                   <th colspan="6" class="sep">Séance — saisie en journée (% vs open)</th>
+                  <th class="sep" title="Ce que le GUS a rapporté (#713)">Résultat</th>
                   <th colspan="3" class="sep"></th>
                 </tr>
                 <tr>
@@ -785,10 +854,11 @@
                   <th class="num">Volume</th>
                   <th class="num sep" title="En dessous, le cumul depuis la clôture de la veille — ce que le scanner montrait à la cloche">Open</th>
                   <th class="num" title="High PM → open : ce qui reste du premarket à 9h30">Tenue</th>
-                  <th class="num">Push open</th>
+                  <th class="num" title="En dessous, le % vs l'open et le temps depuis 9h30">Push open</th>
                   <th class="num">HOD</th>
                   <th class="num">LOD</th>
                   <th class="num">EOD</th>
+                  <th class="num sep" title="Le plus bas après le push, avant la clôture ; en dessous, ce que le short en tire depuis le haut du push (depuis l'open un jour sans push), puis l'heure et la durée">Drop</th>
                   <th class="sep">Flags</th>
                   <th title="Complétée">✓</th>
                   <th>Trade</th>
@@ -800,10 +870,11 @@
                   <td class="num sep">+41,9 %<small class="muted">cumul +60,8 % au high PM</small></td><td class="num">+13,3 %</td><td class="num">6,4 M</td><td class="num">5,8 M</td>
                   <td class="num sep">2,30<small class="muted">cumul +40,7 %</small></td>
                   <td class="num">−12,5 %</td>
-                  <td class="num">2,95<small class="muted">+28,3 %</small></td>
+                  <td class="num">2,95<small class="muted">+28,3 % · 8 min</small></td>
                   <td class="num">2,95<small class="muted">+28,3 %</small></td>
                   <td class="num">1,96<small class="muted">−14,8 %</small></td>
                   <td class="num">2,04<small class="muted">−11,3 %</small></td>
+                  <td class="num sep">1,96<small class="gain">+33,6 % depuis le push</small><small class="muted">10:52 · 74 min</small></td>
                   <td class="sep"></td>
                   <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
                   <td style="white-space: nowrap"><a href="trade.html" class="tag tag-loss" title="Trade 1 · 10:33 → 10:48">−339</a> <a href="trade.html" class="tag tag-loss" title="Trade 2 · 11:00 → 11:04">−444</a> <a href="trade.html" class="tag tag-loss" title="Trade 3 · 11:08 → 11:09">−684</a> <button class="btn btn-sm btn-icon" title="Un autre trade sur cette stat" data-confirm-title="Créer un autre trade {ticker} ?" data-confirm-body="Un nouveau trade vide sur la même stat : même pattern, son propre sens, ses exécutions, son P&amp;L et son post-mortem. Les trades existants ne changent pas. Sous un autre pattern, c'est une autre stat : « Même ticker, autre pattern » sur la stat." data-confirm-ok="Créer le trade"><span class="icon">add</span></button></td>
@@ -817,6 +888,7 @@
                   <td class="num">3,10<small class="muted">+0,0 %</small></td>
                   <td class="num">2,41<small class="muted">−22,3 %</small></td>
                   <td class="num">2,66<small class="muted">−14,2 %</small></td>
+                  <td class="num sep">2,41<small class="gain">+22,3 % depuis l'open · pas de push</small><small class="muted">10:58 · 88 min</small></td>
                   <td class="sep"></td>
                   <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
                   <td><button class="btn btn-sm" data-confirm-title="Créer le trade {ticker} ?" data-confirm-body="Le trade hérite du pattern et du contexte de la stat. Tu ajouteras ensuite les exécutions, le P&amp;L réel, le post-mortem et la capture du chart." data-confirm-ok="Créer le trade"><span class="icon">arrow_forward</span> Trade</button></td>
@@ -830,6 +902,7 @@
                   <td class="num muted">—</td>
                   <td class="num muted">—</td>
                   <td class="num muted">—</td>
+                  <td class="num sep muted">—</td>
                   <td class="sep"></td>
                   <td><button class="check" disabled title="Il manque HOD, LOD, EOD"><span class="icon">radio_button_unchecked</span></button></td>
                   <td><button class="btn btn-sm"><span class="icon">edit</span> Séance</button></td>
@@ -839,10 +912,11 @@
                   <td class="num sep">+63,6 %<small class="muted">cumul +80,0 % au high PM</small></td><td class="num">+10,0 %</td><td class="num">11,2 M</td><td class="num">2,1 M</td>
                   <td class="num sep">5,50<small class="muted">cumul +56,0 %</small></td>
                   <td class="num">−13,3 %</td>
-                  <td class="num">5,88<small class="muted">+6,9 %</small></td>
+                  <td class="num">5,88<small class="muted">+6,9 % · 15 min</small></td>
                   <td class="num">5,95<small class="muted">+8,2 %</small></td>
                   <td class="num">4,62<small class="muted">−16,0 %</small></td>
                   <td class="num">4,70<small class="muted">−14,5 %</small></td>
+                  <td class="num sep">4,62<small class="gain">+21,4 % depuis le push</small><small class="muted">10:40 · 55 min</small></td>
                   <td class="sep"></td>
                   <td><button class="check" title="Marquer complétée"><span class="icon">radio_button_unchecked</span></button></td>
                   <td><button class="btn btn-sm"><span class="icon">edit</span> Séance</button></td>
@@ -856,6 +930,7 @@
                   <td class="num">4,62<small class="muted">+10,0 %</small></td>
                   <td class="num">3,41<small class="muted">−18,8 %</small></td>
                   <td class="num">3,52<small class="muted">−16,2 %</small></td>
+                  <td class="num sep"><span class="warn" title="Complétée avant que le drop existe (#713) : le drop reste à noter — facultatif pour l'instant, il alimente « 15 % atteints »">à saisir</span></td>
                   <td class="sep"></td>
                   <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
                   <td style="white-space: nowrap"><a href="trade.html" class="tag tag-gain">+292</a> <button class="btn btn-sm btn-icon" title="Un autre trade sur cette stat" data-confirm-title="Créer un autre trade {ticker} ?" data-confirm-body="Un nouveau trade vide sur la même stat : même pattern, son propre sens, ses exécutions, son P&amp;L et son post-mortem. Les trades existants ne changent pas. Sous un autre pattern, c'est une autre stat : « Même ticker, autre pattern » sur la stat." data-confirm-ok="Créer le trade"><span class="icon">add</span></button></td>
@@ -865,10 +940,11 @@
                   <td class="num sep">+61,8 %<small class="muted">cumul +82,3 % au high PM</small></td><td class="num">+12,7 %</td><td class="num">4,5 M</td><td class="num">6,2 M</td>
                   <td class="num sep">2,90<small class="muted">cumul +45,7 %</small></td>
                   <td class="num">−20,1 %</td>
-                  <td class="num">3,05<small class="muted">+5,2 %</small></td>
+                  <td class="num">3,05<small class="muted">+5,2 % · 11 min</small></td>
                   <td class="num">3,05<small class="muted">+5,2 %</small></td>
                   <td class="num">2,44<small class="muted">−15,9 %</small></td>
                   <td class="num">2,58<small class="muted">−11,0 %</small></td>
+                  <td class="num sep">2,44<small class="gain">+20,0 % depuis le push</small><small class="muted">10:20 · 39 min</small></td>
                   <td class="sep"><span class="tag tag-warn">SSR</span> <span class="tag">Inst. &lt; 20 %</span></td>
                   <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
                   <td><a href="journal.html" class="tag tag-gain">+115</a></td>
@@ -878,10 +954,11 @@
                   <td class="num sep">+54,4 %<small class="muted">cumul +67,1 % au high PM</small></td><td class="num">+8,2 %</td><td class="num">12,0 M</td><td class="num">2,4 M</td>
                   <td class="num sep">6,00<small class="muted">cumul +51,0 %</small></td>
                   <td class="num">−9,6 %</td>
-                  <td class="num">6,55<small class="muted">+9,2 %</small></td>
+                  <td class="num">6,55<small class="muted">+9,2 % · 14 min</small></td>
                   <td class="num">7,14<small class="muted">+19,0 %</small></td>
                   <td class="num">5,80<small class="muted">−3,3 %</small></td>
                   <td class="num">6,95<small class="muted">+15,8 %</small></td>
+                  <td class="num sep">5,80<small class="gain">+11,5 % depuis le push</small><small class="muted">10:31 · 47 min</small></td>
                   <td class="sep"></td>
                   <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
                   <td><a href="journal.html" class="tag tag-loss">−124</a></td>
@@ -895,6 +972,7 @@
                   <td class="num">3,38<small class="muted">+5,6 %</small></td>
                   <td class="num">2,52<small class="muted">−21,3 %</small></td>
                   <td class="num">2,61<small class="muted">−18,4 %</small></td>
+                  <td class="num sep"><span class="warn" title="Complétée avant que le drop existe (#713) : le drop reste à noter — facultatif pour l'instant, il alimente « 15 % atteints »">à saisir</span></td>
                   <td class="sep"></td>
                   <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
                   <td><a href="journal.html" class="tag tag-gain">+220</a></td>
@@ -904,10 +982,11 @@
                   <td class="num sep">+54,3 %<small class="muted">cumul +68,2 % au high PM</small></td><td class="num">+9,0 %</td><td class="num">18,3 M</td><td class="num">1,9 M</td>
                   <td class="num sep">7,30<small class="muted">cumul +43,0 %</small></td>
                   <td class="num">−15,0 %</td>
-                  <td class="num">7,60<small class="muted">+4,1 %</small></td>
+                  <td class="num">7,60<small class="muted">+4,1 % · 6 min</small></td>
                   <td class="num">7,82<small class="muted">+7,1 %</small></td>
                   <td class="num">6,90<small class="muted">−5,5 %</small></td>
                   <td class="num">7,05<small class="muted">−3,4 %</small></td>
+                  <td class="num sep">6,90<small class="gain">+9,2 % depuis le push</small><small class="muted">10:05 · 29 min</small></td>
                   <td class="sep"></td>
                   <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
                   <td><a href="journal.html" class="tag tag-gain">+30</a></td>
@@ -917,10 +996,11 @@
                   <td class="num sep">+54,5 %<small class="muted">cumul +79,5 % au high PM</small></td><td class="num">+16,2 %</td><td class="num">5,1 M</td><td class="num">7,0 M</td>
                   <td class="num sep">3,55<small class="muted">cumul +38,1 %</small></td>
                   <td class="num">−23,1 %</td>
-                  <td class="num">4,10<small class="muted">+15,5 %</small></td>
+                  <td class="num">4,10<small class="muted">+15,5 % · 9 min</small></td>
                   <td class="num">4,40<small class="muted">+23,9 %</small></td>
                   <td class="num">3,30<small class="muted">−7,0 %</small></td>
                   <td class="num">4,12<small class="muted">+16,1 %</small></td>
+                  <td class="num sep">3,30<small class="gain">+19,5 % depuis le push</small><small class="muted">10:47 · 68 min</small></td>
                   <td class="sep"></td>
                   <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
                   <td><button class="btn btn-sm" data-confirm-title="Créer le trade {ticker} ?" data-confirm-body="Le trade hérite du pattern et du contexte de la stat. Tu ajouteras ensuite les exécutions, le P&amp;L réel, le post-mortem et la capture du chart." data-confirm-ok="Créer le trade"><span class="icon">arrow_forward</span> Trade</button></td>
@@ -934,6 +1014,7 @@
                   <td class="num">2,48<small class="muted">+30,5 %</small></td>
                   <td class="num">1,85<small class="muted">−2,6 %</small></td>
                   <td class="num">2,31<small class="muted">+21,6 %</small></td>
+                  <td class="num sep"><span class="warn" title="Complétée avant que le drop existe (#713) : le drop reste à noter — facultatif pour l'instant, il alimente « 15 % atteints »">à saisir</span></td>
                   <td class="sep"></td>
                   <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
                   <td><a href="journal.html" class="tag tag-loss">−174</a></td>
@@ -943,10 +1024,11 @@
                   <td class="num sep">+63,5 %<small class="muted">cumul +86,6 % au high PM</small></td><td class="num">+14,1 %</td><td class="num">22,0 M</td><td class="num">15,3 M</td>
                   <td class="num sep">0,88<small class="muted">cumul +56,0 %</small></td>
                   <td class="num">−16,4 %</td>
-                  <td class="num">0,95<small class="muted">+8,0 %</small></td>
+                  <td class="num">0,95<small class="muted">+8,0 % · 12 min</small></td>
                   <td class="num">0,95<small class="muted">+8,0 %</small></td>
                   <td class="num">0,71<small class="muted">−19,3 %</small></td>
                   <td class="num">0,74<small class="muted">−15,9 %</small></td>
+                  <td class="num sep">0,71<small class="gain">+25,3 % depuis le push</small><small class="muted">10:12 · 30 min</small></td>
                   <td class="sep"><span class="tag tag-warn" title="Déduit de l'open, pas coché : sous 1 $, c'est le buying power qui limite">&lt; 1 $</span></td>
                   <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
                   <td><button class="btn btn-sm" data-confirm-title="Créer le trade {ticker} ?" data-confirm-body="Le trade hérite du pattern et du contexte de la stat. Tu ajouteras ensuite les exécutions, le P&amp;L réel, le post-mortem et la capture du chart." data-confirm-ok="Créer le trade"><span class="icon">arrow_forward</span> Trade</button></td>
@@ -956,10 +1038,11 @@
                   <td class="num sep">+58,1 %<small class="muted">cumul +71,1 % au high PM</small></td><td class="num">+8,2 %</td><td class="num">9,9 M</td><td class="num">4,4 M</td>
                   <td class="num sep">5,00<small class="muted">cumul +37,4 %</small></td>
                   <td class="num">−19,7 %</td>
-                  <td class="num">5,21<small class="muted">+4,2 %</small></td>
+                  <td class="num">5,21<small class="muted">+4,2 % · 10 min</small></td>
                   <td class="num">5,21<small class="muted">+4,2 %</small></td>
                   <td class="num">3,85<small class="muted">−23,0 %</small></td>
                   <td class="num">3,95<small class="muted">−21,0 %</small></td>
+                  <td class="num sep">3,85<small class="gain">+26,1 % depuis le push</small><small class="muted">11:15 · 95 min</small></td>
                   <td class="sep"></td>
                   <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
                   <td><a href="journal.html" class="tag tag-gain">+321</a></td>
@@ -969,10 +1052,11 @@
                   <td class="num sep">+48,7 %<small class="muted">cumul +61,0 % au high PM</small></td><td class="num">+8,3 %</td><td class="num">32,0 M</td><td class="num">1,2 M</td>
                   <td class="num sep">8,50<small class="muted">cumul +41,9 %</small></td>
                   <td class="num">−11,9 %</td>
-                  <td class="num">8,80<small class="muted">+3,5 %</small></td>
+                  <td class="num">8,80<small class="muted">+3,5 % · 7 min</small></td>
                   <td class="num">8,95<small class="muted">+5,3 %</small></td>
                   <td class="num">7,95<small class="muted">−6,5 %</small></td>
                   <td class="num">8,10<small class="muted">−4,7 %</small></td>
+                  <td class="num sep">7,95<small class="gain">+9,7 % depuis le push</small><small class="muted">10:15 · 38 min</small></td>
                   <td class="sep"></td>
                   <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
                   <td><a href="journal.html" class="tag tag-gain">+72</a></td>
@@ -986,6 +1070,7 @@
                   <td class="num"></td>
                   <td class="num">−15,4 %</td>
                   <td class="num">−11,2 %</td>
+                  <td class="num sep" title="Médianes, sur les GUS dont le drop est saisi">méd. <span class="gain">+20,0 %</span><small class="muted">n = 9 · 6 / 9 ≥ 15 % · 47 min</small></td>
                   <td colspan="3"></td>
                 </tr>
               </tfoot>
@@ -1025,6 +1110,14 @@
           a aussi sa stat DT en fin de matinée — le sélecteur « SGBX · GUS / SGBX · DT » en haut montre les deux panneaux. Une stat
           ne mesure que deux patterns, GUS et DT (#648), et ne se reclasse plus : un DT a ses propres prix, c'est une autre stat. En haut, GUS / DT / Tous choisit les KPIs, les colonnes et les moyennes ; « Tous » ne garde que ce qui se compare
           (premarket — vide sur un DT —, float, volume, flags, trade) et résume chaque stat dans son pattern, sans ligne de moyennes.
+        </p>
+        <p class="mockup-note">
+          Le GUS en points (#713) — la carte Séance devient une liste verticale, une ligne par point comme le double top. Le
+          <b>push</b> gagne son heure, et un point s'ajoute : le <b>drop</b>, le plus bas après le push (heure et prix, avant la clôture),
+          souvent le LOD — différent quand le LOD est venu avant le push. HOD, LOD et EOD restent des repères de la journée, sans
+          heure. La chute se lit côté short <b>depuis le haut du push</b> (depuis l'open un jour sans push), en vert ; le GUS a
+          fonctionné à <b>15 %</b>, le bas de la fourchette de la fiche. Facultative pour l'instant : les GUS déjà cochés n'ont ni
+          heure ni chute (KTTA, NUWE, AEHL « à saisir »), la coche reste à cinq prix, et la rangée de KPIs porte son propre n.
         </p>
         <p class="mockup-note">
           Ce que rapporte un double top (#706) — les quatre points décrivent le setup jusqu'à l'entrée ; un cinquième, le <b>plus bas
@@ -1085,7 +1178,7 @@
         function update() {
           const o = parse(open.value);
           fields.forEach((input) => {
-            const out = input.nextElementSibling;
+            const out = input.closest('tr').querySelector('.pct');
             const v = parse(input.value);
             if (!(o > 0) || isNaN(v)) {
               out.textContent = '—';
@@ -1113,10 +1206,60 @@
         const label = check.querySelector('[data-label]');
         let done = false;
 
+        // La chute (#713) : facultative, hors du compte de la coche ; prix et heure vont ensemble, après le push et sous lui.
+        // Un jour sans push, elle se lit depuis l'open.
+        const drop = document.getElementById('c-drop');
+        const dropTime = document.getElementById('c-drop-time');
+        const pushTime = document.getElementById('c-push-time');
+        const OPEN = 9 * 60 + 30;
+        const toMin = (v) => (v ? Number(v.slice(0, 2)) * 60 + Number(v.slice(3, 5)) : null);
+        const num = (v) => parseFloat(String(v).replace(',', '.'));
+        const fmt = (p) => '+' + p.toFixed(1).replace('.', ',') + ' %';
+        const dropDone = () => num(drop.value) > 0 && !!dropTime.value;
+        function dropLeg() {
+          const out = document.getElementById('c-drop-leg');
+          const p = toMin(pushTime.value);
+          document.getElementById('c-push-span').textContent =
+            p !== null && !noPush.checked ? ' · ' + (p - OPEN) + " min après l'open" : '';
+          const base = noPush.checked ? num(prices[0].value) : num(push.value);
+          const low = num(drop.value);
+          const hasPrice = low > 0;
+          const hasTime = !!dropTime.value;
+          const above = hasPrice && base > 0 && low > base;
+          const from = noPush.checked ? OPEN : p;
+          const early = hasTime && from !== null && toMin(dropTime.value) < from;
+          drop.classList.toggle('invalid', above || (hasTime && !hasPrice));
+          dropTime.classList.toggle('invalid', early || (hasPrice && !hasTime));
+          let html;
+          if (above) html = '<span class="warn">au-dessus du ' + (noPush.checked ? "l'open" : 'push') + '</span>';
+          else if (early) html = '<span class="warn">avant le push : les heures vont dans l\'ordre</span>';
+          else if (hasPrice !== hasTime)
+            html = '<span class="warn">' + (hasPrice ? "l'heure du drop, avec son prix" : 'le prix du drop, avec son heure') + '</span>';
+          else if (hasPrice && base > 0) {
+            const g = ((base - low) / base) * 100;
+            const d = from !== null ? ' · ' + (toMin(dropTime.value) - from) + ' min' : '';
+            html =
+              '<span class="gain">' + fmt(g) + ' pour le short</span>' + d +
+              '<small>' + (noPush.checked ? "depuis l'open — pas de push" : 'depuis le haut du push') +
+              (g >= 15 ? ' · 15 % atteints' : ' · sous les 15 % de la fiche') + '</small>';
+          } else html = 'facultatif — souvent le LOD ; plus haut quand le LOD est venu avant le push<small>vide si le titre a continué de monter</small>';
+          out.innerHTML = html;
+          out.className = 'pct';
+        }
+        [drop, dropTime, pushTime].forEach((f) => {
+          f.addEventListener('input', () => {
+            dropLeg();
+            refresh();
+          });
+          f.addEventListener('change', () => window.saveCue('session-state'));
+        });
+        push.addEventListener('input', dropLeg);
+
         function refresh() {
           const needed = names.filter((_, i) => !prices[i].disabled);
           const missing = needed.filter((n) => prices[names.indexOf(n)].value.trim() === '');
-          progress.textContent = needed.length - missing.length + ' / ' + needed.length + ' prix saisis';
+          progress.textContent =
+            needed.length - missing.length + ' / ' + needed.length + ' prix saisis · ' + (dropDone() ? 'drop ✓' : 'drop à saisir');
           check.disabled = missing.length > 0 && !done;
           check.title = missing.length > 0 ? 'Il manque ' + missing.join(', ') : '';
           // Une stat cochée ne peut pas perdre un prix : les champs vides sont refusés tant qu'elle l'est.
@@ -1142,6 +1285,9 @@
         noPush.addEventListener('change', () => {
           if (noPush.checked) typedPush = push.value;
           push.disabled = noPush.checked;
+          pushTime.disabled = noPush.checked;
+          if (noPush.checked) pushTime.value = '';
+          dropLeg();
           push.value = noPush.checked ? '' : typedPush;
           push.dispatchEvent(new Event('input'));
           markSaved();
@@ -1153,6 +1299,7 @@
           refresh();
         });
         refresh();
+        dropLeg();
 
         // Coche de la liste : bascule complétée / à compléter.
         document.querySelectorAll('table .check').forEach((btn) =>

@@ -4,6 +4,7 @@ import {
   doubleTopDurations,
   doubleTopLegs,
   gapPercent,
+  gusSequence,
   holdPercent,
   minutesBetween,
   percentVsOpen,
@@ -163,5 +164,49 @@ describe('doubleTopDurations', () => {
   // Typed backwards, the panel says so on the field : a negative leg would only mislead.
   it('never reads a negative leg', () => {
     expect(minutesBetween('10:21', '10:14')).toBeNull();
+  });
+});
+
+// #713 — what a GUS paid : KTTA, pushed to 4.62 at 09:41, down to 3.41 at 10:25.
+describe('gusSequence', () => {
+  const ktta = {
+    openPrice: 4.2,
+    pushOpenPrice: 4.62,
+    noPush: false,
+    pushOpenTime: '09:41',
+    gusDropPrice: 3.41,
+    gusDropTime: '10:25',
+  };
+
+  it('reads the drop from the top of the push, as a fall of the price', () => {
+    expect(gusSequence(ktta).drop).toBeCloseTo(-26.19, 2);
+  });
+
+  it('times the push from the bell and the drop from the push', () => {
+    const sequence = gusSequence(ktta);
+
+    expect(sequence.pushMinutes).toBe(11);
+    expect(sequence.dropMinutes).toBe(44);
+  });
+
+  // GLND, 21/09 : no push — the open is where the short could have started.
+  it('reads a no-push day from the open, and times its drop from the bell', () => {
+    const sequence = gusSequence({
+      ...ktta,
+      openPrice: 3.1,
+      pushOpenPrice: null,
+      noPush: true,
+      pushOpenTime: null,
+      gusDropPrice: 2.41,
+      gusDropTime: '10:58',
+    });
+
+    expect(sequence.drop).toBeCloseTo(-22.26, 2);
+    expect(sequence.pushMinutes).toBeNull();
+    expect(sequence.dropMinutes).toBe(88);
+  });
+
+  it('leaves the drop null while it is not typed — it is optional', () => {
+    expect(gusSequence({ ...ktta, gusDropPrice: null }).drop).toBeNull();
   });
 });

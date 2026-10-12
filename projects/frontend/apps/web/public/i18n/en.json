@@ -712,7 +712,14 @@
       "dropDurationSub": "median · retest → low",
       "dropTarget": "{{target}} % reached",
       "dropTargetSub": "drops of at least {{target}} % from the sheet's entry",
-      "dropHint": "What the move offered, not a backtest : the stop may have been hit before the low"
+      "dropHint": "What the move offered, not a backtest : the stop may have been hit before the low",
+      "gusDrop": "Drop from the push",
+      "gusDropSub": "median · push's top → drop · n = {{count}} of {{total}} completed GUS",
+      "gusDropTargetSub": "drops of at least {{target}} % from the push — the low end of the sheet's range",
+      "pushTime": "Push time",
+      "pushTimeSub": "median · 9:30 → push's top · n = {{count}}",
+      "gusDropDuration": "Duration of the drop",
+      "gusDropDurationSub": "median · push's top → drop"
     },
     "complete": {
       "title": "Session",
@@ -797,7 +804,10 @@
       "pushedCount": "{{count}} with a push",
       "dtDrop": "Drop low",
       "dtDropPrice": "Drop low ($)",
-      "dtDropTime": "Drop low time"
+      "dtDropTime": "Drop low time",
+      "pushOpenTime": "Push time",
+      "gusDropPrice": "Drop ($)",
+      "gusDropTime": "Drop time"
     },
     "actions": {
       "edit": "Edit the session",
@@ -881,7 +891,13 @@
       "timeOutsideSession": "a time between 04:00 and 20:00",
       "dropAboveRetest": "the drop low is above the retest",
       "dropTimeRequired": "the drop low time, with its price",
-      "dropPriceRequired": "the drop low price, with its time"
+      "dropPriceRequired": "the drop low price, with its time",
+      "gusDropAbovePush": "the drop is above the push",
+      "gusDropAboveOpen": "the drop is above the open",
+      "gusDropBeforePush": "the drop comes before the push",
+      "gusDropTimeRequired": "the drop time, with its price",
+      "gusDropPriceRequired": "the drop price, with its time",
+      "gusPushTimeRequired": "the push time, with the drop"
     },
     "confirmCreate": {
       "title": "Create the {{ticker}} stat?",
@@ -969,6 +985,33 @@
       "tag": "out of pattern",
       "RETEST_TOOK_TOP": "The retest takes the top back : a breakout, not a double top",
       "PRICE_OUT_OF_RANGE": "The open is outside the sheet's price range (~$0.30 – $10)"
+    },
+    "points": {
+      "point": "Point",
+      "time": "Time",
+      "price": "Price ($)",
+      "step": "Leg",
+      "stepGus": "% vs open · leg"
+    },
+    "gus": {
+      "point": "Drop",
+      "column": "Drop",
+      "columnHint": "The lowest print after the push, before the close ; below, what the short makes from the push's top (from the open on a no-push day), then the time and the duration",
+      "pushMinutes": "{{minutes}} min after the open",
+      "leg": "{{gain}} % for the short",
+      "fromPush": "from the push's top · {{minutes}} min",
+      "fromOpen": "from the open — no push · {{minutes}} min",
+      "reached": "{{target}} % reached",
+      "missed": "under the sheet's {{target}} %",
+      "hint": "optional — often the LOD ; higher when the LOD came before the push, empty when the stock kept going up",
+      "cell": "{{gain}} % for the short",
+      "cellTime": "{{time}} · {{minutes}} min",
+      "done": "drop ✓",
+      "toFill": "drop to fill",
+      "toFillShort": "to fill",
+      "toFillHint": "Completed before the drop existed : the low after the push is still to record. Optional for now, it feeds « 15 % reached ».",
+      "footer": "n = {{count}} · {{reached}} / {{count}} ≥ {{target}} % · {{minutes}} min",
+      "brief": "drop"
     }
   },
   "calculator": {

@@ -94,6 +94,9 @@ function makeStat(overrides: Partial<StatEntry> = {}): StatEntry {
     dtRetestTime: null,
     dtDropPrice: null,
     dtDropTime: null,
+    pushOpenTime: null,
+    gusDropPrice: null,
+    gusDropTime: null,
     ssr: false,
     under1Dollar: false,
     highInstitutions: true,
@@ -173,6 +176,12 @@ function makeSummary(overrides: Partial<StatSummary> = {}): StatSummary {
     medianDropFromEntryPercent: null,
     medianDropMinutes: null,
     dropReachedTargetCount: 0,
+    sessionsWithDrop: 0,
+    medianGusDropPercent: null,
+    gusDropReachedTargetCount: 0,
+    sessionsWithPushTime: 0,
+    medianPushMinutes: null,
+    medianGusDropMinutes: null,
     traded: 8,
     untraded: 2,
     ...overrides,
@@ -1024,6 +1033,145 @@ describe('StatsPage', () => {
     expect(page.rows().map((r) => r.ticker)).toEqual(['BNRG']);
   });
 
+  // ---- GUS sequence (#713) ----
+
+  /** KTTA in the panel, its session typed, the drop still to come. */
+  const kttaInProgress = () =>
+    makePending({ openPrice: 4.2, pushOpenPrice: 4.62, hodPrice: 4.62, lodPrice: 3.41 });
+
+  // Optional like the DT's : the history has none, the ✓ must not wait for it.
+  it("reads the GUS drop live as the short's gain, and counts it apart from the five prices", async () => {
+    const { page } = await setup({ rows: [kttaInProgress()] });
+
+    expect(page.gusDropDone()).toBe(false);
+    page.setSessionTime('pushOpenTime', '09:41');
+    page.setSessionPrice('gusDropPrice', 3.41);
+    page.setSessionTime('gusDropTime', '10:25');
+
+    expect(page.gusDropDone()).toBe(true);
+    expect(page.gusSequence().drop).toBeCloseTo(-26.19, 2);
+    expect(page.gusSequence().pushMinutes).toBe(11);
+    expect(page.gusSequence().dropMinutes).toBe(44);
+    expect(page.sessionMissing()).toEqual(['stats.fields.eod']);
+  });
+
+  it('refuses a drop above the push, before it in time, half typed, or without the push time', async () => {
+    const { page, repo } = await setup({ rows: [kttaInProgress()] });
+    page.setSessionTime('pushOpenTime', '09:41');
+
+    page.setSessionPrice('gusDropPrice', 3.41);
+    page.saveSession();
+    expect(repo.update).not.toHaveBeenCalled();
+    expect(page.sessionIssue()?.reason).toBe('stats.save.gusDropTimeRequired');
+    expect(page.atFault('gusDropTime')).toBe(true);
+
+    page.setSessionTime('gusDropTime', '09:35');
+    expect(page.sessionIssue()?.reason).toBe('stats.save.gusDropBeforePush');
+
+    page.setSessionTime('gusDropTime', '10:25');
+    page.setSessionTime('pushOpenTime', '');
+    expect(page.sessionIssue()?.reason).toBe('stats.save.gusPushTimeRequired');
+    expect(page.atFault('pushOpenTime')).toBe(true);
+    expect(page.gusDropDone()).toBe(false);
+
+    page.setSessionTime('pushOpenTime', '09:41');
+    page.setSessionPrice('hodPrice', 5);
+    page.setSessionPrice('gusDropPrice', 4.7);
+    expect(page.sessionIssue()?.reason).toBe('stats.save.gusDropAbovePush');
+    expect(page.atFault('pushOpenPrice')).toBe(true);
+  });
+
+  // GLND, 21/09 : no push — the drop is read against the open.
+  it('reads the drop of a no-push day against the open', async () => {
+    const { page } = await setup({
+      rows: [makePending({ openPrice: 3.1, hodPrice: 3.2, lodPrice: 2.41, noPush: true })],
+    });
+
+    page.setSessionPrice('gusDropPrice', 3.15);
+    page.setSessionTime('gusDropTime', '10:58');
+
+    expect(page.sessionIssue()?.reason).toBe('stats.save.gusDropAboveOpen');
+    expect(page.atFault('openPrice')).toBe(true);
+  });
+
+  // Review of #713 : over the whole history every completed GUS lacks it — an all-amber column.
+  it('asks for the drop on a completed GUS that has none, once a period is chosen', async () => {
+    const { page } = await setup({
+      rows: [
+        makeStat({ id: 'ktta' }),
+        makeStat({ id: 'bnzi', gusDropPrice: 2.7, gusDropTime: '10:05' }),
+        kttaInProgress(),
+      ],
+    });
+
+    expect(page.rows().map((r) => r.gusDropToFill)).toEqual([false, false, false]);
+
+    page.setPeriod({
+      period: 'custom',
+      dateFrom: new Date(2026, 8, 14),
+      dateTo: new Date(2026, 8, 18),
+    });
+
+    expect(page.rows().map((r) => r.gusDropToFill)).toEqual([true, false, false]);
+  });
+
+  it("shows what the GUS paid as the short's gain, never as a red fall", async () => {
+    const { fixture, page, repo } = await setup({ rows: [makeStat()] });
+    repo.summary.mockReturnValue(
+      of(
+        makeSummary({
+          completed: 12,
+          sessionsWithDrop: 9,
+          medianGusDropPercent: -20,
+          gusDropReachedTargetCount: 6,
+          sessionsWithPushTime: 10,
+          medianPushMinutes: 9.5,
+          medianGusDropMinutes: 47,
+        }),
+      ),
+    );
+    // A new filter fetches the summary again, with the answer above.
+    page.setStatus('COMPLETED');
+    await settle(fixture);
+    await fixture.whenStable();
+    await settle(fixture);
+
+    const values = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll(
+        '[data-testid="gus-drop-kpis"] .kpi__value',
+      ),
+    );
+    expect(values.map((v) => v.textContent?.trim())).toEqual([
+      '+20.0 %',
+      '6 / 9',
+      'stats.kpi.minutes',
+      'stats.kpi.minutes',
+    ]);
+    expect(values[0].classList).toContain('gain');
+  });
+
+  // #713 : both cards read one row per point — the fields named for screen readers and the e2e.
+  it('lays the GUS card out one row per point, its fields named', async () => {
+    const { fixture } = await setup({ rows: [kttaInProgress()] });
+    await fixture.whenStable();
+    await settle(fixture);
+
+    const card = (fixture.nativeElement as HTMLElement).querySelector('table.point-rows');
+    const labels = Array.from(card?.querySelectorAll('input:not([type=checkbox])') ?? []).map((i) =>
+      i.getAttribute('aria-label'),
+    );
+    expect(labels).toEqual([
+      'stats.fields.openPrice',
+      'stats.fields.pushOpenTime',
+      'stats.fields.pushOpen',
+      'stats.fields.gusDropTime',
+      'stats.fields.gusDropPrice',
+      'stats.fields.hod',
+      'stats.fields.lod',
+      'stats.fields.eod',
+    ]);
+  });
+
   // ---- No push (#302) ----
 
   // GLND, 2026-09-21 : dropped straight from the open, only came back up around 11 am.
@@ -1050,6 +1198,19 @@ describe('StatsPage', () => {
 
     expect(page.session().pushOpenPrice).toBe(3.3);
     expect(page.sessionPriceCount()).toBe(5);
+  });
+
+  // #713 : the push's time goes with it, and comes back with it.
+  it('« No push » empties the push time too, and gives it back', async () => {
+    const { page } = await setup({ rows: [makePending()] });
+    page.setSessionPrice('pushOpenPrice', 3.3);
+    page.setSessionTime('pushOpenTime', '09:41');
+
+    page.toggleNoPush(true);
+    expect(page.session().pushOpenTime).toBeNull();
+
+    page.toggleNoPush(false);
+    expect(page.session().pushOpenTime).toBe('09:41');
   });
 
   it('a no-push stat can be ticked without a push price', async () => {

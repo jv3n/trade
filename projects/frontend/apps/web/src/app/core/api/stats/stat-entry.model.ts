@@ -38,6 +38,14 @@ export interface StatEntry {
   hodPrice: number | null;
   lodPrice: number | null;
   eodPrice: number | null;
+  /** When the push topped (#713), `HH:mm` — null on a no-push day. */
+  pushOpenTime: string | null;
+  /**
+   * The drop (#713) : the lowest print after the push — after the open on a no-push day — before
+   * the close, and its time. What the GUS paid ; optional, out of the tick.
+   */
+  gusDropPrice: number | null;
+  gusDropTime: string | null;
 
   // ---- Double top (a DT stat only — null on any other pattern) ----
   /** Where the push starts — the open by default, a later low when the push starts from there. */
@@ -194,6 +202,18 @@ export interface StatSummary {
   medianDropMinutes: number | null;
   /** Drops that gave the 10 % the sheet promises from its entry — read against [doubleTopsWithDrop]. */
   dropReachedTargetCount: number;
+  /** Completed GUS whose drop is typed (#713) — the `n` of the GUS drop figures below. */
+  sessionsWithDrop: number;
+  /** Median drop from the push's top (the open on a no-push day) — negative, the short's gain. */
+  medianGusDropPercent: number | null;
+  /** Drops of at least 15 % — read against [sessionsWithDrop]. */
+  gusDropReachedTargetCount: number;
+  /** Completed GUS whose push time is typed — the `n` of [medianPushMinutes], apart from the drop's. */
+  sessionsWithPushTime: number;
+  /** Median minutes from the bell to the push's top. */
+  medianPushMinutes: number | null;
+  /** Median duration of the drop, from the push's top (the bell on a no-push day). */
+  medianGusDropMinutes: number | null;
   /** Stats of the filtered set that gave birth to a trade — the journal reads « traded / all ». */
   traded: number;
   untraded: number;

@@ -178,7 +178,11 @@
             {{ 'stats.kpi.dropTarget' | translate: { target: dropTarget } }}
           </div>
           <div class="kpi__value">
-            {{ kpi.dropReachedTargetCount }} / {{ kpi.doubleTopsWithDrop }}
+            {{
+              kpi.doubleTopsWithDrop > 0
+                ? kpi.dropReachedTargetCount + ' / ' + kpi.doubleTopsWithDrop
+                : '—'
+            }}
           </div>
           <div class="kpi__sub">
             {{ 'stats.kpi.dropTargetSub' | translate: { target: dropTarget } }}
@@ -337,6 +341,75 @@
                     }
             }}
           </div>
+        </div>
+      </section>
+      <!-- What a GUS pays (#713) : the drop after the push, read as the short's gain, like the DT's
+           (#706). Its own n — the drop is optional, the history has none. -->
+      <section
+        class="stb-fade-in kpi-row"
+        data-testid="gus-drop-kpis"
+        [matTooltip]="'stats.kpi.dropHint' | translate"
+      >
+        <div class="card kpi">
+          <div class="kpi__label">{{ 'stats.kpi.gusDrop' | translate }}</div>
+          <div
+            class="kpi__value"
+            [class.gain]="(kpi.medianGusDropPercent ?? 0) < 0"
+            [class.loss]="(kpi.medianGusDropPercent ?? 0) > 0"
+          >
+            {{
+              kpi.medianGusDropPercent !== null
+                ? (kpi.medianGusDropPercent | shortGain) + ' %'
+                : '—'
+            }}
+          </div>
+          <div class="kpi__sub">
+            {{
+              'stats.kpi.gusDropSub'
+                | translate: { count: kpi.sessionsWithDrop, total: kpi.completed }
+            }}
+          </div>
+        </div>
+        <div class="card kpi">
+          <div class="kpi__label">
+            {{ 'stats.kpi.dropTarget' | translate: { target: gusDropTarget } }}
+          </div>
+          <div class="kpi__value">
+            {{
+              kpi.sessionsWithDrop > 0
+                ? kpi.gusDropReachedTargetCount + ' / ' + kpi.sessionsWithDrop
+                : '—'
+            }}
+          </div>
+          <div class="kpi__sub">
+            {{ 'stats.kpi.gusDropTargetSub' | translate: { target: gusDropTarget } }}
+          </div>
+        </div>
+        <div class="card kpi">
+          <div class="kpi__label">{{ 'stats.kpi.pushTime' | translate }}</div>
+          <div class="kpi__value">
+            {{
+              kpi.medianPushMinutes !== null
+                ? ('stats.kpi.minutes'
+                  | translate: { minutes: (kpi.medianPushMinutes | number: '1.0-1') })
+                : '—'
+            }}
+          </div>
+          <div class="kpi__sub">
+            {{ 'stats.kpi.pushTimeSub' | translate: { count: kpi.sessionsWithPushTime } }}
+          </div>
+        </div>
+        <div class="card kpi">
+          <div class="kpi__label">{{ 'stats.kpi.gusDropDuration' | translate }}</div>
+          <div class="kpi__value">
+            {{
+              kpi.medianGusDropMinutes !== null
+                ? ('stats.kpi.minutes'
+                  | translate: { minutes: (kpi.medianGusDropMinutes | number: '1.0-0') })
+                : '—'
+            }}
+          </div>
+          <div class="kpi__sub">{{ 'stats.kpi.gusDropDurationSub' | translate }}</div>
         </div>
       </section>
     }
@@ -612,388 +685,559 @@
         }}</span>
       </h3>
 
+      <!-- One row per point, like an execution in the journal (#469) : its time, its price, the leg it
+           closes. The GUS reads the same way (#713) ; HOD, LOD and EOD stay day-wide, with no time. -->
       @if (isDoubleTop()) {
         @let legs = doubleTopLegs();
         @let durations = doubleTopDurations();
-        <!-- One row per point, like an execution in the journal : its time, then its price (#469). -->
-        <form class="session-form session-form--dt" (submit)="$event.preventDefault()">
-          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="time-field">
-            <mat-label>{{ 'stats.fields.dtStartTime' | translate }}</mat-label>
-            <input
-              matInput
-              type="time"
-              [value]="session().dtStartTime ?? ''"
-              (input)="setSessionTime('dtStartTime', $any($event.target).value)"
-              (blur)="saveSession()"
-              (keydown.enter)="$any($event.target).blur()"
-            />
-            <mat-hint [class.warn]="atFault('dtStartTime')">{{
-              atFault('dtStartTime') ? (sessionIssue()!.reason | translate) : ''
-            }}</mat-hint>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>{{ 'stats.fields.dtStartPrice' | translate }}</mat-label>
-            <input
-              #dtStartField
-              matInput
-              appNumberMask
-              [decimals]="4"
-              [min]="0"
-              [number]="session().dtStartPrice"
-              (numberChange)="setSessionPrice('dtStartPrice', $event)"
-              (blur)="saveSession()"
-              (keydown.enter)="$any($event.target).blur()"
-            />
-            <ui-form-field-reset matIconSuffix [for]="dtStartField" />
-            <mat-hint [class.warn]="atFault('dtStartPrice')">{{
-              atFault('dtStartPrice')
-                ? (sessionIssue()!.reason | translate)
-                : ('stats.doubleTop.startHint' | translate)
-            }}</mat-hint>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="time-field">
-            <mat-label>{{ 'stats.fields.dtTopTime' | translate }}</mat-label>
-            <input
-              matInput
-              type="time"
-              [value]="session().dtTopTime ?? ''"
-              (input)="setSessionTime('dtTopTime', $any($event.target).value)"
-              (blur)="saveSession()"
-              (keydown.enter)="$any($event.target).blur()"
-            />
-            <mat-hint [class.warn]="atFault('dtTopTime')">{{
-              atFault('dtTopTime')
-                ? (sessionIssue()!.reason | translate)
-                : durations.rise !== null
-                  ? ('stats.doubleTop.durationA' | translate: { minutes: durations.rise })
-                  : ''
-            }}</mat-hint>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>{{ 'stats.fields.dtTopPrice' | translate }}</mat-label>
-            <input
-              #dtTopField
-              matInput
-              appNumberMask
-              [decimals]="4"
-              [min]="0"
-              [number]="session().dtTopPrice"
-              (numberChange)="setSessionPrice('dtTopPrice', $event)"
-              (blur)="saveSession()"
-              (keydown.enter)="$any($event.target).blur()"
-            />
-            <ui-form-field-reset matIconSuffix [for]="dtTopField" />
-            <mat-hint
-              [class.warn]="
-                atFault('dtTopPrice') ||
-                (legs.extension !== null && legs.extension < extensionCriterion)
-              "
-              >{{
-                atFault('dtTopPrice')
-                  ? (sessionIssue()!.reason | translate)
-                  : legs.extension !== null
-                    ? ('stats.doubleTop.legA'
-                      | translate: { leg: (legs.extension | number: '1.1-1') })
-                    : '—'
-              }}</mat-hint
-            >
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="time-field">
-            <mat-label>{{ 'stats.fields.dtLowTime' | translate }}</mat-label>
-            <input
-              matInput
-              type="time"
-              [value]="session().dtLowTime ?? ''"
-              (input)="setSessionTime('dtLowTime', $any($event.target).value)"
-              (blur)="saveSession()"
-              (keydown.enter)="$any($event.target).blur()"
-            />
-            <mat-hint [class.warn]="atFault('dtLowTime')">{{
-              atFault('dtLowTime')
-                ? (sessionIssue()!.reason | translate)
-                : durations.rejection !== null
-                  ? ('stats.doubleTop.durationB' | translate: { minutes: durations.rejection })
-                  : ''
-            }}</mat-hint>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>{{ 'stats.fields.dtLowPrice' | translate }}</mat-label>
-            <input
-              #dtLowField
-              matInput
-              appNumberMask
-              [decimals]="4"
-              [min]="0"
-              [number]="session().dtLowPrice"
-              (numberChange)="setSessionPrice('dtLowPrice', $event)"
-              (blur)="saveSession()"
-              (keydown.enter)="$any($event.target).blur()"
-            />
-            <ui-form-field-reset matIconSuffix [for]="dtLowField" />
-            <mat-hint
-              [class.warn]="
-                atFault('dtLowPrice') ||
-                (legs.rejection !== null && -legs.rejection < rejectionCriterion)
-              "
-              >{{
-                atFault('dtLowPrice')
-                  ? (sessionIssue()!.reason | translate)
-                  : legs.rejection !== null
-                    ? ((-legs.rejection < rejectionCriterion
-                        ? 'stats.doubleTop.legBBreath'
-                        : 'stats.doubleTop.legB'
-                      ) | translate: { leg: (legs.rejection | number: '1.1-1') })
-                    : '—'
-              }}</mat-hint
-            >
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="time-field">
-            <mat-label>{{ 'stats.fields.dtRetestTime' | translate }}</mat-label>
-            <input
-              matInput
-              type="time"
-              [value]="session().dtRetestTime ?? ''"
-              (input)="setSessionTime('dtRetestTime', $any($event.target).value)"
-              (blur)="saveSession()"
-              (keydown.enter)="$any($event.target).blur()"
-            />
-            <mat-hint [class.warn]="atFault('dtRetestTime')">{{
-              atFault('dtRetestTime')
-                ? (sessionIssue()!.reason | translate)
-                : durations.retest !== null && durations.total !== null
-                  ? ('stats.doubleTop.durationC'
-                    | translate: { minutes: durations.retest, total: durations.total })
-                  : ''
-            }}</mat-hint>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>{{ 'stats.fields.dtRetestPrice' | translate }}</mat-label>
-            <input
-              #dtRetestField
-              matInput
-              appNumberMask
-              [decimals]="4"
-              [min]="0"
-              [number]="session().dtRetestPrice"
-              (numberChange)="setSessionPrice('dtRetestPrice', $event)"
-              (blur)="saveSession()"
-              (keydown.enter)="$any($event.target).blur()"
-            />
-            <ui-form-field-reset matIconSuffix [for]="dtRetestField" />
-            <mat-hint [class.warn]="atFault('dtRetestPrice')">{{
-              atFault('dtRetestPrice')
-                ? (sessionIssue()!.reason | translate)
-                : legs.retest !== null && legs.retestToTop !== null
-                  ? ((legs.retestToTop >= 0
-                      ? 'stats.doubleTop.legCTookTop'
-                      : 'stats.doubleTop.legC'
-                    )
-                    | translate
-                      : {
-                          leg: (legs.retest | number: '1.1-1'),
-                          toTop: (legs.retestToTop | number: '1.1-1'),
-                        })
-                  : '—'
-            }}</mat-hint>
-          </mat-form-field>
-
-          <!-- The fifth point (#706) : optional, the ✓ does not wait for it. -->
-          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="time-field">
-            <mat-label>{{ 'stats.fields.dtDropTime' | translate }}</mat-label>
-            <input
-              matInput
-              type="time"
-              [value]="session().dtDropTime ?? ''"
-              (input)="setSessionTime('dtDropTime', $any($event.target).value)"
-              (blur)="saveSession()"
-              (keydown.enter)="$any($event.target).blur()"
-            />
-            <mat-hint [class.warn]="atFault('dtDropTime')">{{
-              atFault('dtDropTime')
-                ? (sessionIssue()!.reason | translate)
-                : durations.drop !== null
-                  ? ('stats.doubleTop.durationD' | translate: { minutes: durations.drop })
-                  : ''
-            }}</mat-hint>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>{{ 'stats.fields.dtDropPrice' | translate }}</mat-label>
-            <input
-              #dtDropField
-              matInput
-              appNumberMask
-              [decimals]="4"
-              [min]="0"
-              [number]="session().dtDropPrice"
-              (numberChange)="setSessionPrice('dtDropPrice', $event)"
-              (blur)="saveSession()"
-              (keydown.enter)="$any($event.target).blur()"
-            />
-            <ui-form-field-reset matIconSuffix [for]="dtDropField" />
-            <mat-hint
-              [class.warn]="atFault('dtDropPrice')"
-              [class.gain]="
-                !atFault('dtDropPrice') &&
-                legs.drop !== null &&
-                (legs.dropFromEntry === null || legs.dropFromEntry < 0)
-              "
-              >{{
-                atFault('dtDropPrice')
-                  ? (sessionIssue()!.reason | translate)
-                  : legs.drop !== null
-                    ? ('stats.doubleTop.legD'
+        <table class="point-rows">
+          <thead>
+            <tr>
+              <th scope="col">{{ 'stats.points.point' | translate }}</th>
+              <th scope="col">{{ 'stats.points.time' | translate }}</th>
+              <th scope="col">{{ 'stats.points.price' | translate }}</th>
+              <th scope="col">{{ 'stats.points.step' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">{{ 'stats.fields.dtStart' | translate }}</th>
+              <td>
+                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="time-field">
+                  <input
+                    matInput
+                    type="time"
+                    [attr.aria-label]="'stats.fields.dtStartTime' | translate"
+                    [value]="session().dtStartTime ?? ''"
+                    (input)="setSessionTime('dtStartTime', $any($event.target).value)"
+                    (blur)="saveSession()"
+                    (keydown.enter)="$any($event.target).blur()"
+                  />
+                  @if (atFault('dtStartTime')) {
+                    <mat-hint class="warn">{{ sessionIssue()!.reason | translate }}</mat-hint>
+                  }
+                </mat-form-field>
+              </td>
+              <td>
+                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="price-field">
+                  <input
+                    #dtStartField
+                    matInput
+                    appNumberMask
+                    [decimals]="4"
+                    [min]="0"
+                    [attr.aria-label]="'stats.fields.dtStartPrice' | translate"
+                    [number]="session().dtStartPrice"
+                    (numberChange)="setSessionPrice('dtStartPrice', $event)"
+                    (blur)="saveSession()"
+                    (keydown.enter)="$any($event.target).blur()"
+                  />
+                  <ui-form-field-reset matIconSuffix [for]="dtStartField" />
+                  @if (atFault('dtStartPrice')) {
+                    <mat-hint class="warn">{{ sessionIssue()!.reason | translate }}</mat-hint>
+                  }
+                </mat-form-field>
+              </td>
+              <td class="point-rows__step">
+                <span class="muted">{{ 'stats.doubleTop.startHint' | translate }}</span>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">{{ 'stats.fields.dtTop' | translate }}</th>
+              <td>
+                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="time-field">
+                  <input
+                    matInput
+                    type="time"
+                    [attr.aria-label]="'stats.fields.dtTopTime' | translate"
+                    [value]="session().dtTopTime ?? ''"
+                    (input)="setSessionTime('dtTopTime', $any($event.target).value)"
+                    (blur)="saveSession()"
+                    (keydown.enter)="$any($event.target).blur()"
+                  />
+                  @if (atFault('dtTopTime')) {
+                    <mat-hint class="warn">{{ sessionIssue()!.reason | translate }}</mat-hint>
+                  }
+                </mat-form-field>
+              </td>
+              <td>
+                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="price-field">
+                  <input
+                    #dtTopField
+                    matInput
+                    appNumberMask
+                    [decimals]="4"
+                    [min]="0"
+                    [attr.aria-label]="'stats.fields.dtTopPrice' | translate"
+                    [number]="session().dtTopPrice"
+                    (numberChange)="setSessionPrice('dtTopPrice', $event)"
+                    (blur)="saveSession()"
+                    (keydown.enter)="$any($event.target).blur()"
+                  />
+                  <ui-form-field-reset matIconSuffix [for]="dtTopField" />
+                  @if (atFault('dtTopPrice')) {
+                    <mat-hint class="warn">{{ sessionIssue()!.reason | translate }}</mat-hint>
+                  }
+                </mat-form-field>
+              </td>
+              <td class="point-rows__step">
+                @if (legs.extension !== null) {
+                  <span [class.warn]="legs.extension < extensionCriterion">{{
+                    'stats.doubleTop.legA' | translate: { leg: (legs.extension | number: '1.1-1') }
+                  }}</span>
+                } @else {
+                  <span class="muted">—</span>
+                }
+                @if (durations.rise !== null) {
+                  <small>{{
+                    'stats.doubleTop.durationA' | translate: { minutes: durations.rise }
+                  }}</small>
+                }
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">{{ 'stats.fields.dtLow' | translate }}</th>
+              <td>
+                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="time-field">
+                  <input
+                    matInput
+                    type="time"
+                    [attr.aria-label]="'stats.fields.dtLowTime' | translate"
+                    [value]="session().dtLowTime ?? ''"
+                    (input)="setSessionTime('dtLowTime', $any($event.target).value)"
+                    (blur)="saveSession()"
+                    (keydown.enter)="$any($event.target).blur()"
+                  />
+                  @if (atFault('dtLowTime')) {
+                    <mat-hint class="warn">{{ sessionIssue()!.reason | translate }}</mat-hint>
+                  }
+                </mat-form-field>
+              </td>
+              <td>
+                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="price-field">
+                  <input
+                    #dtLowField
+                    matInput
+                    appNumberMask
+                    [decimals]="4"
+                    [min]="0"
+                    [attr.aria-label]="'stats.fields.dtLowPrice' | translate"
+                    [number]="session().dtLowPrice"
+                    (numberChange)="setSessionPrice('dtLowPrice', $event)"
+                    (blur)="saveSession()"
+                    (keydown.enter)="$any($event.target).blur()"
+                  />
+                  <ui-form-field-reset matIconSuffix [for]="dtLowField" />
+                  @if (atFault('dtLowPrice')) {
+                    <mat-hint class="warn">{{ sessionIssue()!.reason | translate }}</mat-hint>
+                  }
+                </mat-form-field>
+              </td>
+              <td class="point-rows__step">
+                @if (legs.rejection !== null) {
+                  <span [class.warn]="-legs.rejection < rejectionCriterion">{{
+                    (-legs.rejection < rejectionCriterion
+                      ? 'stats.doubleTop.legBBreath'
+                      : 'stats.doubleTop.legB'
+                    ) | translate: { leg: (legs.rejection | number: '1.1-1') }
+                  }}</span>
+                } @else {
+                  <span class="muted">—</span>
+                }
+                @if (durations.rejection !== null) {
+                  <small>{{
+                    'stats.doubleTop.durationB' | translate: { minutes: durations.rejection }
+                  }}</small>
+                }
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">{{ 'stats.fields.dtRetest' | translate }}</th>
+              <td>
+                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="time-field">
+                  <input
+                    matInput
+                    type="time"
+                    [attr.aria-label]="'stats.fields.dtRetestTime' | translate"
+                    [value]="session().dtRetestTime ?? ''"
+                    (input)="setSessionTime('dtRetestTime', $any($event.target).value)"
+                    (blur)="saveSession()"
+                    (keydown.enter)="$any($event.target).blur()"
+                  />
+                  @if (atFault('dtRetestTime')) {
+                    <mat-hint class="warn">{{ sessionIssue()!.reason | translate }}</mat-hint>
+                  }
+                </mat-form-field>
+              </td>
+              <td>
+                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="price-field">
+                  <input
+                    #dtRetestField
+                    matInput
+                    appNumberMask
+                    [decimals]="4"
+                    [min]="0"
+                    [attr.aria-label]="'stats.fields.dtRetestPrice' | translate"
+                    [number]="session().dtRetestPrice"
+                    (numberChange)="setSessionPrice('dtRetestPrice', $event)"
+                    (blur)="saveSession()"
+                    (keydown.enter)="$any($event.target).blur()"
+                  />
+                  <ui-form-field-reset matIconSuffix [for]="dtRetestField" />
+                  @if (atFault('dtRetestPrice')) {
+                    <mat-hint class="warn">{{ sessionIssue()!.reason | translate }}</mat-hint>
+                  }
+                </mat-form-field>
+              </td>
+              <td class="point-rows__step">
+                @if (legs.retest !== null && legs.retestToTop !== null) {
+                  <span>{{
+                    (legs.retestToTop >= 0 ? 'stats.doubleTop.legCTookTop' : 'stats.doubleTop.legC')
+                      | translate
+                        : {
+                            leg: (legs.retest | number: '1.1-1'),
+                            toTop: (legs.retestToTop | number: '1.1-1'),
+                          }
+                  }}</span>
+                } @else {
+                  <span class="muted">—</span>
+                }
+                @if (durations.retest !== null && durations.total !== null) {
+                  <small>{{
+                    'stats.doubleTop.durationC'
+                      | translate: { minutes: durations.retest, total: durations.total }
+                  }}</small>
+                }
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">{{ 'stats.fields.dtDrop' | translate }}</th>
+              <td>
+                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="time-field">
+                  <input
+                    matInput
+                    type="time"
+                    [attr.aria-label]="'stats.fields.dtDropTime' | translate"
+                    [value]="session().dtDropTime ?? ''"
+                    (input)="setSessionTime('dtDropTime', $any($event.target).value)"
+                    (blur)="saveSession()"
+                    (keydown.enter)="$any($event.target).blur()"
+                  />
+                  @if (atFault('dtDropTime')) {
+                    <mat-hint class="warn">{{ sessionIssue()!.reason | translate }}</mat-hint>
+                  }
+                </mat-form-field>
+              </td>
+              <td>
+                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="price-field">
+                  <input
+                    #dtDropField
+                    matInput
+                    appNumberMask
+                    [decimals]="4"
+                    [min]="0"
+                    [attr.aria-label]="'stats.fields.dtDropPrice' | translate"
+                    [number]="session().dtDropPrice"
+                    (numberChange)="setSessionPrice('dtDropPrice', $event)"
+                    (blur)="saveSession()"
+                    (keydown.enter)="$any($event.target).blur()"
+                  />
+                  <ui-form-field-reset matIconSuffix [for]="dtDropField" />
+                  @if (atFault('dtDropPrice')) {
+                    <mat-hint class="warn">{{ sessionIssue()!.reason | translate }}</mat-hint>
+                  }
+                </mat-form-field>
+              </td>
+              <td class="point-rows__step">
+                @if (legs.drop !== null) {
+                  <span [class.gain]="legs.dropFromEntry === null || legs.dropFromEntry < 0">{{
+                    'stats.doubleTop.legD'
                       | translate
                         : {
                             gain: (legs.drop | shortGain),
                             entry:
                               legs.dropFromEntry !== null ? (legs.dropFromEntry | shortGain) : '—',
-                          })
-                    : ('stats.doubleTop.dropHint' | translate)
-              }}</mat-hint
-            >
-          </mat-form-field>
-        </form>
+                          }
+                  }}</span>
+                } @else {
+                  <span class="muted">{{ 'stats.doubleTop.dropHint' | translate }}</span>
+                }
+                @if (durations.drop !== null) {
+                  <small>{{
+                    'stats.doubleTop.durationD' | translate: { minutes: durations.drop }
+                  }}</small>
+                }
+              </td>
+            </tr>
+          </tbody>
+        </table>
       } @else {
-        <form class="session-form" (submit)="$event.preventDefault()">
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>{{ 'stats.fields.openPrice' | translate }}</mat-label>
-            <input
-              #openPriceField
-              matInput
-              appNumberMask
-              [decimals]="4"
-              [min]="0"
-              [number]="session().openPrice"
-              (numberChange)="setSessionPrice('openPrice', $event)"
-              (blur)="saveSession()"
-              (keydown.enter)="$any($event.target).blur()"
-            />
-            <ui-form-field-reset matIconSuffix [for]="openPriceField" />
-            <mat-hint [class.warn]="atFault('openPrice')">{{
-              atFault('openPrice')
-                ? (sessionIssue()!.reason | translate)
-                : openPercents().hold !== null && openPercents().cumulative !== null
-                  ? ('stats.complete.percentBaseWithHold'
-                    | translate
-                      : {
-                          hold: (openPercents().hold | number: '1.1-1'),
-                          cumulative: (openPercents().cumulative | number: '1.1-1'),
-                        })
-                  : ('stats.complete.percentBase' | translate)
-            }}</mat-hint>
-          </mat-form-field>
-
-          <!-- « No push » sits under the field it greys out (#302). -->
-          <div class="push-field">
-            <mat-form-field appearance="outline" subscriptSizing="dynamic">
-              <mat-label>{{ 'stats.fields.pushOpen' | translate }}</mat-label>
-              <input
-                #pushOpenField
-                matInput
-                appNumberMask
-                [decimals]="4"
-                [min]="0"
-                [number]="session().pushOpenPrice"
-                [disabled]="session().noPush"
-                (numberChange)="setSessionPrice('pushOpenPrice', $event)"
-                (blur)="saveSession()"
-                (keydown.enter)="$any($event.target).blur()"
-              />
-              <ui-form-field-reset matIconSuffix [for]="pushOpenField" />
-              <mat-hint [class.warn]="atFault('pushOpenPrice')">{{
-                atFault('pushOpenPrice')
-                  ? (sessionIssue()!.reason | translate)
-                  : sessionPercents().pushOpen !== null
+        @let gus = gusSequence();
+        <table class="point-rows">
+          <thead>
+            <tr>
+              <th scope="col">{{ 'stats.points.point' | translate }}</th>
+              <th scope="col">{{ 'stats.points.time' | translate }}</th>
+              <th scope="col">{{ 'stats.points.price' | translate }}</th>
+              <th scope="col">{{ 'stats.points.stepGus' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">{{ 'stats.fields.openPriceShort' | translate }}</th>
+              <td>
+                <span class="muted">{{ marketOpen }}</span>
+              </td>
+              <td>
+                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="price-field">
+                  <input
+                    #openPriceField
+                    matInput
+                    appNumberMask
+                    [decimals]="4"
+                    [min]="0"
+                    [attr.aria-label]="'stats.fields.openPrice' | translate"
+                    [number]="session().openPrice"
+                    (numberChange)="setSessionPrice('openPrice', $event)"
+                    (blur)="saveSession()"
+                    (keydown.enter)="$any($event.target).blur()"
+                  />
+                  <ui-form-field-reset matIconSuffix [for]="openPriceField" />
+                  @if (atFault('openPrice')) {
+                    <mat-hint class="warn">{{ sessionIssue()!.reason | translate }}</mat-hint>
+                  }
+                </mat-form-field>
+              </td>
+              <td class="point-rows__step">
+                <span class="muted">{{
+                  openPercents().hold !== null && openPercents().cumulative !== null
+                    ? ('stats.complete.percentBaseWithHold'
+                      | translate
+                        : {
+                            hold: (openPercents().hold | number: '1.1-1'),
+                            cumulative: (openPercents().cumulative | number: '1.1-1'),
+                          })
+                    : ('stats.complete.percentBase' | translate)
+                }}</span>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">{{ 'stats.fields.pushOpen' | translate }}</th>
+              <td>
+                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="time-field">
+                  <input
+                    matInput
+                    type="time"
+                    [disabled]="session().noPush"
+                    [attr.aria-label]="'stats.fields.pushOpenTime' | translate"
+                    [value]="session().pushOpenTime ?? ''"
+                    (input)="setSessionTime('pushOpenTime', $any($event.target).value)"
+                    (blur)="saveSession()"
+                    (keydown.enter)="$any($event.target).blur()"
+                  />
+                  @if (atFault('pushOpenTime')) {
+                    <mat-hint class="warn">{{ sessionIssue()!.reason | translate }}</mat-hint>
+                  }
+                </mat-form-field>
+              </td>
+              <td>
+                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="price-field">
+                  <input
+                    #pushOpenField
+                    matInput
+                    appNumberMask
+                    [decimals]="4"
+                    [min]="0"
+                    [attr.aria-label]="'stats.fields.pushOpen' | translate"
+                    [number]="session().pushOpenPrice"
+                    [disabled]="session().noPush"
+                    (numberChange)="setSessionPrice('pushOpenPrice', $event)"
+                    (blur)="saveSession()"
+                    (keydown.enter)="$any($event.target).blur()"
+                  />
+                  <ui-form-field-reset matIconSuffix [for]="pushOpenField" />
+                  @if (atFault('pushOpenPrice')) {
+                    <mat-hint class="warn">{{ sessionIssue()!.reason | translate }}</mat-hint>
+                  }
+                </mat-form-field>
+                <mat-checkbox
+                  [checked]="session().noPush"
+                  (change)="toggleNoPush($event.checked)"
+                  [matTooltip]="'stats.fields.noPushHint' | translate"
+                >
+                  {{ 'stats.fields.noPush' | translate }}
+                </mat-checkbox>
+              </td>
+              <td class="point-rows__step">
+                <span [class.muted]="sessionPercents().pushOpen === null">{{
+                  sessionPercents().pushOpen !== null
                     ? (sessionPercents().pushOpen | number: '1.1-1') + ' %'
                     : '—'
-              }}</mat-hint>
-            </mat-form-field>
-            <mat-checkbox
-              [checked]="session().noPush"
-              (change)="toggleNoPush($event.checked)"
-              [matTooltip]="'stats.fields.noPushHint' | translate"
-            >
-              {{ 'stats.fields.noPush' | translate }}
-            </mat-checkbox>
-          </div>
-
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>{{ 'stats.fields.hod' | translate }}</mat-label>
-            <input
-              #hodField
-              matInput
-              appNumberMask
-              [decimals]="4"
-              [min]="0"
-              [number]="session().hodPrice"
-              (numberChange)="setSessionPrice('hodPrice', $event)"
-              (blur)="saveSession()"
-              (keydown.enter)="$any($event.target).blur()"
-            />
-            <ui-form-field-reset matIconSuffix [for]="hodField" />
-            <mat-hint [class.warn]="atFault('hodPrice')">{{
-              atFault('hodPrice')
-                ? (sessionIssue()!.reason | translate)
-                : sessionPercents().hod !== null
-                  ? (sessionPercents().hod | number: '1.1-1') + ' %'
-                  : '—'
-            }}</mat-hint>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>{{ 'stats.fields.lod' | translate }}</mat-label>
-            <input
-              #lodField
-              matInput
-              appNumberMask
-              [decimals]="4"
-              [min]="0"
-              [number]="session().lodPrice"
-              (numberChange)="setSessionPrice('lodPrice', $event)"
-              (blur)="saveSession()"
-              (keydown.enter)="$any($event.target).blur()"
-            />
-            <ui-form-field-reset matIconSuffix [for]="lodField" />
-            <mat-hint [class.warn]="atFault('lodPrice')">{{
-              atFault('lodPrice')
-                ? (sessionIssue()!.reason | translate)
-                : sessionPercents().lod !== null
-                  ? (sessionPercents().lod | number: '1.1-1') + ' %'
-                  : '—'
-            }}</mat-hint>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>{{ 'stats.fields.eod' | translate }}</mat-label>
-            <input
-              #eodField
-              matInput
-              appNumberMask
-              [decimals]="4"
-              [min]="0"
-              [number]="session().eodPrice"
-              (numberChange)="setSessionPrice('eodPrice', $event)"
-              (blur)="saveSession()"
-              (keydown.enter)="$any($event.target).blur()"
-            />
-            <ui-form-field-reset matIconSuffix [for]="eodField" />
-            <mat-hint [class.warn]="atFault('eodPrice')">{{
-              atFault('eodPrice')
-                ? (sessionIssue()!.reason | translate)
-                : sessionPercents().eod !== null
-                  ? (sessionPercents().eod | number: '1.1-1') + ' %'
-                  : '—'
-            }}</mat-hint>
-          </mat-form-field>
-        </form>
+                }}</span>
+                @if (gus.pushMinutes !== null) {
+                  <small>{{
+                    'stats.gus.pushMinutes' | translate: { minutes: gus.pushMinutes }
+                  }}</small>
+                }
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">{{ 'stats.gus.point' | translate }}</th>
+              <td>
+                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="time-field">
+                  <input
+                    matInput
+                    type="time"
+                    [attr.aria-label]="'stats.fields.gusDropTime' | translate"
+                    [value]="session().gusDropTime ?? ''"
+                    (input)="setSessionTime('gusDropTime', $any($event.target).value)"
+                    (blur)="saveSession()"
+                    (keydown.enter)="$any($event.target).blur()"
+                  />
+                  @if (atFault('gusDropTime')) {
+                    <mat-hint class="warn">{{ sessionIssue()!.reason | translate }}</mat-hint>
+                  }
+                </mat-form-field>
+              </td>
+              <td>
+                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="price-field">
+                  <input
+                    #gusDropField
+                    matInput
+                    appNumberMask
+                    [decimals]="4"
+                    [min]="0"
+                    [attr.aria-label]="'stats.fields.gusDropPrice' | translate"
+                    [number]="session().gusDropPrice"
+                    (numberChange)="setSessionPrice('gusDropPrice', $event)"
+                    (blur)="saveSession()"
+                    (keydown.enter)="$any($event.target).blur()"
+                  />
+                  <ui-form-field-reset matIconSuffix [for]="gusDropField" />
+                  @if (atFault('gusDropPrice')) {
+                    <mat-hint class="warn">{{ sessionIssue()!.reason | translate }}</mat-hint>
+                  }
+                </mat-form-field>
+              </td>
+              <td class="point-rows__step">
+                @if (gus.drop !== null) {
+                  <span [class.gain]="gus.drop < 0">{{
+                    'stats.gus.leg' | translate: { gain: (gus.drop | shortGain) }
+                  }}</span>
+                  <small>{{
+                    (session().noPush ? 'stats.gus.fromOpen' : 'stats.gus.fromPush')
+                      | translate: { minutes: gus.dropMinutes ?? '—' }
+                  }}</small>
+                  <small>{{
+                    (-gus.drop >= gusDropTarget ? 'stats.gus.reached' : 'stats.gus.missed')
+                      | translate: { target: gusDropTarget }
+                  }}</small>
+                } @else {
+                  <span class="muted">{{ 'stats.gus.hint' | translate }}</span>
+                }
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">{{ 'stats.fields.hod' | translate }}</th>
+              <td>
+                <span class="muted">—</span>
+              </td>
+              <td>
+                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="price-field">
+                  <input
+                    #hodField
+                    matInput
+                    appNumberMask
+                    [decimals]="4"
+                    [min]="0"
+                    [attr.aria-label]="'stats.fields.hod' | translate"
+                    [number]="session().hodPrice"
+                    (numberChange)="setSessionPrice('hodPrice', $event)"
+                    (blur)="saveSession()"
+                    (keydown.enter)="$any($event.target).blur()"
+                  />
+                  <ui-form-field-reset matIconSuffix [for]="hodField" />
+                  @if (atFault('hodPrice')) {
+                    <mat-hint class="warn">{{ sessionIssue()!.reason | translate }}</mat-hint>
+                  }
+                </mat-form-field>
+              </td>
+              <td class="point-rows__step">
+                <span [class.muted]="sessionPercents().hod === null">{{
+                  sessionPercents().hod !== null
+                    ? (sessionPercents().hod | number: '1.1-1') + ' %'
+                    : '—'
+                }}</span>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">{{ 'stats.fields.lod' | translate }}</th>
+              <td>
+                <span class="muted">—</span>
+              </td>
+              <td>
+                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="price-field">
+                  <input
+                    #lodField
+                    matInput
+                    appNumberMask
+                    [decimals]="4"
+                    [min]="0"
+                    [attr.aria-label]="'stats.fields.lod' | translate"
+                    [number]="session().lodPrice"
+                    (numberChange)="setSessionPrice('lodPrice', $event)"
+                    (blur)="saveSession()"
+                    (keydown.enter)="$any($event.target).blur()"
+                  />
+                  <ui-form-field-reset matIconSuffix [for]="lodField" />
+                  @if (atFault('lodPrice')) {
+                    <mat-hint class="warn">{{ sessionIssue()!.reason | translate }}</mat-hint>
+                  }
+                </mat-form-field>
+              </td>
+              <td class="point-rows__step">
+                <span [class.muted]="sessionPercents().lod === null">{{
+                  sessionPercents().lod !== null
+                    ? (sessionPercents().lod | number: '1.1-1') + ' %'
+                    : '—'
+                }}</span>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">{{ 'stats.fields.eod' | translate }}</th>
+              <td>
+                <span class="muted">—</span>
+              </td>
+              <td>
+                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="price-field">
+                  <input
+                    #eodField
+                    matInput
+                    appNumberMask
+                    [decimals]="4"
+                    [min]="0"
+                    [attr.aria-label]="'stats.fields.eod' | translate"
+                    [number]="session().eodPrice"
+                    (numberChange)="setSessionPrice('eodPrice', $event)"
+                    (blur)="saveSession()"
+                    (keydown.enter)="$any($event.target).blur()"
+                  />
+                  <ui-form-field-reset matIconSuffix [for]="eodField" />
+                  @if (atFault('eodPrice')) {
+                    <mat-hint class="warn">{{ sessionIssue()!.reason | translate }}</mat-hint>
+                  }
+                </mat-form-field>
+              </td>
+              <td class="point-rows__step">
+                <span [class.muted]="sessionPercents().eod === null">{{
+                  sessionPercents().eod !== null
+                    ? (sessionPercents().eod | number: '1.1-1') + ' %'
+                    : '—'
+                }}</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       }
 
       <div class="flags-row">
@@ -1026,6 +1270,8 @@
               'stats.complete.progress'
                 | translate: { filled: sessionFilled(), total: sessionPriceCount() }
             }}
+            ·
+            {{ (gusDropDone() ? 'stats.gus.done' : 'stats.gus.toFill') | translate }}
           }
         </span>
         @if (completing(); as stat) {
@@ -1266,6 +1512,11 @@
                 {{
                   s.pushOpenPercent !== null ? (s.pushOpenPercent | number: '1.1-1') + ' %' : '—'
                 }}
+                @if (s.gus.pushMinutes !== null) {
+                  <small class="leg-note">{{
+                    'stats.gus.pushMinutes' | translate: { minutes: s.gus.pushMinutes }
+                  }}</small>
+                }
               }
             </td>
             <td mat-footer-cell *matFooterCellDef stbCol="numeric">
@@ -1318,6 +1569,62 @@
             <td mat-footer-cell *matFooterCellDef stbCol="numeric">
               @let eod = summary()?.medianEodPercent ?? null;
               {{ eod !== null ? (eod | number: '1.1-1') + ' %' : '' }}
+            </td>
+          </ng-container>
+
+          <!-- What the GUS paid (#713) : the drop, and the short's gain under it. -->
+          <ng-container matColumnDef="gusDrop">
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              stbCol="numeric"
+              class="group-start"
+              [matTooltip]="'stats.gus.columnHint' | translate"
+            >
+              {{ 'stats.gus.column' | translate }}
+            </th>
+            <td mat-cell *matCellDef="let s" stbCol="numeric" class="group-start">
+              @if (s.gusDropPrice !== null) {
+                {{ s.gusDropPrice | price: s.openPrice }}
+                @if (s.gus.drop !== null) {
+                  <small class="leg-note" [class.gain]="s.gus.drop < 0">{{
+                    'stats.gus.cell' | translate: { gain: (s.gus.drop | shortGain) }
+                  }}</small>
+                }
+                @if (s.gus.dropMinutes !== null) {
+                  <small class="leg-note">{{
+                    'stats.gus.cellTime'
+                      | translate: { time: s.gusDropTime, minutes: s.gus.dropMinutes }
+                  }}</small>
+                }
+              } @else if (s.gusDropToFill) {
+                <span class="warn" [matTooltip]="'stats.gus.toFillHint' | translate">{{
+                  'stats.gus.toFillShort' | translate
+                }}</span>
+              } @else {
+                <span class="muted">—</span>
+              }
+            </td>
+            <td mat-footer-cell *matFooterCellDef stbCol="numeric" class="group-start">
+              @if (summary(); as kpi) {
+                @if (kpi.medianGusDropPercent !== null) {
+                  {{ 'stats.doubleTop.medianDrop' | translate }}
+                  <span class="gain">{{ kpi.medianGusDropPercent | shortGain }} %</span>
+                  <small class="leg-note">{{
+                    'stats.gus.footer'
+                      | translate
+                        : {
+                            count: kpi.sessionsWithDrop,
+                            reached: kpi.gusDropReachedTargetCount,
+                            target: gusDropTarget,
+                            minutes:
+                              kpi.medianGusDropMinutes !== null
+                                ? (kpi.medianGusDropMinutes | number: '1.0-0')
+                                : '—',
+                          }
+                  }}</small>
+                }
+              }
             </td>
           </ng-container>
 
@@ -1654,6 +1961,14 @@
                             s.lodPercent !== null ? (s.lodPercent | number: '1.1-1') + ' %' : '—',
                         }
                 }}
+                <!-- One element, like the DT's D leg : Angular drops the blank between two spans. -->
+                @if (s.gus.drop !== null) {
+                  <span
+                    >· {{ 'stats.gus.brief' | translate }}&ngsp;<span class="gain"
+                      >{{ s.gus.drop | shortGain }} %</span
+                    ></span
+                  >
+                }
               }
             </td>
           </ng-container>

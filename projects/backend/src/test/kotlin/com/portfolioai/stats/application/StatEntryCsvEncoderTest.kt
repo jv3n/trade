@@ -16,10 +16,10 @@ import org.junit.jupiter.api.Test
  * Unit spec for [StatEntryCsvEncoder] — the CSV export behind the download button.
  *
  * Pins the format contract a spreadsheet relies on : the BOM + CRLF Excel affordances, the
- * **29-column layout** (premarket block, GUS session, double top prices, times and drop, flags — no
- * derived percentage), `toPlainString` numbers, `true` / `false` flags, empty cells for every
- * absent value — including the session prices of a stat still to complete and the prices of the
- * other pattern — and RFC 4180 quoting of free-text notes.
+ * **32-column layout** (premarket block, GUS session and its sequence, double top prices, times and
+ * drop, flags — no derived percentage), `toPlainString` numbers, `true` / `false` flags, empty
+ * cells for every absent value — including the session prices of a stat still to complete and the
+ * prices of the other pattern — and RFC 4180 quoting of free-text notes.
  *
  * No Spring / DB here : the encoder is pure and the entity is built in memory.
  */
@@ -31,7 +31,7 @@ class StatEntryCsvEncoderTest {
     val header = csv.removePrefix("﻿").substringBefore("\r\n")
 
     assertEquals(StatEntryCsvEncoder.HEADERS, header.split(","))
-    assertEquals(29, StatEntryCsvEncoder.HEADERS.size)
+    assertEquals(32, StatEntryCsvEncoder.HEADERS.size)
   }
 
   @Test
@@ -43,12 +43,12 @@ class StatEntryCsvEncoderTest {
   }
 
   @Test
-  fun `a completed stat renders the 29 columns in order, numbers in plain form`() {
+  fun `a completed stat renders the 32 columns in order, numbers in plain form`() {
     val csv = StatEntryCsvEncoder.encode(listOf(makeEntry()))
 
     assertEquals(
       "2026-09-17,GUS,KTTA,2.65,4.05,4.65,8.2,3.1,Push rejeté sous 4.65," +
-        "4.20,4.62,4.62,3.41,3.52,,,,,,,,,,,false,false,false,false,true",
+        "4.20,4.62,4.62,3.41,3.52,,,,,,,,,,,,,,false,false,false,false,true",
       dataRowOf(csv),
     )
   }
@@ -60,7 +60,7 @@ class StatEntryCsvEncoderTest {
 
     assertEquals(
       "2026-09-18,GUS,SGBX,2.65,4.05,4.65,8.2,3.1,Push rejeté sous 4.65," +
-        ",,,,,,,,,,,,,,,false,false,false,false,false",
+        ",,,,,,,,,,,,,,,,,,false,false,false,false,false",
       dataRowOf(csv),
     )
   }
@@ -80,9 +80,9 @@ class StatEntryCsvEncoderTest {
     val csv = StatEntryCsvEncoder.encode(listOf(makeEntry(ssr = true, highInstitutions = true)))
     val cells = dataRowOf(csv).split(",")
 
-    // SSR / < $1 / no push sit at 24-26 and « institutions > 20 % » at 27.
-    assertEquals(listOf("true", "false", "false"), cells.subList(24, 27))
-    assertEquals("true", cells[27])
+    // SSR / < $1 / no push sit at 27-29 and « institutions > 20 % » at 30.
+    assertEquals(listOf("true", "false", "false"), cells.subList(27, 30))
+    assertEquals("true", cells[30])
   }
 
   @Test
@@ -92,7 +92,22 @@ class StatEntryCsvEncoderTest {
 
     val cells = dataRowOf(StatEntryCsvEncoder.encode(listOf(muln))).split(",")
 
-    assertEquals("true", cells[25])
+    assertEquals("true", cells[28])
+  }
+
+  // #713 : the push's time and the drop sit right after the GUS session, before the DT block.
+  @Test
+  fun `a GUS exports its push time and its drop after the session`() {
+    val gus =
+      makeEntry().apply {
+        pushOpenTime = LocalTime.of(9, 41)
+        gusDropPrice = BigDecimal("3.41")
+        gusDropTime = LocalTime.of(10, 25)
+      }
+
+    val cells = dataRowOf(StatEntryCsvEncoder.encode(listOf(gus))).split(",")
+
+    assertEquals(listOf("09:41", "3.41", "10:25"), cells.subList(14, 17))
   }
 
   @Test
@@ -119,13 +134,13 @@ class StatEntryCsvEncoderTest {
     assertEquals("DT", cells[1])
     // No premarket on a double top (#649) : previous close / PM open / PM high at 3-5.
     assertEquals(listOf("", "", ""), cells.subList(3, 6))
-    // Open / push / HOD / LOD / EOD at 9-13, then start / top / rejection low / retest at 14-17.
-    assertEquals(listOf("", "", "", "", ""), cells.subList(9, 14))
-    assertEquals(listOf("1.90", "2.95", "2.36", "2.85"), cells.subList(14, 18))
-    // Their times, to the minute, at 18-21 (#469).
-    assertEquals(listOf("10:02", "10:14", "10:21", "10:38"), cells.subList(18, 22))
-    // The drop low and its time at 22-23 (#706).
-    assertEquals(listOf("2.30", "11:03"), cells.subList(22, 24))
+    // Open / push / HOD / LOD / EOD and the GUS sequence at 9-16, then the four DT prices at 17-20.
+    assertEquals(listOf("", "", "", "", "", "", "", ""), cells.subList(9, 17))
+    assertEquals(listOf("1.90", "2.95", "2.36", "2.85"), cells.subList(17, 21))
+    // Their times, to the minute, at 21-24 (#469).
+    assertEquals(listOf("10:02", "10:14", "10:21", "10:38"), cells.subList(21, 25))
+    // The drop low and its time at 25-26 (#706).
+    assertEquals(listOf("2.30", "11:03"), cells.subList(25, 27))
   }
 
   @Test

@@ -34,6 +34,14 @@ data class StatEntryRequest(
   val hodPrice: BigDecimal? = null,
   val lodPrice: BigDecimal? = null,
   val eodPrice: BigDecimal? = null,
+  /** When the push topped (#713), `HH:mm` — ignored on a no-push day. */
+  val pushOpenTime: LocalTime? = null,
+  /**
+   * The drop (#713) : not above the push (the open on a no-push day), inside the day's range, its
+   * time not before the push's ; price and time together.
+   */
+  val gusDropPrice: BigDecimal? = null,
+  val gusDropTime: LocalTime? = null,
   // ---- Double top (#428) — a DT only ; ignored and stored empty on any other pattern ----
   val dtStartPrice: BigDecimal? = null,
   val dtTopPrice: BigDecimal? = null,

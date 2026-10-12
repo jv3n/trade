@@ -116,30 +116,61 @@
   }
 }
 
-.session-form {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: s.$space-md;
-  // The push column is taller (« No push » under it) : stretched, the other fields would grow with it.
-  align-items: start;
+// One row per point, like an execution in the journal (#469) : its time, its price, then the leg it
+// closes. The double top and the GUS read the same way (#713).
+.point-rows {
+  border-collapse: collapse;
 
-  @media (max-width: s.$bp-wide) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  th,
+  td {
+    padding: s.$space-xs s.$space-md s.$space-xs 0;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  thead th {
+    font-size: s.$font-xs;
+    font-weight: 500;
+    color: var(--color-text-muted);
+  }
+
+  tbody th {
+    font-weight: 500;
+    white-space: nowrap;
+    // Level with the fields' text, not with their outline.
+    padding-top: s.$space-lg;
+  }
+
+  // A row with no time to type (the open at 9:30, the day-wide HOD / LOD / EOD) lines its dash up
+  // with the fields beside it.
+  td:not(.point-rows__step) > .muted {
+    display: inline-block;
+    padding-top: s.$space-lg;
+  }
+
+  // On a phone four columns no longer fit (#456) : each point stacks its time, price and leg.
+  @media (max-width: s.$bp-phone) {
+    thead {
+      display: none;
+    }
+
+    tr,
+    th,
+    td {
+      display: block;
+    }
   }
 }
 
-// One row per point of the double top, like an execution in the journal : its time, then its
-// price — the leg it closes reads under each (#469).
-.session-form--dt {
-  // The fields keep their own width : stretched over the card, a time and a price read as blanks.
-  // `minmax(0, …)` so they can still give way ; the modifier outranks `.session-form`'s own
-  // breakpoints, so it carries its narrow layout itself.
-  grid-template-columns: repeat(2, minmax(0, max-content));
-  justify-content: start;
+.point-rows__step {
+  padding-top: s.$space-lg;
+  font-size: s.$font-sm;
+  font-variant-numeric: tabular-nums;
 
-  // On a phone the two no longer fit side by side (#456) : the time over its price.
-  @media (max-width: s.$bp-phone) {
-    grid-template-columns: minmax(0, 1fr);
+  small {
+    display: block;
+    font-size: s.$font-xs;
+    color: var(--color-text-muted);
   }
 }
 
@@ -148,11 +179,8 @@
   width: s.$space-4xl * 2;
 }
 
-// A column of its own so « No push » sits under the push field.
-.push-field {
-  display: flex;
-  flex-direction: column;
-  gap: s.$space-xs;
+.price-field {
+  width: s.$space-4xl * 3;
 }
 
 .flags-row {

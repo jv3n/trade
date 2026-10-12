@@ -63,6 +63,9 @@ import org.springframework.web.server.ResponseStatusException
  * - **Double top times (#469)** — each price has its time, to the minute, inside the extended
  *   session and in order ; the four are required to tick, and the KPIs give the median duration and
  *   the median rejection — a median, so one slow DT does not move the typical figure.
+ * - **GUS sequence (#713)** — the push's time and the drop (from the push, from the open on a
+ *   no-push day), optional, paired, inside the day and after the push ; the KPIs give its medians
+ *   and « 15 % reached » with their own `n`.
  * - **Double top drop (#706)** — the lowest print after the retest, optional (a DT ticks without
  *   it) but whole (price and time together), not above the retest nor before it ; the KPIs give its
  *   medians with their own `n`.
@@ -932,6 +935,14 @@ class StatsListingIntegrationTest {
         dtLowTime = LocalTime.of(10, 2)
       }
     assertThrows(DataIntegrityViolationException::class.java) { repo.saveAndFlush(backwards) }
+
+    // The history's state : a push price and no push time — a drop on it would have no duration.
+    val untimed =
+      makeStat(testUser, ticker = "AEHL", tradeDate = DAY).apply {
+        gusDropPrice = BigDecimal("3.41")
+        gusDropTime = LocalTime.of(10, 25)
+      }
+    assertThrows(DataIntegrityViolationException::class.java) { repo.saveAndFlush(untimed) }
   }
 
   @Test
@@ -1086,6 +1097,156 @@ class StatsListingIntegrationTest {
     assertNull(summary.medianDropFromEntryPercent)
     assertNull(summary.medianDropMinutes)
     assertEquals(0, summary.dropReachedTargetCount)
+  }
+
+  // ---------------------------------------------------------------------------
+  // GUS sequence (#713) — « did the GUS work ? »
+  // ---------------------------------------------------------------------------
+
+  // Optional like the DT's drop : the history has none, the ✓ still needs the five prices only.
+  @Test
+  fun `a GUS is ticked without its drop, and the push time and drop are typed afterwards`() {
+    val stat = createCompleted(fullSessionRequest(ticker = "KTTA"))
+
+    val withDrop = service.update(stat.id, kttaWithDrop())
+
+    assertTrue(withDrop.completed)
+    assertEquals(LocalTime.of(9, 41), withDrop.pushOpenTime)
+    assertEquals(0, BigDecimal("3.41").compareTo(withDrop.gusDropPrice))
+    assertEquals(LocalTime.of(10, 25), withDrop.gusDropTime)
+  }
+
+  @Test
+  fun `a drop out of the sequence is a 400 naming the rule`() {
+    listOf(
+        kttaWithDrop().copy(gusDropPrice = BigDecimal("4.70")) to "Drop must not be above the HOD",
+        kttaWithDrop().copy(hodPrice = BigDecimal("5.00"), gusDropPrice = BigDecimal("4.70")) to
+          "Drop must not be above the push",
+        kttaWithDrop().copy(gusDropPrice = BigDecimal("3.30")) to "Drop must not be below the LOD",
+        kttaWithDrop().copy(gusDropTime = LocalTime.of(9, 35)) to
+          "Drop time must not be before the push time",
+        kttaWithDrop().copy(gusDropTime = null) to "Drop time is required with the drop",
+        kttaWithDrop().copy(gusDropPrice = null) to "Drop is required with its time",
+        kttaWithDrop().copy(pushOpenTime = null) to "Push time is required with the drop",
+      )
+      .forEach { (request, reason) ->
+        val ex = assertThrows(ResponseStatusException::class.java) { service.create(request) }
+        assertEquals(400, ex.statusCode.value())
+        assertEquals(reason, ex.reason)
+      }
+    assertEquals(0, repo.count())
+  }
+
+  // GLND, 21/09 : no push — the drop reads from the open, and there is no push time to keep.
+  @Test
+  fun `a no-push day keeps no push time, and its drop is read against the open`() {
+    val stat = service.create(glndNoPush().copy(pushOpenTime = LocalTime.of(9, 41)))
+    val above =
+      assertThrows(ResponseStatusException::class.java) {
+        service.create(
+          glndNoPush()
+            .copy(ticker = "AEHL", hodPrice = BigDecimal("3.20"), gusDropPrice = BigDecimal("3.15"))
+        )
+      }
+
+    assertNull(stat.pushOpenTime)
+    assertEquals(0, BigDecimal("2.41").compareTo(stat.gusDropPrice))
+    assertEquals("Drop must not be above the open", above.reason)
+  }
+
+  @Test
+  fun `a double top ignores the GUS sequence`() {
+    val dt =
+      service.create(
+        doubleTopRequest()
+          .copy(
+            pushOpenTime = LocalTime.of(9, 41),
+            gusDropPrice = BigDecimal("2.30"),
+            gusDropTime = LocalTime.of(11, 3),
+          )
+      )
+
+    assertNull(dt.pushOpenTime)
+    assertNull(dt.gusDropPrice)
+    assertNull(dt.gusDropTime)
+  }
+
+  @Test
+  fun `the database refuses half a drop, a drop before the push or without its time, and the sequence on a DT`() {
+    val half =
+      makeStat(testUser, ticker = "KTTA", tradeDate = DAY).apply {
+        gusDropPrice = BigDecimal("3.41")
+      }
+    assertThrows(DataIntegrityViolationException::class.java) { repo.saveAndFlush(half) }
+
+    val backwards =
+      makeStat(testUser, ticker = "BNZI", tradeDate = DAY).apply {
+        pushOpenTime = LocalTime.of(9, 41)
+        gusDropPrice = BigDecimal("3.41")
+        gusDropTime = LocalTime.of(9, 35)
+      }
+    assertThrows(DataIntegrityViolationException::class.java) { repo.saveAndFlush(backwards) }
+
+    val onDt =
+      makeStat(testUser, ticker = "SGBX", tradeDate = DAY).apply {
+        pattern = Pattern.DT
+        clearPremarket()
+        pushOpenTime = LocalTime.of(9, 41)
+      }
+    assertThrows(DataIntegrityViolationException::class.java) { repo.saveAndFlush(onDt) }
+  }
+
+  @Test
+  fun `summarise measures the GUS drop on the completed GUS that have one`() {
+    // KTTA push 4.62 at 09:41 -> 3.41 at 10:25 = -26.19, 44 min ;
+    // BNZI push 3.05 at 09:38 -> 2.70 at 10:05 = -11.48, 27 min ;
+    // GLND no push, open 3.10 -> 2.41 at 10:58 = -22.26, 88 min from the bell.
+    createCompleted(kttaWithDrop())
+    createCompleted(
+      fullSessionRequest(ticker = "BNZI")
+        .copy(
+          openPrice = BigDecimal("2.90"),
+          pushOpenPrice = BigDecimal("3.05"),
+          hodPrice = BigDecimal("3.05"),
+          lodPrice = BigDecimal("2.44"),
+          eodPrice = BigDecimal("2.58"),
+          pushOpenTime = LocalTime.of(9, 38),
+          gusDropPrice = BigDecimal("2.70"),
+          gusDropTime = LocalTime.of(10, 5),
+        )
+    )
+    createCompleted(glndNoPush())
+    // Completed before the drop existed : still a GUS, out of the drop figures.
+    createCompleted(fullSessionRequest(ticker = "NUWE"))
+    // A push time typed, no drop yet : in the push's duration, out of the drop's.
+    createCompleted(fullSessionRequest(ticker = "SGBX").copy(pushOpenTime = LocalTime.of(9, 45)))
+    // In progress : its drop must weigh nothing.
+    service.create(kttaWithDrop().copy(ticker = "MULN", eodPrice = null))
+
+    val summary = service.summarise(gusOnly)
+
+    assertEquals(5, summary.completed)
+    assertEquals(3, summary.sessionsWithDrop)
+    assertEquals(0, BigDecimal("-22.26").compareTo(summary.medianGusDropPercent))
+    assertEquals(2, summary.gusDropReachedTargetCount, "BNZI's 11.48 % missed the 15 %")
+    // Push times : KTTA 11, BNZI 8, SGBX 15 (GLND has none, NUWE none typed) — their own n.
+    assertEquals(3, summary.sessionsWithPushTime)
+    assertEquals(0, BigDecimal("11").compareTo(summary.medianPushMinutes))
+    assertEquals(0, BigDecimal("44.00").compareTo(summary.medianGusDropMinutes))
+  }
+
+  @Test
+  fun `no GUS drop typed means no drop figure, not a zero`() {
+    seedThreeStats()
+
+    val summary = service.summarise(gusOnly)
+
+    assertEquals(0, summary.sessionsWithDrop)
+    assertNull(summary.medianGusDropPercent)
+    assertEquals(0, summary.sessionsWithPushTime)
+    assertNull(summary.medianPushMinutes)
+    assertNull(summary.medianGusDropMinutes)
+    assertEquals(0, summary.gusDropReachedTargetCount)
   }
 
   // ---------------------------------------------------------------------------
@@ -1394,6 +1555,29 @@ class StatsListingIntegrationTest {
         lodPrice = BigDecimal("3.41"),
         eodPrice = BigDecimal("3.52"),
         ssr = ssr,
+      )
+
+  /** KTTA's session and its drop : push 4.62 at 09:41, down to the LOD 3.41 at 10:25. */
+  private fun kttaWithDrop() =
+    fullSessionRequest(ticker = "KTTA")
+      .copy(
+        pushOpenTime = LocalTime.of(9, 41),
+        gusDropPrice = BigDecimal("3.41"),
+        gusDropTime = LocalTime.of(10, 25),
+      )
+
+  /** GLND, 21/09 : no push, opened at 3.10, down to 2.41 at 10:58. */
+  private fun glndNoPush() =
+    fullSessionRequest(ticker = "GLND")
+      .copy(
+        openPrice = BigDecimal("3.10"),
+        pushOpenPrice = null,
+        noPush = true,
+        hodPrice = BigDecimal("3.10"),
+        lodPrice = BigDecimal("2.41"),
+        eodPrice = BigDecimal("2.66"),
+        gusDropPrice = BigDecimal("2.41"),
+        gusDropTime = LocalTime.of(10, 58),
       )
 
   private val outOfPatternOnly = StatEntryFilter(outOfPattern = true)
