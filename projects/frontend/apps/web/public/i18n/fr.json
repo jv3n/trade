@@ -27,7 +27,7 @@
     "account": "Compte",
     "reports": "Rapports",
     "journal": "Journal",
-    "candidates": "Candidats",
+    "candidates": "Candidats GUS",
     "stats": "Stats",
     "patterns": "Patterns",
     "lexicon": "Lexique",
@@ -49,7 +49,7 @@
         "body": "Saisis le solde affiché par TradeZero : l'app le compare à son solde calculé."
       },
       "candidates": {
-        "title": "Saisir les candidats",
+        "title": "Saisir les candidats GUS",
         "body": "Après l'analyse au radar : ticker, clôture veille, open / high PM, float, volume.",
         "captured": "{{count}} candidats saisis — {{tickers}}.",
         "capturedOne": "{{count}} candidat saisi — {{tickers}}.",
@@ -98,7 +98,7 @@
     },
     "actions": {
       "view": "Voir",
-      "capture": "Saisir les candidats",
+      "capture": "Saisir les candidats GUS",
       "promoteRemaining": "Passer les {{count}} en GUS",
       "promoteRemainingOne": "Passer le dernier en GUS",
       "complete": "Compléter",
@@ -121,7 +121,7 @@
       "noTrade": "— pas de trade"
     },
     "candidates": {
-      "title": "Candidats du jour",
+      "title": "Candidats GUS du jour",
       "all": "tout voir",
       "empty": "Pas encore de candidat aujourd'hui.",
       "inStats": "En stats",
@@ -139,8 +139,8 @@
     }
   },
   "candidates": {
-    "title": "Candidats",
-    "subtitle": "Les tickers repérés au radar ce matin, avec ce qu'on connaît en premarket.",
+    "title": "Candidats GUS",
+    "subtitle": "Les tickers repérés au radar ce matin pour un gap-up short, avec ce qu'on connaît en premarket — un double top repéré plus tard passe aussi par ici.",
     "day": {
       "previous": "Jour précédent",
       "next": "Jour suivant",

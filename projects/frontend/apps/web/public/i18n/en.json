@@ -27,7 +27,7 @@
     "account": "Account",
     "reports": "Reports",
     "journal": "Journal",
-    "candidates": "Candidates",
+    "candidates": "GUS candidates",
     "stats": "Stats",
     "patterns": "Patterns",
     "lexicon": "Lexicon",
@@ -49,7 +49,7 @@
         "body": "Enter the balance TradeZero displays : the app compares it to the one it computes."
       },
       "candidates": {
-        "title": "Capture the candidates",
+        "title": "Capture the GUS candidates",
         "body": "After the radar screen : ticker, previous close, PM open / high, float, volume.",
         "captured": "{{count}} candidates captured — {{tickers}}.",
         "capturedOne": "{{count}} candidate captured — {{tickers}}.",
@@ -98,7 +98,7 @@
     },
     "actions": {
       "view": "View",
-      "capture": "Capture the candidates",
+      "capture": "Capture the GUS candidates",
       "promoteRemaining": "Promote the {{count}} to GUS",
       "promoteRemainingOne": "Promote the last one to GUS",
       "complete": "Complete",
@@ -121,7 +121,7 @@
       "noTrade": "— no trade"
     },
     "candidates": {
-      "title": "Today's candidates",
+      "title": "Today's GUS candidates",
       "all": "see all",
       "empty": "No candidate today yet.",
       "inStats": "In stats",
@@ -139,8 +139,8 @@
     }
   },
   "candidates": {
-    "title": "Candidates",
-    "subtitle": "The tickers spotted on the radar this morning, with what is known in premarket.",
+    "title": "GUS candidates",
+    "subtitle": "The tickers spotted on the radar this morning for a gap-up short, with what is known in premarket — a double top spotted later comes through here too.",
     "day": {
       "previous": "Previous day",
       "next": "Next day",

@@ -95,7 +95,7 @@ data : reconciliation validated this morning, candidates captured, stats still t
 on. Beside it : the balance (reconciled or not), the P&L of the day / week / month, the day's
 candidates, the week's trades.
 
-**Menu order** : Today · Candidates · Stats · Journal · Account · (apart, at the bottom) Lexicon.
+**Menu order** : Today · GUS candidates · Stats · Journal · Account · (apart, at the bottom) Lexicon.
 Candidates → Stats → Journal follows the life cycle of a ticker (each « → Stat » / « → Trade »
 button leads to the next tab) ; the account is a ledger consulted now and then, not a step ; the
 lexicon is a reference at hand, outside the trading day. The calculators are not in the menu : they
@@ -209,6 +209,11 @@ never as a trade.
 ## Step 1 — Capturing the candidates (morning) ✅
 
 **When** : in premarket, right after the radar screen, before the open.
+
+**They are the GUS candidates** (#712) : what the capture asks — previous close, PM open and high,
+gap, premarket push — is the GUS's premarket, read off the morning radar. The menu, the page and
+Today's step say « Candidats GUS ». A double top spotted later still comes through here and leaves
+by « → DT » : the name says what the page is for, not a rule on the patterns.
 
 **What I type in** (everything known at that point) :
 
