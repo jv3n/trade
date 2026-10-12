@@ -1622,9 +1622,13 @@
                         : 'stats.doubleTop.briefToTop'
                       ) | translate: { toTop: (s.legs.retestToTop | number: '1.1-1') })
                 }}
+                <!-- One element : Angular drops the blank between two sibling spans. -->
                 @if (s.legs.drop !== null) {
-                  · <span class="leg">D</span>
-                  <span class="gain">{{ s.legs.drop | shortGain }} %</span>
+                  <span
+                    >· <span class="leg">D</span>&ngsp;<span class="gain"
+                      >{{ s.legs.drop | shortGain }} %</span
+                    ></span
+                  >
                 }
               } @else {
                 @if (s.noPush) {
