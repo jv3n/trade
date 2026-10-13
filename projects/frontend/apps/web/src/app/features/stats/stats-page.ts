@@ -994,7 +994,7 @@ export class StatsPage {
 
   /** The GUS being typed (#713), live : its drop, the push's minutes after the bell and the drop's. */
   readonly gusSequence = computed(() => gusSequence(this.session()));
-  /** The optional drop is whole — the count says « drop ✓ » rather than « drop à saisir ». */
+  /** The optional Sink is whole — the count says « Sink ✓ » rather than « Sink à saisir ». */
   readonly gusDropDone = computed(() => {
     const m = this.session();
     return isPositive(m.gusDropPrice) && !!m.gusDropTime && (m.noPush || !!m.pushOpenTime);

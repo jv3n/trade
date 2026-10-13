@@ -72,7 +72,7 @@ test('a HOD below the push holds the save, blocks the tick and sends nothing', a
 }) => {
   const stat = await seedStat(api);
   await openPanel(page, stat);
-  await typeNumber(session(page).getByLabel('Push open', { exact: true }), '4.60');
+  await typeNumber(session(page).getByLabel('Push', { exact: true }), '4.60');
   await expect(session(page).getByText(/✓ enregistré à/)).toBeVisible();
   const saves = countSaves(page, stat);
 

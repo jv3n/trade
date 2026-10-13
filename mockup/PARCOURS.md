@@ -442,40 +442,47 @@ push once it has happened, the flags as they come — and the rest after the 4 p
 at the open (4.62 − 4.20) ÷ 4.20 = +10.0 % ; and from the premarket, the **hold** and the two
 **cumulative** readings of the scanner (#499, below).
 
-### The GUS as a sequence, down to its drop (#713)
+### The GUS as a sequence, down to its Sink (#713, #717)
 
 The five session prices said how far the stock went, not **in what order nor when** — so not whether
 the GUS worked. The « Séance » card becomes a **vertical list, one row per point**, like the double
 top (#428) : point, time, price, then the % vs the open or the leg it closes.
 
+**OPS — Open · Push · Sink** (#717) : the GUS **is** the sequence from the bell, and its three points
+are named with the same words in French and English. Everything else serves to **spot** it (previous
+close, PM open, PM high, gap, PM push, hold) or is a **day-wide reference** (HOD, LOD, EOD) : out of
+the mnemonic, unchanged. **Sink** is the last point of every stat, GUS and DT alike (#716) — one word
+for one effect, the final fall.
+
 | Point | Time | Price | Note |
 |-------|------|-------|------|
 | Open | 9:30 | 1.90 | Fixed time — pre-filled from the candidate |
-| Push at the open | 9:41 | 2.20 | **Now with its time** — « no push » greys both out |
-| Drop | 10:25 | 1.52 | **New, optional** — the lowest print after the push, before the close |
+| Push | 9:41 | 2.20 | **Now with its time** — « no push » greys both out |
+| Sink | 10:25 | 1.52 | **New, optional** — the lowest print after the Push, before the close |
 | HOD / LOD / EOD | — | | Unchanged, no time : day-wide references, the KPIs and the history read them as before |
 
-- **The drop is often the LOD** — it differs when the LOD came before the push (a dip at the bell,
+- **The Sink is often the LOD** — it differs when the LOD came before the Push (a dip at the bell,
   then the push). Empty when the stock kept going up.
-- **Read as the short, from the top of the push** — the fall is the gain, `+30.9 %` in green
-  (`ShortGainPipe`, #706), never a red price move. On a **no-push** day the drop reads **from the
+- **Read as the short, from the top of the Push** — the fall is the gain, `+30.9 %` in green
+  (`ShortGainPipe`, #706), never a red price move. On a **no-push** day the Sink reads **from the
   open**. Not a backtest : the stop may have been hit first.
-- **It worked** when the drop reached **15 %** — the low end of the GUS sheet's 15-20 % R / R.
-- **Rules** : the drop not above the push (the open on a no-push day), its time not before the
-  push's ; the push's time and the drop's inside the extended session. Price and time of the drop go
-  together, half of it is held back (#706) ; and a drop needs the push's time (the bell on a no-push
-  day), so every drop in the `n` has a duration.
-- **Optional for now** : the ticked GUS have no times and no drop ; the ✓ still needs the five prices,
-  the count reads « 5 / 5 prix saisis · chute à saisir », and a completed GUS without its drop shows
+- **It worked** when the Sink reached **15 %** — the low end of the GUS sheet's 15-20 % R / R.
+- **Rules** : the Sink not above the Push (the open on a no-push day), its time not before the
+  Push's ; both times inside the extended session. Price and time of the Sink go together, half of
+  it is held back (#706) ; and a Sink needs the Push's time (the bell on a no-push day), so every
+  Sink in the `n` has a duration.
+- **Optional for now** : the ticked GUS have no times and no Sink ; the ✓ still needs the five prices,
+  the count reads « 5 / 5 prix saisis · Sink à saisir », and a completed GUS without its Sink shows
   an amber « à saisir » in the table **once a period is chosen** — over « Tout » every completed GUS
   lacks it, and an all-amber column nudges no one. Requiring it once the history is filled is a
   follow-up.
-- **The GUS view** gains a second KPI row, medians with their own `n` : the drop from the push (« Drop depuis le push »),
-  « 15 % atteints » x / n, the push's time after the bell (its own `n` : the push times typed), and the
-  drop's duration. The table gains
-  a « Drop » column (price, gain, time and duration) with its median in the footer ; the push cell
-  shows its minutes after the open ; « Tous » adds the drop to the GUS summary. The CSV export gains
-  the push time, the drop low and its time.
+- **The GUS view** gains a second KPI row, medians with their own `n` : the Sink from the Push
+  (« Sink depuis le Push »), « 15 % atteints » x / n, the Push's time after the bell (its own `n` :
+  the Push times typed), and the Sink's duration (« Durée du Sink »). The table gains a « Sink »
+  column (price, gain, time and duration) with its median in the footer ; the « Push » cell shows
+  its minutes after the open ; « Tous » adds the Sink to the GUS summary. The CSV export gains the
+  push time, the drop and its time — the columns keep their names (`gus_drop_*`) : the word lives in
+  the copy.
 - It gives #205 the ordering it lacked : a mechanical-rule score can read a real sequence.
 
 **Institutional ownership** came back as a flag (#349) — « Institutions > 20 % », ticked by hand

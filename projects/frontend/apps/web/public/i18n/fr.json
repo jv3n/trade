@@ -713,13 +713,13 @@
       "dropTarget": "{{target}} % atteints",
       "dropTargetSub": "Sinks d'au moins {{target}} % depuis l'entrée de la fiche",
       "dropHint": "Ce que le mouvement offrait, pas un backtest : le stop a pu sauter avant le Sink",
-      "gusDrop": "Drop depuis le push",
-      "gusDropSub": "médiane · haut du push → drop · n = {{count}} sur {{total}} GUS complétées",
-      "gusDropTargetSub": "drops d'au moins {{target}} % depuis le push — le bas de la fourchette de la fiche",
-      "pushTime": "Heure du push",
-      "pushTimeSub": "médiane · 9h30 → haut du push · n = {{count}}",
-      "gusDropDuration": "Durée du drop",
-      "gusDropDurationSub": "médiane · haut du push → drop"
+      "gusDrop": "Sink depuis le Push",
+      "gusDropSub": "médiane · haut du Push → Sink · n = {{count}} sur {{total}} GUS complétées",
+      "gusDropTargetSub": "Sinks d'au moins {{target}} % depuis le Push — le bas de la fourchette de la fiche",
+      "pushTime": "Heure du Push",
+      "pushTimeSub": "médiane · 9h30 → haut du Push · n = {{count}}",
+      "gusDropDuration": "Durée du Sink",
+      "gusDropDurationSub": "médiane · haut du Push → Sink"
     },
     "complete": {
       "title": "Séance",
@@ -759,7 +759,7 @@
       "note": "Note",
       "openPrice": "Open ($)",
       "openPriceShort": "Open",
-      "pushOpen": "Push open",
+      "pushOpen": "Push",
       "hod": "HOD",
       "lod": "LOD",
       "eod": "EOD",
@@ -806,9 +806,9 @@
       "dtDrop": "Sink",
       "dtDropPrice": "Sink ($)",
       "dtDropTime": "Heure du Sink",
-      "pushOpenTime": "Heure du push",
-      "gusDropPrice": "Drop ($)",
-      "gusDropTime": "Heure du drop"
+      "pushOpenTime": "Heure du Push",
+      "gusDropPrice": "Sink ($)",
+      "gusDropTime": "Heure du Sink"
     },
     "actions": {
       "edit": "Modifier la séance",
@@ -893,12 +893,12 @@
       "dropAboveRetest": "le Sink est au-dessus de l'Echo",
       "dropTimeRequired": "l'heure du Sink, avec son prix",
       "dropPriceRequired": "le prix du Sink, avec son heure",
-      "gusDropAbovePush": "le drop est au-dessus du push",
-      "gusDropAboveOpen": "le drop est au-dessus de l'open",
-      "gusDropBeforePush": "le drop vient avant le push",
-      "gusDropTimeRequired": "l'heure du drop, avec son prix",
-      "gusDropPriceRequired": "le prix du drop, avec son heure",
-      "gusPushTimeRequired": "l'heure du push, avec le drop"
+      "gusDropAbovePush": "le Sink est au-dessus du Push",
+      "gusDropAboveOpen": "le Sink est au-dessus de l'Open",
+      "gusDropBeforePush": "le Sink vient avant le Push",
+      "gusDropTimeRequired": "l'heure du Sink, avec son prix",
+      "gusDropPriceRequired": "le prix du Sink, avec son heure",
+      "gusPushTimeRequired": "l'heure du Push, avec le Sink"
     },
     "confirmCreate": {
       "title": "Créer la stat {{ticker}} ?",
@@ -993,24 +993,24 @@
       "stepGus": "% vs open · étape"
     },
     "gus": {
-      "point": "Drop",
-      "column": "Drop",
-      "columnHint": "Le plus bas après le push, avant la clôture ; en dessous, ce que le short en tire depuis le haut du push (depuis l'open un jour sans push), puis l'heure et la durée",
+      "point": "Sink",
+      "column": "Sink",
+      "columnHint": "Le plus bas après le Push, avant la clôture ; en dessous, ce que le short en tire depuis le haut du Push (depuis l'open un jour sans push), puis l'heure et la durée",
       "pushMinutes": "{{minutes}} min après l'open",
       "leg": "{{gain}} % pour le short",
-      "fromPush": "depuis le haut du push · {{minutes}} min",
+      "fromPush": "depuis le haut du Push · {{minutes}} min",
       "fromOpen": "depuis l'open — pas de push · {{minutes}} min",
       "reached": "{{target}} % atteints",
       "missed": "sous les {{target}} % de la fiche",
-      "hint": "facultatif — souvent le LOD ; plus haut quand le LOD est venu avant le push, vide si le titre a continué de monter",
+      "hint": "facultatif — souvent le LOD ; plus haut quand le LOD est venu avant le Push, vide si le titre a continué de monter",
       "cell": "{{gain}} % pour le short",
       "cellTime": "{{time}} · {{minutes}} min",
-      "done": "drop ✓",
-      "toFill": "drop à saisir",
+      "done": "Sink ✓",
+      "toFill": "Sink à saisir",
       "toFillShort": "à saisir",
-      "toFillHint": "Complétée avant que le drop existe : le plus bas après le push reste à noter. Facultatif pour l'instant, il alimente « 15 % atteints ».",
+      "toFillHint": "Complétée avant que le Sink existe : le plus bas après le Push reste à noter. Facultatif pour l'instant, il alimente « 15 % atteints ».",
       "footer": "n = {{count}} · {{reached}} / {{count}} ≥ {{target}} % · {{minutes}} min",
-      "brief": "drop"
+      "brief": "Sink"
     }
   },
   "calculator": {

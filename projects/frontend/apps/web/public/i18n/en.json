@@ -713,13 +713,13 @@
       "dropTarget": "{{target}} % reached",
       "dropTargetSub": "Sinks of at least {{target}} % from the sheet's entry",
       "dropHint": "What the move offered, not a backtest : the stop may have been hit before the Sink",
-      "gusDrop": "Drop from the push",
-      "gusDropSub": "median · push's top → drop · n = {{count}} of {{total}} completed GUS",
-      "gusDropTargetSub": "drops of at least {{target}} % from the push — the low end of the sheet's range",
+      "gusDrop": "Sink from the Push",
+      "gusDropSub": "median · Push's top → Sink · n = {{count}} of {{total}} completed GUS",
+      "gusDropTargetSub": "Sinks of at least {{target}} % from the Push — the low end of the sheet's range",
       "pushTime": "Push time",
-      "pushTimeSub": "median · 9:30 → push's top · n = {{count}}",
-      "gusDropDuration": "Duration of the drop",
-      "gusDropDurationSub": "median · push's top → drop"
+      "pushTimeSub": "median · 9:30 → Push's top · n = {{count}}",
+      "gusDropDuration": "Duration of the Sink",
+      "gusDropDurationSub": "median · Push's top → Sink"
     },
     "complete": {
       "title": "Session",
@@ -759,7 +759,7 @@
       "note": "Note",
       "openPrice": "Open ($)",
       "openPriceShort": "Open",
-      "pushOpen": "Push open",
+      "pushOpen": "Push",
       "hod": "HOD",
       "lod": "LOD",
       "eod": "EOD",
@@ -807,8 +807,8 @@
       "dtDropPrice": "Sink ($)",
       "dtDropTime": "Sink time",
       "pushOpenTime": "Push time",
-      "gusDropPrice": "Drop ($)",
-      "gusDropTime": "Drop time"
+      "gusDropPrice": "Sink ($)",
+      "gusDropTime": "Sink time"
     },
     "actions": {
       "edit": "Edit the session",
@@ -893,12 +893,12 @@
       "dropAboveRetest": "the Sink is above the Echo",
       "dropTimeRequired": "the Sink time, with its price",
       "dropPriceRequired": "the Sink price, with its time",
-      "gusDropAbovePush": "the drop is above the push",
-      "gusDropAboveOpen": "the drop is above the open",
-      "gusDropBeforePush": "the drop comes before the push",
-      "gusDropTimeRequired": "the drop time, with its price",
-      "gusDropPriceRequired": "the drop price, with its time",
-      "gusPushTimeRequired": "the push time, with the drop"
+      "gusDropAbovePush": "the Sink is above the Push",
+      "gusDropAboveOpen": "the Sink is above the Open",
+      "gusDropBeforePush": "the Sink comes before the Push",
+      "gusDropTimeRequired": "the Sink time, with its price",
+      "gusDropPriceRequired": "the Sink price, with its time",
+      "gusPushTimeRequired": "the Push time, with the Sink"
     },
     "confirmCreate": {
       "title": "Create the {{ticker}} stat?",
@@ -993,24 +993,24 @@
       "stepGus": "% vs open · leg"
     },
     "gus": {
-      "point": "Drop",
-      "column": "Drop",
-      "columnHint": "The lowest print after the push, before the close ; below, what the short makes from the push's top (from the open on a no-push day), then the time and the duration",
+      "point": "Sink",
+      "column": "Sink",
+      "columnHint": "The lowest print after the Push, before the close ; below, what the short makes from the Push's top (from the open on a no-push day), then the time and the duration",
       "pushMinutes": "{{minutes}} min after the open",
       "leg": "{{gain}} % for the short",
-      "fromPush": "from the push's top · {{minutes}} min",
+      "fromPush": "from the Push's top · {{minutes}} min",
       "fromOpen": "from the open — no push · {{minutes}} min",
       "reached": "{{target}} % reached",
       "missed": "under the sheet's {{target}} %",
-      "hint": "optional — often the LOD ; higher when the LOD came before the push, empty when the stock kept going up",
+      "hint": "optional — often the LOD ; higher when the LOD came before the Push, empty when the stock kept going up",
       "cell": "{{gain}} % for the short",
       "cellTime": "{{time}} · {{minutes}} min",
-      "done": "drop ✓",
-      "toFill": "drop to fill",
+      "done": "Sink ✓",
+      "toFill": "Sink to fill",
       "toFillShort": "to fill",
-      "toFillHint": "Completed before the drop existed : the low after the push is still to record. Optional for now, it feeds « 15 % reached ».",
+      "toFillHint": "Completed before the Sink existed : the low after the Push is still to record. Optional for now, it feeds « 15 % reached ».",
       "footer": "n = {{count}} · {{reached}} / {{count}} ≥ {{target}} % · {{minutes}} min",
-      "brief": "drop"
+      "brief": "Sink"
     }
   },
   "calculator": {

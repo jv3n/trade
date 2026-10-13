@@ -82,7 +82,7 @@ test('a full trading day moves the balance by the broker P&L, and the trade foll
   const session = page.locator('.complete-card');
   await typeNumber(session.getByLabel('HOD', { exact: true }), '4.80');
   await typeNumber(session.getByLabel('LOD', { exact: true }), '3.40');
-  await typeNumber(session.getByLabel('Push open', { exact: true }), '4.60');
+  await typeNumber(session.getByLabel('Push', { exact: true }), '4.60');
   await typeNumber(session.getByLabel('EOD', { exact: true }), '3.60');
   await session.getByRole('button', { name: 'Marquer complétée' }).click();
   await expect.poll(async () => (await api.get<Stat>(`/api/stats/${statId}`)).completed).toBe(true);
