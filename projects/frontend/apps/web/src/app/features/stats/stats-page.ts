@@ -178,11 +178,6 @@ export interface StatRow extends StatEntry {
   legs: DoubleTopLegs;
   /** How long each leg took (#469) — null on any other pattern, or until its times are in. */
   durations: DoubleTopDurations;
-  /**
-   * A completed double top with no drop typed, whose retest stayed under the top (#706) — the
-   * drop is optional, but there was one to record. Empty when the top was taken back : no drop.
-   */
-  dropToFill: boolean;
   /** The GUS's push time and drop (#713) — null on a DT, or until typed. */
   gus: GusSequence;
   /** A completed GUS with no drop typed (#713) : optional, but there was one to record. */
@@ -376,25 +371,45 @@ const SESSION_PRICES: readonly { field: SessionPrice; label: string }[] = [
   { field: 'eodPrice', label: 'stats.fields.eod' },
 ];
 
-/** The four prices of a double top, in the order it forms. */
+/** The five prices of a double top, in the order it forms — the drop last (#706). */
 const DOUBLE_TOP_PRICES: readonly { field: SessionPrice; label: string }[] = [
   { field: 'dtStartPrice', label: 'stats.fields.dtStart' },
   { field: 'dtTopPrice', label: 'stats.fields.dtTop' },
   { field: 'dtLowPrice', label: 'stats.fields.dtLow' },
   { field: 'dtRetestPrice', label: 'stats.fields.dtRetest' },
+  { field: 'dtDropPrice', label: 'stats.fields.dtDrop' },
 ];
 
-/** Their four times, in the same order — required to tick like the prices (#469). */
+/** Their five times, in the same order — required to tick like the prices (#469). */
 const DOUBLE_TOP_TIMES: readonly { field: SessionTime; label: string }[] = [
   { field: 'dtStartTime', label: 'stats.fields.dtStartTimeShort' },
   { field: 'dtTopTime', label: 'stats.fields.dtTopTimeShort' },
   { field: 'dtLowTime', label: 'stats.fields.dtLowTimeShort' },
   { field: 'dtRetestTime', label: 'stats.fields.dtRetestTimeShort' },
+  { field: 'dtDropTime', label: 'stats.fields.dtDropTimeShort' },
 ];
 
-/** The session prices a stat needs — all five, four on a no-push day, the four of a double top. */
-function expectedPrices(session: Pick<SessionModel, 'noPush'>, pattern: Pattern) {
-  if (pattern === 'DT') return DOUBLE_TOP_PRICES;
+/**
+ * A double top whose retest took the top back : a breakout, with no drop to measure after it — the
+ * tick waits for four points instead of five (#710).
+ */
+export function retestTookTop(session: Pick<SessionModel, 'dtTopPrice' | 'dtRetestPrice'>) {
+  const { dtTopPrice: top, dtRetestPrice: retest } = session;
+  return top !== null && retest !== null && top > 0 && retest >= top;
+}
+
+/** The points a double top needs to tick — its five, or four when the retest took the top. */
+function doubleTopPoints<T extends { field: SessionField }>(
+  points: readonly T[],
+  session: Pick<SessionModel, 'dtTopPrice' | 'dtRetestPrice'>,
+): readonly T[] {
+  if (!retestTookTop(session)) return points;
+  return points.filter(({ field }) => field !== 'dtDropPrice' && field !== 'dtDropTime');
+}
+
+/** The session prices a stat needs — all five, four on a no-push day, a double top's points. */
+function expectedPrices(session: Pick<SessionModel, SessionField | 'noPush'>, pattern: Pattern) {
+  if (pattern === 'DT') return doubleTopPoints(DOUBLE_TOP_PRICES, session);
   return SESSION_PRICES.filter(({ field }) => !(session.noPush && field === 'pushOpenPrice'));
 }
 
@@ -412,7 +427,9 @@ export function missingPrices(
   if (pattern !== 'DT') return prices;
   return [
     ...prices,
-    ...DOUBLE_TOP_TIMES.filter(({ field }) => !session[field]).map((t) => t.label),
+    ...doubleTopPoints(DOUBLE_TOP_TIMES, session)
+      .filter(({ field }) => !session[field])
+      .map((t) => t.label),
   ];
 }
 
@@ -865,13 +882,6 @@ export class StatsPage {
       eodPercent: percentVsOpen(e.openPrice, e.eodPrice),
       legs: doubleTopLegs(e),
       durations: doubleTopDurations(e),
-      dropToFill:
-        e.completed &&
-        e.pattern === 'DT' &&
-        e.dtDropPrice === null &&
-        e.dtTopPrice !== null &&
-        e.dtRetestPrice !== null &&
-        e.dtRetestPrice < e.dtTopPrice,
       gus: gusSequence(e),
       gusDropToFill: bounded && e.completed && e.pattern !== 'DT' && e.gusDropPrice === null,
       missing: missingPrices(e, e.pattern),
@@ -968,16 +978,17 @@ export class StatsPage {
   readonly doubleTopDurations = computed(() => doubleTopDurations(this.session()));
 
   /**
-   * « 3 / 4 prix · 2 / 4 heures » — the prices and the times a double top needs to tick — and
-   * whether its optional drop is in (#706).
+   * « 3 / 5 prix · 2 / 5 heures » — the prices and the times a double top needs to tick, four of
+   * each when the retest took the top (#710).
    */
   readonly doubleTopProgress = computed(() => {
     const m = this.session();
+    const prices = doubleTopPoints(DOUBLE_TOP_PRICES, m);
     return {
-      prices: DOUBLE_TOP_PRICES.filter(({ field }) => isPositive(m[field])).length,
-      times: DOUBLE_TOP_TIMES.filter(({ field }) => !!m[field]).length,
-      total: DOUBLE_TOP_PRICES.length,
-      drop: isPositive(m.dtDropPrice) && !!m.dtDropTime,
+      prices: prices.filter(({ field }) => isPositive(m[field])).length,
+      times: doubleTopPoints(DOUBLE_TOP_TIMES, m).filter(({ field }) => !!m[field]).length,
+      total: prices.length,
+      tookTop: retestTookTop(m),
     };
   });
 

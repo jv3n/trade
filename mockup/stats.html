@@ -368,12 +368,12 @@
         </section>
 
         <!-- DT : ce que le pattern rapporte (#706) — la chute D après le retest, lue côté short : la baisse est le gain, en vert. -->
-        <!-- Son propre n : la chute est facultative, et vide quand le retest reprend le top (IMNN). -->
+        <!-- Son n : les DT complétées moins celles dont le retest a repris le top (IMNN) — pas de chute à mesurer (#710). -->
         <section class="grid grid-4" style="margin-bottom: 16px" data-group="pattern" data-value="dt" hidden title="Ce que le mouvement offrait, pas un backtest : le stop a pu sauter avant le plus bas">
           <div class="card kpi">
             <div class="label">Chute après le retest (D)</div>
             <div class="value gain">+17,3 %</div>
-            <div class="sub">médiane · retest → plus bas · <b>n = 2</b> sur 3 DT complétées</div>
+            <div class="sub">médiane · retest → plus bas · <b>n = 2</b> · top repris : 1</div>
           </div>
           <div class="card kpi">
             <div class="label">À l'entrée de la fiche</div>
@@ -522,7 +522,7 @@
                   <td><span class="pct muted" id="dt-c">—</span></td>
                 </tr>
                 <tr>
-                  <td title="Le plus bas après le retest, avant la clôture — facultatif pour l'instant : la coche ne l'attend pas">Plus bas après<br />le retest</td>
+                  <td title="Le plus bas après le retest, avant la clôture — requis pour la coche, sauf quand le retest reprend le top (pas de chute à mesurer)">Plus bas après<br />le retest</td>
                   <td><input class="input" type="time" id="dt-drop-time" data-dt-time /></td>
                   <td><input class="input" id="dt-drop" placeholder="2,30" /></td>
                   <td><span class="pct muted" id="dt-d">—</span></td>
@@ -534,7 +534,7 @@
             <label><input type="checkbox" data-flag /> SSR</label>
             <label title="Plus de 20 % du float détenu par des institutions"><input type="checkbox" data-flag /> Institutions &gt; 20 %</label>
             <span style="flex: 1"></span>
-            <span class="progress" id="dt-progress">3 / 4 prix · 3 / 4 heures · chute à saisir</span>
+            <span class="progress" id="dt-progress">3 / 5 prix · 3 / 5 heures</span>
             <button class="btn">Fermer</button>
             <button class="btn btn-check" id="dt-check" disabled title="Il manque le retest"><span class="icon">check_circle</span> <span data-label>Marquer complétée</span></button>
           </div>
@@ -1125,9 +1125,9 @@
           la baisse est le gain, affichée <b>+17,1 %</b> en vert, jamais −17,1 % en rouge (la valeur stockée garde son signe). Trois
           KPIs en médianes, comme le GUS : la chute depuis le retest, la chute <b>depuis l'entrée de la fiche</b> (top −5 %, le prix
           où la fiche dit de shorter — c'est elle qui répond à la question), la durée de D, et combien de chutes atteignent les
-          10 % promis par la fiche. <b>Facultatif pour l'instant</b> : l'historique n'a pas ce prix, la coche reste à quatre prix
-          et la rangée porte son propre n (« n = 2 sur 3 »). Vide quand le retest reprend le top et que le titre continue (IMNN) :
-          pas de chute à mesurer. Ce n'est pas un backtest — le stop a pu sauter avant le plus bas, la carte le dit au survol.
+          10 % promis par la fiche. <b>Requis pour la coche</b> (#710) — « n / 5 prix · n / 5 heures » — <b>sauf quand le retest
+          reprend le top</b> et que le titre continue (IMNN) : pas de chute à mesurer, le champ reste vide et la coche revient à
+          quatre points. Le n de la rangée est donc les DT complétées moins celles-là (« n = 2 · top repris : 1 »). Ce n'est pas un backtest — le stop a pu sauter avant le plus bas, la carte le dit au survol.
         </p>
         <p class="mockup-note">
           Mesurer le GUS avec les chiffres sur lesquels il se décide (#499). Le <b>gap</b> de l'app (clôture veille → open PM) et le
@@ -1485,7 +1485,7 @@
         const prices = [$('dt-start'), $('dt-top'), $('dt-low'), $('dt-retest')];
         const names = ['le départ', 'le top', 'le bas du rejet', 'le retest'];
         const times = [$('dt-start-time'), $('dt-top-time'), $('dt-low-time'), $('dt-retest-time')];
-        // La chute D (#706) : facultative, hors du compte de la coche, mais ses heures et son prix suivent la même règle.
+        // La chute D (#706) : requise pour la coche sauf top repris (#710) ; ses heures et son prix suivent la même règle.
         const drop = $('dt-drop');
         const dropTime = $('dt-drop-time');
         const allTimes = [...times, dropTime];
@@ -1524,6 +1524,8 @@
           } else leg($('dt-c'), '—');
           // D se lit côté short : la baisse est le gain, en vert ; depuis le retest, puis depuis l'entrée de la fiche (top −5 %).
           const bottom = parse(drop.value);
+          // Un retest qui reprend le top n'a pas de chute : la coche ne l'attend que sinon (#710).
+          const tookTop = retest > 0 && top > 0 && retest >= top;
           const dropAbove = bottom > 0 && retest > 0 && bottom > retest;
           drop.classList.toggle('invalid', dropAbove);
           drop.title = dropAbove ? 'Au-dessus du retest : le plus bas vient après, plus bas' : '';
@@ -1534,7 +1536,7 @@
               '<span class="gain">D ' + fmt(d) + '</span>' + span(3) +
               '<small>pour le short' + (atEntry !== null ? ' · ' + fmt(atEntry) + " à l'entrée de la fiche" : '') + '</small>';
             $('dt-d').className = 'pct';
-          } else leg($('dt-d'), '—', false, retest > 0 && top > 0 && retest >= top ? 'top repris : vide si ça a continué' : 'facultatif — se complète à la clôture');
+          } else leg($('dt-d'), '—', false, tookTop ? 'top repris : pas de chute à mesurer' : 'requis — se complète à la clôture');
 
           // Les heures vont dans l'ordre : départ ≤ top ≤ bas ≤ retest. La première qui recule est fautive.
           let outOfOrder = null;
@@ -1548,9 +1550,11 @@
 
           const missing = names.filter((_, i) => !(parse(prices[i].value) > 0));
           const missingTimes = names.filter((_, i) => minutes(times[i]) === null);
+          if (!tookTop && !(bottom > 0)) missing.push('le plus bas après le retest');
+          if (!tookTop && minutes(dropTime) === null) missingTimes.push('le plus bas après le retest');
+          const needed = tookTop ? 4 : 5;
           $('dt-progress').textContent =
-            4 - missing.length + ' / 4 prix · ' + (4 - missingTimes.length) + ' / 4 heures' +
-            (bottom > 0 && minutes(dropTime) !== null ? ' · chute ✓' : ' · chute à saisir');
+            needed - missing.length + ' / ' + needed + ' prix · ' + (needed - missingTimes.length) + ' / ' + needed + ' heures';
           const blockers = [...missing, ...missingTimes.map((n) => "l'heure de " + n)];
           if (outOfOrder !== null) blockers.push("des heures dans l'ordre");
           if (dropAbove) blockers.push('un plus bas sous le retest');

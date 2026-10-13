@@ -127,8 +127,9 @@ class StatEntry(
     get() = pattern == Pattern.DT
 
   /**
-   * The session prices of its pattern are in — five for a GUS, or four on a [noPush] day ; the four
-   * double top prices and their four times for a DT. The precondition to tick.
+   * The session prices of its pattern are in — five for a GUS, or four on a [noPush] day ; for a DT
+   * its five points and their times, four when the retest took the top (#710). The precondition to
+   * tick.
    */
   val hasFullSession: Boolean
     get() = missingSessionPrices.isEmpty()
@@ -146,11 +147,7 @@ class StatEntry(
    */
   val outOfPattern: List<OutOfPatternReason>
     get() = buildList {
-      val top = dtTopPrice
-      val retest = dtRetestPrice
-      if (isDoubleTop && top != null && retest != null && retest >= top) {
-        add(OutOfPatternReason.RETEST_TOOK_TOP)
-      }
+      if (retestTookTop) add(OutOfPatternReason.RETEST_TOOK_TOP)
       val open = openPrice
       if (
         pattern == Pattern.GUS &&
@@ -161,19 +158,30 @@ class StatEntry(
       }
     }
 
+  /** A DT whose retest took the top back : a breakout, with no drop to measure after it. */
+  private val retestTookTop: Boolean
+    get() {
+      val top = dtTopPrice
+      val retest = dtRetestPrice
+      return isDoubleTop && top != null && retest != null && retest >= top
+    }
+
   /** Labels of the session prices (and a DT's times) still missing, in the sheet's order. */
   val missingSessionPrices: List<String>
     get() =
       (if (isDoubleTop) {
-          listOf(
+          val drop = !retestTookTop
+          listOfNotNull(
             "Start" to dtStartPrice,
             "Top" to dtTopPrice,
             "Rejection low" to dtLowPrice,
             "Retest" to dtRetestPrice,
+            ("Drop low" to dtDropPrice).takeIf { drop },
             "Start time" to dtStartTime,
             "Top time" to dtTopTime,
             "Rejection low time" to dtLowTime,
             "Retest time" to dtRetestTime,
+            ("Drop low time" to dtDropTime).takeIf { drop },
           )
         } else {
           listOfNotNull(
