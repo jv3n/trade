@@ -3,7 +3,7 @@
 > **Shorter** un titre qui a fortement monté en intraday, s'est fait rejeter, et revient tester son
 > high. Le pari : le deuxième test échoue, parce que le rejet a convaincu le marché que le top est fait.
 
-*Dernière révision : 2026-10-12 (la chute mesurée, #706) ; 2026-09-25, d'après la séance du Trading Desk du 14 septembre, « Les Patterns ».*
+*Dernière révision : 2026-10-13 (la chute citée telle que mesurée, #711) ; 2026-10-12 (la chute mesurée, #706) ; 2026-09-25, d'après la séance du Trading Desk du 14 septembre, « Les Patterns ».*
 
 ---
 
@@ -37,9 +37,13 @@ cette croyance qui crée la vente sur le retest (voir les [quatre vendeurs](../n
 d'air au-dessus du top → stop vers 3,30 $ → risquer ~15 % pour aller chercher 10-15 %. Un bon R / R avec
 un bon win rate, tant que le double top remplit les critères ci-dessus.
 
-Les 10-15 % viennent de l'expérience. La page Stats les mesure désormais (#706) : la **chute après
-le retest**, lue depuis cette entrée à −5 %, et combien de chutes atteignent 10 % — après quelques
-mois de données, cette ligne devra citer le chiffre mesuré.
+Les 10-15 % venaient de l'expérience ; la page Stats les mesure (#706). **Mesuré à ce jour**
+(2026-09-22 → 2026-10-13, 8 chutes sur 11 double tops — les 3 autres ont repris le top et continué) :
+une médiane de **+17,2 % depuis l'entrée à −5 %** (+18,0 % depuis le retest), **8 / 8 ont atteint
+10 %**, en une médiane de **35 min** après le retest. Au-dessus de la fourchette, pas en dessous —
+mais 8 chutes en trois semaines, c'est trop peu pour déplacer la cible : le R / R ci-dessus garde
+10-15 % tant que le `n` n'a pas passé ~20. C'est ce que le mouvement offrait, pas un backtest : le
+stop a pu sauter avant le plus bas.
 
 **Attendre la cassure** du high initial donne plus de confirmation sur sa réaction, et de meilleures
 entrées — mais en fait rater beaucoup : un double top **frôle souvent le high initial sans le prendre**.

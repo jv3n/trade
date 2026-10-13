@@ -3,7 +3,7 @@
 > **Short** a stock that ran hard intraday, got rejected, and comes back to test its high. The bet :
 > the second test fails, because the rejection convinced the market the top is in.
 
-*Last revised : 2026-10-12 (the measured drop, #706) ; 2026-09-25, from the Trading Desk session of 14 September, « Les Patterns ».*
+*Last revised : 2026-10-13 (the drop quoted as measured, #711) ; 2026-10-12 (the measured drop, #706) ; 2026-09-25, from the Trading Desk session of 14 September, « Les Patterns ».*
 
 ---
 
@@ -36,9 +36,12 @@ selling on the retest (see the [four sellers](../notes/four-sellers.md)).
 breathing room above the top → stop around $3.30 → risking ~15 % to take 10-15 %. A good R / R with
 a good win rate, as long as the double top meets the criteria above.
 
-The 10-15 % comes from experience. The stats page now measures it (#706) : the **drop after the
-retest**, read from this −5 % entry, and how many drops reached 10 % — once a few months are in,
-this line should quote the measured figure.
+The 10-15 % came from experience ; the stats page measures it (#706). **Measured so far**
+(2026-09-22 → 2026-10-13, 8 drops out of 11 double tops — the 3 others took the top back and kept
+going) : a median of **+17.2 % from the −5 % entry** (+18.0 % from the retest), **8 / 8 reached
+10 %**, in a median **35 min** after the retest. Above the range, not under it — but 8 drops in three
+weeks is too few to move the target : the R / R above keeps 10-15 % until the `n` passes ~20. It is
+what the move offered, not a backtest : the stop may have been hit before the low.
 
 **Waiting for the break** of the initial high gives more confirmation of how it reacts, and better
 entries — but misses a lot : a double top often **grazes the initial high without taking it**.
