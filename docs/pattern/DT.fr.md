@@ -3,7 +3,25 @@
 > **Shorter** un titre qui a fortement monté en intraday, s'est fait rejeter, et revient tester son
 > high. Le pari : le deuxième test échoue, parce que le rejet a convaincu le marché que le top est fait.
 
-*Dernière révision : 2026-10-12 (la chute mesurée, #706) ; 2026-09-25, d'après la séance du Trading Desk du 14 septembre, « Les Patterns ».*
+*Dernière révision : 2026-10-13 (les points nommés BARES, #716) ; 2026-10-12 (la chute mesurée, #706) ; 2026-09-25, d'après la séance du Trading Desk du 14 septembre, « Les Patterns ».*
+
+---
+
+## Les points — BARES
+
+Cinq points, les mêmes mots en français et en anglais, nommés d'après ce qu'ils sont :
+
+| | Point | Ce que c'est |
+|---|-------|--------------|
+| **B** | **Base** | Le bas d'où part la poussée — l'open par défaut |
+| **A** | **Apex** | Le haut de la première poussée |
+| **R** | **Rejection** | Le bas du rejet depuis l'Apex |
+| **E** | **Echo** | Le second test, l'écho de l'Apex — le trade |
+| **S** | **Sink** | Le plus bas après l'Echo, avant la clôture — ce que le pattern a payé |
+
+Les jambes se nomment du point qu'elles atteignent : **A** l'extension (Base → Apex), **R** le rejet
+(Apex → Rejection), **E** l'echo (Rejection → Echo), **S** le sink (Echo → Sink). **Sink** est aussi
+le dernier point du GUS (Open · Push · Sink) : la chute finale porte le même nom dans chaque pattern.
 
 ---
 
@@ -11,10 +29,10 @@
 
 | # | Critère | Valeur | Pourquoi |
 |---|---------|--------|----------|
-| 1 | **Extension** | ≥ +50 % | En intraday, depuis l'open. En comptant le gap, c'est à juger — la feuille de stats sépare « extension depuis l'open » et « extension avec gap » pour cette raison. |
-| 2 | **Rejet** | 17-20 % sous le top | En dessous, c'est une respiration normale (section suivante). |
-| 3 | **Retest** | Retour vers le high initial | Le deuxième test, c'est le trade. Il frôle souvent le high sans le prendre. |
-| 4 | **Un risque ailleurs** | Niveau daily ou premarket près du top | Pas obligatoire, mais ça aide nettement. |
+| 1 | **Extension (A)** | ≥ +50 % | Base → Apex, en intraday, depuis l'open. En comptant le gap, c'est à juger — la feuille de stats sépare « extension depuis l'open » et « extension avec gap » pour cette raison. |
+| 2 | **Rejet (R)** | 17-20 % sous l'Apex | En dessous, c'est une respiration normale (section suivante). |
+| 3 | **Echo (E)** | Retour vers l'Apex | Le deuxième test, c'est le trade. Il frôle souvent l'Apex sans le prendre. |
+| 4 | **Un risque ailleurs** | Niveau daily ou premarket près de l'Apex | Pas obligatoire, mais ça aide nettement. |
 
 ---
 
@@ -27,7 +45,7 @@ de 10 % ne prouve rien.
 
 À **17-20 %**, les gens commencent à croire que le top est fait. Les longs qui ont raté leur sortie, et
 ceux qui perdent de l'argent maintenant, décident de vendre la prochaine fois qu'il revient — c'est
-cette croyance qui crée la vente sur le retest (voir les [quatre vendeurs](../notes/four-sellers.fr.md)).
+cette croyance qui crée la vente sur l'Echo (voir les [quatre vendeurs](../notes/four-sellers.fr.md)).
 
 ---
 
@@ -47,7 +65,7 @@ Entrer quelques pourcents sous le high est le compromis habituel.
 
 Une variante du groupe : entrer sur le fake-out du dernier top, stop ~6 % au-dessus.
 
-Quand le retest n'atteint jamais le high, un niveau de rebond qui casse et échoue peut quand même
+Quand l'Echo n'atteint jamais l'Apex, un niveau de rebond qui casse et échoue peut quand même
 donner l'entrée — un [penny break](penny-break.fr.md).
 
 ---

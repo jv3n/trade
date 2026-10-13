@@ -3,7 +3,25 @@
 > **Short** a stock that ran hard intraday, got rejected, and comes back to test its high. The bet :
 > the second test fails, because the rejection convinced the market the top is in.
 
-*Last revised : 2026-10-12 (the measured drop, #706) ; 2026-09-25, from the Trading Desk session of 14 September, « Les Patterns ».*
+*Last revised : 2026-10-13 (the points named BARES, #716) ; 2026-10-12 (the measured drop, #706) ; 2026-09-25, from the Trading Desk session of 14 September, « Les Patterns ».*
+
+---
+
+## The points — BARES
+
+Five points, the same words in French and English, named after what they are :
+
+| | Point | What it is |
+|---|-------|------------|
+| **B** | **Base** | The low the push starts from — the open by default |
+| **A** | **Apex** | The top of the first push |
+| **R** | **Rejection** | The low of the rejection off the Apex |
+| **E** | **Echo** | The second test, echoing the Apex — the trade |
+| **S** | **Sink** | The lowest print after the Echo, before the close — what the pattern paid |
+
+The legs are named by the point they reach : **A** the extension (Base → Apex), **R** the rejection
+(Apex → Rejection), **E** the echo (Rejection → Echo), **S** the sink (Echo → Sink). **Sink** is
+also the last point of the GUS (Open · Push · Sink) : the final fall has one name in every pattern.
 
 ---
 
@@ -11,10 +29,10 @@
 
 | # | Criterion | Value | Why |
 |---|-----------|-------|-----|
-| 1 | **Extension** | ≥ +50 % | Intraday, from the open. With the gap counted in, it is a judgement call — the stats sheet splits « extension from the open » and « extension with a gap » for that reason. |
-| 2 | **Rejection** | 17-20 % off the top | Below that it is a normal breath (next section). |
-| 3 | **Retest** | Back toward the initial high | The second test is the trade. It often grazes the high without taking it. |
-| 4 | **A risk elsewhere** | Daily or premarket level near the top | Not required, but it definitely helps the case. |
+| 1 | **Extension (A)** | ≥ +50 % | Base → Apex, intraday, from the open. With the gap counted in, it is a judgement call — the stats sheet splits « extension from the open » and « extension with a gap » for that reason. |
+| 2 | **Rejection (R)** | 17-20 % off the Apex | Below that it is a normal breath (next section). |
+| 3 | **Echo (E)** | Back toward the Apex | The second test is the trade. It often grazes the Apex without taking it. |
+| 4 | **A risk elsewhere** | Daily or premarket level near the Apex | Not required, but it definitely helps the case. |
 
 ---
 
@@ -26,7 +44,7 @@ you know it, you see 10 % breaths everywhere, and a 10 % rejection proves nothin
 
 At **17-20 %**, people start believing the top is in. The longs who missed their exit, and the ones
 now losing money, decide to sell the next time it comes back — that belief is what creates the
-selling on the retest (see the [four sellers](../notes/four-sellers.md)).
+selling on the Echo (see the [four sellers](../notes/four-sellers.md)).
 
 ---
 
@@ -46,7 +64,7 @@ Entering a few percent under the high is the usual compromise.
 
 A variant from the group : enter on the fake-out of the last top, stop ~6 % above it.
 
-When the retest never reaches the high, a bounce level that breaks and fails can still give the entry
+When the Echo never reaches the Apex, a bounce level that breaks and fails can still give the entry
 — a [penny break](penny-break.md).
 
 ---

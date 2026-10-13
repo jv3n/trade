@@ -196,7 +196,7 @@
         cursor: not-allowed;
       }
 
-      /* Double top : quatre prix, les trois jambes A (extension), B (rejet), C (retest) se calculent entre eux. */
+      /* Double top, BARES (#716) : Base · Apex · Rejection · Echo · Sink ; les jambes A, R, E, S se nomment du point qu'elles atteignent. */
       /* Une ligne par point, comme une exécution du journal : heure, prix, puis l'étape qu'il ferme (#469). */
       .dt-rows {
         width: 100%;
@@ -348,47 +348,47 @@
           <div class="card kpi">
             <div class="label">Extension moyenne (A)</div>
             <div class="value">+59,2 %</div>
-            <div class="sub">depuis le départ</div>
+            <div class="sub">Base → Apex</div>
           </div>
           <div class="card kpi">
-            <div class="label">Rejet moyen (B)</div>
+            <div class="label">Rejection moyenne (R)</div>
             <div class="value">−18,9 %</div>
-            <div class="sub">depuis le top · <b>2 / 3</b> à 17 % ou plus</div>
+            <div class="sub">Apex → Rejection · <b>2 / 3</b> à 17 % ou plus</div>
           </div>
           <div class="card kpi">
-            <div class="label">Retest (C)</div>
+            <div class="label">Echo (E)</div>
             <div class="value">−1,2 %</div>
-            <div class="sub">du top en moyenne · <b>1 / 3</b> a repris le top</div>
+            <div class="sub">de l'Apex en moyenne · <b>1 / 3</b> a repris l'Apex</div>
           </div>
           <div class="card kpi" title="Médiane, pas moyenne : un DT qui traîne tout l'après-midi ne déplace pas le chiffre typique">
             <div class="label">Durée médiane</div>
             <div class="value">34 min</div>
-            <div class="sub">départ → retest · <b>n = 3</b> · rejet (B) 7 min</div>
+            <div class="sub">Base → Echo · <b>n = 3</b> · Rejection (R) 7 min</div>
           </div>
         </section>
 
-        <!-- DT : ce que le pattern rapporte (#706) — la chute D après le retest, lue côté short : la baisse est le gain, en vert. -->
-        <!-- Son n : les DT complétées moins celles dont le retest a repris le top (IMNN) — pas de chute à mesurer (#710). -->
-        <section class="grid grid-4" style="margin-bottom: 16px" data-group="pattern" data-value="dt" hidden title="Ce que le mouvement offrait, pas un backtest : le stop a pu sauter avant le plus bas">
+        <!-- DT : ce que le pattern rapporte (#706) — la jambe S, de l'Echo au Sink, lue côté short : la baisse est le gain, en vert. -->
+        <!-- Son n : les DT complétées moins celles dont l'Echo a repris l'Apex (IMNN) — pas de Sink à mesurer (#710). -->
+        <section class="grid grid-4" style="margin-bottom: 16px" data-group="pattern" data-value="dt" hidden title="Ce que le mouvement offrait, pas un backtest : le stop a pu sauter avant le Sink">
           <div class="card kpi">
-            <div class="label">Chute après le retest (D)</div>
+            <div class="label">Sink depuis l'Echo (S)</div>
             <div class="value gain">+17,3 %</div>
-            <div class="sub">médiane · retest → plus bas · <b>n = 2</b> · top repris : 1</div>
+            <div class="sub">médiane · Echo → Sink · <b>n = 2</b> · Apex repris : 1</div>
           </div>
           <div class="card kpi">
             <div class="label">À l'entrée de la fiche</div>
             <div class="value gain">+15,3 %</div>
-            <div class="sub">médiane · depuis top −5 % → plus bas</div>
+            <div class="sub">médiane · Apex −5 % → Sink</div>
           </div>
           <div class="card kpi">
-            <div class="label">Durée de D</div>
+            <div class="label">Durée du Sink (S)</div>
             <div class="value">39 min</div>
-            <div class="sub">médiane · retest → plus bas</div>
+            <div class="sub">médiane · Echo → Sink</div>
           </div>
           <div class="card kpi">
             <div class="label">10 % atteints</div>
             <div class="value">2 / 2</div>
-            <div class="sub">chutes d'au moins 10 % depuis l'entrée de la fiche</div>
+            <div class="sub">Sinks d'au moins 10 % depuis l'entrée de la fiche</div>
           </div>
         </section>
 
@@ -480,11 +480,11 @@
           </div>
         </section>
 
-        <!-- Stat DT : le premarket reste le même, la séance devient les trois jambes du double top (docs/pattern/DT.md). -->
+        <!-- Stat DT : la séance devient les cinq points du double top, BARES (#716, docs/pattern/DT.md). -->
         <section class="card" style="margin-bottom: 16px; border-color: var(--warn)" id="dt-panel" data-group="panel" data-value="dt" hidden>
           <h2>
             <span>Double top<span class="save-state" id="dt-state">✓ enregistré à 11:48</span></span>
-            <span class="hint">en fin de matinée, quand il se forme · chaque prix avec son heure · chaque champ s'enregistre à la sortie · A ≥ 50 %, B 17-20 % · la chute D se complète à la clôture</span>
+            <span class="hint">en fin de matinée, quand il se forme · chaque prix avec son heure · chaque champ s'enregistre à la sortie · A ≥ 50 %, R 17-20 % · le Sink se complète à la clôture</span>
           </h2>
           <form onsubmit="return false">
             <table class="dt-rows">
@@ -498,31 +498,31 @@
               </thead>
               <tbody>
                 <tr>
-                  <td>Départ</td>
+                  <td title="Le bas d'où part la poussée">Base</td>
                   <td><input class="input" type="time" id="dt-start-time" data-dt-time value="10:02" /></td>
                   <td><input class="input" id="dt-start" data-dt value="1,90" /></td>
                   <td><span class="pct muted">l'open (9h30) par défaut — le bas d'où part la poussée</span></td>
                 </tr>
                 <tr>
-                  <td>Top</td>
+                  <td title="Le haut de la première poussée">Apex</td>
                   <td><input class="input" type="time" id="dt-top-time" data-dt-time value="10:14" /></td>
                   <td><input class="input" id="dt-top" data-dt value="2,95" /></td>
                   <td><span class="pct" id="dt-a">—</span></td>
                 </tr>
                 <tr>
-                  <td>Bas du rejet</td>
+                  <td title="Le bas du rejet depuis l'Apex">Rejection</td>
                   <td><input class="input" type="time" id="dt-low-time" data-dt-time value="10:21" /></td>
                   <td><input class="input" id="dt-low" data-dt value="2,36" /></td>
                   <td><span class="pct" id="dt-b">—</span></td>
                 </tr>
                 <tr>
-                  <td>Retest</td>
+                  <td title="Le second test, l'écho de l'Apex">Echo</td>
                   <td><input class="input" type="time" id="dt-retest-time" data-dt-time /></td>
                   <td><input class="input" id="dt-retest" data-dt placeholder="2,85" /></td>
                   <td><span class="pct muted" id="dt-c">—</span></td>
                 </tr>
                 <tr>
-                  <td title="Le plus bas après le retest, avant la clôture — requis pour la coche, sauf quand le retest reprend le top (pas de chute à mesurer)">Plus bas après<br />le retest</td>
+                  <td title="Le plus bas après l'Echo, avant la clôture — requis pour la coche, sauf quand l'Echo reprend l'Apex (pas de Sink à mesurer)">Sink</td>
                   <td><input class="input" type="time" id="dt-drop-time" data-dt-time /></td>
                   <td><input class="input" id="dt-drop" placeholder="2,30" /></td>
                   <td><span class="pct muted" id="dt-d">—</span></td>
@@ -536,7 +536,7 @@
             <span style="flex: 1"></span>
             <span class="progress" id="dt-progress">3 / 5 prix · 3 / 5 heures</span>
             <button class="btn">Fermer</button>
-            <button class="btn btn-check" id="dt-check" disabled title="Il manque le retest"><span class="icon">check_circle</span> <span data-label>Marquer complétée</span></button>
+            <button class="btn btn-check" id="dt-check" disabled title="Il manque l'Echo"><span class="icon">check_circle</span> <span data-label>Marquer complétée</span></button>
           </div>
         </section>
 
@@ -638,7 +638,7 @@
             </div>
             <!-- #499 : deux conditions que l'app déduit — des bascules qui se combinent avec les onglets, pas un onglet de plus. -->
             <span class="filter-toggles">
-              <button class="btn btn-sm filter-toggle" aria-pressed="false" title="Ce que les prix enregistrés disent ne pas être le setup — un DT dont le retest reprend le top, un prix hors de la fourchette de la fiche. Se combine avec les onglets.">Hors pattern</button>
+              <button class="btn btn-sm filter-toggle" aria-pressed="false" title="Ce que les prix enregistrés disent ne pas être le setup — un DT dont l'Echo reprend l'Apex, un prix hors de la fourchette de la fiche. Se combine avec les onglets.">Hors pattern</button>
               <button class="btn btn-sm filter-toggle" aria-pressed="false" title="Open sous 1 $ — déduit du prix, plus une case à cocher. Se combine avec les onglets.">Sous 1 $</button>
             </span>
           </div>
@@ -650,7 +650,7 @@
                 <tr class="group-head">
                   <th colspan="3"></th>
                   <th colspan="2" class="sep" title="Pas de premarket sur un double top (#649) : il se lit sur la séance">Titre</th>
-                  <th colspan="5" class="sep">Double top — A extension · B rejet · C retest</th>
+                  <th colspan="5" class="sep">Double top — BARES · A extension · R rejet · E echo</th>
                   <th class="sep" title="Ce que le pattern a rapporté (#706)">Résultat</th>
                   <th colspan="3" class="sep"></th>
                 </tr>
@@ -660,12 +660,12 @@
                   <th>Pattern</th>
                   <th class="num sep">Float</th>
                   <th class="num">Volume</th>
-                  <th class="num sep">Départ</th>
-                  <th class="num" title="Du départ au top">A — top</th>
-                  <th class="num" title="Du top au bas du rejet">B — bas</th>
-                  <th class="num" title="Du bas au haut du retest ; en dessous, l'écart au top">C — retest</th>
-                  <th class="num" title="Du départ au retest ; en dessous, les trois jambes">Durée</th>
-                  <th class="num sep" title="Le plus bas après le retest ; en dessous, ce que le short en tire depuis le retest, depuis l'entrée de la fiche (top −5 %), et la durée">D — chute</th>
+                  <th class="num sep">Base</th>
+                  <th class="num" title="De la Base à l'Apex">A — apex</th>
+                  <th class="num" title="De l'Apex à la Rejection">R — rejection</th>
+                  <th class="num" title="De la Rejection à l'Echo ; en dessous, l'écart à l'Apex">E — echo</th>
+                  <th class="num" title="De la Base à l'Echo ; en dessous, les trois jambes">Durée</th>
+                  <th class="num sep" title="Le plus bas après l'Echo ; en dessous, ce que le short en tire depuis l'Echo, depuis l'entrée de la fiche (Apex −5 %), et la durée">S — sink</th>
                   <th class="sep">Flags</th>
                   <th title="Complétée">✓</th>
                   <th>Trade</th>
@@ -679,10 +679,10 @@
                   <td class="num">2,95<small class="muted">+55,3 %</small></td>
                   <td class="num">2,36<small class="muted">−20,0 %</small></td>
                   <td class="num muted">—</td>
-                  <td class="num muted">—<small class="muted">A 12 · B 7</small></td>
+                  <td class="num muted">—<small class="muted">A 12 · R 7</small></td>
                   <td class="num sep muted">—</td>
                   <td class="sep"></td>
-                  <td><button class="check" disabled title="Il manque le retest"><span class="icon">radio_button_unchecked</span></button></td>
+                  <td><button class="check" disabled title="Il manque l'Echo"><span class="icon">radio_button_unchecked</span></button></td>
                   <td><button class="btn btn-sm"><span class="icon">edit</span> Double top</button></td>
                 </tr>
                 <tr>
@@ -691,8 +691,8 @@
                   <td class="num sep">2,40</td>
                   <td class="num">3,80<small class="muted">+58,3 %</small></td>
                   <td class="num">3,02<small class="muted">−20,5 %</small></td>
-                  <td class="num">3,68<small class="muted">+21,9 % · top −3,2 %</small></td>
-                  <td class="num">38 min<small class="muted">A 12 · B 9 · C 17</small></td>
+                  <td class="num">3,68<small class="muted">+21,9 % · Apex −3,2 %</small></td>
+                  <td class="num">38 min<small class="muted">A 12 · R 9 · E 17</small></td>
                   <td class="num sep">3,05<small class="gain">+17,1 % · entrée +15,5 %</small><small class="muted">31 min</small></td>
                   <td class="sep"></td>
                   <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
@@ -704,10 +704,10 @@
                   <td class="num sep">2,10</td>
                   <td class="num">3,40<small class="muted">+61,9 %</small></td>
                   <td class="num">2,70<small class="muted">−20,6 %</small></td>
-                  <td class="num">3,46<small class="below" title="Le retest reprend le top : une cassure, pas un double top">+28,1 % · top repris +1,8 %</small></td>
-                  <td class="num">34 min<small class="muted">A 15 · B 7 · C 12</small></td>
-                  <td class="num sep muted" title="Le retest a repris le top et le titre a continué : pas de chute à mesurer, le champ reste vide">—</td>
-                  <td class="sep"><span class="tag tag-warn" title="Le retest (3,46) reprend le top (3,40) : le double top ne s'est pas formé. La stat reste dans les chiffres du DT — c'est le trade qui n'a pas suivi la fiche.">hors pattern</span></td>
+                  <td class="num">3,46<small class="below" title="L'Echo reprend l'Apex : une cassure, pas un double top">+28,1 % · Apex repris +1,8 %</small></td>
+                  <td class="num">34 min<small class="muted">A 15 · R 7 · E 12</small></td>
+                  <td class="num sep muted" title="L'Echo a repris l'Apex et le titre a continué : pas de Sink à mesurer, le champ reste vide">—</td>
+                  <td class="sep"><span class="tag tag-warn" title="L'Echo (3,46) reprend l'Apex (3,40) : le double top ne s'est pas formé. La stat reste dans les chiffres du DT — c'est le trade qui n'a pas suivi la fiche.">hors pattern</span></td>
                   <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
                   <td><a href="trade.html" class="tag tag-loss">−234</a></td>
                 </tr>
@@ -717,8 +717,8 @@
                   <td class="num sep">4,10</td>
                   <td class="num">6,45<small class="muted">+57,3 %</small></td>
                   <td class="num">5,45<small class="below" title="Sous les 17 % de la fiche : une respiration plutôt qu'un rejet">−15,5 %</small></td>
-                  <td class="num">6,30<small class="muted">+15,6 % · top −2,3 %</small></td>
-                  <td class="num">26 min<small class="muted">A 10 · B 6 · C 10</small></td>
+                  <td class="num">6,30<small class="muted">+15,6 % · Apex −2,3 %</small></td>
+                  <td class="num">26 min<small class="muted">A 10 · R 6 · E 10</small></td>
                   <td class="num sep">5,20<small class="gain">+17,5 % · entrée +15,1 %</small><small class="muted">47 min</small></td>
                   <td class="sep"></td>
                   <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
@@ -730,9 +730,9 @@
                   <td colspan="6">Moyennes — 3 stats DT complétées</td>
                   <td class="num">+59,2 %</td>
                   <td class="num">−18,9 %<small class="muted">2 / 3 ≥ 17 %</small></td>
-                  <td class="num">+21,9 %<small class="muted">top −1,2 %</small></td>
-                  <td class="num" title="Médiane, pas moyenne">méd. 34 min<small class="muted">n = 3 · B 7</small></td>
-                  <td class="num sep" title="Médianes, sur les DT dont la chute est saisie">méd. <span class="gain">+17,3 %</span><small class="muted">n = 2 · entrée +15,3 % · 39 min</small></td>
+                  <td class="num">+21,9 %<small class="muted">Apex −1,2 %</small></td>
+                  <td class="num" title="Médiane, pas moyenne">méd. 34 min<small class="muted">n = 3 · R 7</small></td>
+                  <td class="num sep" title="Médianes, sur les DT dont le Sink est saisi">méd. <span class="gain">+17,3 %</span><small class="muted">n = 2 · entrée +15,3 % · 39 min</small></td>
                   <td colspan="3"></td>
                 </tr>
               </tfoot>
@@ -804,7 +804,7 @@
                 <tr>
                   <td>16/09</td><td><span class="ticker">PRSO</span></td><td><span class="tag tag-accent">DT</span></td>
                   <td class="num sep muted" title="Pas de premarket sur un double top (#649)">—</td><td class="num muted">—</td><td class="num">6,1 M</td><td class="num">1,4 M</td>
-                  <td class="sep"><span class="leg">A</span>+58,3 % · <span class="leg">B</span>−20,5 % · <span class="leg">C</span>top −3,2 % · <span class="leg">D</span><span class="gain">+17,1 %</span></td>
+                  <td class="sep"><span class="leg">A</span>+58,3 % · <span class="leg">R</span>−20,5 % · <span class="leg">E</span>Apex −3,2 % · <span class="leg">S</span><span class="gain">+17,1 %</span></td>
                   <td class="sep"></td>
                   <td><button class="check done"><span class="icon">check_circle</span></button></td>
                   <td><a href="journal.html" class="tag tag-gain">+185</a></td>
@@ -822,7 +822,7 @@
                 <tr>
                   <td>11/09</td><td><span class="ticker">IMNN</span></td><td><span class="tag tag-accent">DT</span></td>
                   <td class="num sep muted" title="Pas de premarket sur un double top (#649)">—</td><td class="num muted">—</td><td class="num">7,5 M</td><td class="num">0,8 M</td>
-                  <td class="sep"><span class="leg">A</span>+61,9 % · <span class="leg">B</span>−20,6 % · <span class="leg">C</span>top repris +1,8 %</td>
+                  <td class="sep"><span class="leg">A</span>+61,9 % · <span class="leg">R</span>−20,6 % · <span class="leg">E</span>Apex repris +1,8 %</td>
                   <td class="sep"></td>
                   <td><button class="check done"><span class="icon">check_circle</span></button></td>
                   <td><button class="btn btn-sm"><span class="icon">arrow_forward</span> Trade</button></td>
@@ -1102,11 +1102,13 @@
         </p>
         <p class="mockup-note">
           Double top (#428) — une stat DT n'a pas de premarket (#649) : elle se lit sur la séance, pas sur le matin. Sa première carte
-          ne garde que le float, le volume et la note, et « Créer la stat » ne demande que la date et le ticker. Sa séance est le double top lui-même : quatre prix, le départ (l'open par défaut, ou le bas d'où part la poussée), le
-          top, le bas du rejet et le haut du retest. L'app en tire les trois jambes : <b>A</b> l'extension (départ → top, ≥ 50 %),
-          <b>B</b> le rejet (top → bas,
-          17-20 %, en ambre sous 17 % : une respiration), <b>C</b> le retest (bas → retest, et son écart au top — souvent frôlé sans
-          être repris). Elle se coche avec les quatre prix. Un candidat peut avoir <b>une stat par pattern</b> : SGBX, GUS le matin,
+          ne garde que le float, le volume et la note, et « Créer la stat » ne demande que la date et le ticker. Sa séance est le double top lui-même,
+          cinq points nommés <b>BARES</b> (#716) — les mêmes mots en français et en anglais : <b>Base</b> (l'open par défaut, ou le bas d'où part
+          la poussée), <b>Apex</b> (le haut de la poussée), <b>Rejection</b> (le bas du rejet), <b>Echo</b> (le second test) et <b>Sink</b>
+          (le plus bas ensuite, le même mot que le dernier point du GUS). Chaque jambe porte l'initiale du point qu'elle atteint : <b>A</b>
+          l'extension (Base → Apex, ≥ 50 %), <b>R</b> le rejet (Apex → Rejection, 17-20 %, en ambre sous 17 % : une respiration), <b>E</b>
+          l'echo (Rejection → Echo, et son écart à l'Apex — souvent frôlé sans
+          être repris), <b>S</b> le sink (Echo → Sink). Un candidat peut avoir <b>une stat par pattern</b> : SGBX, GUS le matin,
           a aussi sa stat DT en fin de matinée — le sélecteur « SGBX · GUS / SGBX · DT » en haut montre les deux panneaux. Une stat
           ne mesure que deux patterns, GUS et DT (#648), et ne se reclasse plus : un DT a ses propres prix, c'est une autre stat. En haut, GUS / DT / Tous choisit les KPIs, les colonnes et les moyennes ; « Tous » ne garde que ce qui se compare
           (premarket — vide sur un DT —, float, volume, flags, trade) et résume chaque stat dans son pattern, sans ligne de moyennes.
@@ -1120,14 +1122,15 @@
           heure ni chute (KTTA, NUWE, AEHL « à saisir »), la coche reste à cinq prix, et la rangée de KPIs porte son propre n.
         </p>
         <p class="mockup-note">
-          Ce que rapporte un double top (#706) — les quatre points décrivent le setup jusqu'à l'entrée ; un cinquième, le <b>plus bas
-          après le retest</b> (heure et prix, avant la clôture), dit ce qu'il a payé : <b>D</b>, retest → plus bas. Lu côté short :
-          la baisse est le gain, affichée <b>+17,1 %</b> en vert, jamais −17,1 % en rouge (la valeur stockée garde son signe). Trois
-          KPIs en médianes, comme le GUS : la chute depuis le retest, la chute <b>depuis l'entrée de la fiche</b> (top −5 %, le prix
-          où la fiche dit de shorter — c'est elle qui répond à la question), la durée de D, et combien de chutes atteignent les
-          10 % promis par la fiche. <b>Requis pour la coche</b> (#710) — « n / 5 prix · n / 5 heures » — <b>sauf quand le retest
-          reprend le top</b> et que le titre continue (IMNN) : pas de chute à mesurer, le champ reste vide et la coche revient à
-          quatre points. Le n de la rangée est donc les DT complétées moins celles-là (« n = 2 · top repris : 1 »). Ce n'est pas un backtest — le stop a pu sauter avant le plus bas, la carte le dit au survol.
+          Ce que rapporte un double top (#706) — Base, Apex, Rejection et Echo décrivent le setup jusqu'à l'entrée ; le cinquième
+          point, le <b>Sink</b> (le plus bas après l'Echo, heure et prix, avant la clôture), dit ce qu'il a payé : la jambe <b>S</b>,
+          Echo → Sink. Lu côté short : la baisse est le gain, affichée <b>+17,1 %</b> en vert, jamais −17,1 % en rouge (la valeur
+          stockée garde son signe). Trois KPIs en médianes, comme le GUS : le Sink depuis l'Echo, le Sink <b>depuis l'entrée de la
+          fiche</b> (Apex −5 %, le prix où la fiche dit de shorter — c'est lui qui répond à la question), la durée du Sink, et combien de
+          Sinks atteignent les 10 % promis par la fiche. <b>Requis pour la coche</b> (#710) — « n / 5 prix · n / 5 heures » —
+          <b>sauf quand l'Echo reprend l'Apex</b> et que le titre continue (IMNN) : pas de Sink à mesurer, le champ reste vide et la
+          coche revient à quatre points. Le n de la rangée est donc les DT complétées moins celles-là (« n = 2 · Apex repris : 1 »).
+          Ce n'est pas un backtest — le stop a pu sauter avant le Sink, la carte le dit au survol.
         </p>
         <p class="mockup-note">
           Mesurer le GUS avec les chiffres sur lesquels il se décide (#499). Le <b>gap</b> de l'app (clôture veille → open PM) et le
@@ -1139,7 +1142,7 @@
           à l'open ; à l'écran tout reste en %. Pas encore de seuil de tenue : la carte « Tenue médiane » le dira sur la durée.
           Les cartes et la ligne du bas du GUS passent en <b>médianes</b> (comme la durée du DT) : un ou deux gros mouvements ne
           tirent plus « LOD » de 7 points. <b>Hors pattern</b> — un drapeau ambre, calculé, jamais coché : il ne porte que ce que les
-          prix enregistrés vérifient au moment de l'entrée (un DT dont le retest reprend le top, IMNN le 11/09 ; un prix hors de la
+          prix enregistrés vérifient au moment de l'entrée (un DT dont l'Echo reprend l'Apex, IMNN le 11/09 ; un prix hors de la
           fourchette de la fiche ; la tenue, une fois un seuil fixé). Jamais le gap : BKYI aurait été marqué sur 24,9 % quand le
           scanner affichait 113 %. Une stat hors pattern <b>reste dans les chiffres</b> — les échecs sont le dénominateur ; c'est le
           trade qui n'a pas suivi la fiche, et le journal sépare son P&amp;L. « Hors pattern » et « Sous 1 $ » sont deux bascules
@@ -1475,21 +1478,21 @@
       })();
     </script>
     <script>
-      // Double top : A = départ → top, B = top → bas du rejet, C = bas → retest (et son écart au top). Sous le critère de la
-      // fiche (A < 50 %, B < 17 %), le % passe en ambre ; la coche attend les quatre prix.
+      // Double top, BARES (#716) : A = Base → Apex, R = Apex → Rejection, E = Rejection → Echo (et son écart à l'Apex),
+      // S = Echo → Sink. Sous le critère de la fiche (A < 50 %, R < 17 %), le % passe en ambre.
       (function () {
         const $ = (id) => document.getElementById(id);
         const parse = (v) => parseFloat(String(v).replace(',', '.'));
         const fmt = (pct) => (pct >= 0 ? '+' : '') + pct.toFixed(1).replace('.', ',') + ' %';
         const move = (from, to) => ((to - from) / from) * 100;
         const prices = [$('dt-start'), $('dt-top'), $('dt-low'), $('dt-retest')];
-        const names = ['le départ', 'le top', 'le bas du rejet', 'le retest'];
+        const names = ['la Base', "l'Apex", 'la Rejection', "l'Echo"];
         const times = [$('dt-start-time'), $('dt-top-time'), $('dt-low-time'), $('dt-retest-time')];
-        // La chute D (#706) : requise pour la coche sauf top repris (#710) ; ses heures et son prix suivent la même règle.
+        // Le Sink (#706) : requis pour la coche sauf Apex repris (#710) ; son heure et son prix suivent la même règle.
         const drop = $('dt-drop');
         const dropTime = $('dt-drop-time');
         const allTimes = [...times, dropTime];
-        const allNames = [...names, 'le plus bas'];
+        const allNames = [...names, 'le Sink'];
         const minutes = (el) => {
           const [h, m] = el.value.split(':').map(Number);
           return el.value ? h * 60 + m : null;
@@ -1512,33 +1515,33 @@
           const [start, top, low, retest] = prices.map((p) => parse(p.value));
           if (start > 0 && top > 0) {
             const a = move(start, top);
-            leg($('dt-a'), 'A ' + fmt(a) + span(0), a < 50, a < 50 ? 'sous les 50 % de la fiche' : 'depuis le départ');
+            leg($('dt-a'), 'A ' + fmt(a) + span(0), a < 50, a < 50 ? 'sous les 50 % de la fiche' : 'depuis la Base');
           } else leg($('dt-a'), '—');
           if (top > 0 && low > 0) {
             const b = move(top, low);
-            leg($('dt-b'), 'B ' + fmt(b) + span(1), -b < 17, -b < 17 ? 'sous 17 % : une respiration plutôt qu\'un rejet' : 'depuis le top');
+            leg($('dt-b'), 'R ' + fmt(b) + span(1), -b < 17, -b < 17 ? 'sous 17 % : une respiration plutôt qu\'un rejet' : "depuis l'Apex");
           } else leg($('dt-b'), '—');
           if (low > 0 && retest > 0) {
             const toTop = move(top, retest);
-            leg($('dt-c'), 'C ' + fmt(move(low, retest)) + span(2), false, toTop >= 0 ? 'top repris ' + fmt(toTop) : fmt(toTop) + ' du top');
+            leg($('dt-c'), 'E ' + fmt(move(low, retest)) + span(2), false, toTop >= 0 ? 'Apex repris ' + fmt(toTop) : fmt(toTop) + " de l'Apex");
           } else leg($('dt-c'), '—');
-          // D se lit côté short : la baisse est le gain, en vert ; depuis le retest, puis depuis l'entrée de la fiche (top −5 %).
+          // S se lit côté short : la baisse est le gain, en vert ; depuis l'Echo, puis depuis l'entrée de la fiche (Apex −5 %).
           const bottom = parse(drop.value);
-          // Un retest qui reprend le top n'a pas de chute : la coche ne l'attend que sinon (#710).
+          // Un Echo qui reprend l'Apex n'a pas de Sink : la coche ne l'attend que sinon (#710).
           const tookTop = retest > 0 && top > 0 && retest >= top;
           const dropAbove = bottom > 0 && retest > 0 && bottom > retest;
           drop.classList.toggle('invalid', dropAbove);
-          drop.title = dropAbove ? 'Au-dessus du retest : le plus bas vient après, plus bas' : '';
+          drop.title = dropAbove ? "Au-dessus de l'Echo : le Sink vient après, plus bas" : '';
           if (retest > 0 && bottom > 0 && !dropAbove) {
             const d = -move(retest, bottom);
             const atEntry = top > 0 ? -move(top * 0.95, bottom) : null;
             $('dt-d').innerHTML =
-              '<span class="gain">D ' + fmt(d) + '</span>' + span(3) +
+              '<span class="gain">S ' + fmt(d) + '</span>' + span(3) +
               '<small>pour le short' + (atEntry !== null ? ' · ' + fmt(atEntry) + " à l'entrée de la fiche" : '') + '</small>';
             $('dt-d').className = 'pct';
-          } else leg($('dt-d'), '—', false, tookTop ? 'top repris : pas de chute à mesurer' : 'requis — se complète à la clôture');
+          } else leg($('dt-d'), '—', false, tookTop ? 'Apex repris : pas de Sink à mesurer' : 'requis — se complète à la clôture');
 
-          // Les heures vont dans l'ordre : départ ≤ top ≤ bas ≤ retest. La première qui recule est fautive.
+          // Les heures vont dans l'ordre : Base ≤ Apex ≤ Rejection ≤ Echo ≤ Sink. La première qui recule est fautive.
           let outOfOrder = null;
           allTimes.forEach((t, i) => {
             const prev = i > 0 ? minutes(allTimes[i - 1]) : null;
@@ -1550,14 +1553,14 @@
 
           const missing = names.filter((_, i) => !(parse(prices[i].value) > 0));
           const missingTimes = names.filter((_, i) => minutes(times[i]) === null);
-          if (!tookTop && !(bottom > 0)) missing.push('le plus bas après le retest');
-          if (!tookTop && minutes(dropTime) === null) missingTimes.push('le plus bas après le retest');
+          if (!tookTop && !(bottom > 0)) missing.push('le Sink');
+          if (!tookTop && minutes(dropTime) === null) missingTimes.push('le Sink');
           const needed = tookTop ? 4 : 5;
           $('dt-progress').textContent =
             needed - missing.length + ' / ' + needed + ' prix · ' + (needed - missingTimes.length) + ' / ' + needed + ' heures';
           const blockers = [...missing, ...missingTimes.map((n) => "l'heure de " + n)];
           if (outOfOrder !== null) blockers.push("des heures dans l'ordre");
-          if (dropAbove) blockers.push('un plus bas sous le retest');
+          if (dropAbove) blockers.push("un Sink sous l'Echo");
           check.disabled = blockers.length > 0 && !done;
           check.title = blockers.length ? 'Il manque ' + blockers.join(', ') : '';
         }

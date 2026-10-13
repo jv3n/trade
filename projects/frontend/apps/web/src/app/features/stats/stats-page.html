@@ -1914,9 +1914,9 @@
               @if (s.pattern === 'DT') {
                 <span class="leg">A</span>
                 {{ s.legs.extension !== null ? (s.legs.extension | number: '1.1-1') + ' %' : '—' }}
-                · <span class="leg">B</span>
+                · <span class="leg">R</span>
                 {{ s.legs.rejection !== null ? (s.legs.rejection | number: '1.1-1') + ' %' : '—' }}
-                · <span class="leg">C</span>
+                · <span class="leg">E</span>
                 {{
                   s.legs.retestToTop === null
                     ? '—'
@@ -1928,7 +1928,7 @@
                 <!-- One element : Angular drops the blank between two sibling spans. -->
                 @if (s.legs.drop !== null) {
                   <span
-                    >· <span class="leg">D</span>&ngsp;<span class="gain"
+                    >· <span class="leg">S</span>&ngsp;<span class="gain"
                       >{{ s.legs.drop | shortGain }} %</span
                     ></span
                   >

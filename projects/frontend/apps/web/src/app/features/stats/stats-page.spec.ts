@@ -1692,7 +1692,7 @@ describe('StatsPage', () => {
 
   // #706 recette : the D leg read « -3,3 %  · D+20,7 % » — Angular dropped the blank between its two
   // spans and kept the one on each side of the separator.
-  it('spaces the D leg of the brief like A, B and C', async () => {
+  it('spaces the S leg of the brief like A, R and E', async () => {
     const { fixture, page } = await setup({
       rows: [
         makeDoubleTop({
@@ -1709,7 +1709,7 @@ describe('StatsPage', () => {
     await fixture.whenStable();
 
     const brief = (fixture.nativeElement as HTMLElement).querySelector('td.brief')?.textContent;
-    expect(brief?.trim()).toMatch(/briefToTop · D \+19\.3 %$/);
+    expect(brief?.trim()).toMatch(/briefToTop · S \+19\.3 %$/);
   });
 
   // #452 : with no column, the footer row still laid out a blank 52 px band under the table.

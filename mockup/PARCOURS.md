@@ -292,7 +292,7 @@ at 11:20 for a DT) — and a "promote them all in GUS" button, day-by-day naviga
 - The stat **takes every field of the candidate** (ticker, previous close, PM open / high, gap, PM
   push, float, volume, note, open) — not the target push, which is a plan — and **the pattern
   of the button** used. A **DT** takes no premarket (#649) : only float, volume, note and the open
-  (its start).
+  (its Base).
 - A candidate promoted before 9:30 has no open yet : the open typed on it afterwards also fills its
   stat, as long as the stat's open is still empty.
 - The stat is created "to complete" : the session data arrives at step 5.
@@ -615,7 +615,7 @@ points. The DT already reads a median duration ; its leg averages stay for now.
 **Out of pattern** — a computed amber flag, never ticked by hand, carrying only what the recorded
 prices verify **at the moment of the entry** :
 
-- a DT whose retest is at or above the top — a breakout, not a double top ;
+- a DT whose Echo is at or above its Apex — a breakout, not a double top ;
 - a price outside the pattern sheet's range (the open, for a GUS : ~$0.30 – $10) ;
 - the hold, once a threshold exists.
 
@@ -639,59 +639,71 @@ SSR, institutions > 20 % and no push stay : nothing else recorded says them.
 ### The double top stat (#428)
 
 A DT is measured by what makes it (`docs/pattern/DT.md`), not by the GUS session : it carries **no
-premarket** (#649) — the card above keeps float, volume and note — and the « Session » card becomes a **« Double top »** card of four points — a
-**time and a price** each (#469) — saved field by field like the rest. The card reads **one row per
-point**, like an execution in the journal : point, time, price, then the leg it closes.
+premarket** (#649) — the card above keeps float, volume and note — and the « Session » card becomes a
+**« Double top »** card of five points — a **time and a price** each (#469) — saved field by field
+like the rest. The card reads **one row per point**, like an execution in the journal : point, time,
+price, then the leg it closes.
 
-| Point | Time | Price | Note |
-|-------|------|-------|------|
-| Start | 10:02 | 1.90 | Where the push starts — **pre-filled with the open**, moved when it starts from a later low |
-| Top | 10:14 | 2.95 | The top of the first push |
-| Rejection low | 10:21 | 2.36 | The low of the rejection |
-| Retest | 10:38 | 2.85 | The high of the retest, back toward the top |
+**BARES — Base · Apex · Rejection · Echo · Sink** (#716) : the pattern's own vocabulary, **the same
+words in French and English**, and a mnemonic. The last point shares its name with the GUS's (#717,
+OPS : Open · Push · Sink). The data columns keep their names (`dt_start_price` … `dt_drop_price`) :
+the word lives in the copy.
 
-The times are wall-clock on the stat's day, to the minute. They go **in order** — start ≤ top ≤ low ≤
-retest — and a time that goes back is refused, the field at fault pointed out like a bad price : a DT
-whose low precedes its top is a typo.
+| | Point | Time | Price | Note |
+|-|-------|------|-------|------|
+| **B** | Base | 10:02 | 1.90 | Where the push starts — **pre-filled with the open**, moved when it starts from a later low |
+| **A** | Apex | 10:14 | 2.95 | The top of the first push |
+| **R** | Rejection | 10:21 | 2.36 | The low of the rejection off the Apex |
+| **E** | Echo | 10:38 | 2.85 | The second test, echoing the Apex |
+| **S** | Sink | 11:03 | 2.30 | The lowest print after the Echo, before the close (#706) |
 
-**What the app computes** — the three legs :
+The times are wall-clock on the stat's day, to the minute. They go **in order** — Base ≤ Apex ≤
+Rejection ≤ Echo ≤ Sink — and a time that goes back is refused, the field at fault pointed out like a
+bad price : a DT whose Rejection precedes its Apex is a typo.
 
-- **A, the extension** = start → top (+55.3 %). Amber under **50 %**. The « with the gap » reading
+**What the app computes** — the legs, each named by **the point it reaches** (the former A · B · C · D
+go with the old names) :
+
+- **A, the extension** = Base → Apex (+55.3 %). Amber under **50 %**. The « with the gap » reading
   (from the previous close) went with the premarket (#649) : every leg is measured inside the session.
-- **B, the rejection** = top → rejection low (−20.0 %). Amber under **17 %** : a normal breath, not a
+- **R, the rejection** = Apex → Rejection (−20.0 %). Amber under **17 %** : a normal breath, not a
   rejection.
-- **C, the retest** = rejection low → retest (+20.8 %), and its **distance to the top** (−3.4 %, or
-  « top taken back ») — a DT often grazes its top without taking it.
+- **E, the echo** = Rejection → Echo (+20.8 %), and its **distance to the Apex** (−3.4 %, or « Apex
+  repris ») — a DT often grazes its Apex without taking it.
 
-- **Each leg also has a duration** (#469) : A start → top, B top → low (how fast the rejection comes
-  — the one the entry depends on), C low → retest, and the **total** start → retest. The question
-  behind it : does a double top really play out over about half an hour ?
-- **D, the drop** (#706) — a **fifth point** : the lowest print **after the retest**, before
-  the close, with its time (retest ≤ drop in time, drop ≤ retest in price). The four others describe the
-  setup up to the entry ; D says what the pattern paid, traded or not. Read **as the short** : the fall is
-  the gain, shown `+17.1 %` in green, never `−17.1 %` in red (the stored value keeps its sign). Measured
-  from the retest, and from **the sheet's entry** (top −5 %, `docs/pattern/DT.md`) — the price the sheet
-  says to short at, the one that answers « is it worth trading ». Left **empty when the retest takes the
-  top and the stock keeps going** : no drop to measure. Not a backtest — the stop may have been hit
-  before the low ; measuring that would need a sixth price.
+- **Each leg also has a duration** (#469) : A Base → Apex, R Apex → Rejection (how fast the rejection
+  comes — the one the entry depends on), E Rejection → Echo, and the **total** Base → Echo. The
+  question behind it : does a double top really play out over about half an hour ?
+- **S, the sink** (#706) — the **fifth point** : the lowest print **after the Echo**, before the close,
+  with its time (Echo ≤ Sink in time, Sink ≤ Echo in price). The four others describe the setup up to
+  the entry ; S says what the pattern paid, traded or not. Read **as the short** : the fall is the
+  gain, shown `+17.1 %` in green, never `−17.1 %` in red (the stored value keeps its sign). Measured
+  from the Echo, and from **the sheet's entry** (Apex −5 %, `docs/pattern/DT.md`) — the price the
+  sheet says to short at, the one that answers « is it worth trading ». Left **empty when the Echo
+  takes the Apex and the stock keeps going** : no Sink to measure. Not a backtest — the stop may have
+  been hit before the Sink ; measuring that would need a sixth price.
 - The stat is checked with the **five prices and the five times** (« n / 5 prices · n / 5 times »),
-  **unless the retest took the top** : no drop to measure, the check goes back to the four points
-  (« n / 4 »), and the drop stays empty (#710). It shipped optional while the history had none (#706) ;
-  the database holds the same rule (`ck_stat_entry_completed_whole`).
+  **unless the Echo took the Apex** : no Sink to measure, the check goes back to the four points
+  (« n / 4 »), and the Sink stays empty (#710). It shipped optional while the history had none
+  (#706) ; the database holds the same rule (`ck_stat_entry_completed_whole`).
 - The flags stay (SSR, institutions > 20 %) ; « no push » does not apply.
 - **The page follows the pattern** : a **GUS / DT / All** switch above the KPIs picks the KPIs, the
   table's columns and the averages (#648 — the SIR, SIV and discretionary views stayed empty). Each
-  pattern has its own numbers, never folded into the other's. **DT** : completed DT stats, average extension, average rejection (and how many reach 17 %), average retest distance to the top (and how
-  many took it back), and the **median duration** start → retest with its `n` and the median
-  rejection (B) — a median, not a mean : one DT that drags all afternoon would move an average and
-  say nothing about the typical one. A **second row** says what the DT pays (#706), medians again,
-  with its own `n` — the completed DTs minus those whose retest took the top (« n = 2 · top taken back : 1 ») : the **drop
-  after the retest**, the **drop from the sheet's entry**, the **duration of D**, and **« reached 10 % »**
-  — how many drops gave the 10 % the sheet promises from its entry. The table shows float and volume, then start, A, B, C and the
-  duration (total, and the three legs under it), then the **drop** (the price, the short's gain from the retest and from the sheet's entry, its duration) ; its footer carries the medians. **All** keeps what
-  compares across patterns — premarket (blank on a DT), float, volume, flags, check, trade — plus a one-line summary of each stat
-  in its own pattern, and no averages, neither in the cards nor in a row : a push at the open and a
-  DT extension don't add up, and the summary computes none without a pattern.
+  pattern has its own numbers, never folded into the other's. **DT** : completed DT stats, average
+  extension (A), average rejection (R, and how many reach 17 %), the Echo's average distance to the
+  Apex (E, and how many took it back), and the **median duration** Base → Echo with its `n` and the
+  median rejection (R) — a median, not a mean : one DT that drags all afternoon would move an average
+  and say nothing about the typical one. A **second row** says what the DT pays (#706), medians again,
+  with its own `n` — the completed DTs minus those whose Echo took the Apex (« n = 2 · Apex repris :
+  1 ») : the **Sink from the Echo** (S), the **Sink from the sheet's entry**, the **duration of S**, and
+  **« reached 10 % »** — how many Sinks gave the 10 % the sheet promises from its entry. The table
+  shows float and volume, then Base, « A — apex », « R — rejection », « E — echo » and the duration
+  (total, and the three legs under it), then « S — sink » (the price, the short's gain from the Echo
+  and from the sheet's entry, its duration) ; its footer carries the medians. **All** keeps what
+  compares across patterns — premarket (blank on a DT), float, volume, flags, check, trade — plus a
+  one-line summary of each stat in its own pattern (« A · R · E · S »), and no averages, neither in the
+  cards nor in a row : a push at the open and a DT extension don't add up, and the summary computes
+  none without a pattern.
 - The « À l'open » push references only use GUS stats, as before (same pattern).
 - **Data model** — the four DT prices are nullable columns on the stat rather than a table of their
   own, so the database CHECK can keep a ticked stat whole, pattern by pattern (#435).
