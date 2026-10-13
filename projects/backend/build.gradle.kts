@@ -1,10 +1,10 @@
 plugins {
-  kotlin("jvm") version "2.4.10"
-  kotlin("plugin.spring") version "2.4.10"
+  kotlin("jvm") version "2.4.21"
+  kotlin("plugin.spring") version "2.4.21"
   id("org.springframework.boot") version "4.1.1"
   id("io.spring.dependency-management") version "1.1.7"
-  kotlin("plugin.jpa") version "2.4.10"
-  id("com.diffplug.spotless") version "8.10.3"
+  kotlin("plugin.jpa") version "2.4.21"
+  id("com.diffplug.spotless") version "8.10.4"
   // Detekt — Kotlin static analysis (cyclomatic complexity, magic numbers, long methods,
   // potential bugs). Complements Spotless, which only handles formatting. See the `detekt { … }`
   // block below for the ramp-up strategy. An alpha on purpose : 1.23.x can't run on JDK 25.
@@ -105,7 +105,7 @@ dependencies {
   // Spring Boot starter auto-instruments uncaught controller exceptions and pulls in the Logback
   // appender so MDC values (notably `userId`) become event extras automatically. The `-4` artifact
   // is the Spring Boot 4 one ; the `-jakarta` starter targets Boot 3 and doesn't wire on Boot 4.
-  implementation("io.sentry:sentry-spring-boot-4-starter:8.59.0")
+  implementation("io.sentry:sentry-spring-boot-4-starter:8.60.0")
   runtimeOnly("org.postgresql:postgresql")
   developmentOnly("org.springframework.boot:spring-boot-devtools")
   testImplementation("org.springframework.boot:spring-boot-starter-test")
