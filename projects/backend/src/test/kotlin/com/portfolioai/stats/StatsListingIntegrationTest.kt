@@ -620,7 +620,7 @@ class StatsListingIntegrationTest {
   // ---------------------------------------------------------------------------
 
   @Test
-  fun `a double top saves its four prices one at a time and is ticked with them`() {
+  fun `a double top saves its prices one at a time and is ticked with them`() {
     val stat = service.create(premarketRequest(ticker = "SGBX", pattern = Pattern.DT))
     var request = premarketRequest(ticker = "SGBX", pattern = Pattern.DT)
 
@@ -638,6 +638,8 @@ class StatsListingIntegrationTest {
         dtTopTime = LocalTime.of(10, 14),
         dtLowTime = LocalTime.of(10, 21),
         dtRetestTime = LocalTime.of(10, 38),
+        dtDropPrice = BigDecimal("2.30"),
+        dtDropTime = LocalTime.of(11, 3),
       )
     service.update(stat.id, request)
 
@@ -651,7 +653,7 @@ class StatsListingIntegrationTest {
 
   @Test
   fun `ticking a double top with a missing price is a 400 naming it`() {
-    val stat = service.create(doubleTopRequest(ticker = "SGBX").copy(dtRetestPrice = null))
+    val stat = service.create(sgbxWithDrop().copy(dtRetestPrice = null))
 
     val ex =
       assertThrows(ResponseStatusException::class.java) {
@@ -664,11 +666,11 @@ class StatsListingIntegrationTest {
 
   @Test
   fun `a completed double top can't lose one of its four prices`() {
-    val stat = createCompleted(doubleTopRequest(ticker = "SGBX"))
+    val stat = createCompleted(sgbxWithDrop())
 
     val ex =
       assertThrows(ResponseStatusException::class.java) {
-        service.update(stat.id, doubleTopRequest(ticker = "SGBX").copy(dtLowPrice = null))
+        service.update(stat.id, sgbxWithDrop().copy(dtLowPrice = null))
       }
 
     assertEquals(400, ex.statusCode.value())
@@ -799,7 +801,7 @@ class StatsListingIntegrationTest {
 
   @Test
   fun `summarise computes the double top legs on the completed double tops only`() {
-    createCompleted(doubleTopRequest(ticker = "SGBX"))
+    createCompleted(sgbxWithDrop())
     createCompleted(nxttDoubleTop())
     // In progress : its legs must weigh nothing.
     service.create(doubleTopRequest(ticker = "MULN").copy(dtRetestPrice = null))
@@ -825,7 +827,7 @@ class StatsListingIntegrationTest {
     val before = service.summarise(gusOnly)
     val countedBefore = service.summarise(noFilter).completed
 
-    createCompleted(doubleTopRequest(ticker = "SGBX"))
+    createCompleted(sgbxWithDrop())
     createCompleted(nxttDoubleTop())
 
     assertEquals(
@@ -842,7 +844,7 @@ class StatsListingIntegrationTest {
 
   @Test
   fun `ticking a double top with a price but no time is a 400 naming the time`() {
-    val stat = service.create(doubleTopRequest(ticker = "SGBX").copy(dtRetestTime = null))
+    val stat = service.create(sgbxWithDrop().copy(dtRetestTime = null))
 
     val ex =
       assertThrows(ResponseStatusException::class.java) {
@@ -855,11 +857,11 @@ class StatsListingIntegrationTest {
 
   @Test
   fun `a completed double top can't lose one of its four times`() {
-    val stat = createCompleted(doubleTopRequest(ticker = "SGBX"))
+    val stat = createCompleted(sgbxWithDrop())
 
     val ex =
       assertThrows(ResponseStatusException::class.java) {
-        service.update(stat.id, doubleTopRequest(ticker = "SGBX").copy(dtTopTime = null))
+        service.update(stat.id, sgbxWithDrop().copy(dtTopTime = null))
       }
 
     assertEquals(400, ex.statusCode.value())
@@ -949,7 +951,7 @@ class StatsListingIntegrationTest {
   fun `summarise gives the median duration and the median rejection of the completed double tops`() {
     // SGBX 10:02 -> 10:38 = 36 min, rejection 10:14 -> 10:21 = 7 ;
     // NXTT 09:45 -> 10:50 = 65 min, rejection 10:05 -> 10:20 = 15.
-    createCompleted(doubleTopRequest(ticker = "SGBX"))
+    createCompleted(sgbxWithDrop())
     createCompleted(nxttDoubleTop())
     // In progress : its times must weigh nothing.
     service.create(doubleTopRequest(ticker = "MULN").copy(dtRetestTime = LocalTime.of(19, 0)))
@@ -974,17 +976,90 @@ class StatsListingIntegrationTest {
   // Double top drop (#706) — « what does a DT pay ? »
   // ---------------------------------------------------------------------------
 
-  // Optional on purpose : the history has no drop, and requiring it would untick every DT.
+  // Required since the history is filled (#710) — optional when #706 shipped it.
   @Test
-  fun `a double top is ticked without its drop, and the drop is typed afterwards`() {
-    val stat = createCompleted(doubleTopRequest(ticker = "SGBX"))
+  fun `ticking a double top without its drop is a 400 naming it`() {
+    val stat = service.create(doubleTopRequest(ticker = "SGBX"))
 
-    val withDrop = service.update(stat.id, sgbxWithDrop())
+    val ex =
+      assertThrows(ResponseStatusException::class.java) {
+        service.setCompleted(stat.id, completed = true)
+      }
 
-    assertTrue(stat.completed)
-    assertTrue(withDrop.completed)
-    assertEquals(0, BigDecimal("2.30").compareTo(withDrop.dtDropPrice))
-    assertEquals(LocalTime.of(11, 3), withDrop.dtDropTime)
+    assertEquals(400, ex.statusCode.value())
+    assertEquals("Stat SGBX can't be completed yet — missing Drop low, Drop low time", ex.reason)
+  }
+
+  // NXTT took its top back and kept going : a breakout, no drop to measure.
+  @Test
+  fun `a double top whose retest took the top is ticked without a drop`() {
+    val ticked = createCompleted(nxttDoubleTop())
+
+    assertTrue(ticked.completed)
+    assertNull(ticked.dtDropPrice)
+  }
+
+  @Test
+  fun `a completed double top can't lose its drop`() {
+    val stat = createCompleted(sgbxWithDrop())
+
+    val ex =
+      assertThrows(ResponseStatusException::class.java) {
+        service.update(stat.id, doubleTopRequest(ticker = "SGBX"))
+      }
+
+    assertEquals(400, ex.statusCode.value())
+    assertTrue(ex.reason!!.contains("Drop low"), "got ${ex.reason}")
+  }
+
+  // The other route into the forbidden state : a breakout ticked on four points, its retest then
+  // brought back under the top — the same guard as a lost drop, never a raw CHECK violation.
+  @Test
+  fun `a completed breakout can't have its retest lowered under the top without a drop`() {
+    val stat = createCompleted(nxttDoubleTop())
+
+    val ex =
+      assertThrows(ResponseStatusException::class.java) {
+        service.update(stat.id, nxttDoubleTop().copy(dtRetestPrice = BigDecimal("2.90")))
+      }
+
+    assertEquals(400, ex.statusCode.value())
+    assertTrue(ex.reason!!.contains("Drop low"), "got ${ex.reason}")
+  }
+
+  @Test
+  fun `the database refuses a ticked double top under its top without its drop`() {
+    val stat =
+      makeStat(testUser, ticker = "SGBX", tradeDate = DAY).apply {
+        pattern = Pattern.DT
+        clearPremarket()
+        dtStartPrice = BigDecimal("1.90")
+        dtTopPrice = BigDecimal("2.95")
+        dtLowPrice = BigDecimal("2.36")
+        dtRetestPrice = BigDecimal("2.85")
+        dtStartTime = LocalTime.of(10, 2)
+        dtTopTime = LocalTime.of(10, 14)
+        dtLowTime = LocalTime.of(10, 21)
+        dtRetestTime = LocalTime.of(10, 38)
+        completedAt = Instant.now()
+      }
+    assertThrows(DataIntegrityViolationException::class.java) { repo.saveAndFlush(stat) }
+
+    val breakout =
+      makeStat(testUser, ticker = "NXTT", tradeDate = DAY).apply {
+        pattern = Pattern.DT
+        clearPremarket()
+        dtStartPrice = BigDecimal("2.00")
+        dtTopPrice = BigDecimal("3.00")
+        dtLowPrice = BigDecimal("2.70")
+        dtRetestPrice = BigDecimal("3.10")
+        dtStartTime = LocalTime.of(9, 45)
+        dtTopTime = LocalTime.of(10, 5)
+        dtLowTime = LocalTime.of(10, 20)
+        dtRetestTime = LocalTime.of(10, 50)
+        completedAt = Instant.now()
+      }
+    repo.saveAndFlush(breakout)
   }
 
   @Test
@@ -1086,9 +1161,10 @@ class StatsListingIntegrationTest {
     assertEquals(1, summary.dropReachedTargetCount, "only SGBX gave 10 % from the entry")
   }
 
+  // Only a breakout can be ticked without its drop now (#710).
   @Test
   fun `no drop typed means no drop figure, not a zero`() {
-    createCompleted(doubleTopRequest(ticker = "SGBX"))
+    createCompleted(nxttDoubleTop())
 
     val summary = service.summarise(dtOnly)
 

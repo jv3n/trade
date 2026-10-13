@@ -1792,23 +1792,25 @@ describe('StatsPage', () => {
     expect(legs.retestToTop).toBeCloseTo(-3.39, 2);
   });
 
-  it('counts four prices and four times on a double top and names what is missing', async () => {
+  it('counts five prices and five times on a double top and names what is missing', async () => {
     const { page } = await setup({ rows: [makeDoubleTop()] });
 
-    expect(page.doubleTopProgress()).toEqual({ prices: 3, times: 3, total: 4, drop: false });
-    expect(page.sessionMissing()).toEqual([
+    expect(page.doubleTopProgress()).toEqual({ prices: 3, times: 3, total: 5, tookTop: false });
+    const missing = [
       'stats.fields.dtRetest',
+      'stats.fields.dtDrop',
       'stats.fields.dtRetestTimeShort',
-    ]);
-    expect(page.rows()[0].missing).toEqual([
-      'stats.fields.dtRetest',
-      'stats.fields.dtRetestTimeShort',
-    ]);
+      'stats.fields.dtDropTimeShort',
+    ];
+    expect(page.sessionMissing()).toEqual(missing);
+    expect(page.rows()[0].missing).toEqual(missing);
   });
 
   // #469 : the price alone no longer ticks a double top — its time is required like it.
-  it('keeps the tick blocked on a double top with its four prices but a time missing', async () => {
-    const { page } = await setup({ rows: [makeDoubleTop({ dtRetestPrice: 2.85 })] });
+  it('keeps the tick blocked on a double top with its five prices but a time missing', async () => {
+    const { page } = await setup({
+      rows: [makeDoubleTop({ dtRetestPrice: 2.85, dtDropPrice: 2.3, dtDropTime: '11:03' })],
+    });
 
     expect(page.sessionMissing()).toEqual(['stats.fields.dtRetestTimeShort']);
     expect(page.tickBlockedReason()).not.toBe('');
@@ -1837,21 +1839,34 @@ describe('StatsPage', () => {
     expect(page.rows()[0].durations.rise).toBe(12);
   });
 
-  // #706 : the drop is the fifth point, optional — the history has none, the ✓ must not wait.
-  it('ticks a double top without its drop, and counts the drop apart', async () => {
+  // #710 : the drop is the fifth point, required once the history has it — under the top, there
+  // was one to record.
+  it('waits for the drop before ticking a double top whose retest stayed under the top', async () => {
     const { page } = await setup({
       rows: [makeDoubleTop({ dtRetestPrice: 2.85, dtRetestTime: '10:38' })],
     });
 
-    expect(page.tickBlockedReason()).toBe('');
-    expect(page.doubleTopProgress().drop).toBe(false);
+    expect(page.tickBlockedReason()).not.toBe('');
+    expect(page.doubleTopProgress()).toEqual({ prices: 4, times: 4, total: 5, tookTop: false });
 
     page.setSessionPrice('dtDropPrice', 2.3);
     page.setSessionTime('dtDropTime', '11:03');
 
-    expect(page.doubleTopProgress().drop).toBe(true);
+    expect(page.tickBlockedReason()).toBe('');
+    expect(page.doubleTopProgress()).toEqual({ prices: 5, times: 5, total: 5, tookTop: false });
     expect(page.doubleTopLegs().drop).toBeCloseTo(-19.3, 2);
     expect(page.doubleTopDurations().drop).toBe(25);
+  });
+
+  // IMNN : the retest took the top back and kept going — a breakout, no drop to measure.
+  it('ticks a double top whose retest took the top back on its four points', async () => {
+    const { page } = await setup({
+      rows: [makeDoubleTop({ dtRetestPrice: 3.0, dtRetestTime: '10:38' })],
+    });
+
+    expect(page.doubleTopProgress()).toEqual({ prices: 4, times: 4, total: 4, tookTop: true });
+    expect(page.sessionMissing()).toEqual([]);
+    expect(page.tickBlockedReason()).toBe('');
   });
 
   it('refuses a drop above the retest or before it in time, pointing at both fields', async () => {
@@ -1902,30 +1917,6 @@ describe('StatsPage', () => {
 
     expect(page.sessionIssue()?.reason).toBe('stats.save.dropPriceRequired');
     expect(page.atFault('dtDropPrice')).toBe(true);
-  });
-
-  // A completed DT whose retest stayed under its top had a drop to record ; one that took the top
-  // back and kept going had none, and must not be nagged about it.
-  it('asks for the drop on a completed double top only when the retest stayed under the top', async () => {
-    const { page } = await setup({
-      rows: [
-        makeDoubleTop({
-          id: 'prso',
-          dtRetestPrice: 2.85,
-          dtRetestTime: '10:38',
-          completed: true,
-        }),
-        makeDoubleTop({
-          id: 'imnn',
-          dtRetestPrice: 3.0,
-          dtRetestTime: '10:38',
-          completed: true,
-        }),
-        makeDoubleTop({ id: 'grin', dtRetestPrice: 2.85, dtRetestTime: '10:38' }),
-      ],
-    });
-
-    expect(page.rows().map((r) => r.dropToFill)).toEqual([true, false, false]);
   });
 
   it("shows what the double tops paid as the short's gain, never as a red fall", async () => {
@@ -2012,8 +2003,10 @@ describe('StatsPage', () => {
     expect(page.session().dtTopTime).toBeNull();
   });
 
-  it('saves a double top price with the whole row, then ticks it with its four prices and times', async () => {
-    const { page, repo } = await setup({ rows: [makeDoubleTop()] });
+  it('saves a double top price with the whole row, then ticks it with its five prices and times', async () => {
+    const { page, repo } = await setup({
+      rows: [makeDoubleTop({ dtDropPrice: 2.3, dtDropTime: '11:03' })],
+    });
 
     page.setSessionPrice('dtRetestPrice', 2.85);
     page.setSessionTime('dtRetestTime', '10:38');
@@ -2124,7 +2117,7 @@ describe('StatsPage', () => {
 
     page.setIdentity({ ticker: 'nxtt', tradeDate: new Date(2026, 8, 18), pattern: 'DT' });
     expect(page.isDoubleTop()).toBe(true);
-    expect(page.sessionPriceCount()).toBe(4);
+    expect(page.sessionPriceCount()).toBe(5);
     // #649 : a double top asks for no premarket — the date and the ticker are enough.
     expect(page.createMissing()).toEqual([]);
     page.setSessionPrice('dtStartPrice', 1.75);

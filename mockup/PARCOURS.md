@@ -666,7 +666,7 @@ whose low precedes its top is a typo.
 - **Each leg also has a duration** (#469) : A start → top, B top → low (how fast the rejection comes
   — the one the entry depends on), C low → retest, and the **total** start → retest. The question
   behind it : does a double top really play out over about half an hour ?
-- **D, the drop** (#706) — a **fifth point, optional** : the lowest print **after the retest**, before
+- **D, the drop** (#706) — a **fifth point** : the lowest print **after the retest**, before
   the close, with its time (retest ≤ drop in time, drop ≤ retest in price). The four others describe the
   setup up to the entry ; D says what the pattern paid, traded or not. Read **as the short** : the fall is
   the gain, shown `+17.1 %` in green, never `−17.1 %` in red (the stored value keeps its sign). Measured
@@ -674,11 +674,10 @@ whose low precedes its top is a typo.
   says to short at, the one that answers « is it worth trading ». Left **empty when the retest takes the
   top and the stock keeps going** : no drop to measure. Not a backtest — the stop may have been hit
   before the low ; measuring that would need a sixth price.
-- The stat is checked with the **four prices and the four times** (« n / 4 prices · n / 4 times ») ;
-  same check, same rules. **The drop does not count** for now : the history has none, and requiring it
-  would send every ticked DT back to « to complete ». It shows as « drop to fill » next to the count,
-  and as an amber « to fill » on a completed stat whose retest stayed under the top. Making it required
-  once the history is filled is a follow-up.
+- The stat is checked with the **five prices and the five times** (« n / 5 prices · n / 5 times »),
+  **unless the retest took the top** : no drop to measure, the check goes back to the four points
+  (« n / 4 »), and the drop stays empty (#710). It shipped optional while the history had none (#706) ;
+  the database holds the same rule (`ck_stat_entry_completed_whole`).
 - The flags stay (SSR, institutions > 20 %) ; « no push » does not apply.
 - **The page follows the pattern** : a **GUS / DT / All** switch above the KPIs picks the KPIs, the
   table's columns and the averages (#648 — the SIR, SIV and discretionary views stayed empty). Each
@@ -686,7 +685,7 @@ whose low precedes its top is a typo.
   many took it back), and the **median duration** start → retest with its `n` and the median
   rejection (B) — a median, not a mean : one DT that drags all afternoon would move an average and
   say nothing about the typical one. A **second row** says what the DT pays (#706), medians again,
-  with its own `n` (« n = 2 of 3 completed DTs ») since only the stats with a drop count : the **drop
+  with its own `n` — the completed DTs minus those whose retest took the top (« n = 2 · top taken back : 1 ») : the **drop
   after the retest**, the **drop from the sheet's entry**, the **duration of D**, and **« reached 10 % »**
   — how many drops gave the 10 % the sheet promises from its entry. The table shows float and volume, then start, A, B, C and the
   duration (total, and the three legs under it), then the **drop** (the price, the short's gain from the retest and from the sheet's entry, its duration) ; its footer carries the medians. **All** keeps what

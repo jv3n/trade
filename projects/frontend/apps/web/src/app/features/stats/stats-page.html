@@ -142,7 +142,7 @@
           <div class="kpi__sub">
             {{
               'stats.kpi.dropSub'
-                | translate: { count: kpi.doubleTopsWithDrop, total: kpi.completedDoubleTops }
+                | translate: { count: kpi.doubleTopsWithDrop, tookTop: kpi.retestTookTopCount }
             }}
           </div>
         </div>
@@ -960,7 +960,12 @@
                           }
                   }}</span>
                 } @else {
-                  <span class="muted">{{ 'stats.doubleTop.dropHint' | translate }}</span>
+                  <span class="muted">{{
+                    (doubleTopProgress().tookTop
+                      ? 'stats.doubleTop.dropTookTopHint'
+                      : 'stats.doubleTop.dropHint'
+                    ) | translate
+                  }}</span>
                 }
                 @if (durations.drop !== null) {
                   <small>{{
@@ -1259,11 +1264,6 @@
               'stats.doubleTop.progress'
                 | translate
                   : { prices: progress.prices, times: progress.times, total: progress.total }
-            }}
-            ·
-            {{
-              (progress.drop ? 'stats.doubleTop.dropDone' : 'stats.doubleTop.dropToFill')
-                | translate
             }}
           } @else {
             {{
@@ -1853,10 +1853,6 @@
                     'stats.kpi.minutes' | translate: { minutes: s.durations.drop }
                   }}</small>
                 }
-              } @else if (s.dropToFill) {
-                <span class="warn" [matTooltip]="'stats.doubleTop.dropToFillHint' | translate">{{
-                  'stats.doubleTop.dropToFill' | translate
-                }}</span>
               } @else {
                 <span class="muted">—</span>
               }
