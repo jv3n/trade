@@ -313,28 +313,28 @@
           <span>les KPIs, les colonnes du tableau et les moyennes suivent le pattern — les stats ne mesurent que le GUS et le DT (#648) ; un trade SIR, SIV ou discrétionnaire se note au journal, sans stat</span>
         </div>
 
-        <!-- GUS : ce que le pattern rapporte (#713) — la chute après le push, lue côté short, comme la chute D du DT (#706). -->
-        <!-- Son propre n : le drop est facultatif, l'historique ne l'a pas (KTTA, NUWE, AEHL « à saisir »). -->
-        <section class="grid grid-4" style="margin-bottom: 16px" data-group="pattern" data-value="gus" title="Ce que le mouvement offrait, pas un backtest : le stop a pu sauter avant le plus bas">
+        <!-- GUS, OPS (#717) : Open · Push · Sink — ce que le pattern rapporte (#713), le Sink lu côté short, le même mot que le dernier point du DT (#716). -->
+        <!-- Son propre n : le Sink est facultatif, l'historique ne l'a pas (KTTA, NUWE, AEHL « à saisir »). -->
+        <section class="grid grid-4" style="margin-bottom: 16px" data-group="pattern" data-value="gus" title="Ce que le mouvement offrait, pas un backtest : le stop a pu sauter avant le Sink">
           <div class="card kpi">
-            <div class="label">Drop depuis le push</div>
+            <div class="label">Sink depuis le Push</div>
             <div class="value gain">+20,0 %</div>
-            <div class="sub">médiane · haut du push → plus bas · <b>n = 9</b> sur 12 GUS complétées</div>
+            <div class="sub">médiane · haut du Push → Sink · <b>n = 9</b> sur 12 GUS complétées</div>
           </div>
           <div class="card kpi">
             <div class="label">15 % atteints</div>
             <div class="value">6 / 9</div>
-            <div class="sub">drops d'au moins 15 % depuis le push — le bas de la fourchette de la fiche</div>
+            <div class="sub">Sinks d'au moins 15 % depuis le Push — le bas de la fourchette de la fiche</div>
           </div>
           <div class="card kpi">
-            <div class="label">Heure du push</div>
+            <div class="label">Heure du Push</div>
             <div class="value">9,5 min</div>
             <div class="sub">médiane · 9h30 → haut du push · n = 8</div>
           </div>
           <div class="card kpi">
-            <div class="label">Durée du drop</div>
+            <div class="label">Durée du Sink</div>
             <div class="value">47 min</div>
-            <div class="sub">médiane · haut du push → plus bas</div>
+            <div class="sub">médiane · haut du Push → Sink</div>
           </div>
         </section>
 
@@ -543,9 +543,9 @@
         <section class="card" style="margin-bottom: 16px; border-color: var(--warn)" id="session-panel" data-group="panel" data-value="gus">
           <h2>
             <span>Séance<span class="save-state" id="session-state">✓ enregistré à 09:42</span></span>
-            <span class="hint">à remplir au fil de la journée · chaque champ s'enregistre à la sortie · les % se calculent vs l'open · le drop se complète à la clôture</span>
+            <span class="hint">à remplir au fil de la journée · chaque champ s'enregistre à la sortie · les % se calculent vs l'open · le Sink se complète à la clôture</span>
           </h2>
-          <!-- Une ligne par point, comme le double top (#713) : le push et la chute ont une heure ; HOD, LOD, EOD restent des repères de la journée, sans heure. -->
+          <!-- Une ligne par point, comme le double top (#713) — OPS (#717) : Open, Push, Sink ; le Push et le Sink ont une heure ; HOD, LOD, EOD restent des repères de la journée, sans heure. -->
           <form onsubmit="return false">
             <table class="dt-rows">
               <thead>
@@ -564,16 +564,16 @@
                   <td><span class="pct muted">repris du candidat · tenue −22,8 % · cumul +69,6 %</span></td>
                 </tr>
                 <tr>
-                  <td>Push à l'open</td>
+                  <td>Push</td>
                   <td><input class="input" type="time" id="c-push-time" value="09:41" title="L'heure du haut du push" /></td>
                   <td>
                     <input class="input" id="c-push" data-pct data-price value="2,20" />
-                    <label class="no-push" title="Le titre n'a pas poussé dans les ~10 minutes après l'open : le drop se lit alors depuis l'open"><input type="checkbox" id="c-no-push" /> Pas de push</label>
+                    <label class="no-push" title="Le titre n'a pas poussé dans les ~10 minutes après l'open : le Sink se lit alors depuis l'open"><input type="checkbox" id="c-no-push" /> Pas de push</label>
                   </td>
                   <td><span class="pct muted">—</span><small class="muted" id="c-push-span"></small></td>
                 </tr>
                 <tr>
-                  <td title="Le plus bas après le push, avant la clôture — facultatif pour l'instant : la coche ne l'attend pas">Drop</td>
+                  <td title="Le plus bas après le Push, avant la clôture — facultatif pour l'instant : la coche ne l'attend pas">Sink</td>
                   <td><input class="input" type="time" id="c-drop-time" /></td>
                   <td><input class="input" id="c-drop" placeholder="1,52" /></td>
                   <td><span class="pct muted" id="c-drop-leg">—</span></td>
@@ -603,7 +603,7 @@
             <label><input type="checkbox" data-flag /> SSR</label>
             <label title="Plus de 20 % du float détenu par des institutions"><input type="checkbox" data-flag /> Institutions &gt; 20 %</label>
             <span style="flex: 1"></span>
-            <span class="progress" id="panel-progress">2 / 5 prix saisis · drop à saisir</span>
+            <span class="progress" id="panel-progress">2 / 5 prix saisis · Sink à saisir</span>
             <button class="btn" id="panel-close">Fermer</button>
             <button class="btn btn-check" id="panel-check" disabled title="Il manque HOD, LOD, EOD"><span class="icon">check_circle</span> <span data-label>Marquer complétée</span></button>
           </div>
@@ -768,7 +768,7 @@
                 <tr>
                   <td>21/09</td><td><span class="ticker">GLND</span></td><td><span class="tag tag-accent">GUS</span></td>
                   <td class="num sep">+58,4 %</td><td class="num">+12,1 %</td><td class="num">5,2 M</td><td class="num">6,1 M</td>
-                  <td class="sep"><span class="tag">pas de push</span> · LOD −22,3 % · drop <span class="gain">+22,3 %</span></td>
+                  <td class="sep"><span class="tag">pas de push</span> · LOD −22,3 % · Sink <span class="gain">+22,3 %</span></td>
                   <td class="sep"></td>
                   <td><button class="check done"><span class="icon">check_circle</span></button></td>
                   <td><button class="btn btn-sm"><span class="icon">arrow_forward</span> Trade</button></td>
@@ -854,11 +854,11 @@
                   <th class="num">Volume</th>
                   <th class="num sep" title="En dessous, le cumul depuis la clôture de la veille — ce que le scanner montrait à la cloche">Open</th>
                   <th class="num" title="High PM → open : ce qui reste du premarket à 9h30">Tenue</th>
-                  <th class="num" title="En dessous, le % vs l'open et le temps depuis 9h30">Push open</th>
+                  <th class="num" title="En dessous, le % vs l'open et le temps depuis 9h30">Push</th>
                   <th class="num">HOD</th>
                   <th class="num">LOD</th>
                   <th class="num">EOD</th>
-                  <th class="num sep" title="Le plus bas après le push, avant la clôture ; en dessous, ce que le short en tire depuis le haut du push (depuis l'open un jour sans push), puis l'heure et la durée">Drop</th>
+                  <th class="num sep" title="Le plus bas après le Push, avant la clôture ; en dessous, ce que le short en tire depuis le haut du Push (depuis l'open un jour sans push), puis l'heure et la durée">Sink</th>
                   <th class="sep">Flags</th>
                   <th title="Complétée">✓</th>
                   <th>Trade</th>
@@ -930,7 +930,7 @@
                   <td class="num">4,62<small class="muted">+10,0 %</small></td>
                   <td class="num">3,41<small class="muted">−18,8 %</small></td>
                   <td class="num">3,52<small class="muted">−16,2 %</small></td>
-                  <td class="num sep"><span class="warn" title="Complétée avant que le drop existe (#713) : le drop reste à noter — facultatif pour l'instant, il alimente « 15 % atteints »">à saisir</span></td>
+                  <td class="num sep"><span class="warn" title="Complétée avant que le Sink existe (#713) : le Sink reste à noter — facultatif pour l'instant, il alimente « 15 % atteints »">à saisir</span></td>
                   <td class="sep"></td>
                   <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
                   <td style="white-space: nowrap"><a href="trade.html" class="tag tag-gain">+292</a> <button class="btn btn-sm btn-icon" title="Un autre trade sur cette stat" data-confirm-title="Créer un autre trade {ticker} ?" data-confirm-body="Un nouveau trade vide sur la même stat : même pattern, son propre sens, ses exécutions, son P&amp;L et son post-mortem. Les trades existants ne changent pas. Sous un autre pattern, c'est une autre stat : « Même ticker, autre pattern » sur la stat." data-confirm-ok="Créer le trade"><span class="icon">add</span></button></td>
@@ -972,7 +972,7 @@
                   <td class="num">3,38<small class="muted">+5,6 %</small></td>
                   <td class="num">2,52<small class="muted">−21,3 %</small></td>
                   <td class="num">2,61<small class="muted">−18,4 %</small></td>
-                  <td class="num sep"><span class="warn" title="Complétée avant que le drop existe (#713) : le drop reste à noter — facultatif pour l'instant, il alimente « 15 % atteints »">à saisir</span></td>
+                  <td class="num sep"><span class="warn" title="Complétée avant que le Sink existe (#713) : le Sink reste à noter — facultatif pour l'instant, il alimente « 15 % atteints »">à saisir</span></td>
                   <td class="sep"></td>
                   <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
                   <td><a href="journal.html" class="tag tag-gain">+220</a></td>
@@ -1014,7 +1014,7 @@
                   <td class="num">2,48<small class="muted">+30,5 %</small></td>
                   <td class="num">1,85<small class="muted">−2,6 %</small></td>
                   <td class="num">2,31<small class="muted">+21,6 %</small></td>
-                  <td class="num sep"><span class="warn" title="Complétée avant que le drop existe (#713) : le drop reste à noter — facultatif pour l'instant, il alimente « 15 % atteints »">à saisir</span></td>
+                  <td class="num sep"><span class="warn" title="Complétée avant que le Sink existe (#713) : le Sink reste à noter — facultatif pour l'instant, il alimente « 15 % atteints »">à saisir</span></td>
                   <td class="sep"></td>
                   <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
                   <td><a href="journal.html" class="tag tag-loss">−174</a></td>
@@ -1070,7 +1070,7 @@
                   <td class="num"></td>
                   <td class="num">−15,4 %</td>
                   <td class="num">−11,2 %</td>
-                  <td class="num sep" title="Médianes, sur les GUS dont le drop est saisi">méd. <span class="gain">+20,0 %</span><small class="muted">n = 9 · 6 / 9 ≥ 15 % · 47 min</small></td>
+                  <td class="num sep" title="Médianes, sur les GUS dont le Sink est saisi">méd. <span class="gain">+20,0 %</span><small class="muted">n = 9 · 6 / 9 ≥ 15 % · 47 min</small></td>
                   <td colspan="3"></td>
                 </tr>
               </tfoot>
@@ -1080,7 +1080,7 @@
 
         <p class="mockup-note">
           Maquette statique — une stat naît d’un candidat (bouton « → GUS » ou « → DT ») et reprend ses données premarket et l'open de 9h30. La
-          séance se remplit au fil de la journée, champ par champ : Open, Push à l'open, HOD, LOD, EOD (en $) et les flags (SSR,
+          séance se remplit au fil de la journée, champ par champ : Open, Push, HOD, LOD, EOD (en $) et les flags (SSR,
           institutions &gt; 20 %), chacun enregistré à la sortie du champ, sans modale ; l'app calcule chaque % vs l'open. Une stat
           reste « à compléter » jusqu'à ce qu'on la coche (✓, comme une transaction revue dans Monarch) : la coche n'est possible
           qu'avec les cinq prix et se décoche d'un clic. La coche d'une stat complétée est verte. Vider un prix d'une stat cochée est refusé — il faut la décocher d'abord. Les
@@ -1114,12 +1114,14 @@
           (premarket — vide sur un DT —, float, volume, flags, trade) et résume chaque stat dans son pattern, sans ligne de moyennes.
         </p>
         <p class="mockup-note">
-          Le GUS en points (#713) — la carte Séance devient une liste verticale, une ligne par point comme le double top. Le
-          <b>push</b> gagne son heure, et un point s'ajoute : le <b>drop</b>, le plus bas après le push (heure et prix, avant la clôture),
-          souvent le LOD — différent quand le LOD est venu avant le push. HOD, LOD et EOD restent des repères de la journée, sans
-          heure. La chute se lit côté short <b>depuis le haut du push</b> (depuis l'open un jour sans push), en vert ; le GUS a
-          fonctionné à <b>15 %</b>, le bas de la fourchette de la fiche. Facultative pour l'instant : les GUS déjà cochés n'ont ni
-          heure ni chute (KTTA, NUWE, AEHL « à saisir »), la coche reste à cinq prix, et la rangée de KPIs porte son propre n.
+          Le GUS en points (#713), nommés <b>OPS</b> (#717) — <b>Open · Push · Sink</b>, les mêmes mots en français et en anglais. La
+          carte Séance devient une liste verticale, une ligne par point comme le double top. Le <b>Push</b> gagne son heure, et un
+          point s'ajoute : le <b>Sink</b>, le plus bas après le Push (heure et prix, avant la clôture), souvent le LOD — différent quand
+          le LOD est venu avant le Push. Le reste sert à <b>repérer</b> le GUS (clôture veille, open PM, high PM, gap, push PM, tenue)
+          ou est un <b>repère de la journée</b> (HOD, LOD, EOD, sans heure) : hors du mnémonique. Le Sink se lit côté short <b>depuis
+          le haut du Push</b> (depuis l'open un jour sans push), en vert ; le GUS a fonctionné à <b>15 %</b>, le bas de la fourchette de
+          la fiche. Facultatif pour l'instant : les GUS déjà cochés n'ont ni heure ni Sink (KTTA, NUWE, AEHL « à saisir »), la coche
+          reste à cinq prix, et la rangée de KPIs porte son propre n.
         </p>
         <p class="mockup-note">
           Ce que rapporte un double top (#706) — Base, Apex, Rejection et Echo décrivent le setup jusqu'à l'entrée ; le cinquième
@@ -1209,7 +1211,7 @@
         const label = check.querySelector('[data-label]');
         let done = false;
 
-        // La chute (#713) : facultative, hors du compte de la coche ; prix et heure vont ensemble, après le push et sous lui.
+        // Le Sink (#713, #717) : facultatif, hors du compte de la coche ; prix et heure vont ensemble, après le Push et sous lui.
         // Un jour sans push, elle se lit depuis l'open.
         const drop = document.getElementById('c-drop');
         const dropTime = document.getElementById('c-drop-time');
@@ -1237,13 +1239,13 @@
           if (above) html = '<span class="warn">au-dessus du ' + (noPush.checked ? "l'open" : 'push') + '</span>';
           else if (early) html = '<span class="warn">avant le push : les heures vont dans l\'ordre</span>';
           else if (hasPrice !== hasTime)
-            html = '<span class="warn">' + (hasPrice ? "l'heure du drop, avec son prix" : 'le prix du drop, avec son heure') + '</span>';
+            html = '<span class="warn">' + (hasPrice ? "l'heure du Sink, avec son prix" : 'le prix du Sink, avec son heure') + '</span>';
           else if (hasPrice && base > 0) {
             const g = ((base - low) / base) * 100;
             const d = from !== null ? ' · ' + (toMin(dropTime.value) - from) + ' min' : '';
             html =
               '<span class="gain">' + fmt(g) + ' pour le short</span>' + d +
-              '<small>' + (noPush.checked ? "depuis l'open — pas de push" : 'depuis le haut du push') +
+              '<small>' + (noPush.checked ? "depuis l'open — pas de push" : 'depuis le haut du Push') +
               (g >= 15 ? ' · 15 % atteints' : ' · sous les 15 % de la fiche') + '</small>';
           } else html = 'facultatif — souvent le LOD ; plus haut quand le LOD est venu avant le push<small>vide si le titre a continué de monter</small>';
           out.innerHTML = html;
@@ -1262,7 +1264,7 @@
           const needed = names.filter((_, i) => !prices[i].disabled);
           const missing = needed.filter((n) => prices[names.indexOf(n)].value.trim() === '');
           progress.textContent =
-            needed.length - missing.length + ' / ' + needed.length + ' prix saisis · ' + (dropDone() ? 'drop ✓' : 'drop à saisir');
+            needed.length - missing.length + ' / ' + needed.length + ' prix saisis · ' + (dropDone() ? 'Sink ✓' : 'Sink à saisir');
           check.disabled = missing.length > 0 && !done;
           check.title = missing.length > 0 ? 'Il manque ' + missing.join(', ') : '';
           // Une stat cochée ne peut pas perdre un prix : les champs vides sont refusés tant qu'elle l'est.

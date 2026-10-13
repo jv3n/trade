@@ -3,7 +3,24 @@
 > **Shorter** une small-cap américaine qui a gappé en premarket sans fondamental derrière. Le pari :
 > le prix retombe pendant la séance, parce que le pump est artificiel.
 
-*Dernière révision : 2026-10-01 (gap lu comme le scanner, #499), d'après la séance du Trading Desk du 14 septembre, « Les Patterns ».*
+*Dernière révision : 2026-10-13 (la séquence nommée OPS, #717) ; 2026-10-01 (gap lu comme le scanner, #499), d'après la séance du Trading Desk du 14 septembre, « Les Patterns ».*
+
+---
+
+## La séquence — OPS
+
+Le GUS **est** la séquence depuis la cloche, trois points nommés avec les mêmes mots en français et
+en anglais :
+
+| | Point | Ce que c'est |
+|---|-------|--------------|
+| **O** | **Open** | L'open de 9h30 |
+| **P** | **Push** | Le haut de la poussée après l'open, en général dans les ~10 minutes — aucun un jour sans push |
+| **S** | **Sink** | Le plus bas après le Push, avant la clôture — ce que le pattern a payé, lu depuis le haut du Push (depuis l'Open un jour sans push) |
+
+Le reste sert à **repérer** le GUS (clôture veille, open PM, high PM, gap, push PM, tenue) ou est un
+**repère de la journée** (HOD, LOD, EOD). **Sink** est aussi le dernier point du double top
+(BARES) : la chute finale porte le même nom dans chaque pattern.
 
 ---
 

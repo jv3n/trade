@@ -3,7 +3,24 @@
 > **Short** a US small-cap that gapped up in premarket with no fundamental behind it. The bet : the
 > price falls back during the session because the pump is artificial.
 
-*Last revised : 2026-10-01 (gap read as the scanner does, #499), from the Trading Desk session of 14 September, « Les Patterns ».*
+*Last revised : 2026-10-13 (the sequence named OPS, #717) ; 2026-10-01 (gap read as the scanner does, #499), from the Trading Desk session of 14 September, « Les Patterns ».*
+
+---
+
+## The sequence — OPS
+
+The GUS **is** the sequence from the bell, three points named with the same words in French and
+English :
+
+| | Point | What it is |
+|---|-------|------------|
+| **O** | **Open** | The 9:30 open |
+| **P** | **Push** | The top of the push after the open, usually within ~10 minutes — none on a no-push day |
+| **S** | **Sink** | The lowest print after the Push, before the close — what the pattern paid, read from the Push's top (from the Open on a no-push day) |
+
+Everything else **spots** the GUS (previous close, PM open, PM high, gap, PM push, hold) or is a
+**day-wide reference** (HOD, LOD, EOD). **Sink** is also the last point of the double top (BARES) :
+the final fall has one name in every pattern.
 
 ---
 
