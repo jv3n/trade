@@ -234,6 +234,18 @@ detekt {
   basePath.set(file("../.."))
 }
 
+// Detekt refuses to run on a Kotlin other than the one it was compiled with, and the Kotlin
+// plugin otherwise aligns its classpath on the project's : pin it back to Detekt's own.
+configurations
+  .matching { it.name == "detekt" }
+  .configureEach {
+    resolutionStrategy.eachDependency {
+      if (requested.group == "org.jetbrains.kotlin") {
+        useVersion(dev.detekt.gradle.plugin.getSupportedKotlinVersion())
+      }
+    }
+  }
+
 // Detekt 2 only runs the rules needing type information (`LongParameterList`,
 // `UnsafeCallOnNullableType`…) in its per-compilation tasks, so `check` runs `detektMain` +
 // `detektTest` and merges their SARIF into the one file CI uploads. The plain `detekt` task would
