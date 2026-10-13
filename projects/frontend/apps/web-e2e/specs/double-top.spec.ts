@@ -9,14 +9,16 @@ import { Api, expect, isoToday, test, typeNumber } from '../fixtures';
  * - « → GUS » then « → DT » on the same candidate leave one badge per stat ;
  * - the DT badge opens the « Double top » card in the DT view, its start pre-filled with the open,
  *   and the stat carries no premarket (#649) ;
+ * - the points are named BARES (#716) — Base, Apex, Rejection, Echo, Sink — the legs by the point
+ *   they reach : A, R, E, S ;
  * - the four prices save field by field, the legs read like the mockup's SGBX ;
  * - their four times (#469) give each leg its duration ;
  * - the drop after the retest (#706), required to tick since #710 : the retest stayed under the top ;
  * - the DT view counts that double top, the GUS view doesn't.
  *
- * Prices are the SGBX of `mockup/stats.html` : open 1.90, top 2.95, rejection low 2.36, retest 2.85
- * — A +55.3 %, B −20.0 %, C +20.8 %, 3.4 % under the top
- * — at 10:02, 10:14, 10:21 and 10:38 : A 12 min, B 7 min, C 17 min, 36 min in all.
+ * Prices are the SGBX of `mockup/stats.html` : Base 1.90 (the open), Apex 2.95, Rejection 2.36, Echo
+ * 2.85 — A +55.3 %, R −20.0 %, E +20.8 %, 3.4 % under the Apex
+ * — at 10:02, 10:14, 10:21 and 10:38 : A 12 min, R 7 min, E 17 min, 36 min in all.
  */
 
 const TICKER = 'SGBX';
@@ -75,37 +77,37 @@ test('a candidate promoted in GUS then in DT is filled and ticked as a double to
   await expect(card.getByText('1 / 5 prix · 0 / 5 heures')).toBeVisible();
 
   // ---- The three other prices, the legs computed as they come ----
-  await typeNumber(card.getByLabel('Top ($)'), '2.95');
+  await typeNumber(card.getByLabel('Apex ($)'), '2.95');
   await expect(card.getByText('A 55,3 %', { exact: true })).toBeVisible();
-  await typeNumber(card.getByLabel('Bas du rejet ($)'), '2.36');
-  await expect(card.getByText(/B [-−]20,0 % depuis le top/)).toBeVisible();
-  await typeNumber(card.getByLabel('Retest ($)', { exact: true }), '2.85');
-  await expect(card.getByText(/C 20,8 % · [-−]3,4 % du top/)).toBeVisible();
+  await typeNumber(card.getByLabel('Rejection ($)'), '2.36');
+  await expect(card.getByText(/R [-−]20,0 % depuis l'Apex/)).toBeVisible();
+  await typeNumber(card.getByLabel('Echo ($)', { exact: true }), '2.85');
+  await expect(card.getByText(/E 20,8 % · [-−]3,4 % de l'Apex/)).toBeVisible();
   await expect(card.getByText('4 / 5 prix · 0 / 5 heures')).toBeVisible();
   await expect
     .poll(async () => (await api.get<Stat>(`/api/stats/${dtId}`)).dtRetestPrice)
     .toBe(2.85);
 
   // ---- The four times, each leg's duration read as they come (#469) ----
-  await typeTime(card.getByLabel('Heure du départ'), '10:02');
-  await typeTime(card.getByLabel('Heure du top'), '10:14');
+  await typeTime(card.getByLabel('Heure de la Base'), '10:02');
+  await typeTime(card.getByLabel("Heure de l'Apex"), '10:14');
   await expect(card.getByText('A · 12 min')).toBeVisible();
-  await typeTime(card.getByLabel('Heure du bas'), '10:21');
-  await expect(card.getByText('B · 7 min')).toBeVisible();
-  await typeTime(card.getByLabel('Heure du retest'), '10:38');
-  await expect(card.getByText('C · 17 min · total 36 min')).toBeVisible();
+  await typeTime(card.getByLabel('Heure de la Rejection'), '10:21');
+  await expect(card.getByText('R · 7 min')).toBeVisible();
+  await typeTime(card.getByLabel("Heure de l'Echo"), '10:38');
+  await expect(card.getByText('E · 17 min · total 36 min')).toBeVisible();
   await expect(card.getByText('4 / 5 prix · 4 / 5 heures')).toBeVisible();
   await expect
     .poll(async () => (await api.get<Stat>(`/api/stats/${dtId}`)).dtRetestTime)
     .toMatch(/^10:38/);
 
-  // ---- The drop after the retest (#706), required since #710 : read as the short's gain ----
-  await typeTime(card.getByLabel('Heure du plus bas'), '11:03');
-  await typeNumber(card.getByLabel('Plus bas après le retest ($)'), '2.30');
+  // ---- The Sink after the Echo (#706), required since #710 : read as the short's gain ----
+  await typeTime(card.getByLabel('Heure du Sink'), '11:03');
+  await typeNumber(card.getByLabel('Sink ($)'), '2.30');
   await expect(
-    card.getByText(/D \+19,3 % pour le short · \+17,9 % à l'entrée de la fiche/),
+    card.getByText(/S \+19,3 % pour le short · \+17,9 % à l'entrée de la fiche/),
   ).toBeVisible();
-  await expect(card.getByText('D · 25 min')).toBeVisible();
+  await expect(card.getByText('S · 25 min')).toBeVisible();
   await expect(card.getByText('5 / 5 prix · 5 / 5 heures')).toBeVisible();
   await expect.poll(async () => (await api.get<Stat>(`/api/stats/${dtId}`)).dtDropPrice).toBe(2.3);
 
