@@ -97,8 +97,8 @@ class StatEntry(
   @Column(name = "dt_retest_time") var dtRetestTime: LocalTime? = null,
   /**
    * The lowest print after the retest, before the close, and its time (#706) — what the pattern
-   * paid. Optional : left out of [hasFullSession], and empty when the retest took the top and the
-   * stock kept going.
+   * paid. Required to tick from [DT_DROP_SINCE] on (#710, #726), and empty when the retest took the
+   * top and the stock kept going.
    */
   @Column(name = "dt_drop_price", precision = 18, scale = 4) var dtDropPrice: BigDecimal? = null,
   @Column(name = "dt_drop_time") var dtDropTime: LocalTime? = null,
@@ -128,8 +128,8 @@ class StatEntry(
 
   /**
    * The session prices of its pattern are in — five for a GUS, or four on a [noPush] day ; for a DT
-   * its five points and their times, four when the retest took the top (#710). The precondition to
-   * tick.
+   * its five points and their times, four when the retest took the top (#710) or before the drop
+   * was asked (#726). The precondition to tick.
    */
   val hasFullSession: Boolean
     get() = missingSessionPrices.isEmpty()
@@ -166,7 +166,17 @@ class StatEntry(
       return isDoubleTop && top != null && retest != null && retest >= top
     }
 
-  /** Labels of the session prices (and a DT's times) still missing, in the sheet's order. */
+  /**
+   * A DT under its top with no drop : before [DT_DROP_SINCE], the app did not ask for one (#726) —
+   * the drop KPIs count it apart, so their `n` still adds up to the completed double tops.
+   */
+  val isDoubleTopWithoutDrop: Boolean
+    get() = isDoubleTop && !retestTookTop && dtDropPrice == null
+
+  /**
+   * Labels of the session prices (and a DT's times) still missing, in the sheet's order — a field
+   * is only asked of the stats recorded since it existed ([REQUIRED_SINCE], #726).
+   */
   val missingSessionPrices: List<String>
     get() =
       (if (isDoubleTop) {
@@ -192,10 +202,23 @@ class StatEntry(
             "EOD" to eodPrice,
           )
         })
-        .filter { (_, price) -> price == null }
+        .filter { (label, price) -> price == null && isAsked(label) }
         .map { (label, _) -> label }
 
-  private companion object {
-    val ONE_DOLLAR: BigDecimal = BigDecimal.ONE
+  private fun isAsked(label: String): Boolean =
+    REQUIRED_SINCE[label]?.let { !tradeDate.isBefore(it) } ?: true
+
+  companion object {
+    private val ONE_DOLLAR: BigDecimal = BigDecimal.ONE
+
+    /** The first day the double top's drop was recorded — V26 holds the same date. */
+    val DT_DROP_SINCE: LocalDate = LocalDate.of(2026, 10, 12)
+
+    /**
+     * Session fields added after the history began, with the day they are asked from : the stats of
+     * an earlier day are complete without them, by the standard of the day they were written.
+     */
+    private val REQUIRED_SINCE: Map<String, LocalDate> =
+      mapOf("Drop low" to DT_DROP_SINCE, "Drop low time" to DT_DROP_SINCE)
   }
 }

@@ -27,9 +27,9 @@ import { TodayPage, marketStatusAt } from './today-page';
  * - the **market status** comes from the New York clock, not the browser's ;
  * - the **current step** is the first one that isn't behind us, whatever the day looks like ;
  * - a step is done from the **data** : a reconciled morning, every captured candidate with at least
- *   one stat (#436), no stat left to complete whatever its day, a trade entered (#337) ;
+ *   one stat (#436), no stat left to complete in the last 30 days, a trade entered (#337) ;
  * - step 1 splits the stats to complete between yesterday's and the **overdue** ones, which carry
- *   their date ;
+ *   their date — up to 30 days back (#726) ;
  * - a quiet day can be **settled** (#407) : « no candidate » empties step 3, « no trade » step 5,
  *   and a candidate or a trade entered afterwards beats the mark ;
  * - the **locates** step (#625) is optional : done with a locate, never the current step nor
@@ -386,7 +386,7 @@ describe('TodayPage', () => {
     expect(page.stepStates().stats).not.toBe('done');
   });
 
-  it("asks for the stats to complete of every day before today — the day's own are not in it", async () => {
+  it("asks for the stats to complete of the 30 days before today — the day's own are not in it", async () => {
     const findAll = vi.fn((_filter: StatEntryFilter, _page: unknown) => of(page([])));
     TestBed.overrideProvider(StatsRepository, {
       useValue: { findAll, summary: () => of(makeStatSummary()) } as unknown as StatsRepository,
@@ -395,7 +395,8 @@ describe('TodayPage', () => {
 
     const [filter, paging] = findAll.mock.calls[0];
     expect(filter.status).toBe('TO_COMPLETE');
-    expect(filter.dateFrom).toBeUndefined();
+    // Friday 18/09 : back to 19/08 — older ones stay under the stats sheet's filter (#726).
+    expect([filter.dateFrom?.getMonth(), filter.dateFrom?.getDate()]).toEqual([7, 19]);
     expect(filter.dateTo?.getDate()).toBe(17);
     expect(paging).toEqual(
       expect.objectContaining({ sortField: 'tradeDate', sortDirection: 'desc' }),

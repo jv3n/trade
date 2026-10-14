@@ -89,6 +89,12 @@ const SESSION_CLOSE = 16 * 60;
 /** Overdue stats named on step 1 ; the rest is counted. */
 const OVERDUE_SHOWN = 5;
 
+/**
+ * How far back step 1 looks (#726) : an older stat can no longer be completed from memory — it stays
+ * under the stats sheet's « À compléter » filter, off the morning's list.
+ */
+const OVERDUE_FLOOR_DAYS = 30;
+
 /** One ticker's locates of the day, added up — a top-up is the same ticker. */
 export interface TickerLocates {
   ticker: string;
@@ -221,7 +227,11 @@ export class TodayPage {
     params: () => ({ day: this.dayWrites() }),
     stream: () =>
       this.statsRepo.findAll(
-        { status: 'TO_COMPLETE', dateTo: subDays(this.today, 1) },
+        {
+          status: 'TO_COMPLETE',
+          dateFrom: subDays(this.today, OVERDUE_FLOOR_DAYS),
+          dateTo: subDays(this.today, 1),
+        },
         { pageIndex: 0, pageSize: 50, sortField: 'tradeDate', sortDirection: 'desc' },
       ),
   });
@@ -305,7 +315,7 @@ export class TodayPage {
   /**
    * Step 1 counts the stats still to complete **before today** (#531) — the day's own cannot be
    * completed before its session. The previous trading day is the normal case ; anything older is
-   * overdue (#337), and nothing else in the daily flow would point at it.
+   * overdue (#337), and nothing else in the daily flow would point at it — for 30 days (#726).
    */
   // Weekends only : the morning after a market holiday reads the day before it as overdue (amber),
   // which leaves the count, the done state and the action untouched — accepted (#531).

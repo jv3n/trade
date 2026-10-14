@@ -112,12 +112,14 @@ function makeStat(overrides: Partial<StatEntry> = {}): StatEntry {
 
 /**
  * SGBX of `mockup/stats.html`, its double top late in the morning : start 1.90, top 2.95, rejection
- * low 2.36, the retest still to come — off a 1.12 previous close.
+ * low 2.36, the retest still to come — off a 1.12 previous close. Dated 12/10, the first day the
+ * drop is asked for (#726).
  */
 function makeDoubleTop(overrides: Partial<StatEntry> = {}): StatEntry {
   return makePending({
     id: 'stat-sgbx-dt',
     pattern: 'DT',
+    tradeDate: DT_DROP_DAY,
     previousClose: null,
     pmOpen: null,
     pmHigh: null,
@@ -130,6 +132,9 @@ function makeDoubleTop(overrides: Partial<StatEntry> = {}): StatEntry {
     ...overrides,
   });
 }
+
+/** The first day the double top's drop is asked for (#726) — the fixtures' 17/09 is before it. */
+const DT_DROP_DAY = new Date(2026, 9, 12);
 
 /** A stat promoted this morning : premarket only, session still to enter. */
 function makePending(overrides: Partial<StatEntry> = {}): StatEntry {
@@ -169,6 +174,7 @@ function makeSummary(overrides: Partial<StatSummary> = {}): StatSummary {
     averageRetestPercent: null,
     averageRetestToTopPercent: null,
     retestTookTopCount: 0,
+    doubleTopsWithoutDrop: 0,
     medianDoubleTopMinutes: null,
     medianRejectionMinutes: null,
     doubleTopsWithDrop: 0,
@@ -1795,7 +1801,13 @@ describe('StatsPage', () => {
   it('counts five prices and five times on a double top and names what is missing', async () => {
     const { page } = await setup({ rows: [makeDoubleTop()] });
 
-    expect(page.doubleTopProgress()).toEqual({ prices: 3, times: 3, total: 5, tookTop: false });
+    expect(page.doubleTopProgress()).toEqual({
+      prices: 3,
+      times: 3,
+      total: 5,
+      tookTop: false,
+      dropAsked: true,
+    });
     const missing = [
       'stats.fields.dtRetest',
       'stats.fields.dtDrop',
@@ -1847,15 +1859,63 @@ describe('StatsPage', () => {
     });
 
     expect(page.tickBlockedReason()).not.toBe('');
-    expect(page.doubleTopProgress()).toEqual({ prices: 4, times: 4, total: 5, tookTop: false });
+    expect(page.doubleTopProgress()).toEqual({
+      prices: 4,
+      times: 4,
+      total: 5,
+      tookTop: false,
+      dropAsked: true,
+    });
 
     page.setSessionPrice('dtDropPrice', 2.3);
     page.setSessionTime('dtDropTime', '11:03');
 
     expect(page.tickBlockedReason()).toBe('');
-    expect(page.doubleTopProgress()).toEqual({ prices: 5, times: 5, total: 5, tookTop: false });
+    expect(page.doubleTopProgress()).toEqual({
+      prices: 5,
+      times: 5,
+      total: 5,
+      tookTop: false,
+      dropAsked: true,
+    });
     expect(page.doubleTopLegs().drop).toBeCloseTo(-19.3, 2);
     expect(page.doubleTopDurations().drop).toBe(25);
+  });
+
+  // #726 : the September double tops — weeks old, their lows can't be read back, and the app never
+  // asked for them then. Complete on four points, by the standard of their day.
+  it('ticks a double top recorded before the drop was asked on its four points', async () => {
+    const { page } = await setup({
+      rows: [
+        makeDoubleTop({
+          tradeDate: new Date(2026, 8, 17),
+          dtRetestPrice: 2.85,
+          dtRetestTime: '10:38',
+        }),
+      ],
+    });
+
+    expect(page.doubleTopProgress()).toEqual({
+      prices: 4,
+      times: 4,
+      total: 4,
+      tookTop: false,
+      dropAsked: false,
+    });
+    expect(page.sessionMissing()).toEqual([]);
+    expect(page.rows()[0].missing).toEqual([]);
+    expect(page.tickBlockedReason()).toBe('');
+  });
+
+  it('asks a new double top for its drop from the day it was first recorded', async () => {
+    const { page } = await setup({ rows: [] });
+    page.startNew();
+
+    page.setIdentity({ ticker: 'nxtt', tradeDate: new Date(2026, 9, 11), pattern: 'DT' });
+    expect(page.sessionPriceCount()).toBe(4);
+
+    page.setIdentity({ ticker: 'nxtt', tradeDate: DT_DROP_DAY, pattern: 'DT' });
+    expect(page.sessionPriceCount()).toBe(5);
   });
 
   // IMNN : the retest took the top back and kept going — a breakout, no drop to measure.
@@ -1864,7 +1924,13 @@ describe('StatsPage', () => {
       rows: [makeDoubleTop({ dtRetestPrice: 3.0, dtRetestTime: '10:38' })],
     });
 
-    expect(page.doubleTopProgress()).toEqual({ prices: 4, times: 4, total: 4, tookTop: true });
+    expect(page.doubleTopProgress()).toEqual({
+      prices: 4,
+      times: 4,
+      total: 4,
+      tookTop: true,
+      dropAsked: true,
+    });
     expect(page.sessionMissing()).toEqual([]);
     expect(page.tickBlockedReason()).toBe('');
   });
@@ -2115,7 +2181,7 @@ describe('StatsPage', () => {
     const { page, repo } = await setup({ rows: [] });
     page.startNew();
 
-    page.setIdentity({ ticker: 'nxtt', tradeDate: new Date(2026, 8, 18), pattern: 'DT' });
+    page.setIdentity({ ticker: 'nxtt', tradeDate: DT_DROP_DAY, pattern: 'DT' });
     expect(page.isDoubleTop()).toBe(true);
     expect(page.sessionPriceCount()).toBe(5);
     // #649 : a double top asks for no premarket — the date and the ticker are enough.

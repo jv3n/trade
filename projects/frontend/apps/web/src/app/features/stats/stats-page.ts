@@ -25,7 +25,7 @@ import {
   StbTooltipModule,
   stbLoadGate,
 } from '@portfolioai/ui';
-import { isToday, isYesterday, startOfDay } from 'date-fns';
+import { isBefore, isToday, isYesterday, startOfDay } from 'date-fns';
 import {
   EMPTY,
   Observable,
@@ -371,22 +371,35 @@ const SESSION_PRICES: readonly { field: SessionPrice; label: string }[] = [
   { field: 'eodPrice', label: 'stats.fields.eod' },
 ];
 
+/** The first day the double top's drop was asked for (#726) — the backend's `DT_DROP_SINCE`. */
+const DT_DROP_SINCE = new Date(2026, 9, 12);
+
+/**
+ * A point of the sheet ; `since`, for a field added after the history began, is the first day it is
+ * asked for — the stats of an earlier day are complete without it (#726).
+ */
+interface SheetPoint<F> {
+  field: F;
+  label: string;
+  since?: Date;
+}
+
 /** The five prices of a double top, in the order it forms — the drop last (#706). */
-const DOUBLE_TOP_PRICES: readonly { field: SessionPrice; label: string }[] = [
+const DOUBLE_TOP_PRICES: readonly SheetPoint<SessionPrice>[] = [
   { field: 'dtStartPrice', label: 'stats.fields.dtStart' },
   { field: 'dtTopPrice', label: 'stats.fields.dtTop' },
   { field: 'dtLowPrice', label: 'stats.fields.dtLow' },
   { field: 'dtRetestPrice', label: 'stats.fields.dtRetest' },
-  { field: 'dtDropPrice', label: 'stats.fields.dtDrop' },
+  { field: 'dtDropPrice', label: 'stats.fields.dtDrop', since: DT_DROP_SINCE },
 ];
 
 /** Their five times, in the same order — required to tick like the prices (#469). */
-const DOUBLE_TOP_TIMES: readonly { field: SessionTime; label: string }[] = [
+const DOUBLE_TOP_TIMES: readonly SheetPoint<SessionTime>[] = [
   { field: 'dtStartTime', label: 'stats.fields.dtStartTimeShort' },
   { field: 'dtTopTime', label: 'stats.fields.dtTopTimeShort' },
   { field: 'dtLowTime', label: 'stats.fields.dtLowTimeShort' },
   { field: 'dtRetestTime', label: 'stats.fields.dtRetestTimeShort' },
-  { field: 'dtDropTime', label: 'stats.fields.dtDropTimeShort' },
+  { field: 'dtDropTime', label: 'stats.fields.dtDropTimeShort', since: DT_DROP_SINCE },
 ];
 
 /**
@@ -398,18 +411,35 @@ export function retestTookTop(session: Pick<SessionModel, 'dtTopPrice' | 'dtRete
   return top !== null && retest !== null && top > 0 && retest >= top;
 }
 
-/** The points a double top needs to tick — its five, or four when the retest took the top. */
-function doubleTopPoints<T extends { field: SessionField }>(
+/** Whether a stat of [tradeDate] is asked for [point] — a stat not dated yet is asked everything. */
+function isAsked(point: { since?: Date }, tradeDate: Date | null): boolean {
+  return !point.since || !tradeDate || !isBefore(tradeDate, point.since);
+}
+
+/**
+ * The points a double top needs to tick — its five, or four when the retest took the top or when
+ * it was recorded before the drop was asked.
+ */
+function doubleTopPoints<T extends SheetPoint<SessionField>>(
   points: readonly T[],
   session: Pick<SessionModel, 'dtTopPrice' | 'dtRetestPrice'>,
+  tradeDate: Date | null,
 ): readonly T[] {
-  if (!retestTookTop(session)) return points;
-  return points.filter(({ field }) => field !== 'dtDropPrice' && field !== 'dtDropTime');
+  const tookTop = retestTookTop(session);
+  return points.filter(
+    (point) =>
+      isAsked(point, tradeDate) &&
+      !(tookTop && (point.field === 'dtDropPrice' || point.field === 'dtDropTime')),
+  );
 }
 
 /** The session prices a stat needs — all five, four on a no-push day, a double top's points. */
-function expectedPrices(session: Pick<SessionModel, SessionField | 'noPush'>, pattern: Pattern) {
-  if (pattern === 'DT') return doubleTopPoints(DOUBLE_TOP_PRICES, session);
+function expectedPrices(
+  session: Pick<SessionModel, SessionField | 'noPush'>,
+  pattern: Pattern,
+  tradeDate: Date | null,
+) {
+  if (pattern === 'DT') return doubleTopPoints(DOUBLE_TOP_PRICES, session, tradeDate);
   return SESSION_PRICES.filter(({ field }) => !(session.noPush && field === 'pushOpenPrice'));
 }
 
@@ -420,14 +450,15 @@ function expectedPrices(session: Pick<SessionModel, SessionField | 'noPush'>, pa
 export function missingPrices(
   session: Pick<SessionModel, SessionField | 'noPush'>,
   pattern: Pattern,
+  tradeDate: Date | null,
 ): string[] {
-  const prices = expectedPrices(session, pattern)
+  const prices = expectedPrices(session, pattern, tradeDate)
     .filter(({ field }) => !isPositive(session[field]))
     .map((p) => p.label);
   if (pattern !== 'DT') return prices;
   return [
     ...prices,
-    ...doubleTopPoints(DOUBLE_TOP_TIMES, session)
+    ...doubleTopPoints(DOUBLE_TOP_TIMES, session, tradeDate)
       .filter(({ field }) => !session[field])
       .map((t) => t.label),
   ];
@@ -884,7 +915,7 @@ export class StatsPage {
       durations: doubleTopDurations(e),
       gus: gusSequence(e),
       gusDropToFill: bounded && e.completed && e.pattern !== 'DT' && e.gusDropPrice === null,
-      missing: missingPrices(e, e.pattern),
+      missing: missingPrices(e, e.pattern, e.tradeDate),
       // A row written before the range rule existed can still hold an impossible set : the ✓ of
       // the table answers for it like the panel's does, and the backend replays it on the tick.
       issue: sessionProblem(sessionOf(e), e.pattern)?.reason ?? null,
@@ -964,6 +995,10 @@ export class StatsPage {
     return missing;
   });
 
+  /** The day of the stat in the panel — the one picked in « New stat » while creating. */
+  readonly panelDate = computed(() =>
+    this.creating() ? this.identity().tradeDate : (this.completing()?.tradeDate ?? null),
+  );
   /** The pattern of the stat in the panel — the one picked in « New stat » while creating. */
   readonly panelPattern = computed(() =>
     this.creating() ? this.identity().pattern : this.premarket().pattern,
@@ -979,16 +1014,18 @@ export class StatsPage {
 
   /**
    * « 3 / 5 prix · 2 / 5 heures » — the prices and the times a double top needs to tick, four of
-   * each when the retest took the top (#710).
+   * each when the retest took the top (#710) or before the drop was asked (#726).
    */
   readonly doubleTopProgress = computed(() => {
     const m = this.session();
-    const prices = doubleTopPoints(DOUBLE_TOP_PRICES, m);
+    const date = this.panelDate();
+    const prices = doubleTopPoints(DOUBLE_TOP_PRICES, m, date);
     return {
       prices: prices.filter(({ field }) => isPositive(m[field])).length,
-      times: doubleTopPoints(DOUBLE_TOP_TIMES, m).filter(({ field }) => !!m[field]).length,
+      times: doubleTopPoints(DOUBLE_TOP_TIMES, m, date).filter(({ field }) => !!m[field]).length,
       total: prices.length,
       tookTop: retestTookTop(m),
+      dropAsked: isAsked({ since: DT_DROP_SINCE }, date),
     };
   });
 
@@ -1049,9 +1086,11 @@ export class StatsPage {
   }
 
   /** Label keys of the prices the panel still misses. */
-  readonly sessionMissing = computed(() => missingPrices(this.session(), this.panelPattern()));
+  readonly sessionMissing = computed(() =>
+    missingPrices(this.session(), this.panelPattern(), this.panelDate()),
+  );
   readonly sessionPriceCount = computed(
-    () => expectedPrices(this.session(), this.panelPattern()).length,
+    () => expectedPrices(this.session(), this.panelPattern(), this.panelDate()).length,
   );
   readonly sessionFilled = computed(() => this.sessionPriceCount() - this.sessionMissing().length);
   /** The push typed before « no push » was ticked, and its time — given back if it is unticked. */
@@ -1256,7 +1295,7 @@ export class StatsPage {
       this.clearRefusals(entry.updatedAt);
       return;
     }
-    if (entry.completed && missingPrices(session, premarket.pattern).length > 0) {
+    if (entry.completed && missingPrices(session, premarket.pattern, entry.tradeDate).length > 0) {
       this.toasts.error(
         this.translate.instant('stats.snackbar.untickFirst', { ticker: entry.ticker }),
       );
@@ -1430,7 +1469,7 @@ export class StatsPage {
    */
   toggleCompleted(entry: StatEntry): void {
     const completed = !entry.completed;
-    if (completed && missingPrices(entry, entry.pattern).length > 0) return;
+    if (completed && missingPrices(entry, entry.pattern, entry.tradeDate).length > 0) return;
     this.enqueue(
       this.repo.setCompleted(entry.id, completed).pipe(
         tap((saved) => {
@@ -1453,7 +1492,7 @@ export class StatsPage {
    */
   tickBlockedReason(): string {
     if (this.sessionMissing().length > 0) {
-      return this.missingLabel(this.session(), this.panelPattern());
+      return this.missingLabel(this.sessionMissing());
     }
     const issue = this.sessionIssue();
     return issue ? this.translate.instant(issue.reason) : '';
@@ -1461,13 +1500,13 @@ export class StatsPage {
 
   /** The same answer for a row of the table, which has no panel model to read. */
   rowBlockedReason(row: StatRow): string {
-    if (row.missing.length > 0) return this.missingLabel(row, row.pattern);
+    if (row.missing.length > 0) return this.missingLabel(row.missing);
     return row.issue ? this.translate.instant(row.issue) : '';
   }
 
   /** « Il manque HOD, EOD » — the ✓'s tooltip while it can't tick. */
-  missingLabel(entry: Pick<SessionModel, SessionField | 'noPush'>, pattern: Pattern): string {
-    const fields = missingPrices(entry, pattern).map((key) => this.translate.instant(key));
+  missingLabel(missing: readonly string[]): string {
+    const fields = missing.map((key) => this.translate.instant(key));
     return this.translate.instant('stats.completion.missing', { fields: fields.join(', ') });
   }
 

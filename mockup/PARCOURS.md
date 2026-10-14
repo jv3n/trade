@@ -130,7 +130,9 @@ type, no confirmation (a clean morning creates no correction) (#407).
   today** — the day's own are not in it : they cannot be completed before their session, and they
   are tomorrow morning's. **Yesterday** — the previous trading day, so Friday on a Monday — is the
   normal case ; anything older is overdue and listed in amber (« Overdue : GLND (21/09), KTTA
-  (17/09) ») until it is ticked (#337). Its single action opens the stats sheet, where the session
+  (17/09) ») until it is ticked (#337) — **for 30 days** (#726) : past that, a stat leaves the
+  morning list, which only holds what can still be acted on, and stays under the stats sheet's
+  « À compléter » filter for whoever goes hunting. Its single action opens the stats sheet, where the session
   panel opens on the first stat to complete. The step is **done when nothing is left before
   today** — a morning with nothing to finish is simply done, whatever the day's candidates.
 
@@ -691,8 +693,15 @@ go with the old names) :
   been hit before the Sink ; measuring that would need a sixth price.
 - The stat is checked with the **five prices and the five times** (« n / 5 prices · n / 5 times »),
   **unless the Echo took the Apex** : no Sink to measure, the check goes back to the four points
-  (« n / 4 »), and the Sink stays empty (#710). It shipped optional while the history had none
-  (#706) ; the database holds the same rule (`ck_stat_entry_completed_whole`).
+  (« n / 4 »), and the Sink stays empty (#710). The database holds the same rule
+  (`ck_stat_entry_completed_whole`).
+- **A session field is only required of the stats recorded since it existed** (#726). The app
+  never asked for a Sink before 2026-10-12, so a double top of an earlier day is complete with its
+  four points (« n / 4 »), its Sink field reading « facultatif — pas demandé avant le 12/10 » : a
+  session weeks old cannot be read back, and a to-do that can never be done would only wear the
+  list out. Each required field carries the date it is expected from, next to the migration that
+  introduced it. A Sink typed on an earlier DT still counts in every KPI — they read the price,
+  never the rule.
 - The flags stay (SSR, institutions > 20 %) ; « no push » does not apply.
 - **The page follows the pattern** : a **GUS / DT / All** switch above the KPIs picks the KPIs, the
   table's columns and the averages (#648 — the SIR, SIV and discretionary views stayed empty). Each
@@ -702,7 +711,8 @@ go with the old names) :
   median rejection (R) — a median, not a mean : one DT that drags all afternoon would move an average
   and say nothing about the typical one. A **second row** says what the DT pays (#706), medians again,
   with its own `n` — the completed DTs minus those whose Echo took the Apex (« n = 2 · Apex repris :
-  1 ») : the **Sink from the Echo** (S), the **Sink from the sheet's entry**, the **duration of S**, and
+  1 »), and minus those recorded before the Sink was asked, counted once there are any (« · sans
+  Sink : 2 », #726) — the three add up to the completed DTs : the **Sink from the Echo** (S), the **Sink from the sheet's entry**, the **duration of S**, and
   **« reached 10 % »** — how many Sinks gave the 10 % the sheet promises from its entry. The table
   shows float and volume, then Base, « A — apex », « R — rejection », « E — echo » and the duration
   (total, and the three legs under it), then « S — sink » (the price, the short's gain from the Echo

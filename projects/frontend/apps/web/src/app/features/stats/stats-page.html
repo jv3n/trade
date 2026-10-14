@@ -140,9 +140,15 @@
             {{ kpi.medianDropPercent !== null ? (kpi.medianDropPercent | shortGain) + ' %' : '—' }}
           </div>
           <div class="kpi__sub">
+            <!-- The three counts add up to the completed DTs (#726) : the third shows once it exists. -->
             {{
-              'stats.kpi.dropSub'
-                | translate: { count: kpi.doubleTopsWithDrop, tookTop: kpi.retestTookTopCount }
+              (kpi.doubleTopsWithoutDrop > 0 ? 'stats.kpi.dropSubWithoutDrop' : 'stats.kpi.dropSub')
+                | translate
+                  : {
+                      count: kpi.doubleTopsWithDrop,
+                      tookTop: kpi.retestTookTopCount,
+                      withoutDrop: kpi.doubleTopsWithoutDrop,
+                    }
             }}
           </div>
         </div>
@@ -963,7 +969,9 @@
                   <span class="muted">{{
                     (doubleTopProgress().tookTop
                       ? 'stats.doubleTop.dropTookTopHint'
-                      : 'stats.doubleTop.dropHint'
+                      : doubleTopProgress().dropAsked
+                        ? 'stats.doubleTop.dropHint'
+                        : 'stats.doubleTop.dropNotAskedHint'
                     ) | translate
                   }}</span>
                 }

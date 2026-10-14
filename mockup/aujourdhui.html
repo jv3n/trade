@@ -254,7 +254,7 @@
                       <span style="color: var(--warn)">En retard : BNZI GUS (16/09), SNTG GUS (15/09).</span>
                     </div>
                   </div>
-                  <!-- #337 : une stat laissée incomplète plus tôt que la veille reste visible ici, en ambre, jusqu'à ce qu'elle soit cochée. -->
+                  <!-- #337 : une stat laissée incomplète plus tôt que la veille reste visible ici, en ambre, jusqu'à ce qu'elle soit cochée — 30 jours au plus (#726), ensuite elle ne vit plus que sous le filtre « À compléter » des stats. -->
                   <div class="step-action"><a class="btn btn-sm btn-primary" href="stats.html">Compléter</a></div>
                 </li>
 
@@ -537,7 +537,7 @@
           moments. Dans l'app, l'état des étapes se déduit de l'heure et des données. Le rapprochement du matin se fait directement ici
           (l'écart se calcule en direct) ; le détail des mouvements reste dans Compte. L'étape des candidats n'est cochée qu'une fois tous les
           candidats passés en stats. L'étape 1 (#531) compte les stats à compléter d'avant aujourd'hui : la veille est le cas normal
-          (l'app ne s'ouvre que le matin), les jours d'avant sont en retard, en ambre. Sans rien d'avant aujourd'hui, elle est faite.
+          (l'app ne s'ouvre que le matin), les jours d'avant sont en retard, en ambre, pendant 30 jours (#726) : au-delà, la stat quitte la liste du matin — qui ne montre que ce qui se fait encore — et reste sous le filtre « À compléter » des stats. Sans rien d'avant aujourd'hui, elle est faite.
         </p>
       </main>
     </div>
