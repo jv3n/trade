@@ -185,6 +185,8 @@ export interface StatSummary {
   averageRetestToTopPercent: number | null;
   /** Double tops whose retest took the top back. */
   retestTookTopCount: number;
+  /** Completed DTs under their top with no drop — recorded before the drop was asked (#726). */
+  doubleTopsWithoutDrop: number;
   /**
    * Median duration of the completed double tops, start → retest, in minutes (#469) — a median, so
    * one DT that drags all afternoon does not move the typical figure. Null without any.

@@ -654,6 +654,7 @@ function makeStatSummary(overrides: Partial<StatSummary> = {}): StatSummary {
     averageRetestPercent: null,
     averageRetestToTopPercent: null,
     retestTookTopCount: 0,
+    doubleTopsWithoutDrop: 0,
     medianDoubleTopMinutes: null,
     medianRejectionMinutes: null,
     doubleTopsWithDrop: 0,

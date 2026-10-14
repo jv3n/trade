@@ -522,7 +522,7 @@
                   <td><span class="pct muted" id="dt-c">—</span></td>
                 </tr>
                 <tr>
-                  <td title="Le plus bas après l'Echo, avant la clôture — requis pour la coche, sauf quand l'Echo reprend l'Apex (pas de Sink à mesurer)">Sink</td>
+                  <td title="Le plus bas après l'Echo, avant la clôture — requis pour la coche, sauf quand l'Echo reprend l'Apex (pas de Sink à mesurer) ou pour une DT d'avant le 12/10 (pas demandé à l'époque)">Sink</td>
                   <td><input class="input" type="time" id="dt-drop-time" data-dt-time /></td>
                   <td><input class="input" id="dt-drop" placeholder="2,30" /></td>
                   <td><span class="pct muted" id="dt-d">—</span></td>
@@ -1131,7 +1131,7 @@
           fiche</b> (Apex −5 %, le prix où la fiche dit de shorter — c'est lui qui répond à la question), la durée du Sink, et combien de
           Sinks atteignent les 10 % promis par la fiche. <b>Requis pour la coche</b> (#710) — « n / 5 prix · n / 5 heures » —
           <b>sauf quand l'Echo reprend l'Apex</b> et que le titre continue (IMNN) : pas de Sink à mesurer, le champ reste vide et la
-          coche revient à quatre points. Le n de la rangée est donc les DT complétées moins celles-là (« n = 2 · Apex repris : 1 »).
+          coche revient à quatre points. Quatre points aussi pour une DT <b>d'avant le 12/10</b> (#726) : l'app ne demandait pas le Sink à l'époque, le champ lit « facultatif — pas demandé avant le 12/10 » et la stat se coche sans lui ; un Sink saisi compte quand même dans les KPIs. Le n de la rangée est donc les DT complétées moins celles-là (« n = 2 · Apex repris : 1 »), et moins celles d'avant le 12/10 sans Sink, comptées dès qu'il y en a (« · sans Sink : 2 ») : les trois font le total des DT complétées.
           Ce n'est pas un backtest — le stop a pu sauter avant le Sink, la carte le dit au survol.
         </p>
         <p class="mockup-note">

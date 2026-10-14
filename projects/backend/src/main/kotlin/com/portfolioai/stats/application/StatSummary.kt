@@ -70,6 +70,7 @@ internal fun statSummaryOf(rows: List<StatEntry>, pattern: Pattern?, traded: Int
     averageRetestToTopPercent =
       doubleTops.averageOf { StatMetrics.percentChange(it.dtTopPrice, it.dtRetestPrice) },
     retestTookTopCount = doubleTops.count { isAtLeast(it.dtRetestPrice, it.dtTopPrice) },
+    doubleTopsWithoutDrop = doubleTops.count { it.isDoubleTopWithoutDrop },
     medianDoubleTopMinutes =
       doubleTops.medianMinutes { StatMetrics.minutesBetween(it.dtStartTime, it.dtRetestTime) },
     medianRejectionMinutes =

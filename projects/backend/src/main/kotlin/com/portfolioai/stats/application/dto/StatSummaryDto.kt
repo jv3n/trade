@@ -38,13 +38,16 @@ import java.math.BigDecimal
  * @param averageRetestPercent Leg C : rejection low → retest.
  * @param averageRetestToTopPercent Where the retest ended against the top (negative = under it).
  * @param retestTookTopCount Double tops whose retest took the top back.
+ * @param doubleTopsWithoutDrop Completed double tops under their top with no drop — recorded before
+ *   the drop was asked (#726). With [doubleTopsWithDrop] and [retestTookTopCount], it makes up
+ *   [completedDoubleTops].
  * @param medianDoubleTopMinutes Median duration of the completed double tops, start → retest, in
  *   minutes (#469) — a median, not a mean : one DT that drags all afternoon would move an average
  *   and say nothing about the typical one. Read against [completedDoubleTops].
  * @param medianRejectionMinutes Median of leg B, top → rejection low — how fast the rejection
  *   comes, the leg the entry depends on.
  * @param doubleTopsWithDrop Completed double tops whose drop after the retest is typed (#706) — the
- *   `n` of the four drop figures, read against [completedDoubleTops] : the drop is optional.
+ *   `n` of the four drop figures, read against [completedDoubleTops].
  * @param medianDropPercent Median leg D, retest → drop low. Negative : the price fell, which is the
  *   short's gain — the front flips the sign to show it as one.
  * @param medianDropFromEntryPercent Median drop from the DT sheet's entry (top −5 %) → drop low —
@@ -88,6 +91,7 @@ data class StatSummaryDto(
   val averageRetestPercent: BigDecimal?,
   val averageRetestToTopPercent: BigDecimal?,
   val retestTookTopCount: Int,
+  val doubleTopsWithoutDrop: Int,
   val medianDoubleTopMinutes: BigDecimal?,
   val medianRejectionMinutes: BigDecimal?,
   val doubleTopsWithDrop: Int,

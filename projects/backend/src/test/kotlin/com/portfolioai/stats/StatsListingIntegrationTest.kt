@@ -976,10 +976,10 @@ class StatsListingIntegrationTest {
   // Double top drop (#706) — « what does a DT pay ? »
   // ---------------------------------------------------------------------------
 
-  // Required since the history is filled (#710) — optional when #706 shipped it.
+  // Required from the day it was first recorded (#710, #726) — the rule's day, not the fixtures'.
   @Test
   fun `ticking a double top without its drop is a 400 naming it`() {
-    val stat = service.create(doubleTopRequest(ticker = "SGBX"))
+    val stat = service.create(doubleTopRequest(ticker = "SGBX").copy(tradeDate = DROP_DAY))
 
     val ex =
       assertThrows(ResponseStatusException::class.java) {
@@ -1001,11 +1001,11 @@ class StatsListingIntegrationTest {
 
   @Test
   fun `a completed double top can't lose its drop`() {
-    val stat = createCompleted(sgbxWithDrop())
+    val stat = createCompleted(sgbxWithDrop().copy(tradeDate = DROP_DAY))
 
     val ex =
       assertThrows(ResponseStatusException::class.java) {
-        service.update(stat.id, doubleTopRequest(ticker = "SGBX"))
+        service.update(stat.id, doubleTopRequest(ticker = "SGBX").copy(tradeDate = DROP_DAY))
       }
 
     assertEquals(400, ex.statusCode.value())
@@ -1016,11 +1016,14 @@ class StatsListingIntegrationTest {
   // brought back under the top — the same guard as a lost drop, never a raw CHECK violation.
   @Test
   fun `a completed breakout can't have its retest lowered under the top without a drop`() {
-    val stat = createCompleted(nxttDoubleTop())
+    val stat = createCompleted(nxttDoubleTop().copy(tradeDate = DROP_DAY))
 
     val ex =
       assertThrows(ResponseStatusException::class.java) {
-        service.update(stat.id, nxttDoubleTop().copy(dtRetestPrice = BigDecimal("2.90")))
+        service.update(
+          stat.id,
+          nxttDoubleTop().copy(tradeDate = DROP_DAY, dtRetestPrice = BigDecimal("2.90")),
+        )
       }
 
     assertEquals(400, ex.statusCode.value())
@@ -1030,7 +1033,7 @@ class StatsListingIntegrationTest {
   @Test
   fun `the database refuses a ticked double top under its top without its drop`() {
     val stat =
-      makeStat(testUser, ticker = "SGBX", tradeDate = DAY).apply {
+      makeStat(testUser, ticker = "SGBX", tradeDate = DROP_DAY).apply {
         pattern = Pattern.DT
         clearPremarket()
         dtStartPrice = BigDecimal("1.90")
@@ -1046,7 +1049,7 @@ class StatsListingIntegrationTest {
     assertThrows(DataIntegrityViolationException::class.java) { repo.saveAndFlush(stat) }
 
     val breakout =
-      makeStat(testUser, ticker = "NXTT", tradeDate = DAY).apply {
+      makeStat(testUser, ticker = "NXTT", tradeDate = DROP_DAY).apply {
         pattern = Pattern.DT
         clearPremarket()
         dtStartPrice = BigDecimal("2.00")
@@ -1060,6 +1063,36 @@ class StatsListingIntegrationTest {
         completedAt = Instant.now()
       }
     repo.saveAndFlush(breakout)
+  }
+
+  // The five DTs of September : weeks old, their lows can't be read back — the app never asked
+  // for them then, so they are complete by the standard of their day (#726).
+  @Test
+  fun `a double top recorded before the drop was asked ticks on its four points`() {
+    val ticked = createCompleted(doubleTopRequest(ticker = "SGBX"))
+
+    assertTrue(ticked.completed)
+    assertNull(ticked.dtDropPrice)
+  }
+
+  @Test
+  fun `the database accepts a ticked double top without its drop before the drop was asked`() {
+    val stat =
+      makeStat(testUser, ticker = "SGBX", tradeDate = DROP_DAY.minusDays(1)).apply {
+        pattern = Pattern.DT
+        clearPremarket()
+        dtStartPrice = BigDecimal("1.90")
+        dtTopPrice = BigDecimal("2.95")
+        dtLowPrice = BigDecimal("2.36")
+        dtRetestPrice = BigDecimal("2.85")
+        dtStartTime = LocalTime.of(10, 2)
+        dtTopTime = LocalTime.of(10, 14)
+        dtLowTime = LocalTime.of(10, 21)
+        dtRetestTime = LocalTime.of(10, 38)
+        completedAt = Instant.now()
+      }
+
+    repo.saveAndFlush(stat)
   }
 
   @Test
@@ -1155,13 +1188,30 @@ class StatsListingIntegrationTest {
 
     assertEquals(3, summary.completedDoubleTops)
     assertEquals(2, summary.doubleTopsWithDrop)
+    assertEquals(0, summary.doubleTopsWithoutDrop, "NXTT has no drop to measure, none is missing")
     assertEquals(0, BigDecimal("-14.04").compareTo(summary.medianDropPercent))
     assertEquals(0, BigDecimal("-12.58").compareTo(summary.medianDropFromEntryPercent))
     assertEquals(0, BigDecimal("22.50").compareTo(summary.medianDropMinutes))
     assertEquals(1, summary.dropReachedTargetCount, "only SGBX gave 10 % from the entry")
   }
 
-  // Only a breakout can be ticked without its drop now (#710).
+  // The drop's n, the breakouts and the DTs from before the drop was asked add up to the completed
+  // double tops : « n = 1 · Apex repris : 1 · sans Sink : 1 » for 3 (#726).
+  @Test
+  fun `summarise counts apart the double tops recorded before the drop was asked`() {
+    createCompleted(sgbxWithDrop().copy(tradeDate = DROP_DAY))
+    createCompleted(nxttDoubleTop())
+    createCompleted(doubleTopRequest(ticker = "MULN"))
+
+    val summary = service.summarise(dtOnly)
+
+    assertEquals(3, summary.completedDoubleTops)
+    assertEquals(1, summary.doubleTopsWithDrop)
+    assertEquals(1, summary.retestTookTopCount)
+    assertEquals(1, summary.doubleTopsWithoutDrop, "MULN, recorded before the drop was asked")
+  }
+
+  // A breakout, or a DT from before the drop was asked, is ticked without one (#710, #726).
   @Test
   fun `no drop typed means no drop figure, not a zero`() {
     createCompleted(nxttDoubleTop())
@@ -1778,5 +1828,8 @@ class StatsListingIntegrationTest {
   private companion object {
     /** KTTA's day — the example of `mockup/PARCOURS.md › Étape 1`. */
     val DAY: LocalDate = LocalDate.of(2026, 9, 17)
+
+    /** The first day the double top's drop is asked for (#726) — [DAY] is before it. */
+    val DROP_DAY: LocalDate = StatEntry.DT_DROP_SINCE
   }
 }
