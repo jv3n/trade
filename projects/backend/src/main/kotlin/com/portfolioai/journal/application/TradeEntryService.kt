@@ -10,6 +10,7 @@ import com.portfolioai.journal.application.dto.TradeLinkDto
 import com.portfolioai.journal.application.dto.toDto
 import com.portfolioai.journal.application.dto.toLinkDto
 import com.portfolioai.journal.domain.OutOfPatternStats
+import com.portfolioai.journal.domain.StatOfTheDay
 import com.portfolioai.journal.domain.TradeEntry
 import com.portfolioai.journal.domain.TradeEntryFilter
 import com.portfolioai.journal.domain.TradePositionCalculator
@@ -47,6 +48,7 @@ class TradeEntryService(
   private val authService: AuthService,
   private val events: ApplicationEventPublisher,
   private val outOfPatternStats: OutOfPatternStats,
+  private val statOfTheDay: StatOfTheDay,
 ) {
 
   @Transactional(readOnly = true)
@@ -165,6 +167,33 @@ class TradeEntryService(
   }
 
   /**
+   * Links the caller's trades on its own on [tradeDate], [ticker] and [pattern] to the stat just
+   * created there (#732) — the trade typed live, the stat filled after the close. Every one of them
+   * : a setup traded twice is two trades. Driven by `StatEntryService.create`.
+   */
+  @Transactional
+  fun attachToStat(
+    statEntryId: UUID,
+    userId: UUID,
+    tradeDate: LocalDate,
+    ticker: String,
+    pattern: Pattern,
+  ) {
+    repo
+      .findByUserIdAndTradeDateAndTickerAndPatternAndStatEntryIdIsNull(
+        userId,
+        tradeDate,
+        ticker,
+        pattern,
+      )
+      .forEach {
+        it.statEntryId = statEntryId
+        it.updatedAt = Instant.now()
+      }
+    repo.flush()
+  }
+
+  /**
    * Unlinks the trades born from [statEntryId] (#635) — the stat is being deleted, its trades stay
    * as trades on their own : executions, P&L, pattern and account line untouched. No trade is a
    * no-op. Driven by `StatDeletedEvent`.
@@ -210,8 +239,9 @@ class TradeEntryService(
   }
 
   /**
-   * A trade with no stat behind it (#633) — an import, a session typed after the fact. Never linked
-   * to a stat, whatever the request carries ; a blank ticker or a future day is a 400.
+   * A trade typed on its own (#633) — an import, a session logged live before its stat. It joins
+   * the stat already on its day, ticker and pattern (#732), and stands alone otherwise : the stat
+   * id the request carries is never read. A blank ticker or a future day is a 400.
    */
   @Transactional
   fun createStandalone(request: TradeEntryRequest): TradeEntryDto {
@@ -219,7 +249,14 @@ class TradeEntryService(
     require(!request.tradeDate.isAfter(LocalDate.now())) {
       "A trade can't be dated in the future (${request.tradeDate})"
     }
-    return create(request.copy(statEntryId = null))
+    val stat =
+      statOfTheDay.find(
+        authService.getCurrentUser().id,
+        request.tradeDate,
+        request.ticker.trim().uppercase(),
+        request.pattern ?: Pattern.GUS,
+      )
+    return create(request.copy(statEntryId = stat))
   }
 
   /**

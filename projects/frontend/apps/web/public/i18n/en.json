@@ -555,7 +555,7 @@
     },
     "newTrade": {
       "title": "New trade",
-      "lead": "No stat : for a trade the sheet never studied — an import, a session typed after the fact. It counts in the journal and the account, not in the stats. A trade studied first is created from its stat (« → Trade »).",
+      "lead": "The trade joins the stat of this day, ticker and pattern when there is one — otherwise a stat created later will take it. Without a stat, it counts in the journal and the account, not in the stats : an import, a session the sheet never studied.",
       "date": "Date",
       "ticker": "Ticker",
       "pattern": "Pattern",
@@ -638,6 +638,7 @@
     },
     "snackbar": {
       "createSuccess": "Trade {{ticker}} created.",
+      "createAttached": "Trade {{ticker}} created, attached to the day's stat.",
       "createError": "Failed to create the trade. Please retry.",
       "updateSuccess": "Trade {{ticker}} updated.",
       "updateError": "Failed to update the trade. Please retry.",
@@ -849,10 +850,14 @@
       "untickFirst": "{{ticker}} is completed: untick it before clearing a price.",
       "completionError": "Couldn't change the status of {{ticker}}. Please retry.",
       "createSuccess": "Stat {{ticker}} created.",
+      "createAttachedOne": "Stat {{ticker}} created — the trade already in the journal is attached to it.",
+      "createAttached": "Stat {{ticker}} created — the {{count}} trades already in the journal are attached to it.",
       "createConflict": "{{ticker}} already has a stat that day.",
       "createError": "Could not create the {{ticker}} stat. Try again.",
       "editDropped": "{{ticker}}: the unsaved edit was dropped.",
       "siblingSuccess": "{{pattern}} stat of {{ticker}} created.",
+      "siblingAttachedOne": "{{pattern}} stat of {{ticker}} created — the trade already in the journal is attached to it.",
+      "siblingAttached": "{{pattern}} stat of {{ticker}} created — the {{count}} trades already in the journal are attached to it.",
       "siblingConflict": "{{ticker}} already has a {{pattern}} stat that day.",
       "siblingError": "Could not create the {{pattern}} stat of {{ticker}}. Try again."
     },

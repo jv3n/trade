@@ -66,7 +66,9 @@ describe('JournalPage', () => {
     toastShown = vi.fn();
     summary = vi.fn((_filter?: TradeEntryFilter) => of(makeSummary()));
     statSummary = vi.fn(() => of(makeStatSummary()));
-    create = vi.fn((input: NewTradeInput) => of(makeTrade({ id: 'new-1', ticker: input.ticker })));
+    create = vi.fn((input: NewTradeInput) =>
+      of(makeTrade({ id: 'new-1', ticker: input.ticker, statEntryId: null })),
+    );
     dialogOpen = vi.fn();
 
     await TestBed.configureTestingModule({
@@ -534,6 +536,24 @@ describe('JournalPage', () => {
     expect(create).toHaveBeenCalledWith(input);
     expect(toastShown).toHaveBeenCalledWith('success', 'journal.snackbar.createSuccess');
     expect(navigate).toHaveBeenCalledWith(['/journal', 'new-1']);
+  });
+
+  it('says so when the trade typed joins the stat already on its day, ticker and pattern', async () => {
+    // #732 : the stat came first this time, the trade finds it.
+    const input: NewTradeInput = {
+      tradeDate: new Date(2026, 9, 14),
+      ticker: 'LINK1',
+      pattern: 'DT',
+      direction: 'SHORT',
+    };
+    dialogOpen.mockReturnValue({ afterClosed: () => of(input) });
+    create.mockReturnValue(of(makeTrade({ id: 'new-1', ticker: 'LINK1', statEntryId: 'stat-1' })));
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    const fixture = await render();
+
+    fixture.componentInstance.openNewTrade();
+
+    expect(toastShown).toHaveBeenCalledWith('success', 'journal.snackbar.createAttached');
   });
 
   it('saves nothing when the dialog is dismissed', async () => {

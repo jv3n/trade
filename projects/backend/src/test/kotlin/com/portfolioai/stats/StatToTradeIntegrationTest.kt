@@ -49,7 +49,9 @@ import org.springframework.web.server.ResponseStatusException
  *   retained P&L) so the UI can swap the button for them, and they survive an edit of the stat ;
  *   the « traded » KPI still counts stats, not trades ;
  * - deleting a stat **keeps its trades** (#635) : unlinked, with their executions, P&L, pattern and
- *   account line — the only way the stats invented for an import go away without the trades.
+ *   account line — the only way the stats invented for an import go away without the trades ;
+ * - a trade **logged before its stat** (#732) is adopted when the stat comes : every trade on its
+ *   own on the stat's day, ticker and pattern, the caller's only.
  *
  * `AuthService` is mocked so the user scope is deterministic ; a second user is seeded to check the
  * action can't reach across tenants.
@@ -281,6 +283,40 @@ class StatToTradeIntegrationTest {
   }
 
   // ---------------------------------------------------------------------------
+  // A trade logged before its stat (#732)
+  // ---------------------------------------------------------------------------
+
+  @Test
+  fun `a new stat adopts every trade on its own on its day, ticker and pattern`() {
+    // The staging reproduction : LINK1 shorted twice live, the stat typed after the close.
+    val first = tradeService.createStandalone(standalone("LINK1"))
+    val second = tradeService.createStandalone(standalone("LINK1"))
+
+    val created = statService.createByHand(completionRequest().copy(ticker = "LINK1"))
+
+    assertEquals(listOf(first.id, second.id), created.trades.map { it.tradeId })
+    assertEquals(created.id, tradeService.findById(first.id).statEntryId)
+    assertEquals(created.id, tradeService.findById(second.id).statEntryId)
+  }
+
+  @Test
+  fun `a new stat leaves the trades of another pattern, day or user alone`() {
+    val sir = tradeService.createStandalone(standalone("LINK1", pattern = Pattern.SIR))
+    val dayBefore =
+      tradeService.createStandalone(standalone("LINK1", tradeDate = TRADE_DATE.minusDays(1)))
+    whenever(authService.getCurrentUser()).thenReturn(otherUser)
+    val foreign = tradeService.createStandalone(standalone("LINK1"))
+    whenever(authService.getCurrentUser()).thenReturn(testUser)
+
+    val created = statService.createByHand(completionRequest().copy(ticker = "LINK1"))
+
+    assertTrue(created.trades.isEmpty())
+    assertNull(tradeRepo.findById(sir.id).get().statEntryId)
+    assertNull(tradeRepo.findById(dayBefore.id).get().statEntryId)
+    assertNull(tradeRepo.findById(foreign.id).get().statEntryId, "never across tenants")
+  }
+
+  // ---------------------------------------------------------------------------
   // Sample factories
   // ---------------------------------------------------------------------------
 
@@ -319,6 +355,13 @@ class StatToTradeIntegrationTest {
         role = Role.USER,
       )
     )
+
+  /** A trade typed by hand on the journal, before any stat — no execution yet. */
+  private fun standalone(
+    ticker: String,
+    pattern: Pattern = Pattern.GUS,
+    tradeDate: LocalDate = TRADE_DATE,
+  ) = TradeEntryRequest(tradeDate = tradeDate, ticker = ticker, pattern = pattern)
 
   /** A stat "to complete" : the premarket block only, the way a promoted candidate lands. */
   private fun sampleStat(user: User, ticker: String = "KTTA") =

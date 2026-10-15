@@ -555,7 +555,7 @@
     },
     "newTrade": {
       "title": "Nouveau trade",
-      "lead": "Sans stat : pour un trade que la feuille n'a pas étudié — un import, une séance saisie après coup. Il compte au journal et au compte, pas dans les stats. Un trade étudié se crée depuis sa stat (« → Trade »).",
+      "lead": "Le trade rejoint la stat de ce jour, de ce ticker et de ce pattern si elle existe — sinon une stat créée plus tard le reprendra. Sans stat, il compte au journal et au compte, pas dans les stats : un import, une séance que la feuille n'a pas étudiée.",
       "date": "Date",
       "ticker": "Ticker",
       "pattern": "Pattern",
@@ -638,6 +638,7 @@
     },
     "snackbar": {
       "createSuccess": "Trade {{ticker}} créé.",
+      "createAttached": "Trade {{ticker}} créé, rattaché à la stat du jour.",
       "createError": "Échec de la création du trade. Réessaie.",
       "updateSuccess": "Trade {{ticker}} mis à jour.",
       "updateError": "Échec de la mise à jour du trade. Réessaie.",
@@ -849,10 +850,14 @@
       "untickFirst": "{{ticker}} est complétée : décoche-la avant de vider un prix.",
       "completionError": "Impossible de changer le statut de {{ticker}}. Réessaie.",
       "createSuccess": "Stat {{ticker}} créée.",
+      "createAttachedOne": "Stat {{ticker}} créée — le trade déjà au journal y est rattaché.",
+      "createAttached": "Stat {{ticker}} créée — les {{count}} trades déjà au journal y sont rattachés.",
       "createConflict": "{{ticker}} a déjà une stat ce jour-là.",
       "createError": "Impossible de créer la stat {{ticker}}. Réessaie.",
       "editDropped": "{{ticker}} : la modification non enregistrée est abandonnée.",
       "siblingSuccess": "Stat {{pattern}} de {{ticker}} créée.",
+      "siblingAttachedOne": "Stat {{pattern}} de {{ticker}} créée — le trade déjà au journal y est rattaché.",
+      "siblingAttached": "Stat {{pattern}} de {{ticker}} créée — les {{count}} trades déjà au journal y sont rattachés.",
       "siblingConflict": "{{ticker}} a déjà une stat {{pattern}} ce jour-là.",
       "siblingError": "Impossible de créer la stat {{pattern}} de {{ticker}}. Réessaie."
     },
