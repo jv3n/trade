@@ -262,11 +262,32 @@ class JournalIntegrationTest {
   }
 
   @Test
-  fun `a trade created on its own is never linked, whatever the request carries`() {
-    val dto = service.createStandalone(sampleRequest(statEntryId = stat.id))
+  fun `a trade created on its own ignores the stat the request carries`() {
+    val dto = service.createStandalone(sampleRequest(ticker = "SGBX", statEntryId = stat.id))
 
     assertNull(dto.statEntryId)
     assertNull(service.tradeLinksByStat(listOf(stat.id))[stat.id], "the stat counts no trade")
+  }
+
+  @Test
+  fun `a trade created on its own joins the stat already on its day, ticker and pattern`() {
+    // #732 : the stat AAPL GUS of 04/06 exists ; a trade typed by hand on that same triple used
+    // to stay « without a stat », a screen away from it.
+    val dto =
+      service.createStandalone(sampleRequest(ticker = " aapl ", statEntryId = UUID.randomUUID()))
+
+    assertEquals(stat.id, dto.statEntryId)
+    assertEquals(
+      listOf(dto.id),
+      service.tradeLinksByStat(listOf(stat.id))[stat.id]?.map { it.tradeId },
+    )
+  }
+
+  @Test
+  fun `a trade on its own under another pattern than the day's stat stays on its own`() {
+    val dto = service.createStandalone(sampleRequest(pattern = Pattern.SIR))
+
+    assertNull(dto.statEntryId, "a SIR trade has no stat to join — only GUS and DT are measured")
   }
 
   @Test

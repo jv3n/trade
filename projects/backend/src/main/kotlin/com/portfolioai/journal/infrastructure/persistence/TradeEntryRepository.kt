@@ -1,6 +1,7 @@
 package com.portfolioai.journal.infrastructure.persistence
 
 import com.portfolioai.journal.domain.TradeEntry
+import com.portfolioai.shared.Pattern
 import java.time.LocalDate
 import java.util.UUID
 import org.springframework.data.jpa.repository.JpaRepository
@@ -25,6 +26,14 @@ interface TradeEntryRepository :
    * stats listing shows in place of the « → Trade » button, in one query per page.
    */
   fun findByUserIdAndStatEntryIdIn(userId: UUID, statEntryIds: Collection<UUID>): List<TradeEntry>
+
+  /** The caller's trades on their own on one (day, ticker, pattern) — a new stat's to adopt. */
+  fun findByUserIdAndTradeDateAndTickerAndPatternAndStatEntryIdIsNull(
+    userId: UUID,
+    tradeDate: LocalDate,
+    ticker: String,
+    pattern: Pattern,
+  ): List<TradeEntry>
 
   fun findByUserIdAndTradeDateBetween(
     userId: UUID,

@@ -1213,7 +1213,7 @@ export class StatsPage {
         filter(Boolean),
         switchMap(() => this.repo.createSibling(source.id, pattern)),
         tap((saved) => {
-          this.toasts.success(this.translate.instant('stats.snackbar.siblingSuccess', params));
+          this.toasts.success(this.createdMessage(saved, 'sibling', params));
           this.followView(saved);
           this.open(saved);
           this.refetch();
@@ -1392,6 +1392,17 @@ export class StatsPage {
    * « Create the stat » — confirmed (it creates something), then the stat joins the table and its
    * cards go on saving field by field, like any stat's.
    */
+  /** A new stat adopts the trades already logged on its day, ticker and pattern (#732) : say so. */
+  private createdMessage(
+    saved: StatEntry,
+    action: 'create' | 'sibling',
+    params: Record<string, string>,
+  ): string {
+    const count = saved.trades.length;
+    const suffix = count === 0 ? 'Success' : count === 1 ? 'AttachedOne' : 'Attached';
+    return this.translate.instant(`stats.snackbar.${action}${suffix}`, { ...params, count });
+  }
+
   createStat(): void {
     if (!this.creating() || this.createMissing().length > 0) return;
     const id = this.identity();
@@ -1411,7 +1422,7 @@ export class StatsPage {
         filter(Boolean),
         switchMap(() => this.repo.create(input)),
         tap((saved) => {
-          this.toasts.success(this.translate.instant('stats.snackbar.createSuccess', { ticker }));
+          this.toasts.success(this.createdMessage(saved, 'create', { ticker }));
           this.followView(saved);
           this.open(saved);
           this.refetch();

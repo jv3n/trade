@@ -334,6 +334,11 @@ the journal). As a consequence : no real-time screen, no live position tracking.
   account like any other, never in the stats sheet, and is never « out of pattern » — nothing was
   measured. Its sheet keeps its executions, P&L, locates, post-mortem and screenshot ; only the
   day's context (premarket, open, HOD, LOD) is missing, and the sheet says so.
+- **A trade and a stat on the same day, ticker and pattern are linked, whichever comes first**
+  (#732) — the trade logged live, the stat filled after the close. « + Trade » joins the stat already
+  on that triple ; a new stat (typed by hand, from a candidate or « Same ticker, another pattern »)
+  adopts every trade on its own on its triple. The toast says so either way. The link is resolved
+  once, at creation, and stored : « without a stat » means there is genuinely none.
 - **Deleting a stat keeps its trades** (#628) : the confirmation warns when a trade is attached, and
   the trade stays in the journal without a stat — executions, P&L, account line and pattern
   untouched. It is how the stats invented for an import go away without taking the trades along.

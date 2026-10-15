@@ -205,6 +205,9 @@ class StatEntryService(
    * Creates a stat for the caller — the promotion of a candidate (#189), or [createByHand].
    * [candidateId] keeps the trace of the source candidate. A (day, ticker, pattern) already in the
    * sheet is a 409. A double top born with an open starts from it, unless a start is sent.
+   *
+   * The trades on their own on that day, ticker and pattern join it (#732) and come back in the
+   * response, so the sheet can say it.
    */
   @Transactional
   fun create(request: StatEntryRequest, candidateId: UUID? = null): StatEntryDto {
@@ -219,7 +222,9 @@ class StatEntryService(
     entry.fillFrom(born, ticker)
     // Flushed here so a race lost on a unique constraint surfaces as the 409 of
     // `GlobalExceptionHandler`, not as a failed commit.
-    return repo.saveAndFlush(entry).toDto()
+    val saved = repo.saveAndFlush(entry)
+    tradeEntryService.attachToStat(saved.id, user.id, saved.tradeDate, saved.ticker, saved.pattern)
+    return saved.toDto(tradeEntryService.tradeLinksByStat(listOf(saved.id))[saved.id].orEmpty())
   }
 
   /**

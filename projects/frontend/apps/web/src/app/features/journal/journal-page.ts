@@ -380,10 +380,9 @@ export class JournalPage {
         switchMap((input) =>
           this.repo.create(input).pipe(
             tap((created) => {
+              const key = created.statEntryId ? 'createAttached' : 'createSuccess';
               this.toasts.success(
-                this.translate.instant('journal.snackbar.createSuccess', {
-                  ticker: created.ticker,
-                }),
+                this.translate.instant(`journal.snackbar.${key}`, { ticker: created.ticker }),
               );
               this.openDetail(created);
             }),

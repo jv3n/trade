@@ -2177,6 +2177,32 @@ describe('StatsPage', () => {
     expect(page.completing()?.id).toBe('stat-new');
   });
 
+  it('says so when the new stat adopts the trades already in the journal on its triple', async () => {
+    // #732 : LINK1 shorted twice live, the stat typed after the close — both trades join it.
+    const { page, repo, toastShown } = await setup({ rows: [] });
+    repo.create.mockReturnValue(
+      of(
+        makeStat({
+          id: 'stat-new',
+          ticker: 'LINK1',
+          trades: [
+            { tradeId: 'trade-1', direction: 'SHORT', retainedProfitDollars: null },
+            { tradeId: 'trade-2', direction: 'SHORT', retainedProfitDollars: null },
+          ],
+        }),
+      ),
+    );
+    page.startNew();
+    page.setIdentity({ ticker: 'link1', tradeDate: new Date(2026, 9, 14) });
+    page.setPremarketPrice('previousClose', 1.96);
+    page.setPremarketPrice('pmOpen', 3.1);
+    page.setPremarketPrice('pmHigh', 3.48);
+
+    page.createStat();
+
+    expect(toastShown).toHaveBeenCalledWith('success', 'stats.snackbar.createAttached');
+  });
+
   it('a new stat typed as DT is created with the double top card, then shown in the DT view', async () => {
     const { page, repo } = await setup({ rows: [] });
     page.startNew();
