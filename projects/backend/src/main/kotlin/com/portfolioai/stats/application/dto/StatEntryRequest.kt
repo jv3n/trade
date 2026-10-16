@@ -59,6 +59,11 @@ data class StatEntryRequest(
   val ssr: Boolean = false,
   /** The stock never pushed after the open — [pushOpenPrice] is then ignored and stored empty. */
   val noPush: Boolean = false,
+  /**
+   * The Sink is not read and will not be (#729) — dropped when a Sink is typed, and on a DT whose
+   * retest took the top or recorded before the Sink was asked.
+   */
+  val dropNotRead: Boolean = false,
   /** Less than 20 % of the float held by institutions (#349). */
   val highInstitutions: Boolean = false,
 )

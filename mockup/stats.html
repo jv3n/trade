@@ -181,8 +181,10 @@
         opacity: 0.5;
       }
 
-      /* « Pas de push » sous le champ du push : cocher grise le champ, la stat se complète sans lui. */
-      .no-push {
+      /* « Pas de push » sous le champ du push : cocher grise le champ, la stat se complète sans lui.
+         « Non relevé » sous le Sink (#729) : la même case, mais les champs restent ouverts — saisir un Sink la décoche. */
+      .no-push,
+      .no-drop {
         display: inline-flex;
         gap: 6px;
         align-items: center;
@@ -314,12 +316,12 @@
         </div>
 
         <!-- GUS, OPS (#717) : Open · Push · Sink — ce que le pattern rapporte (#713), le Sink lu côté short, le même mot que le dernier point du DT (#716). -->
-        <!-- Son propre n : le Sink est facultatif, l'historique ne l'a pas (KTTA, NUWE, AEHL « à saisir »). -->
+        <!-- Son propre n : le Sink est facultatif, l'historique ne l'a pas (KTTA, NUWE « à saisir ») ; AEHL est marqué « non relevé » (#729). -->
         <section class="grid grid-4" style="margin-bottom: 16px" data-group="pattern" data-value="gus" title="Ce que le mouvement offrait, pas un backtest : le stop a pu sauter avant le Sink">
           <div class="card kpi">
             <div class="label">Sink depuis le Push</div>
             <div class="value gain">+20,0 %</div>
-            <div class="sub">médiane · haut du Push → Sink · <b>n = 9</b> sur 12 GUS complétées</div>
+            <div class="sub">médiane · haut du Push → Sink · <b>n = 9</b> sur 12 GUS complétées · sans Sink : 3 <span title="À saisir : le Sink peut encore être noté. Non relevé : il ne le sera pas (#729).">(à saisir 2 · non relevé 1)</span></div>
           </div>
           <div class="card kpi">
             <div class="label">15 % atteints</div>
@@ -368,12 +370,13 @@
         </section>
 
         <!-- DT : ce que le pattern rapporte (#706) — la jambe S, de l'Echo au Sink, lue côté short : la baisse est le gain, en vert. -->
-        <!-- Son n : les DT complétées moins celles dont l'Echo a repris l'Apex (IMNN) — pas de Sink à mesurer (#710). -->
+        <!-- Son n : les DT qui ont un Sink (#729) — « dont y ont repris l'Apex » s'ajoute quand un Sink suit un Apex repris. À part, les DT sans Sink, par raison :
+             Apex repris (IMNN, #710), non relevé (MULN, #729), pas demandé (avant le 12/10, #726). Les deux termes font le total des DT complétées. -->
         <section class="grid grid-4" style="margin-bottom: 16px" data-group="pattern" data-value="dt" hidden title="Ce que le mouvement offrait, pas un backtest : le stop a pu sauter avant le Sink">
           <div class="card kpi">
             <div class="label">Sink depuis l'Echo (S)</div>
             <div class="value gain">+17,3 %</div>
-            <div class="sub">médiane · Echo → Sink · <b>n = 2</b> · Apex repris : 1</div>
+            <div class="sub">médiane · Echo → Sink · <b>n = 2 Sinks</b> · sans Sink : 2 <span title="Apex repris : l'Echo a repris l'Apex, pas de Sink à mesurer. Non relevé : il n'a pas été lu (#729). Pas demandé : une DT d'avant le 12/10 (#726). Chaque raison n'apparaît que si elle compte une stat.">(Apex repris 1 · non relevé 1)</span></div>
           </div>
           <div class="card kpi">
             <div class="label">À l'entrée de la fiche</div>
@@ -522,9 +525,12 @@
                   <td><span class="pct muted" id="dt-c">—</span></td>
                 </tr>
                 <tr>
-                  <td title="Le plus bas après l'Echo, avant la clôture — requis pour la coche, sauf quand l'Echo reprend l'Apex (pas de Sink à mesurer) ou pour une DT d'avant le 12/10 (pas demandé à l'époque)">Sink</td>
+                  <td title="Le plus bas après l'Echo, avant la clôture — requis pour la coche, sauf quand l'Echo reprend l'Apex (pas de Sink à mesurer), pour une DT d'avant le 12/10 (pas demandé à l'époque) ou quand il est marqué « non relevé »">Sink</td>
                   <td><input class="input" type="time" id="dt-drop-time" data-dt-time /></td>
-                  <td><input class="input" id="dt-drop" placeholder="2,30" /></td>
+                  <td>
+                    <input class="input" id="dt-drop" placeholder="2,30" />
+                    <label class="no-drop" id="dt-no-drop-label" title="Le Sink n'a pas été lu et ne le sera pas — la séance n'a pas été suivie jusqu'au bout. Un constat sur toi, pas sur le marché : la stat se coche sans lui, et un Sink saisi plus tard retire la marque."><input type="checkbox" id="dt-no-drop" /> Non relevé</label>
+                  </td>
                   <td><span class="pct muted" id="dt-d">—</span></td>
                 </tr>
               </tbody>
@@ -575,7 +581,10 @@
                 <tr>
                   <td title="Le plus bas après le Push, avant la clôture — facultatif pour l'instant : la coche ne l'attend pas">Sink</td>
                   <td><input class="input" type="time" id="c-drop-time" /></td>
-                  <td><input class="input" id="c-drop" placeholder="1,52" /></td>
+                  <td>
+                    <input class="input" id="c-drop" placeholder="1,52" />
+                    <label class="no-drop" title="Le Sink n'a pas été lu et ne le sera pas — la séance n'a pas été suivie jusqu'au bout. Un constat sur toi, pas sur le marché : la stat se coche sans lui, et un Sink saisi plus tard retire la marque."><input type="checkbox" id="c-no-drop" /> Non relevé</label>
+                  </td>
                   <td><span class="pct muted" id="c-drop-leg">—</span></td>
                 </tr>
                 <tr>
@@ -686,6 +695,19 @@
                   <td><button class="btn btn-sm"><span class="icon">edit</span> Double top</button></td>
                 </tr>
                 <tr>
+                  <td>17/09</td><td><span class="ticker">MULN</span></td><td><span class="tag tag-accent">DT</span></td>
+                  <td class="num sep">4,4 M</td><td class="num">2,2 M</td>
+                  <td class="num sep">1,55</td>
+                  <td class="num">2,41<small class="muted">+55,5 %</small></td>
+                  <td class="num">1,98<small class="muted">−17,8 %</small></td>
+                  <td class="num">2,33<small class="muted">+17,7 % · Apex −3,3 %</small></td>
+                  <td class="num">41 min<small class="muted">A 14 · R 11 · E 16</small></td>
+                  <td class="num sep"><span class="tag" title="Sink non relevé (#729) : la séance n'a pas été suivie jusqu'au bout, il ne sera pas saisi — la stat est complète sans lui, hors des chiffres du Sink">non relevé</span></td>
+                  <td class="sep"></td>
+                  <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
+                  <td><button class="btn btn-sm" data-confirm-title="Créer le trade {ticker} ?" data-confirm-body="Le trade hérite du pattern et du contexte de la stat. Tu ajouteras ensuite les exécutions, le P&amp;L réel, le post-mortem et la capture du chart." data-confirm-ok="Créer le trade"><span class="icon">arrow_forward</span> Trade</button></td>
+                </tr>
+                <tr>
                   <td>16/09</td><td><span class="ticker">PRSO</span></td><td><span class="tag tag-accent">DT</span></td>
                   <td class="num sep">6,1 M</td><td class="num">1,4 M</td>
                   <td class="num sep">2,40</td>
@@ -727,12 +749,12 @@
               </tbody>
               <tfoot>
                 <tr>
-                  <td colspan="6">Moyennes — 3 stats DT complétées</td>
+                  <td colspan="6">Moyennes — 4 stats DT complétées</td>
                   <td class="num">+59,2 %</td>
                   <td class="num">−18,9 %<small class="muted">2 / 3 ≥ 17 %</small></td>
                   <td class="num">+21,9 %<small class="muted">Apex −1,2 %</small></td>
                   <td class="num" title="Médiane, pas moyenne">méd. 34 min<small class="muted">n = 3 · R 7</small></td>
-                  <td class="num sep" title="Médianes, sur les DT dont le Sink est saisi">méd. <span class="gain">+17,3 %</span><small class="muted">n = 2 · entrée +15,3 % · 39 min</small></td>
+                  <td class="num sep" title="Médianes, sur les DT dont le Sink est saisi — ni les Apex repris, ni les non relevés">méd. <span class="gain">+17,3 %</span><small class="muted">n = 2 · entrée +15,3 % · 39 min</small></td>
                   <td colspan="3"></td>
                 </tr>
               </tfoot>
@@ -800,6 +822,15 @@
                   <td><button class="check done"><span class="icon">check_circle</span></button></td>
                   <td style="white-space: nowrap"><a href="trade.html" class="tag tag-gain">+292</a> <button class="btn btn-sm btn-icon" title="Un autre trade sur cette stat" data-confirm-title="Créer un autre trade {ticker} ?" data-confirm-body="Un nouveau trade vide sur la même stat : même pattern, son propre sens, ses exécutions, son P&amp;L et son post-mortem. Les trades existants ne changent pas. Sous un autre pattern, c'est une autre stat : « Même ticker, autre pattern » sur la stat." data-confirm-ok="Créer le trade"><span class="icon">add</span></button></td>
                   <td><button class="btn btn-sm btn-icon" title="Supprimer la stat" data-confirm-title="Supprimer la stat {ticker} ?" data-confirm-body="Définitif. Un trade y est rattaché : il reste au journal, sans stat — exécutions, P&amp;L, post-mortem et ligne de compte conservés, pattern inchangé. Sa fiche n'aura plus de contexte du jour." data-confirm-ok="Supprimer la stat" data-confirm-danger><span class="icon">delete</span></button></td>
+                </tr>
+                <tr>
+                  <td>17/09</td><td><span class="ticker">MULN</span></td><td><span class="tag tag-accent">DT</span></td>
+                  <td class="num sep muted" title="Pas de premarket sur un double top (#649)">—</td><td class="num muted">—</td><td class="num">4,4 M</td><td class="num">2,2 M</td>
+                  <td class="sep"><span class="leg">A</span>+55,5 % · <span class="leg">R</span>−17,8 % · <span class="leg">E</span>Apex −3,3 % · <span class="leg">S</span><span class="tag" title="Sink non relevé (#729) : la séance n'a pas été suivie jusqu'au bout, il ne sera pas saisi — la stat est complète sans lui, hors des chiffres du Sink">non relevé</span></td>
+                  <td class="sep"></td>
+                  <td><button class="check done"><span class="icon">check_circle</span></button></td>
+                  <td><button class="btn btn-sm" data-confirm-title="Créer le trade {ticker} ?" data-confirm-body="Le trade hérite du pattern et du contexte de la stat. Tu ajouteras ensuite les exécutions, le P&amp;L réel, le post-mortem et la capture du chart." data-confirm-ok="Créer le trade"><span class="icon">arrow_forward</span> Trade</button></td>
+                  <td><button class="btn btn-sm btn-icon" title="Supprimer la stat" data-confirm-title="Supprimer la stat {ticker} ?" data-confirm-body="Définitif. Aucun trade n'y est rattaché." data-confirm-ok="Supprimer la stat" data-confirm-danger><span class="icon">delete</span></button></td>
                 </tr>
                 <tr>
                   <td>16/09</td><td><span class="ticker">PRSO</span></td><td><span class="tag tag-accent">DT</span></td>
@@ -1014,7 +1045,7 @@
                   <td class="num">2,48<small class="muted">+30,5 %</small></td>
                   <td class="num">1,85<small class="muted">−2,6 %</small></td>
                   <td class="num">2,31<small class="muted">+21,6 %</small></td>
-                  <td class="num sep"><span class="warn" title="Complétée avant que le Sink existe (#713) : le Sink reste à noter — facultatif pour l'instant, il alimente « 15 % atteints »">à saisir</span></td>
+                  <td class="num sep"><span class="tag" title="Sink non relevé (#729) : la séance n'a pas été suivie jusqu'au bout, il ne sera pas saisi — hors des chiffres du Sink, rien à faire">non relevé</span></td>
                   <td class="sep"></td>
                   <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
                   <td><a href="journal.html" class="tag tag-loss">−174</a></td>
@@ -1120,8 +1151,14 @@
           le LOD est venu avant le Push. Le reste sert à <b>repérer</b> le GUS (clôture veille, open PM, high PM, gap, push PM, tenue)
           ou est un <b>repère de la journée</b> (HOD, LOD, EOD, sans heure) : hors du mnémonique. Le Sink se lit côté short <b>depuis
           le haut du Push</b> (depuis l'open un jour sans push), en vert ; le GUS a fonctionné à <b>15 %</b>, le bas de la fourchette de
-          la fiche. Facultatif pour l'instant : les GUS déjà cochés n'ont ni heure ni Sink (KTTA, NUWE, AEHL « à saisir »), la coche
+          la fiche. Facultatif pour l'instant : les GUS déjà cochés n'ont ni heure ni Sink (KTTA, NUWE « à saisir »), la coche
           reste à cinq prix, et la rangée de KPIs porte son propre n.
+          <b>« Non relevé »</b> (#729), la case sous le Sink, GUS et DT : le Sink n'a pas été lu et ne le sera pas (AEHL, MULN). Un
+          constat sur l'observateur, jamais sur le marché — il ne compte pas à côté de « pas de push ». Jamais cochée par défaut ;
+          cocher vide le Sink, saisir un Sink la décoche. Le tableau lit « non relevé » en neutre au lieu de « à saisir » en ambre ; la
+          DT se coche sans son Sink — cochée, elle quitte l'étape 1 d'Aujourd'hui sans attendre les 30 jours. Le sous-titre du KPI sépare les raisons :
+          « n = 2 Sinks · sans Sink : 2 (Apex repris 1 · non relevé 1) » — Sinks et sans Sink font le total des complétées, et
+          « dont y ont repris l'Apex » s'ajoute aux Sinks quand un Echo qui a repris l'Apex est quand même redescendu.
         </p>
         <p class="mockup-note">
           Ce que rapporte un double top (#706) — Base, Apex, Rejection et Echo décrivent le setup jusqu'à l'entrée ; le cinquième
@@ -1131,7 +1168,7 @@
           fiche</b> (Apex −5 %, le prix où la fiche dit de shorter — c'est lui qui répond à la question), la durée du Sink, et combien de
           Sinks atteignent les 10 % promis par la fiche. <b>Requis pour la coche</b> (#710) — « n / 5 prix · n / 5 heures » —
           <b>sauf quand l'Echo reprend l'Apex</b> et que le titre continue (IMNN) : pas de Sink à mesurer, le champ reste vide et la
-          coche revient à quatre points. Quatre points aussi pour une DT <b>d'avant le 12/10</b> (#726) : l'app ne demandait pas le Sink à l'époque, le champ lit « facultatif — pas demandé avant le 12/10 » et la stat se coche sans lui ; un Sink saisi compte quand même dans les KPIs. Le n de la rangée est donc les DT complétées moins celles-là (« n = 2 · Apex repris : 1 »), et moins celles d'avant le 12/10 sans Sink, comptées dès qu'il y en a (« · sans Sink : 2 ») : les trois font le total des DT complétées.
+          coche revient à quatre points. Quatre points aussi pour une DT <b>d'avant le 12/10</b> (#726) : l'app ne demandait pas le Sink à l'époque, le champ lit « facultatif — pas demandé avant le 12/10 » et la stat se coche sans lui ; un Sink saisi compte quand même dans les KPIs. Le n de la rangée est le nombre de DT qui ont un Sink (« n = 2 Sinks », #729) ; à part, celles qui n'en ont pas, par raison — Apex repris, non relevé, pas demandé (avant le 12/10) — chacune affichée dès qu'elle compte une stat : les deux termes font le total des DT complétées.
           Ce n'est pas un backtest — le stop a pu sauter avant le Sink, la carte le dit au survol.
         </p>
         <p class="mockup-note">
@@ -1216,6 +1253,8 @@
         const drop = document.getElementById('c-drop');
         const dropTime = document.getElementById('c-drop-time');
         const pushTime = document.getElementById('c-push-time');
+        // « Non relevé » (#729) : cocher vide le Sink ; saisir un Sink décoche — la marque dit pourquoi le champ est vide, jamais à côté d'un chiffre.
+        const noDrop = document.getElementById('c-no-drop');
         const OPEN = 9 * 60 + 30;
         const toMin = (v) => (v ? Number(v.slice(0, 2)) * 60 + Number(v.slice(3, 5)) : null);
         const num = (v) => parseFloat(String(v).replace(',', '.'));
@@ -1247,10 +1286,22 @@
               '<span class="gain">' + fmt(g) + ' pour le short</span>' + d +
               '<small>' + (noPush.checked ? "depuis l'open — pas de push" : 'depuis le haut du Push') +
               (g >= 15 ? ' · 15 % atteints' : ' · sous les 15 % de la fiche') + '</small>';
-          } else html = 'facultatif — souvent le LOD ; plus haut quand le LOD est venu avant le push<small>vide si le titre a continué de monter</small>';
+          } else if (noDrop.checked) html = "non relevé — il ne sera pas saisi<small>hors des chiffres du Sink ; saisir un prix retire la marque</small>";
+          else html = 'facultatif — souvent le LOD ; plus haut quand le LOD est venu avant le push<small>vide si le titre a continué de monter · « non relevé » s\'il ne sera pas lu</small>';
           out.innerHTML = html;
           out.className = 'pct';
         }
+        [drop, dropTime].forEach((f) =>
+          f.addEventListener('input', () => {
+            if (f.value) noDrop.checked = false;
+          }),
+        );
+        noDrop.addEventListener('change', () => {
+          if (noDrop.checked) drop.value = dropTime.value = '';
+          dropLeg();
+          refresh();
+          window.saveCue('session-state');
+        });
         [drop, dropTime, pushTime].forEach((f) => {
           f.addEventListener('input', () => {
             dropLeg();
@@ -1264,7 +1315,7 @@
           const needed = names.filter((_, i) => !prices[i].disabled);
           const missing = needed.filter((n) => prices[names.indexOf(n)].value.trim() === '');
           progress.textContent =
-            needed.length - missing.length + ' / ' + needed.length + ' prix saisis · ' + (dropDone() ? 'Sink ✓' : 'Sink à saisir');
+            needed.length - missing.length + ' / ' + needed.length + ' prix saisis · ' + (dropDone() ? 'Sink ✓' : noDrop.checked ? 'Sink non relevé' : 'Sink à saisir');
           check.disabled = missing.length > 0 && !done;
           check.title = missing.length > 0 ? 'Il manque ' + missing.join(', ') : '';
           // Une stat cochée ne peut pas perdre un prix : les champs vides sont refusés tant qu'elle l'est.
@@ -1493,6 +1544,8 @@
         // Le Sink (#706) : requis pour la coche sauf Apex repris (#710) ; son heure et son prix suivent la même règle.
         const drop = $('dt-drop');
         const dropTime = $('dt-drop-time');
+        // « Non relevé » (#729) : la coche ne l'attend plus ; caché quand l'Echo reprend l'Apex — il n'y a alors rien à relever.
+        const noDrop = $('dt-no-drop');
         const allTimes = [...times, dropTime];
         const allNames = [...names, 'le Sink'];
         const minutes = (el) => {
@@ -1531,6 +1584,9 @@
           const bottom = parse(drop.value);
           // Un Echo qui reprend l'Apex n'a pas de Sink : la coche ne l'attend que sinon (#710).
           const tookTop = retest > 0 && top > 0 && retest >= top;
+          $('dt-no-drop-label').hidden = tookTop;
+          if (tookTop) noDrop.checked = false;
+          const unread = noDrop.checked;
           const dropAbove = bottom > 0 && retest > 0 && bottom > retest;
           drop.classList.toggle('invalid', dropAbove);
           drop.title = dropAbove ? "Au-dessus de l'Echo : le Sink vient après, plus bas" : '';
@@ -1541,7 +1597,13 @@
               '<span class="gain">S ' + fmt(d) + '</span>' + span(3) +
               '<small>pour le short' + (atEntry !== null ? ' · ' + fmt(atEntry) + " à l'entrée de la fiche" : '') + '</small>';
             $('dt-d').className = 'pct';
-          } else leg($('dt-d'), '—', false, tookTop ? 'Apex repris : pas de Sink à mesurer' : 'requis — se complète à la clôture');
+          } else
+            leg(
+              $('dt-d'),
+              '—',
+              false,
+              tookTop ? 'Apex repris : pas de Sink à mesurer' : unread ? 'non relevé — la stat se coche sans lui, hors des chiffres du Sink' : 'requis — se complète à la clôture · « non relevé » s\'il ne sera pas lu',
+            );
 
           // Les heures vont dans l'ordre : Base ≤ Apex ≤ Rejection ≤ Echo ≤ Sink. La première qui recule est fautive.
           let outOfOrder = null;
@@ -1555,11 +1617,12 @@
 
           const missing = names.filter((_, i) => !(parse(prices[i].value) > 0));
           const missingTimes = names.filter((_, i) => minutes(times[i]) === null);
-          if (!tookTop && !(bottom > 0)) missing.push('le Sink');
-          if (!tookTop && minutes(dropTime) === null) missingTimes.push('le Sink');
-          const needed = tookTop ? 4 : 5;
+          const withoutDrop = tookTop || unread;
+          if (!withoutDrop && !(bottom > 0)) missing.push('le Sink');
+          if (!withoutDrop && minutes(dropTime) === null) missingTimes.push('le Sink');
+          const needed = withoutDrop ? 4 : 5;
           $('dt-progress').textContent =
-            needed - missing.length + ' / ' + needed + ' prix · ' + (needed - missingTimes.length) + ' / ' + needed + ' heures';
+            needed - missing.length + ' / ' + needed + ' prix · ' + (needed - missingTimes.length) + ' / ' + needed + ' heures' + (unread ? ' · Sink non relevé' : '');
           const blockers = [...missing, ...missingTimes.map((n) => "l'heure de " + n)];
           if (outOfOrder !== null) blockers.push("des heures dans l'ordre");
           if (dropAbove) blockers.push("un Sink sous l'Echo");
@@ -1567,6 +1630,16 @@
           check.title = blockers.length ? 'Il manque ' + blockers.join(', ') : '';
         }
 
+        [drop, dropTime].forEach((f) =>
+          f.addEventListener('input', () => {
+            if (f.value) noDrop.checked = false;
+          }),
+        );
+        noDrop.addEventListener('change', () => {
+          if (noDrop.checked) drop.value = dropTime.value = '';
+          refresh();
+          window.saveCue('dt-state');
+        });
         [...prices, ...allTimes, drop].forEach((p) => {
           p.addEventListener('input', refresh);
           p.addEventListener('change', () => window.saveCue('dt-state'));

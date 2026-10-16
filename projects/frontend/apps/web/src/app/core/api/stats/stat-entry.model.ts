@@ -77,6 +77,11 @@ export interface StatEntry {
   /** Ticked on a GUS ; derived from the retest time on a double top (#499). */
   /** The stock never pushed after the open (#302) — [pushOpenPrice] stays null. */
   noPush: boolean;
+  /**
+   * The Sink was not read and will not be (#729) — what the observer did not do, never what the
+   * market did. Its Sink stays empty ; a double top ticks without it.
+   */
+  dropNotRead: boolean;
   /** Less than 20 % of the float held by institutions (#349) — the threshold lives in the label. */
   highInstitutions: boolean;
   /**
@@ -185,8 +190,15 @@ export interface StatSummary {
   averageRetestToTopPercent: number | null;
   /** Double tops whose retest took the top back. */
   retestTookTopCount: number;
-  /** Completed DTs under their top with no drop — recorded before the drop was asked (#726). */
-  doubleTopsWithoutDrop: number;
+  /** Completed DTs whose retest took the top, with no drop to measure (#710). */
+  doubleTopsTookTopWithoutDrop: number;
+  /** Completed DTs under their top with no drop, recorded before the drop was asked (#726). */
+  doubleTopsDropNotAsked: number;
+  /**
+   * Completed DTs whose drop is marked as not read (#729). With [doubleTopsWithDrop] and the two
+   * above, it makes up [completedDoubleTops].
+   */
+  doubleTopsDropNotRead: number;
   /**
    * Median duration of the completed double tops, start → retest, in minutes (#469) — a median, so
    * one DT that drags all afternoon does not move the typical figure. Null without any.
@@ -196,6 +208,8 @@ export interface StatSummary {
   medianRejectionMinutes: number | null;
   /** Completed double tops whose drop is typed (#706) — the `n` of the drop figures below. */
   doubleTopsWithDrop: number;
+  /** Of [doubleTopsWithDrop], those whose retest took the top and fell all the same (#729). */
+  dropsAfterTookTop: number;
   /** Median leg D, retest → drop low — negative : the price fell, which is the short's gain. */
   medianDropPercent: number | null;
   /** Median drop from the DT sheet's entry (top −5 %) — what the entry rule captured. */
@@ -206,6 +220,8 @@ export interface StatSummary {
   dropReachedTargetCount: number;
   /** Completed GUS whose drop is typed (#713) — the `n` of the GUS drop figures below. */
   sessionsWithDrop: number;
+  /** Completed GUS whose drop is marked as not read (#729) — the rest without one is to fill. */
+  sessionsDropNotRead: number;
   /** Median drop from the push's top (the open on a no-push day) — negative, the short's gain. */
   medianGusDropPercent: number | null;
   /** Drops of at least 15 % — read against [sessionsWithDrop]. */

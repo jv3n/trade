@@ -38,9 +38,13 @@ import java.math.BigDecimal
  * @param averageRetestPercent Leg C : rejection low → retest.
  * @param averageRetestToTopPercent Where the retest ended against the top (negative = under it).
  * @param retestTookTopCount Double tops whose retest took the top back.
- * @param doubleTopsWithoutDrop Completed double tops under their top with no drop — recorded before
- *   the drop was asked (#726). With [doubleTopsWithDrop] and [retestTookTopCount], it makes up
- *   [completedDoubleTops].
+ * @param doubleTopsTookTopWithoutDrop Completed double tops whose retest took the top and that have
+ *   no drop — nothing to measure (#710).
+ * @param doubleTopsDropNotAsked Completed double tops under their top with no drop, recorded before
+ *   the drop was asked (#726).
+ * @param doubleTopsDropNotRead Completed double tops whose drop is marked as not read (#729). With
+ *   [doubleTopsWithDrop], [doubleTopsTookTopWithoutDrop] and [doubleTopsDropNotAsked], it makes up
+ *   [completedDoubleTops] — each DT in exactly one of the four.
  * @param medianDoubleTopMinutes Median duration of the completed double tops, start → retest, in
  *   minutes (#469) — a median, not a mean : one DT that drags all afternoon would move an average
  *   and say nothing about the typical one. Read against [completedDoubleTops].
@@ -48,6 +52,8 @@ import java.math.BigDecimal
  *   comes, the leg the entry depends on.
  * @param doubleTopsWithDrop Completed double tops whose drop after the retest is typed (#706) — the
  *   `n` of the four drop figures, read against [completedDoubleTops].
+ * @param dropsAfterTookTop Of [doubleTopsWithDrop], those whose retest took the top and that fell
+ *   all the same — a separate axis, not a slice beside them (#729).
  * @param medianDropPercent Median leg D, retest → drop low. Negative : the price fell, which is the
  *   short's gain — the front flips the sign to show it as one.
  * @param medianDropFromEntryPercent Median drop from the DT sheet's entry (top −5 %) → drop low —
@@ -61,6 +67,8 @@ import java.math.BigDecimal
  *   drop. Negative : the price fell, the short's gain ; the front flips the sign.
  * @param gusDropReachedTargetCount Drops of at least 15 % — the low end of the GUS sheet's R / R —
  *   read against [sessionsWithDrop].
+ * @param sessionsDropNotRead Completed GUS whose drop is marked as not read (#729) — the rest of
+ *   the completed GUS without a drop is still to fill.
  * @param sessionsWithPushTime Completed GUS whose push time is typed — the `n` of
  *   [medianPushMinutes], apart from [sessionsWithDrop] : the history has push prices and no times.
  * @param medianPushMinutes Median time from the bell to the push's top, in minutes.
@@ -91,15 +99,19 @@ data class StatSummaryDto(
   val averageRetestPercent: BigDecimal?,
   val averageRetestToTopPercent: BigDecimal?,
   val retestTookTopCount: Int,
-  val doubleTopsWithoutDrop: Int,
+  val doubleTopsTookTopWithoutDrop: Int,
+  val doubleTopsDropNotAsked: Int,
+  val doubleTopsDropNotRead: Int,
   val medianDoubleTopMinutes: BigDecimal?,
   val medianRejectionMinutes: BigDecimal?,
   val doubleTopsWithDrop: Int,
+  val dropsAfterTookTop: Int,
   val medianDropPercent: BigDecimal?,
   val medianDropFromEntryPercent: BigDecimal?,
   val medianDropMinutes: BigDecimal?,
   val dropReachedTargetCount: Int,
   val sessionsWithDrop: Int,
+  val sessionsDropNotRead: Int,
   val medianGusDropPercent: BigDecimal?,
   val gusDropReachedTargetCount: Int,
   val sessionsWithPushTime: Int,

@@ -63,6 +63,7 @@ data class StatEntryDto(
   /** Derived from the open (#499) — read-only, no longer a box. */
   val under1Dollar: Boolean,
   val noPush: Boolean,
+  val dropNotRead: Boolean,
   val highInstitutions: Boolean,
   val completed: Boolean,
   /** Why the recorded prices say this was not the setup (#499) — empty when nothing does. */
@@ -106,6 +107,7 @@ fun StatEntry.toDto(trades: List<TradeLinkDto> = emptyList()) =
     ssr = ssr,
     under1Dollar = under1Dollar,
     noPush = noPush,
+    dropNotRead = dropNotRead,
     highInstitutions = highInstitutions,
     completed = isCompleted,
     outOfPattern = outOfPattern,

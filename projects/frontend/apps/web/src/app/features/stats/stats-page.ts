@@ -53,6 +53,7 @@ import {
   StatEntryFilter,
   StatEntryInput,
   StatStatus,
+  StatSummary,
 } from '../../core/api/stats/stat-entry.model';
 import { StatsRepository } from '../../core/api/stats/stats.repository';
 import { ConfirmService } from '../../core/app-state/confirm.service';
@@ -123,6 +124,8 @@ interface SessionModel {
   dtDropTime: string | null;
   ssr: boolean;
   noPush: boolean;
+  /** The Sink is not read and will not be (#729) — the observer's mark, never a market fact. */
+  dropNotRead: boolean;
   highInstitutions: boolean;
 }
 
@@ -312,6 +315,7 @@ const BLANK_SESSION: SessionModel = {
   dtDropTime: null,
   ssr: false,
   noPush: false,
+  dropNotRead: false,
   highInstitutions: false,
 };
 
@@ -417,25 +421,53 @@ function isAsked(point: { since?: Date }, tradeDate: Date | null): boolean {
 }
 
 /**
- * The points a double top needs to tick — its five, or four when the retest took the top or when
- * it was recorded before the drop was asked.
+ * The points a double top needs to tick — its five, or four when the retest took the top, when it
+ * was recorded before the drop was asked, or when its drop is marked as not read (#729).
  */
 function doubleTopPoints<T extends SheetPoint<SessionField>>(
   points: readonly T[],
-  session: Pick<SessionModel, 'dtTopPrice' | 'dtRetestPrice'>,
+  session: Pick<SessionModel, 'dtTopPrice' | 'dtRetestPrice' | 'dropNotRead'>,
   tradeDate: Date | null,
 ): readonly T[] {
-  const tookTop = retestTookTop(session);
+  const withoutDrop = retestTookTop(session) || session.dropNotRead;
   return points.filter(
     (point) =>
       isAsked(point, tradeDate) &&
-      !(tookTop && (point.field === 'dtDropPrice' || point.field === 'dtDropTime')),
+      !(withoutDrop && (point.field === 'dtDropPrice' || point.field === 'dtDropTime')),
   );
+}
+
+/**
+ * Whether the Sink can be marked as not read (#729) : always on a GUS ; on a double top only when a
+ * Sink is asked — none after a retest that took the top, none before the drop was asked.
+ */
+export function dropCanBeNotRead(
+  session: Pick<SessionModel, 'dtTopPrice' | 'dtRetestPrice'>,
+  pattern: Pattern,
+  tradeDate: Date | null,
+): boolean {
+  if (pattern !== 'DT') return true;
+  return !retestTookTop(session) && isAsked({ since: DT_DROP_SINCE }, tradeDate);
+}
+
+/** The Sink's own fields — typing one of them clears the « not read » mark (#729). */
+const DROP_FIELDS: readonly SessionField[] = [
+  'gusDropPrice',
+  'gusDropTime',
+  'dtDropPrice',
+  'dtDropTime',
+];
+
+/** Typing a Sink takes the « not read » mark off — the two never sit together. */
+function markCleared(field: SessionField, value: unknown): Partial<SessionModel> {
+  return DROP_FIELDS.includes(field) && value !== null && value !== ''
+    ? { dropNotRead: false }
+    : {};
 }
 
 /** The session prices a stat needs — all five, four on a no-push day, a double top's points. */
 function expectedPrices(
-  session: Pick<SessionModel, SessionField | 'noPush'>,
+  session: Pick<SessionModel, SessionField | 'noPush' | 'dropNotRead'>,
   pattern: Pattern,
   tradeDate: Date | null,
 ) {
@@ -448,7 +480,7 @@ function expectedPrices(
  * between a stat and its tick.
  */
 export function missingPrices(
-  session: Pick<SessionModel, SessionField | 'noPush'>,
+  session: Pick<SessionModel, SessionField | 'noPush' | 'dropNotRead'>,
   pattern: Pattern,
   tradeDate: Date | null,
 ): string[] {
@@ -632,6 +664,7 @@ function sessionOf(entry: StatEntry): SessionModel {
     dtDropTime: entry.dtDropTime,
     ssr: entry.ssr,
     noPush: entry.noPush,
+    dropNotRead: entry.dropNotRead,
     highInstitutions: entry.highInstitutions,
   };
 }
@@ -914,7 +947,8 @@ export class StatsPage {
       legs: doubleTopLegs(e),
       durations: doubleTopDurations(e),
       gus: gusSequence(e),
-      gusDropToFill: bounded && e.completed && e.pattern !== 'DT' && e.gusDropPrice === null,
+      gusDropToFill:
+        bounded && e.completed && e.pattern !== 'DT' && e.gusDropPrice === null && !e.dropNotRead,
       missing: missingPrices(e, e.pattern, e.tradeDate),
       // A row written before the range rule existed can still hold an impossible set : the ✓ of
       // the table answers for it like the panel's does, and the backend replays it on the tick.
@@ -1026,8 +1060,14 @@ export class StatsPage {
       total: prices.length,
       tookTop: retestTookTop(m),
       dropAsked: isAsked({ since: DT_DROP_SINCE }, date),
+      notRead: m.dropNotRead,
     };
   });
+
+  /** Whether the panel offers « Sink non relevé » (#729) — hidden where no Sink is asked. */
+  readonly dropMarkable = computed(() =>
+    dropCanBeNotRead(this.session(), this.panelPattern(), this.panelDate()),
+  );
 
   /** The GUS being typed (#713), live : its drop, the push's minutes after the bell and the drop's. */
   readonly gusSequence = computed(() => gusSequence(this.session()));
@@ -1239,12 +1279,24 @@ export class StatsPage {
   }
 
   setSessionPrice(field: SessionPrice, value: number | null): void {
-    this.session.update((m) => ({ ...m, [field]: value }));
+    this.session.update((m) => ({ ...m, [field]: value, ...markCleared(field, value) }));
   }
 
   /** A native time input gives `HH:mm`, or an empty string once cleared. */
   setSessionTime(field: SessionTime, value: string): void {
-    this.session.update((m) => ({ ...m, [field]: value || null }));
+    this.session.update((m) => ({ ...m, [field]: value || null, ...markCleared(field, value) }));
+  }
+
+  /** « Sink non relevé » (#729) empties the Sink ; typing one afterwards unticks it. */
+  toggleDropNotRead(dropNotRead: boolean): void {
+    this.session.update((m) => ({
+      ...m,
+      dropNotRead,
+      ...(dropNotRead
+        ? { gusDropPrice: null, gusDropTime: null, dtDropPrice: null, dtDropTime: null }
+        : {}),
+    }));
+    this.saveSession('session');
   }
 
   toggleFlag(field: 'ssr' | 'highInstitutions', value: boolean): void {
@@ -1494,6 +1546,44 @@ export class StatsPage {
           return EMPTY;
         }),
       ),
+    );
+  }
+
+  /**
+   * The Sink KPI's sub-label (#729), read on its own axes : the Sinks — those after a retest that
+   * took the top among them — then apart, the stats without one by reason, each once it counts one.
+   * The two terms add up to the completed stats of [pattern].
+   */
+  dropSubLabel(kpi: StatSummary, pattern: 'GUS' | 'DT'): string {
+    const t = (key: string, params?: object) => this.translate.instant(key, params);
+    const reasons: [string, number][] =
+      pattern === 'DT'
+        ? [
+            ['tookTop', kpi.doubleTopsTookTopWithoutDrop],
+            ['notRead', kpi.doubleTopsDropNotRead],
+            ['notAsked', kpi.doubleTopsDropNotAsked],
+          ]
+        : [
+            ['toFill', kpi.completed - kpi.sessionsWithDrop - kpi.sessionsDropNotRead],
+            ['notRead', kpi.sessionsDropNotRead],
+          ];
+    const head =
+      pattern === 'DT'
+        ? t('stats.kpi.dropSub', { count: kpi.doubleTopsWithDrop }) +
+          (kpi.dropsAfterTookTop > 0
+            ? t('stats.kpi.dropSubTookTop', { count: kpi.dropsAfterTookTop })
+            : '')
+        : t('stats.kpi.gusDropSub', { count: kpi.sessionsWithDrop, total: kpi.completed });
+    const counted = reasons.filter(([, count]) => count > 0);
+    if (counted.length === 0) return head;
+    return (
+      head +
+      t('stats.kpi.withoutDrop', {
+        count: counted.reduce((sum, [, count]) => sum + count, 0),
+        reasons: counted
+          .map(([reason, count]) => t('stats.kpi.withoutDropReason.' + reason, { count }))
+          .join(' · '),
+      })
     );
   }
 
