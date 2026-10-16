@@ -22,6 +22,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -257,6 +258,7 @@ class StatToTradeIntegrationTest {
     assertEquals(2, kept.executions.size, "one entry and one exit, as typed")
     assertEquals(0, kept.retainedProfitDollars!!.compareTo(BigDecimal("294.00")))
     assertNull(tradeService.findById(long.id).statEntryId, "every trade of the stat, not only one")
+    assertFalse(kept.bornFromStat, "no stat left to have been born from")
     assertEquals(
       0,
       movementRepo.findByTradeEntryId(short.id)!!.amount.compareTo(BigDecimal("294.00")),
@@ -314,6 +316,34 @@ class StatToTradeIntegrationTest {
     assertNull(tradeRepo.findById(sir.id).get().statEntryId)
     assertNull(tradeRepo.findById(dayBefore.id).get().statEntryId)
     assertNull(tradeRepo.findById(foreign.id).get().statEntryId, "never across tenants")
+  }
+
+  // ---------------------------------------------------------------------------
+  // Where the link came from (#735)
+  // ---------------------------------------------------------------------------
+
+  @Test
+  fun `a trade promoted from its stat was born from it`() {
+    assertTrue(statService.promoteToTrade(stat.id).bornFromStat)
+  }
+
+  @Test
+  fun `a trade typed on its own onto a stat's triple is attached, not born from it`() {
+    // LINK2 on staging : « + Trade » on a triple that already had its stat read « created from ».
+    val trade = tradeService.createStandalone(standalone("KTTA"))
+
+    assertEquals(stat.id, trade.statEntryId)
+    assertFalse(trade.bornFromStat)
+  }
+
+  @Test
+  fun `a trade adopted by a stat created after it is attached, not born from it`() {
+    // LINK1 on staging : typed before its stat, adopted — and it read « created from the stat ».
+    val trade = tradeService.createStandalone(standalone("LINK1"))
+
+    statService.createByHand(completionRequest().copy(ticker = "LINK1"))
+
+    assertFalse(tradeService.findById(trade.id).bornFromStat)
   }
 
   // ---------------------------------------------------------------------------

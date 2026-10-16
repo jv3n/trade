@@ -202,6 +202,7 @@ class TradeEntryService(
   fun detachFromStat(statEntryId: UUID, userId: UUID) {
     repo.findByUserIdAndStatEntryIdIn(userId, listOf(statEntryId)).forEach {
       it.statEntryId = null
+      it.bornFromStat = false
       it.updatedAt = Instant.now()
     }
     // The stat's delete follows in the same transaction : the ON DELETE RESTRICT FK must already
@@ -230,8 +231,11 @@ class TradeEntryService(
    * through [createStandalone].
    */
   @Transactional
-  fun create(request: TradeEntryRequest): TradeEntryDto {
+  fun create(request: TradeEntryRequest): TradeEntryDto = insert(request, bornFromStat = true)
+
+  private fun insert(request: TradeEntryRequest, bornFromStat: Boolean): TradeEntryDto {
     val entry = newEntry(authService.getCurrentUser(), request)
+    entry.bornFromStat = bornFromStat && entry.statEntryId != null
     applyExecutions(entry, request)
     val saved = repo.saveAndFlush(entry)
     publishChange(saved)
@@ -256,7 +260,7 @@ class TradeEntryService(
         request.ticker.trim().uppercase(),
         request.pattern ?: Pattern.GUS,
       )
-    return create(request.copy(statEntryId = stat))
+    return insert(request.copy(statEntryId = stat), bornFromStat = false)
   }
 
   /**

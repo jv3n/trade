@@ -26,6 +26,7 @@ import java.util.UUID
 data class TradeEntryDto(
   val id: UUID,
   val statEntryId: UUID?,
+  val bornFromStat: Boolean,
   val tradeDate: LocalDate,
   val ticker: String,
   val pattern: Pattern,
@@ -52,6 +53,7 @@ fun TradeEntry.toDto() =
   TradeEntryDto(
     id = id,
     statEntryId = statEntryId,
+    bornFromStat = bornFromStat,
     tradeDate = tradeDate,
     ticker = ticker,
     pattern = pattern,

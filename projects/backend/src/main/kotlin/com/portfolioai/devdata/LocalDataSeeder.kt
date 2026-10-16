@@ -173,6 +173,7 @@ class LocalDataSeeder(
       TradeEntry(
         user = user,
         statEntryId = stat.id,
+        bornFromStat = true,
         tradeDate = stat.tradeDate,
         ticker = stat.ticker,
         pattern = stat.pattern,

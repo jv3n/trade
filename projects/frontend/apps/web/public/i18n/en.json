@@ -567,6 +567,7 @@
       "loading": "Loading trade…",
       "loadError": "Couldn't load the trade. Try again.",
       "fromStat": "created from the",
+      "attachedTo": "attached to the",
       "statOf": "stat of {{date}}",
       "noStat": "no stat",
       "after11am": "after 11 am",

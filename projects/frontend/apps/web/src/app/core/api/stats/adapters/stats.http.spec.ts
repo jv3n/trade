@@ -229,6 +229,7 @@ describe('HttpStatsRepository', () => {
     req.flush({
       id: 'trade-9',
       statEntryId: 'stat-1',
+      bornFromStat: true,
       tradeDate: '2026-09-17',
       ticker: 'KTTA',
       pattern: 'GUS',

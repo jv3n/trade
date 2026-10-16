@@ -567,6 +567,7 @@
       "loading": "Chargement du trade…",
       "loadError": "Impossible de charger le trade. Réessaie.",
       "fromStat": "créé depuis la",
+      "attachedTo": "rattaché à la",
       "statOf": "stat du {{date}}",
       "noStat": "sans stat",
       "after11am": "après 11h",

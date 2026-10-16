@@ -57,8 +57,14 @@ class TradeEntry(
   /** Owner. Multi-tenant scope key — every read path filters on `user.id`. */
   @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "user_id", nullable = false) val user: User,
 
-  /** Source stat — null for a trade created on its own (#633). */
+  /** The stat holding the trade — null for a trade on its own (#633). */
   @Column(name = "stat_entry_id") var statEntryId: UUID? = null,
+
+  /**
+   * Created from [statEntryId] (« → Trade ») rather than attached to it — at creation, when the
+   * stat came later, or on an edit (#735). False whenever [statEntryId] is null.
+   */
+  @Column(name = "born_from_stat", nullable = false) var bornFromStat: Boolean = false,
 
   // ---- Identity, copied from the source stat when there is one ----
   @Column(name = "trade_date", nullable = false) var tradeDate: LocalDate,
