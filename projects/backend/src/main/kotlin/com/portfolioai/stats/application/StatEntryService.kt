@@ -283,7 +283,6 @@ class StatEntryService(
         entry.dtTopPrice,
         entry.dtLowPrice,
         entry.dtRetestPrice,
-        entry.dtDropPrice,
       )
       requireDoubleTopTimesInOrder(
         entry.dtStartTime,
@@ -305,7 +304,6 @@ class StatEntryService(
       )
       requireGusDrop(
         entry.noPush,
-        if (entry.noPush) entry.openPrice else entry.pushOpenPrice,
         entry.pushOpenTime,
         entry.gusDropPrice,
         entry.gusDropTime,

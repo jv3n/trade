@@ -57,6 +57,7 @@ interface StatEntryWireDto {
   ssr: boolean;
   under1Dollar: boolean;
   noPush: boolean;
+  dropNotRead: boolean;
   highInstitutions: boolean;
   completed: boolean;
   outOfPattern: OutOfPatternReason[];
