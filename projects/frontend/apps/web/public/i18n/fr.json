@@ -641,6 +641,7 @@
       "createAttached": "Trade {{ticker}} créé, rattaché à la stat du jour.",
       "createError": "Échec de la création du trade. Réessaie.",
       "updateSuccess": "Trade {{ticker}} mis à jour.",
+      "updateAttached": "Trade {{ticker}} mis à jour, rattaché à la stat du jour.",
       "updateError": "Échec de la mise à jour du trade. Réessaie.",
       "deleteSuccess": "Trade {{ticker}} supprimé.",
       "deleteError": "Échec de la suppression du trade. Réessaie."

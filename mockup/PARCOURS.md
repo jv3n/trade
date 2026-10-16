@@ -338,7 +338,9 @@ the journal). As a consequence : no real-time screen, no live position tracking.
   (#732) — the trade logged live, the stat filled after the close. « + Trade » joins the stat already
   on that triple ; a new stat (typed by hand, from a candidate or « Same ticker, another pattern »)
   adopts every trade on its own on its triple. The toast says so either way. The link is resolved
-  once, at creation, and stored : « without a stat » means there is genuinely none.
+  at creation, and again when a trade without a stat is edited onto a stat's triple (#734 — a
+  pattern left on GUS, corrected on the sheet) ; it is stored, and an edit never moves a trade that
+  already has a stat : « without a stat » means there is genuinely none.
 - **Deleting a stat keeps its trades** (#628) : the confirmation warns when a trade is attached, and
   the trade stays in the journal without a stat — executions, P&L, account line and pattern
   untouched. It is how the stats invented for an import go away without taking the trades along.

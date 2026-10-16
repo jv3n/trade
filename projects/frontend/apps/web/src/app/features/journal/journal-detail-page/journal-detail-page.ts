@@ -677,8 +677,9 @@ export class JournalDetailPage implements HasUnsavedChanges {
           // out, the draft goes back to what the server kept (half-typed fills dropped).
           if (saved.id === this.id()) this.draft.set(draftOf(saved));
           this.contextWrites.update((n) => n + 1);
+          const key = !entry.statEntryId && saved.statEntryId ? 'updateAttached' : 'updateSuccess';
           this.toasts.success(
-            this.translate.instant('journal.snackbar.updateSuccess', { ticker: saved.ticker }),
+            this.translate.instant(`journal.snackbar.${key}`, { ticker: saved.ticker }),
           );
         }),
         catchError(() => {
