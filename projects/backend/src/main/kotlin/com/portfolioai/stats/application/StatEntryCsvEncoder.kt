@@ -55,6 +55,7 @@ object StatEntryCsvEncoder {
       "SSR?",
       "<\$1 stock?",
       "No push?",
+      "Sink not read?",
       "Institutions >20%?",
       "Completed?",
     )
@@ -103,6 +104,7 @@ object StatEntryCsvEncoder {
         e.ssr.toString(),
         e.under1Dollar.toString(),
         e.noPush.toString(),
+        e.dropNotRead.toString(),
         e.highInstitutions.toString(),
         e.isCompleted.toString(),
       )

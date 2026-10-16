@@ -66,13 +66,13 @@ internal fun StatEntry.fillFrom(request: StatEntryRequest, cleanTicker: String) 
   )
   val pushTime = if (noPush) null else request.pushOpenTime?.takeIf { gus }?.inSession("Push time")
   val gusDropTime = request.gusDropTime?.takeIf { gus }?.inSession("Drop time")
-  requireGusDrop(noPush, if (noPush) open else push, pushTime, gusDrop, gusDropTime)
+  requireGusDrop(noPush, pushTime, gusDrop, gusDropTime)
   val dtStart = request.dtStartPrice?.takeIf { doubleTop }?.requirePositive("Start")
   val dtTop = request.dtTopPrice?.takeIf { doubleTop }?.requirePositive("Top")
   val dtLow = request.dtLowPrice?.takeIf { doubleTop }?.requirePositive("Rejection low")
   val dtRetest = request.dtRetestPrice?.takeIf { doubleTop }?.requirePositive("Retest")
   val dtDrop = request.dtDropPrice?.takeIf { doubleTop }?.requirePositive("Drop low")
-  requireDoubleTopShape(dtStart, dtTop, dtLow, dtRetest, dtDrop)
+  requireDoubleTopShape(dtStart, dtTop, dtLow, dtRetest)
   val dtStartTime = request.dtStartTime?.takeIf { doubleTop }?.inSession("Start time")
   val dtTopTime = request.dtTopTime?.takeIf { doubleTop }?.inSession("Top time")
   val dtLowTime = request.dtLowTime?.takeIf { doubleTop }?.inSession("Rejection low time")
@@ -113,6 +113,9 @@ internal fun StatEntry.fillFrom(request: StatEntryRequest, cleanTicker: String) 
   ssr = request.ssr
   this.noPush = noPush
   highInstitutions = request.highInstitutions
+  // Typing a Sink is what clears the mark : the two never sit together.
+  val dropTyped = listOf(gusDrop, gusDropTime, dtDrop, dtDropTime).any { it != null }
+  dropNotRead = request.dropNotRead && !dropTyped && dropCanBeNotRead
 }
 
 private fun BigDecimal?.required(label: String): BigDecimal =
@@ -141,15 +144,14 @@ internal fun requireInsideTheDay(
 
 /**
  * The shape of a double top (`docs/pattern/DT.md`) : the top not under the start, the rejection low
- * not above the top, the retest not under the low, the drop not above the retest (#706). Each pair
- * is checked once both are in.
+ * not above the top, the retest not under the low. Each pair is checked once both are in. The drop
+ * is free of the retest : a session that rallied off it ends above it, a loss for the short (#729).
  */
 internal fun requireDoubleTopShape(
   start: BigDecimal?,
   top: BigDecimal?,
   low: BigDecimal?,
   retest: BigDecimal?,
-  drop: BigDecimal?,
 ) {
   if (start != null && top != null && top < start) {
     throw badRequest("Top must not be below the start")
@@ -159,9 +161,6 @@ internal fun requireDoubleTopShape(
   }
   if (low != null && retest != null && retest < low) {
     throw badRequest("Retest must not be below the rejection low")
-  }
-  if (retest != null && drop != null && drop > retest) {
-    throw badRequest("Drop low must not be above the retest")
   }
 }
 
@@ -206,20 +205,16 @@ internal fun requireDropPaired(price: BigDecimal?, time: LocalTime?) {
 }
 
 /**
- * The drop of a GUS (#713) : not above where it is read from — the push, or the open on a no-push
- * day — its time not before the push's, price and time together, and timed from a push time : a
- * drop without one would count in the drop's `n` and not in its duration.
+ * The drop of a GUS (#713) : its time not before the push's, price and time together, and timed
+ * from a push time — a drop without one would count in the drop's `n` and not in its duration. No
+ * bound against the push : a session that kept rising ends above it, a loss for the short (#729).
  */
 internal fun requireGusDrop(
   noPush: Boolean,
-  from: BigDecimal?,
   pushTime: LocalTime?,
   drop: BigDecimal?,
   dropTime: LocalTime?,
 ) {
-  if (from != null && drop != null && drop > from) {
-    throw badRequest("Drop must not be above the ${if (noPush) "open" else "push"}")
-  }
   if (pushTime != null && dropTime != null && dropTime < pushTime) {
     throw badRequest("Drop time must not be before the push time")
   }

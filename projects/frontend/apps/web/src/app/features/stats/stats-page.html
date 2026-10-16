@@ -140,16 +140,7 @@
             {{ kpi.medianDropPercent !== null ? (kpi.medianDropPercent | shortGain) + ' %' : '—' }}
           </div>
           <div class="kpi__sub">
-            <!-- The three counts add up to the completed DTs (#726) : the third shows once it exists. -->
-            {{
-              (kpi.doubleTopsWithoutDrop > 0 ? 'stats.kpi.dropSubWithoutDrop' : 'stats.kpi.dropSub')
-                | translate
-                  : {
-                      count: kpi.doubleTopsWithDrop,
-                      tookTop: kpi.retestTookTopCount,
-                      withoutDrop: kpi.doubleTopsWithoutDrop,
-                    }
-            }}
+            {{ dropSubLabel(kpi, 'DT') }}
           </div>
         </div>
         <div class="card kpi">
@@ -370,10 +361,7 @@
             }}
           </div>
           <div class="kpi__sub">
-            {{
-              'stats.kpi.gusDropSub'
-                | translate: { count: kpi.sessionsWithDrop, total: kpi.completed }
-            }}
+            {{ dropSubLabel(kpi, 'GUS') }}
           </div>
         </div>
         <div class="card kpi">
@@ -953,25 +941,45 @@
                     <mat-hint class="warn">{{ sessionIssue()!.reason | translate }}</mat-hint>
                   }
                 </mat-form-field>
+                @if (dropMarkable()) {
+                  <mat-checkbox
+                    data-testid="drop-not-read"
+                    [checked]="session().dropNotRead"
+                    (change)="toggleDropNotRead($event.checked)"
+                    [matTooltip]="'stats.fields.dropNotReadHint' | translate"
+                  >
+                    {{ 'stats.fields.dropNotRead' | translate }}
+                  </mat-checkbox>
+                }
               </td>
               <td class="point-rows__step">
                 @if (legs.drop !== null) {
-                  <span [class.gain]="legs.dropFromEntry === null || legs.dropFromEntry < 0">{{
-                    'stats.doubleTop.legD'
-                      | translate
-                        : {
-                            gain: (legs.drop | shortGain),
-                            entry:
-                              legs.dropFromEntry !== null ? (legs.dropFromEntry | shortGain) : '—',
-                          }
-                  }}</span>
+                  <span
+                    [class.gain]="
+                      legs.drop <= 0 && (legs.dropFromEntry === null || legs.dropFromEntry < 0)
+                    "
+                    [class.loss]="legs.drop > 0"
+                    >{{
+                      'stats.doubleTop.legD'
+                        | translate
+                          : {
+                              gain: (legs.drop | shortGain),
+                              entry:
+                                legs.dropFromEntry !== null
+                                  ? (legs.dropFromEntry | shortGain)
+                                  : '—',
+                            }
+                    }}</span
+                  >
                 } @else {
                   <span class="muted">{{
                     (doubleTopProgress().tookTop
                       ? 'stats.doubleTop.dropTookTopHint'
-                      : doubleTopProgress().dropAsked
-                        ? 'stats.doubleTop.dropHint'
-                        : 'stats.doubleTop.dropNotAskedHint'
+                      : !doubleTopProgress().dropAsked
+                        ? 'stats.doubleTop.dropNotAskedHint'
+                        : doubleTopProgress().notRead
+                          ? 'stats.doubleTop.dropNotReadHint'
+                          : 'stats.doubleTop.dropHint'
                     ) | translate
                   }}</span>
                 }
@@ -1131,10 +1139,18 @@
                     <mat-hint class="warn">{{ sessionIssue()!.reason | translate }}</mat-hint>
                   }
                 </mat-form-field>
+                <mat-checkbox
+                  data-testid="drop-not-read"
+                  [checked]="session().dropNotRead"
+                  (change)="toggleDropNotRead($event.checked)"
+                  [matTooltip]="'stats.fields.dropNotReadHint' | translate"
+                >
+                  {{ 'stats.fields.dropNotRead' | translate }}
+                </mat-checkbox>
               </td>
               <td class="point-rows__step">
                 @if (gus.drop !== null) {
-                  <span [class.gain]="gus.drop < 0">{{
+                  <span [class.gain]="gus.drop < 0" [class.loss]="gus.drop > 0">{{
                     'stats.gus.leg' | translate: { gain: (gus.drop | shortGain) }
                   }}</span>
                   <small>{{
@@ -1146,7 +1162,9 @@
                       | translate: { target: gusDropTarget }
                   }}</small>
                 } @else {
-                  <span class="muted">{{ 'stats.gus.hint' | translate }}</span>
+                  <span class="muted">{{
+                    (session().dropNotRead ? 'stats.gus.notReadHint' : 'stats.gus.hint') | translate
+                  }}</span>
                 }
               </td>
             </tr>
@@ -1273,13 +1291,23 @@
                 | translate
                   : { prices: progress.prices, times: progress.times, total: progress.total }
             }}
+            @if (progress.notRead) {
+              · {{ 'stats.fields.dropNotReadProgress' | translate }}
+            }
           } @else {
             {{
               'stats.complete.progress'
                 | translate: { filled: sessionFilled(), total: sessionPriceCount() }
             }}
             ·
-            {{ (gusDropDone() ? 'stats.gus.done' : 'stats.gus.toFill') | translate }}
+            {{
+              (gusDropDone()
+                ? 'stats.gus.done'
+                : session().dropNotRead
+                  ? 'stats.fields.dropNotReadProgress'
+                  : 'stats.gus.toFill'
+              ) | translate
+            }}
           }
         </span>
         @if (completing(); as stat) {
@@ -1595,9 +1623,12 @@
               @if (s.gusDropPrice !== null) {
                 {{ s.gusDropPrice | price: s.openPrice }}
                 @if (s.gus.drop !== null) {
-                  <small class="leg-note" [class.gain]="s.gus.drop < 0">{{
-                    'stats.gus.cell' | translate: { gain: (s.gus.drop | shortGain) }
-                  }}</small>
+                  <small
+                    class="leg-note"
+                    [class.gain]="s.gus.drop < 0"
+                    [class.loss]="s.gus.drop > 0"
+                    >{{ 'stats.gus.cell' | translate: { gain: (s.gus.drop | shortGain) } }}</small
+                  >
                 }
                 @if (s.gus.dropMinutes !== null) {
                   <small class="leg-note">{{
@@ -1605,6 +1636,12 @@
                       | translate: { time: s.gusDropTime, minutes: s.gus.dropMinutes }
                   }}</small>
                 }
+              } @else if (s.dropNotRead) {
+                <span
+                  class="flag-tag"
+                  [matTooltip]="'stats.fields.dropNotReadTagHint' | translate"
+                  >{{ 'stats.fields.dropNotReadTag' | translate }}</span
+                >
               } @else if (s.gusDropToFill) {
                 <span class="warn" [matTooltip]="'stats.gus.toFillHint' | translate">{{
                   'stats.gus.toFillShort' | translate
@@ -1842,7 +1879,11 @@
                 @if (s.legs.drop !== null) {
                   <small
                     class="leg-note"
-                    [class.gain]="s.legs.dropFromEntry === null || s.legs.dropFromEntry < 0"
+                    [class.gain]="
+                      s.legs.drop <= 0 &&
+                      (s.legs.dropFromEntry === null || s.legs.dropFromEntry < 0)
+                    "
+                    [class.loss]="s.legs.drop > 0"
                     >{{
                       'stats.doubleTop.cellD'
                         | translate
@@ -1861,6 +1902,12 @@
                     'stats.kpi.minutes' | translate: { minutes: s.durations.drop }
                   }}</small>
                 }
+              } @else if (s.dropNotRead) {
+                <span
+                  class="flag-tag"
+                  [matTooltip]="'stats.fields.dropNotReadTagHint' | translate"
+                  >{{ 'stats.fields.dropNotReadTag' | translate }}</span
+                >
               } @else {
                 <span class="muted">—</span>
               }

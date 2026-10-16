@@ -70,7 +70,10 @@ internal fun statSummaryOf(rows: List<StatEntry>, pattern: Pattern?, traded: Int
     averageRetestToTopPercent =
       doubleTops.averageOf { StatMetrics.percentChange(it.dtTopPrice, it.dtRetestPrice) },
     retestTookTopCount = doubleTops.count { isAtLeast(it.dtRetestPrice, it.dtTopPrice) },
-    doubleTopsWithoutDrop = doubleTops.count { it.isDoubleTopWithoutDrop },
+    doubleTopsTookTopWithoutDrop = doubleTops.count { it.retestTookTop && it.dtDropPrice == null },
+    doubleTopsDropNotAsked = doubleTops.count { it.isDoubleTopDropNotAsked },
+    doubleTopsDropNotRead = doubleTops.count { it.dropNotRead },
+    dropsAfterTookTop = drops.count { it.retestTookTop },
     medianDoubleTopMinutes =
       doubleTops.medianMinutes { StatMetrics.minutesBetween(it.dtStartTime, it.dtRetestTime) },
     medianRejectionMinutes =
@@ -84,6 +87,7 @@ internal fun statSummaryOf(rows: List<StatEntry>, pattern: Pattern?, traded: Int
     dropReachedTargetCount =
       drops.count { dropFromEntry(it)?.let { change -> change <= -DT_DROP_TARGET } == true },
     sessionsWithDrop = gusDrops.size,
+    sessionsDropNotRead = sessions.count { it.dropNotRead },
     medianGusDropPercent = gusDrops.medianOf(::gusDrop),
     gusDropReachedTargetCount =
       gusDrops.count { gusDrop(it)?.let { change -> change <= -GUS_DROP_TARGET } == true },

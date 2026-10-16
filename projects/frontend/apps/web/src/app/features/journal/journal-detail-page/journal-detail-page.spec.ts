@@ -916,6 +916,7 @@ function makeStat(overrides: Partial<StatEntry> = {}): StatEntry {
     ssr: true,
     under1Dollar: false,
     noPush: false,
+    dropNotRead: false,
     highInstitutions: false,
     completed: true,
     outOfPattern: [],

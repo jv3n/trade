@@ -67,8 +67,8 @@ import org.springframework.web.server.ResponseStatusException
  *   no-push day), optional, paired, inside the day and after the push ; the KPIs give its medians
  *   and « 15 % reached » with their own `n`.
  * - **Double top drop (#706)** — the lowest print after the retest, optional (a DT ticks without
- *   it) but whole (price and time together), not above the retest nor before it ; the KPIs give its
- *   medians with their own `n`.
+ *   it) but whole (price and time together), not before the retest in time — above it in price when
+ *   the session rallied (#729) ; the KPIs give its medians with their own `n`.
  * - **KPIs** — [StatEntryService.summarise] counts completed / to complete over the whole filtered
  *   set and averages the derived percentages (never stored) of the completed rows only, plus the
  *   median / 3rd quartile / max push at open behind the candidates' « À l'open » card (#261).
@@ -1095,20 +1095,132 @@ class StatsListingIntegrationTest {
     repo.saveAndFlush(stat)
   }
 
+  // ---------------------------------------------------------------------------
+  // Sink not read (#729) — which kind of absent
+  // ---------------------------------------------------------------------------
+
+  // The session was not watched to the end : the low can't be read back, and must not be invented.
   @Test
-  fun `a drop above the retest or before it in time is a 400`() {
-    listOf(
-        sgbxWithDrop().copy(dtDropPrice = BigDecimal("2.90")) to
-          "Drop low must not be above the retest",
-        sgbxWithDrop().copy(dtDropTime = LocalTime.of(10, 30)) to
-          "Drop low time must not be before the retest time",
+  fun `a double top under its top ticks with its Sink marked as not read`() {
+    val ticked =
+      createCompleted(
+        doubleTopRequest(ticker = "SGBX").copy(tradeDate = DROP_DAY, dropNotRead = true)
       )
-      .forEach { (request, reason) ->
-        val ex = assertThrows(ResponseStatusException::class.java) { service.create(request) }
-        assertEquals(400, ex.statusCode.value())
-        assertEquals(reason, ex.reason)
+
+    assertTrue(ticked.completed)
+    assertTrue(ticked.dropNotRead)
+    assertNull(ticked.dtDropPrice)
+  }
+
+  @Test
+  fun `typing a Sink afterwards clears the mark`() {
+    val stat =
+      createCompleted(
+        doubleTopRequest(ticker = "SGBX").copy(tradeDate = DROP_DAY, dropNotRead = true)
+      )
+
+    val updated =
+      service.update(stat.id, sgbxWithDrop().copy(tradeDate = DROP_DAY, dropNotRead = true))
+
+    assertFalse(updated.dropNotRead, "the figure turned up : the mark goes")
+    assertEquals(0, BigDecimal("2.30").compareTo(updated.dtDropPrice))
+  }
+
+  // No case where there is nothing to read : a breakout has no Sink, and before 12/10 none was
+  // asked.
+  @Test
+  fun `the mark is not kept where no Sink is asked`() {
+    val breakout = service.create(nxttDoubleTop().copy(tradeDate = DROP_DAY, dropNotRead = true))
+    val september = service.create(doubleTopRequest(ticker = "MULN").copy(dropNotRead = true))
+
+    assertFalse(breakout.dropNotRead)
+    assertFalse(september.dropNotRead)
+  }
+
+  @Test
+  fun `a GUS can mark its Sink as not read`() {
+    val stat = createCompleted(fullSessionRequest(ticker = "AEHL").copy(dropNotRead = true))
+
+    assertTrue(stat.dropNotRead)
+    assertFalse(stat.noPush, "the observer's mark is not a market fact")
+  }
+
+  @Test
+  fun `the database refuses a mark beside a typed Sink`() {
+    val stat =
+      makeStat(testUser, ticker = "KTTA", tradeDate = DAY).apply {
+        gusDropPrice = BigDecimal("3.10")
+        dropNotRead = true
       }
+
+    assertThrows(DataIntegrityViolationException::class.java) { repo.saveAndFlush(stat) }
+  }
+
+  @Test
+  fun `summarise counts the double tops without a Sink by reason, adding up to the completed`() {
+    createCompleted(sgbxWithDrop().copy(tradeDate = DROP_DAY))
+    createCompleted(nxttDoubleTop())
+    createCompleted(doubleTopRequest(ticker = "MULN"))
+    createCompleted(doubleTopRequest(ticker = "GRI").copy(tradeDate = DROP_DAY, dropNotRead = true))
+    // Took its Apex back, then dumped all the same : a Sink, and a breakout too.
+    createCompleted(
+      nxttDoubleTop()
+        .copy(ticker = "IMNN", dtDropPrice = BigDecimal("2.50"), dtDropTime = LocalTime.of(11, 20))
+    )
+
+    val summary = service.summarise(dtOnly)
+
+    assertEquals(5, summary.completedDoubleTops)
+    assertEquals(2, summary.doubleTopsWithDrop)
+    assertEquals(1, summary.dropsAfterTookTop, "IMNN, counted among the Sinks, not beside them")
+    assertEquals(1, summary.doubleTopsTookTopWithoutDrop)
+    assertEquals(1, summary.doubleTopsDropNotAsked)
+    assertEquals(1, summary.doubleTopsDropNotRead)
+    assertEquals(
+      summary.completedDoubleTops,
+      summary.doubleTopsWithDrop +
+        summary.doubleTopsTookTopWithoutDrop +
+        summary.doubleTopsDropNotAsked +
+        summary.doubleTopsDropNotRead,
+    )
+  }
+
+  @Test
+  fun `summarise counts the GUS whose Sink is not read apart from those still to fill`() {
+    createCompleted(kttaWithDrop())
+    createCompleted(fullSessionRequest(ticker = "AEHL").copy(dropNotRead = true))
+    createCompleted(fullSessionRequest(ticker = "NUWE"))
+
+    val summary = service.summarise(gusOnly)
+
+    assertEquals(1, summary.sessionsWithDrop)
+    assertEquals(1, summary.sessionsDropNotRead, "NUWE is still to fill, not « not read »")
+    assertEquals(0, summary.noPushCount, "never counted beside a market fact")
+  }
+
+  @Test
+  fun `a drop before the retest in time is a 400`() {
+    val ex =
+      assertThrows(ResponseStatusException::class.java) {
+        service.create(sgbxWithDrop().copy(dtDropTime = LocalTime.of(10, 30)))
+      }
+
+    assertEquals(400, ex.statusCode.value())
+    assertEquals("Drop low time must not be before the retest time", ex.reason)
     assertEquals(0, repo.count())
+  }
+
+  // #729 : watched to the close, the session rallied off the Echo and never came back under it.
+  // Refusing the row left « not read » as the only way to tick it — which it was not.
+  @Test
+  fun `a sink above the echo is recorded, and counts in the drop figures as a loss for the short`() {
+    createCompleted(sgbxWithDrop().copy(dtDropPrice = BigDecimal("2.90")))
+
+    val summary = service.summarise(dtOnly)
+
+    assertEquals(1, summary.doubleTopsWithDrop)
+    assertEquals(0, summary.doubleTopsDropNotRead)
+    assertEquals(0, BigDecimal("1.75").compareTo(summary.medianDropPercent))
   }
 
   // A price alone counted in the drop's n but not in its median duration : the card mixed two
@@ -1188,15 +1300,16 @@ class StatsListingIntegrationTest {
 
     assertEquals(3, summary.completedDoubleTops)
     assertEquals(2, summary.doubleTopsWithDrop)
-    assertEquals(0, summary.doubleTopsWithoutDrop, "NXTT has no drop to measure, none is missing")
+    assertEquals(1, summary.doubleTopsTookTopWithoutDrop, "NXTT has no drop to measure")
+    assertEquals(0, summary.doubleTopsDropNotAsked, "none is missing")
     assertEquals(0, BigDecimal("-14.04").compareTo(summary.medianDropPercent))
     assertEquals(0, BigDecimal("-12.58").compareTo(summary.medianDropFromEntryPercent))
     assertEquals(0, BigDecimal("22.50").compareTo(summary.medianDropMinutes))
     assertEquals(1, summary.dropReachedTargetCount, "only SGBX gave 10 % from the entry")
   }
 
-  // The drop's n, the breakouts and the DTs from before the drop was asked add up to the completed
-  // double tops : « n = 1 · Apex repris : 1 · sans Sink : 1 » for 3 (#726).
+  // The drop's n and the DTs without one, by reason, add up to the completed double tops :
+  // « n = 1 Sinks · sans Sink : 2 (Apex repris 1 · pas demandé 1) » for 3 (#726, #729).
   @Test
   fun `summarise counts apart the double tops recorded before the drop was asked`() {
     createCompleted(sgbxWithDrop().copy(tradeDate = DROP_DAY))
@@ -1208,7 +1321,9 @@ class StatsListingIntegrationTest {
     assertEquals(3, summary.completedDoubleTops)
     assertEquals(1, summary.doubleTopsWithDrop)
     assertEquals(1, summary.retestTookTopCount)
-    assertEquals(1, summary.doubleTopsWithoutDrop, "MULN, recorded before the drop was asked")
+    assertEquals(1, summary.doubleTopsTookTopWithoutDrop)
+    assertEquals(1, summary.doubleTopsDropNotAsked, "MULN, recorded before the drop was asked")
+    assertEquals(0, summary.doubleTopsDropNotRead)
   }
 
   // A breakout, or a DT from before the drop was asked, is ticked without one (#710, #726).
@@ -1246,8 +1361,6 @@ class StatsListingIntegrationTest {
   fun `a drop out of the sequence is a 400 naming the rule`() {
     listOf(
         kttaWithDrop().copy(gusDropPrice = BigDecimal("4.70")) to "Drop must not be above the HOD",
-        kttaWithDrop().copy(hodPrice = BigDecimal("5.00"), gusDropPrice = BigDecimal("4.70")) to
-          "Drop must not be above the push",
         kttaWithDrop().copy(gusDropPrice = BigDecimal("3.30")) to "Drop must not be below the LOD",
         kttaWithDrop().copy(gusDropTime = LocalTime.of(9, 35)) to
           "Drop time must not be before the push time",
@@ -1265,19 +1378,28 @@ class StatsListingIntegrationTest {
 
   // GLND, 21/09 : no push — the drop reads from the open, and there is no push time to keep.
   @Test
-  fun `a no-push day keeps no push time, and its drop is read against the open`() {
+  fun `a no-push day keeps no push time`() {
     val stat = service.create(glndNoPush().copy(pushOpenTime = LocalTime.of(9, 41)))
-    val above =
-      assertThrows(ResponseStatusException::class.java) {
-        service.create(
-          glndNoPush()
-            .copy(ticker = "AEHL", hodPrice = BigDecimal("3.20"), gusDropPrice = BigDecimal("3.15"))
-        )
-      }
 
     assertNull(stat.pushOpenTime)
     assertEquals(0, BigDecimal("2.41").compareTo(stat.gusDropPrice))
-    assertEquals("Drop must not be above the open", above.reason)
+  }
+
+  // #729 : watched to the close, the stock kept rising after the push. Refusing the row left an
+  // empty Sink as the only way to record it — « to fill » or « not read », neither true.
+  @Test
+  fun `a sink above the push is recorded, and counts in the drop figures as a loss for the short`() {
+    val stat =
+      createCompleted(
+        kttaWithDrop().copy(hodPrice = BigDecimal("5.00"), gusDropPrice = BigDecimal("4.70"))
+      )
+
+    val summary = service.summarise(gusOnly)
+
+    assertEquals(0, BigDecimal("4.70").compareTo(stat.gusDropPrice))
+    assertEquals(1, summary.sessionsWithDrop)
+    assertEquals(0, summary.sessionsDropNotRead)
+    assertTrue(summary.medianGusDropPercent!! > BigDecimal.ZERO, "a rise reads as a loss")
   }
 
   @Test
