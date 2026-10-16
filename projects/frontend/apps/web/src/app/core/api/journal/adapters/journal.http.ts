@@ -46,6 +46,7 @@ interface ExecutionWireRequest {
 export interface TradeEntryWireDto {
   id: string;
   statEntryId: string | null;
+  bornFromStat: boolean;
   tradeDate: string;
   ticker: string;
   pattern: Pattern;
@@ -107,6 +108,7 @@ export function tradeEntryFromWire(w: TradeEntryWireDto): TradeEntry {
   return {
     id: w.id,
     statEntryId: w.statEntryId,
+    bornFromStat: w.bornFromStat,
     tradeDate: parseISO(w.tradeDate),
     ticker: w.ticker,
     pattern: w.pattern,

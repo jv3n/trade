@@ -202,8 +202,34 @@ describe('JournalDetailPage', () => {
     expect(fixture.componentInstance.entry()).not.toBeNull();
   });
 
+  describe('where its stat link came from (#735)', () => {
+    async function statLink(trade: TradeEntry): Promise<string> {
+      findById = vi.fn(() => of(trade));
+      const fixture = setup();
+      await settle(fixture);
+      const el: HTMLElement = fixture.nativeElement;
+      return el.querySelector('[data-testid="stat-link"]')?.textContent ?? '';
+    }
+
+    it('reads « created from » for a trade born from its stat', async () => {
+      expect(await statLink(makeTrade({ bornFromStat: true }))).toContain(
+        'journal.detail.fromStat',
+      );
+    });
+
+    // LINK1 on staging : typed before its stat, adopted by it — it read « créé depuis la stat ».
+    it('reads « attached to » for a trade that joined its stat', async () => {
+      const text = await statLink(makeTrade({ bornFromStat: false }));
+
+      expect(text).toContain('journal.detail.attachedTo');
+      expect(text).toContain('journal.detail.statOf');
+      expect(text).not.toContain('journal.detail.fromStat');
+    });
+  });
+
   describe('a trade on its own (#634)', () => {
-    const alone = () => makeTrade({ statEntryId: null, direction: 'BUY', executions: [] });
+    const alone = () =>
+      makeTrade({ statEntryId: null, bornFromStat: false, direction: 'BUY', executions: [] });
 
     it('asks no stat, and says so in the header and the day context', async () => {
       findById = vi.fn(() => of(alone()));
@@ -795,6 +821,7 @@ function makeTrade(overrides: Partial<TradeEntry> = {}): TradeEntry {
   return {
     id: 'abc-123',
     statEntryId: 'stat-1',
+    bornFromStat: true,
     tradeDate: new Date(2026, 8, 17),
     ticker: 'KTTA',
     pattern: 'GUS',

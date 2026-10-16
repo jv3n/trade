@@ -433,6 +433,7 @@ function wireFixture(overrides: Partial<Record<string, unknown>> = {}) {
   return {
     id: 'fixture-id',
     statEntryId: 'stat-id',
+    bornFromStat: true,
     tradeDate: '2026-06-04',
     ticker: 'AAPL',
     pattern: 'GUS',

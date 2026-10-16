@@ -83,6 +83,11 @@ export interface TradeEntryFilter {
 export interface TradeEntry {
   id: string;
   statEntryId: string | null;
+  /**
+   * Created from its stat (« → Trade ») rather than attached to it — typed on its own onto the
+   * stat's triple, adopted by a later stat, or edited onto it (#735). False without a stat.
+   */
+  bornFromStat: boolean;
   tradeDate: Date;
   ticker: string;
   pattern: Pattern;

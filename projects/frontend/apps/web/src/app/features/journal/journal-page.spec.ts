@@ -589,6 +589,7 @@ function makeTrade(overrides: Partial<TradeEntry> = {}): TradeEntry {
   return {
     id: 'id-1',
     statEntryId: 'stat-1',
+    bornFromStat: true,
     tradeDate: new Date(2026, 5, 4),
     ticker: 'BAC',
     pattern: 'GUS',

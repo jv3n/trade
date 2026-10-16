@@ -334,6 +334,9 @@ the journal). As a consequence : no real-time screen, no live position tracking.
   account like any other, never in the stats sheet, and is never « out of pattern » — nothing was
   measured. Its sheet keeps its executions, P&L, locates, post-mortem and screenshot ; only the
   day's context (premarket, open, HOD, LOD) is missing, and the sheet says so.
+- **The sheet says where the link came from** (#735) : « créé depuis la stat du … » for a trade born
+  from « → Trade », « rattaché à la stat du … » for one that joined it — typed on its own onto its
+  triple, adopted by a later stat, or edited onto it. The origin is stored on the trade, not inferred.
 - **A trade and a stat on the same day, ticker and pattern are linked, whichever comes first**
   (#732) — the trade logged live, the stat filled after the close. « + Trade » joins the stat already
   on that triple ; a new stat (typed by hand, from a candidate or « Same ticker, another pattern »)
