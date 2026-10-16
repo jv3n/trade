@@ -277,6 +277,24 @@ describe('JournalDetailPage', () => {
       expect(input.direction).toBe('BUY');
     });
 
+    it('says so when the pattern picked joins the stat of its day and ticker (#734)', async () => {
+      findById = vi.fn(() => of(alone()));
+      update = vi.fn((_id: string, input: TradeEntryInput) =>
+        of(makeTrade({ ...alone(), pattern: input.pattern ?? 'GUS', statEntryId: 'stat-1' })),
+      );
+      const fixture = setup();
+      await settle(fixture);
+      const page = fixture.componentInstance;
+
+      page.setPattern('DT');
+      page.save();
+      await settle(fixture);
+
+      expect(TestBed.inject(StbToast).success).toHaveBeenCalledWith(
+        'journal.snackbar.updateAttached',
+      );
+    });
+
     // A long typed at creation must not fall back to a short on the first save before any fill.
     it('keeps the direction chosen at creation through a save before any fill', async () => {
       findById = vi.fn(() => of(alone()));

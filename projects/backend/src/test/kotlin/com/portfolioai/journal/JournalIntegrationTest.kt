@@ -347,6 +347,40 @@ class JournalIntegrationTest {
   }
 
   @Test
+  fun `a trade on its own whose pattern is changed to its stat's joins that stat`() {
+    // #734 : a double top typed with « + Trade » left on GUS stays without a stat ; switching its
+    // pattern on the sheet is the one fix the app offers, and it used to attach nothing.
+    val alone = service.createStandalone(sampleRequest(pattern = Pattern.SIR))
+
+    val updated = service.update(alone.id, sampleRequest(pattern = Pattern.GUS))
+
+    assertEquals(stat.id, updated.statEntryId)
+    assertEquals(
+      listOf(updated.id),
+      service.tradeLinksByStat(listOf(stat.id))[stat.id]?.map { it.tradeId },
+    )
+  }
+
+  @Test
+  fun `a trade on its own whose ticker is corrected to its stat's joins that stat`() {
+    val alone = service.createStandalone(sampleRequest(ticker = "AAPLL"))
+
+    val updated = service.update(alone.id, sampleRequest(ticker = " aapl "))
+
+    assertEquals(stat.id, updated.statEntryId)
+  }
+
+  @Test
+  fun `a trade with a stat edited onto another stat's triple stays with its own`() {
+    statRepo.save(sampleStat(user = testUser, ticker = "TSLA"))
+    val fromStat = service.create(sampleRequest())
+
+    val updated = service.update(fromStat.id, sampleRequest(ticker = "TSLA"))
+
+    assertEquals(stat.id, updated.statEntryId)
+  }
+
+  @Test
   fun `a trade with a stat keeps the stat's pattern — a change is refused`() {
     // The API used to take it : a SIR trade carrying a GUS stat, the state #648 rules out.
     val fromStat = service.create(sampleRequest())

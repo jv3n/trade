@@ -261,7 +261,9 @@ class TradeEntryService(
 
   /**
    * The stat link is not the client's to change : [TradeEntryRequest.statEntryId] is ignored. The
-   * pattern of a trade a stat holds is the stat's (#654) — changing it is a 400.
+   * pattern of a trade a stat holds is the stat's (#654) — changing it is a 400. A trade without a
+   * stat edited onto the day, ticker and pattern of one joins it (#734), as at creation ; a trade
+   * with a stat is never moved.
    */
   @Transactional
   fun update(id: UUID, request: TradeEntryRequest): TradeEntryDto {
@@ -277,6 +279,9 @@ class TradeEntryService(
     entry.note = request.note
     entry.errorNote = request.errorNote
     applyExecutions(entry, request)
+    if (entry.statEntryId == null) {
+      entry.statEntryId = statOfTheDay.find(entry.user.id, entry.tradeDate, entry.ticker, pattern)
+    }
     entry.updatedAt = Instant.now()
     val saved = repo.saveAndFlush(entry)
     publishChange(saved)
