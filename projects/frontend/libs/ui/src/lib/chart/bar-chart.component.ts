@@ -129,9 +129,10 @@ export class StbBarChart {
         textStyle: { color: palette.text },
         formatter: (params: unknown) => {
           const [first] = params as { dataIndex: number }[];
-          // Hovering off the bars hands over an empty list ; throwing would kill the tooltip.
-          if (!first) return '';
-          const bucket = buckets[first.dataIndex];
+          // Hovering off the bars hands over an empty list, and a tooltip still showing when the
+          // buckets shrink keeps an index past the new last one (#737) ; throwing would kill it.
+          const bucket = first && buckets[first.dataIndex];
+          if (!bucket) return '';
           // ECharts renders the formatter's string as HTML : everything the consumer handed over is
           // escaped, the markup is ours.
           const rows = series

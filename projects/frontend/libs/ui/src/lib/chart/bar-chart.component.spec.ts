@@ -145,6 +145,16 @@ describe('StbBarChart', () => {
     expect(tooltip).toContain('Net <b>-355.00 $</b>');
   });
 
+  // #737 : the tooltip still showing at the right of a week view keeps its index when the
+  // grouping switches to quarters, and ECharts calls the new formatter with it.
+  it('shows nothing, rather than throwing, for an index past the last bucket', () => {
+    expect(option().tooltip.formatter([{ dataIndex: BUCKETS.length + 5 }])).toBe('');
+  });
+
+  it('shows nothing when hovering off the bars', () => {
+    expect(option().tooltip.formatter([])).toBe('');
+  });
+
   // A design-system tooltip : the next consumer may pass a ticker or a typed note.
   it('escapes what the consumer hands over, its own markup aside', () => {
     const fixture = TestBed.createComponent(StbBarChart);
