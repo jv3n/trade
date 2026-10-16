@@ -113,6 +113,9 @@ internal fun StatEntry.fillFrom(request: StatEntryRequest, cleanTicker: String) 
   ssr = request.ssr
   this.noPush = noPush
   highInstitutions = request.highInstitutions
+  // Typing a Sink is what clears the mark : the two never sit together.
+  val dropTyped = listOf(gusDrop, gusDropTime, dtDrop, dtDropTime).any { it != null }
+  dropNotRead = request.dropNotRead && !dropTyped && dropCanBeNotRead
 }
 
 private fun BigDecimal?.required(label: String): BigDecimal =

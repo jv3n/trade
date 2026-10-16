@@ -101,6 +101,7 @@ function makeStat(overrides: Partial<StatEntry> = {}): StatEntry {
     under1Dollar: false,
     highInstitutions: true,
     noPush: false,
+    dropNotRead: false,
     completed: true,
     outOfPattern: [],
     trades: [],
@@ -174,15 +175,19 @@ function makeSummary(overrides: Partial<StatSummary> = {}): StatSummary {
     averageRetestPercent: null,
     averageRetestToTopPercent: null,
     retestTookTopCount: 0,
-    doubleTopsWithoutDrop: 0,
+    doubleTopsTookTopWithoutDrop: 0,
+    doubleTopsDropNotAsked: 0,
+    doubleTopsDropNotRead: 0,
     medianDoubleTopMinutes: null,
     medianRejectionMinutes: null,
     doubleTopsWithDrop: 0,
+    dropsAfterTookTop: 0,
     medianDropPercent: null,
     medianDropFromEntryPercent: null,
     medianDropMinutes: null,
     dropReachedTargetCount: 0,
     sessionsWithDrop: 0,
+    sessionsDropNotRead: 0,
     medianGusDropPercent: null,
     gusDropReachedTargetCount: 0,
     sessionsWithPushTime: 0,
@@ -2253,5 +2258,145 @@ describe('StatsPage', () => {
 
     expect(repo.create).not.toHaveBeenCalled();
     expect(page.creating()).toBe(true);
+  });
+});
+
+/**
+ * « Sink non relevé » (#729) — which kind of absent. The mark says the figure was not read and will
+ * not be : it records the observer, never the market. What is pinned :
+ *
+ *  - **Ticking it empties the Sink, typing a Sink unticks it** — the two never sit together.
+ *  - **A double top ticks on its four points** once marked, and the box only shows where a Sink is
+ *    asked : not after a retest that took the top, not before the drop was asked (12/10).
+ *  - **The table reads « not read »** instead of the amber « to fill ».
+ *  - **The KPI sub-label** splits the stats without a Sink by reason, and the terms add up.
+ */
+describe('StatsPage — Sink not read (#729)', () => {
+  const EN_SUB = {
+    stats: {
+      kpi: {
+        dropSub: 'median · Echo → Sink · n = {{count}} Sinks',
+        dropSubTookTop: ', {{count}} of them after the Apex was taken back',
+        gusDropSub: "median · Push's top → Sink · n = {{count}} of {{total}} completed GUS",
+        withoutDrop: ' · no Sink : {{count}} ({{reasons}})',
+        withoutDropReason: {
+          tookTop: 'Apex taken back {{count}}',
+          notRead: 'not read {{count}}',
+          notAsked: 'not asked {{count}}',
+          toFill: 'to fill {{count}}',
+        },
+      },
+    },
+  };
+
+  it('empties the Sink when ticked and saves the mark', async () => {
+    const { page, repo } = await setup({ rows: [makePending({ ticker: 'AEHL' })] });
+    page.setSessionPrice('gusDropPrice', 3.15);
+
+    page.toggleDropNotRead(true);
+
+    expect(repo.update).toHaveBeenCalledWith(
+      'stat-sgbx',
+      expect.objectContaining({ dropNotRead: true, gusDropPrice: null, gusDropTime: null }),
+    );
+  });
+
+  it('takes the mark off as soon as a Sink is typed', async () => {
+    const { page } = await setup({ rows: [makePending({ dropNotRead: true })] });
+
+    page.setSessionPrice('gusDropPrice', 3.15);
+
+    expect(page.session().dropNotRead).toBe(false);
+  });
+
+  // MULN, 17/10 : the session was not watched to the end — the low can't be read back.
+  it('lets a double top tick on its four points once its Sink is marked as not read', async () => {
+    const { page } = await setup({
+      rows: [makeDoubleTop({ dtRetestPrice: 2.85, dtRetestTime: '10:38' })],
+    });
+    expect(page.sessionMissing()).toContain('stats.fields.dtDrop');
+
+    page.toggleDropNotRead(true);
+
+    expect(page.sessionMissing()).toEqual([]);
+    expect(page.doubleTopProgress().total).toBe(4);
+  });
+
+  it('offers the mark only where a Sink is asked', async () => {
+    const { page } = await setup({
+      rows: [makeDoubleTop({ dtRetestPrice: 3.0, dtRetestTime: '10:38' })],
+    });
+
+    expect(page.dropMarkable()).toBe(false);
+  });
+
+  it('offers no mark on a double top recorded before the Sink was asked', async () => {
+    const { page } = await setup({
+      rows: [makeDoubleTop({ tradeDate: new Date(2026, 8, 17), dtRetestPrice: 2.85 })],
+    });
+
+    expect(page.dropMarkable()).toBe(false);
+  });
+
+  it('reads « not read » in the table rather than asking for the Sink', async () => {
+    const { page } = await setup({
+      rows: [makeStat({ id: 'aehl', dropNotRead: true }), makeStat({ id: 'ktta' })],
+    });
+    page.setPeriod({
+      period: 'custom',
+      dateFrom: new Date(2026, 8, 14),
+      dateTo: new Date(2026, 8, 18),
+    });
+
+    expect(page.rows().map((r) => r.gusDropToFill)).toEqual([false, true]);
+  });
+
+  it('splits the double tops without a Sink by reason, the terms adding up', async () => {
+    const { page } = await setup();
+    TestBed.inject(TranslateService).setTranslation('en', EN_SUB);
+
+    const label = page.dropSubLabel(
+      makeSummary({
+        completedDoubleTops: 4,
+        doubleTopsWithDrop: 2,
+        doubleTopsTookTopWithoutDrop: 1,
+        doubleTopsDropNotRead: 1,
+      }),
+      'DT',
+    );
+
+    expect(label).toBe(
+      'median · Echo → Sink · n = 2 Sinks · no Sink : 2 (Apex taken back 1 · not read 1)',
+    );
+  });
+
+  // The old « n = 2 · Apex repris : 1 » read as two slices ; an Echo that took the Apex and fell
+  // all the same is one of the Sinks.
+  it('counts a Sink after a retest that took the top among the Sinks, not beside them', async () => {
+    const { page } = await setup();
+    TestBed.inject(TranslateService).setTranslation('en', EN_SUB);
+
+    const label = page.dropSubLabel(
+      makeSummary({ completedDoubleTops: 3, doubleTopsWithDrop: 3, dropsAfterTookTop: 1 }),
+      'DT',
+    );
+
+    expect(label).toBe(
+      'median · Echo → Sink · n = 3 Sinks, 1 of them after the Apex was taken back',
+    );
+  });
+
+  it('tells the GUS still to fill from the ones not read', async () => {
+    const { page } = await setup();
+    TestBed.inject(TranslateService).setTranslation('en', EN_SUB);
+
+    const label = page.dropSubLabel(
+      makeSummary({ completed: 12, sessionsWithDrop: 9, sessionsDropNotRead: 1 }),
+      'GUS',
+    );
+
+    expect(label).toBe(
+      "median · Push's top → Sink · n = 9 of 12 completed GUS · no Sink : 3 (to fill 2 · not read 1)",
+    );
   });
 });

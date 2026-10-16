@@ -107,6 +107,11 @@ class StatEntry(
   @Column(nullable = false) var ssr: Boolean = false,
   /** The stock never pushed after the open (#302) — [pushOpenPrice] stays empty. */
   @Column(name = "no_push", nullable = false) var noPush: Boolean = false,
+  /**
+   * The Sink was not read and will not be (#729) — the observer's doing, never the market's : it is
+   * never counted beside [noPush]. Its Sink stays empty, and a double top ticks without it.
+   */
+  @Column(name = "drop_not_read", nullable = false) var dropNotRead: Boolean = false,
   /** More than 20 % of the float held by institutions (#369) — the threshold lives in the UI. */
   @Column(name = "high_institutions", nullable = false) var highInstitutions: Boolean = false,
 
@@ -128,8 +133,8 @@ class StatEntry(
 
   /**
    * The session prices of its pattern are in — five for a GUS, or four on a [noPush] day ; for a DT
-   * its five points and their times, four when the retest took the top (#710) or before the drop
-   * was asked (#726). The precondition to tick.
+   * its five points and their times, four when the retest took the top (#710), before the drop was
+   * asked (#726) or when it is not read (#729). The precondition to tick.
    */
   val hasFullSession: Boolean
     get() = missingSessionPrices.isEmpty()
@@ -159,7 +164,7 @@ class StatEntry(
     }
 
   /** A DT whose retest took the top back : a breakout, with no drop to measure after it. */
-  private val retestTookTop: Boolean
+  val retestTookTop: Boolean
     get() {
       val top = dtTopPrice
       val retest = dtRetestPrice
@@ -167,11 +172,15 @@ class StatEntry(
     }
 
   /**
-   * A DT under its top with no drop : before [DT_DROP_SINCE], the app did not ask for one (#726) —
-   * the drop KPIs count it apart, so their `n` still adds up to the completed double tops.
+   * A DT under its top with no drop and no mark : before [DT_DROP_SINCE], the app did not ask for
+   * one (#726) — the drop KPIs count it apart, so their `n` still adds up to the completed DTs.
    */
-  val isDoubleTopWithoutDrop: Boolean
-    get() = isDoubleTop && !retestTookTop && dtDropPrice == null
+  val isDoubleTopDropNotAsked: Boolean
+    get() = isDoubleTop && !retestTookTop && !dropNotRead && dtDropPrice == null
+
+  /** Whether the Sink can be marked as not read : a GUS, or a DT whose Sink is asked (#729). */
+  val dropCanBeNotRead: Boolean
+    get() = !isDoubleTop || (!retestTookTop && !tradeDate.isBefore(DT_DROP_SINCE))
 
   /**
    * Labels of the session prices (and a DT's times) still missing, in the sheet's order — a field
@@ -180,7 +189,7 @@ class StatEntry(
   val missingSessionPrices: List<String>
     get() =
       (if (isDoubleTop) {
-          val drop = !retestTookTop
+          val drop = !retestTookTop && !dropNotRead
           listOfNotNull(
             "Start" to dtStartPrice,
             "Top" to dtTopPrice,

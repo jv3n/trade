@@ -1095,6 +1095,109 @@ class StatsListingIntegrationTest {
     repo.saveAndFlush(stat)
   }
 
+  // ---------------------------------------------------------------------------
+  // Sink not read (#729) — which kind of absent
+  // ---------------------------------------------------------------------------
+
+  // The session was not watched to the end : the low can't be read back, and must not be invented.
+  @Test
+  fun `a double top under its top ticks with its Sink marked as not read`() {
+    val ticked =
+      createCompleted(
+        doubleTopRequest(ticker = "SGBX").copy(tradeDate = DROP_DAY, dropNotRead = true)
+      )
+
+    assertTrue(ticked.completed)
+    assertTrue(ticked.dropNotRead)
+    assertNull(ticked.dtDropPrice)
+  }
+
+  @Test
+  fun `typing a Sink afterwards clears the mark`() {
+    val stat =
+      createCompleted(
+        doubleTopRequest(ticker = "SGBX").copy(tradeDate = DROP_DAY, dropNotRead = true)
+      )
+
+    val updated =
+      service.update(stat.id, sgbxWithDrop().copy(tradeDate = DROP_DAY, dropNotRead = true))
+
+    assertFalse(updated.dropNotRead, "the figure turned up : the mark goes")
+    assertEquals(0, BigDecimal("2.30").compareTo(updated.dtDropPrice))
+  }
+
+  // No case where there is nothing to read : a breakout has no Sink, and before 12/10 none was
+  // asked.
+  @Test
+  fun `the mark is not kept where no Sink is asked`() {
+    val breakout = service.create(nxttDoubleTop().copy(tradeDate = DROP_DAY, dropNotRead = true))
+    val september = service.create(doubleTopRequest(ticker = "MULN").copy(dropNotRead = true))
+
+    assertFalse(breakout.dropNotRead)
+    assertFalse(september.dropNotRead)
+  }
+
+  @Test
+  fun `a GUS can mark its Sink as not read`() {
+    val stat = createCompleted(fullSessionRequest(ticker = "AEHL").copy(dropNotRead = true))
+
+    assertTrue(stat.dropNotRead)
+    assertFalse(stat.noPush, "the observer's mark is not a market fact")
+  }
+
+  @Test
+  fun `the database refuses a mark beside a typed Sink`() {
+    val stat =
+      makeStat(testUser, ticker = "KTTA", tradeDate = DAY).apply {
+        gusDropPrice = BigDecimal("3.10")
+        dropNotRead = true
+      }
+
+    assertThrows(DataIntegrityViolationException::class.java) { repo.saveAndFlush(stat) }
+  }
+
+  @Test
+  fun `summarise counts the double tops without a Sink by reason, adding up to the completed`() {
+    createCompleted(sgbxWithDrop().copy(tradeDate = DROP_DAY))
+    createCompleted(nxttDoubleTop())
+    createCompleted(doubleTopRequest(ticker = "MULN"))
+    createCompleted(doubleTopRequest(ticker = "GRI").copy(tradeDate = DROP_DAY, dropNotRead = true))
+    // Took its Apex back, then dumped all the same : a Sink, and a breakout too.
+    createCompleted(
+      nxttDoubleTop()
+        .copy(ticker = "IMNN", dtDropPrice = BigDecimal("2.50"), dtDropTime = LocalTime.of(11, 20))
+    )
+
+    val summary = service.summarise(dtOnly)
+
+    assertEquals(5, summary.completedDoubleTops)
+    assertEquals(2, summary.doubleTopsWithDrop)
+    assertEquals(1, summary.dropsAfterTookTop, "IMNN, counted among the Sinks, not beside them")
+    assertEquals(1, summary.doubleTopsTookTopWithoutDrop)
+    assertEquals(1, summary.doubleTopsDropNotAsked)
+    assertEquals(1, summary.doubleTopsDropNotRead)
+    assertEquals(
+      summary.completedDoubleTops,
+      summary.doubleTopsWithDrop +
+        summary.doubleTopsTookTopWithoutDrop +
+        summary.doubleTopsDropNotAsked +
+        summary.doubleTopsDropNotRead,
+    )
+  }
+
+  @Test
+  fun `summarise counts the GUS whose Sink is not read apart from those still to fill`() {
+    createCompleted(kttaWithDrop())
+    createCompleted(fullSessionRequest(ticker = "AEHL").copy(dropNotRead = true))
+    createCompleted(fullSessionRequest(ticker = "NUWE"))
+
+    val summary = service.summarise(gusOnly)
+
+    assertEquals(1, summary.sessionsWithDrop)
+    assertEquals(1, summary.sessionsDropNotRead, "NUWE is still to fill, not « not read »")
+    assertEquals(0, summary.noPushCount, "never counted beside a market fact")
+  }
+
   @Test
   fun `a drop above the retest or before it in time is a 400`() {
     listOf(
@@ -1188,15 +1291,16 @@ class StatsListingIntegrationTest {
 
     assertEquals(3, summary.completedDoubleTops)
     assertEquals(2, summary.doubleTopsWithDrop)
-    assertEquals(0, summary.doubleTopsWithoutDrop, "NXTT has no drop to measure, none is missing")
+    assertEquals(1, summary.doubleTopsTookTopWithoutDrop, "NXTT has no drop to measure")
+    assertEquals(0, summary.doubleTopsDropNotAsked, "none is missing")
     assertEquals(0, BigDecimal("-14.04").compareTo(summary.medianDropPercent))
     assertEquals(0, BigDecimal("-12.58").compareTo(summary.medianDropFromEntryPercent))
     assertEquals(0, BigDecimal("22.50").compareTo(summary.medianDropMinutes))
     assertEquals(1, summary.dropReachedTargetCount, "only SGBX gave 10 % from the entry")
   }
 
-  // The drop's n, the breakouts and the DTs from before the drop was asked add up to the completed
-  // double tops : « n = 1 · Apex repris : 1 · sans Sink : 1 » for 3 (#726).
+  // The drop's n and the DTs without one, by reason, add up to the completed double tops :
+  // « n = 1 Sinks · sans Sink : 2 (Apex repris 1 · pas demandé 1) » for 3 (#726, #729).
   @Test
   fun `summarise counts apart the double tops recorded before the drop was asked`() {
     createCompleted(sgbxWithDrop().copy(tradeDate = DROP_DAY))
@@ -1208,7 +1312,9 @@ class StatsListingIntegrationTest {
     assertEquals(3, summary.completedDoubleTops)
     assertEquals(1, summary.doubleTopsWithDrop)
     assertEquals(1, summary.retestTookTopCount)
-    assertEquals(1, summary.doubleTopsWithoutDrop, "MULN, recorded before the drop was asked")
+    assertEquals(1, summary.doubleTopsTookTopWithoutDrop)
+    assertEquals(1, summary.doubleTopsDropNotAsked, "MULN, recorded before the drop was asked")
+    assertEquals(0, summary.doubleTopsDropNotRead)
   }
 
   // A breakout, or a DT from before the drop was asked, is ticked without one (#710, #726).

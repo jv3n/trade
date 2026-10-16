@@ -713,6 +713,22 @@ go with the old names) :
   introduced it. A Sink typed on an earlier DT still counts in every KPI — they read the price,
   never the rule.
 - The flags stay (SSR, institutions > 20 %) ; « no push » does not apply.
+- **« Not read » — a Sink marked as not caught** (#729), on the GUS and the DT alike : a box under
+  the Sink, « Non relevé », says the figure was not read and will not be — the session was not
+  watched to the end. It is **provenance, never an observation** : unlike « no push », which records
+  what the market did, it records what the observer did not do, and is never counted beside a market
+  fact. **A deliberate act** : never pre-checked, never inferred from age. Ticking it empties the
+  Sink ; typing a Sink unticks it and puts the stat back in the figures. Hidden on a DT whose Echo
+  took the Apex (nothing to read). Effects : a DT ticks without its Sink (« 4 / 4 prix · 4 / 4
+  heures · Sink non relevé ») ; the table reads a neutral « non relevé » instead of the amber « à
+  saisir » ; the Sink figures never read it. On step 1 of the Today page a double top waiting only
+  for its Sink can now be ticked, which takes it off the list — no need to wait out the 30 days.
+- **The Sink KPIs' sub-label, on their own axes** (#729) : « n = x Sinks » — the stats that have one,
+  « dont y ont repris l'Apex » added when an Echo that took the Apex still came down — then apart,
+  « sans Sink : z (Apex repris · non relevé · pas demandé) », each reason shown once it counts a
+  stat. The Sinks and the « sans Sink » add up to the completed stats ; the former « Apex repris : y »
+  beside n read as a third slice, while an Echo that took the Apex and then fell counts in both. The
+  GUS row reads the same way : « sans Sink : z (à saisir · non relevé) ».
 - **The page follows the pattern** : a **GUS / DT / All** switch above the KPIs picks the KPIs, the
   table's columns and the averages (#648 — the SIR, SIV and discretionary views stayed empty). Each
   pattern has its own numbers, never folded into the other's. **DT** : completed DT stats, average
@@ -720,9 +736,9 @@ go with the old names) :
   Apex (E, and how many took it back), and the **median duration** Base → Echo with its `n` and the
   median rejection (R) — a median, not a mean : one DT that drags all afternoon would move an average
   and say nothing about the typical one. A **second row** says what the DT pays (#706), medians again,
-  with its own `n` — the completed DTs minus those whose Echo took the Apex (« n = 2 · Apex repris :
-  1 »), and minus those recorded before the Sink was asked, counted once there are any (« · sans
-  Sink : 2 », #726) — the three add up to the completed DTs : the **Sink from the Echo** (S), the **Sink from the sheet's entry**, the **duration of S**, and
+  with its own `n` — the DTs that have a Sink, the ones without one counted apart by reason (« n = 2
+  Sinks · sans Sink : 2 (Apex repris 1 · non relevé 1) », #726, #729 — see « Not read » above) : the
+  **Sink from the Echo** (S), the **Sink from the sheet's entry**, the **duration of S**, and
   **« reached 10 % »** — how many Sinks gave the 10 % the sheet promises from its entry. The table
   shows float and volume, then Base, « A — apex », « R — rejection », « E — echo » and the duration
   (total, and the three legs under it), then « S — sink » (the price, the short's gain from the Echo

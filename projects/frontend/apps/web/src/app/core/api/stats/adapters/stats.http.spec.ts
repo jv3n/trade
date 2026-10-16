@@ -178,6 +178,7 @@ describe('HttpStatsRepository', () => {
       gusDropTime: null,
       ssr: true,
       noPush: false,
+      dropNotRead: false,
       highInstitutions: false,
     });
     req.flush(wireStat());
@@ -305,6 +306,7 @@ describe('HttpStatsRepository', () => {
       ssr: true,
       under1Dollar: false,
       noPush: false,
+      dropNotRead: false,
       highInstitutions: false,
       completed: true,
       outOfPattern: [],
@@ -345,6 +347,7 @@ describe('HttpStatsRepository', () => {
       gusDropTime: null,
       ssr: true,
       noPush: false,
+      dropNotRead: false,
       highInstitutions: false,
     };
   }
