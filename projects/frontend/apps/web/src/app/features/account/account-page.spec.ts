@@ -1,6 +1,6 @@
 import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { of, Subject, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -32,6 +32,8 @@ import { AccountPage } from './account-page';
  *  - **The table opens on the trades** (#473, #629) — what the page is opened for ; the KPI row is
  *    not narrowed by that default, and an empty filter says so.
  *  - **A filter change rewinds to page 0** — page 4 of the previous result set means nothing.
+ *  - **A link names its filter** (#739) — a report segment opens the page on its days, as a custom
+ *    range, and its type ; the KPI tiles follow those days like any period.
  *  - **The balance column is the server's** — `balanceAfter` is rendered as received, never
  *    recomputed from the visible rows, or filtering to trades would renumber it.
  *
@@ -150,6 +152,18 @@ describe('AccountPage', () => {
     expect(sent.types).toEqual(['DEPOSIT', 'WITHDRAWAL']);
   });
 
+  // #739 : the report's merged fees series lands here, and its list must sum to the segment.
+  it('expands the « fees » choice into the locates and the corrections', async () => {
+    const fixture = await render();
+    findMovements.mockClear();
+
+    fixture.componentInstance.onTypeChange('fees');
+    await settle(fixture);
+
+    const sent = findMovements.mock.calls[0][0] as AccountMovementFilter;
+    expect(sent.types).toEqual(['LOCATE', 'ADJUSTMENT']);
+  });
+
   // #629 : a month of real data holds more locates than trades — they have their own filter.
   it('opens on the trades alone, the rows the page is opened for', async () => {
     const fixture = await render();
@@ -157,6 +171,30 @@ describe('AccountPage', () => {
     const sent = findMovements.mock.calls[0][0] as AccountMovementFilter;
     expect(fixture.componentInstance.appliedFilter().type).toBe('trades');
     expect(sent.types).toEqual(['TRADE']);
+  });
+
+  // #739 : « the list sums to the segment » only holds if the link's days and type are what is asked.
+  it('opens on the days and the type a report segment names', async () => {
+    TestBed.overrideProvider(ActivatedRoute, {
+      useValue: {
+        queryParamMap: of(
+          convertToParamMap({ from: '2026-09-14', to: '2026-09-20', type: 'locates' }),
+        ),
+        fragment: of('movements'),
+      },
+    });
+    const fixture = await render();
+
+    const sent = findMovements.mock.calls[0][0] as AccountMovementFilter;
+    const summarised = getSummary.mock.calls[0][0] as AccountMovementFilter;
+    expect(fixture.componentInstance.appliedFilter().period).toBe('custom');
+    expect(sent).toEqual({
+      dateFrom: new Date(2026, 8, 14),
+      dateTo: new Date(2026, 8, 20),
+      types: ['LOCATE'],
+    });
+    expect(summarised.dateFrom).toEqual(new Date(2026, 8, 14));
+    expect(summarised.dateTo).toEqual(new Date(2026, 8, 20));
   });
 
   // #624 : « add a deposit » under a filter read as an empty account.

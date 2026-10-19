@@ -5,6 +5,7 @@ import { startOfDay } from 'date-fns';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { Router } from '@angular/router';
 import { provideNativeDateAdapter } from '@portfolioai/ui';
 import {
   AccountMovementFilter,
@@ -28,6 +29,8 @@ import { ReportsPage } from './reports-page';
  *  - **A filter change keeps the previous chart** until the answer lands — no skeleton flash.
  *  - **An empty period** shows its empty state ; **a failed load** its banner, and « retry » asks
  *    again.
+ *  - **A segment opens the account's movements behind it** (#739) : its bucket's days and its type,
+ *    in the URL, landing on the movements table.
  */
 function bucket(overrides: Partial<CashFlowBucket> = {}): CashFlowBucket {
   return {
@@ -237,6 +240,29 @@ describe('ReportsPage', () => {
 
     expect(fixture.nativeElement.querySelector('[data-testid="reports-empty"]')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('ui-bar-chart')).toBeNull();
+  });
+
+  it('opens the account on the days of the bucket clicked and the type of its segment', async () => {
+    const fixture = await render();
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+    // The second week, its losing trades.
+    fixture.componentInstance.openSegment({ bucket: 1, series: 'losing' });
+
+    expect(navigate).toHaveBeenCalledWith(['/account'], {
+      queryParams: { from: '2026-09-14', to: '2026-09-20', type: 'trades' },
+      fragment: 'movements',
+    });
+  });
+
+  // Locates and corrections are one series here, one choice there : the list sums to the segment.
+  it('opens the merged fees on the locates and corrections together', async () => {
+    const fixture = await render();
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+    fixture.componentInstance.openSegment({ bucket: 1, series: 'fees' });
+
+    expect(navigate.mock.lastCall?.[1]?.queryParams?.['type']).toBe('fees');
   });
 
   it('says the load failed, and asks again on retry', async () => {

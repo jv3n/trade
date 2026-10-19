@@ -187,6 +187,9 @@
               [format]="formatAmount"
               [netLabel]="'reports.flow.series.net' | translate"
               [height]="260"
+              [clickable]="true"
+              [hint]="'reports.flow.clickHint' | translate"
+              (segmentClick)="openSegment($event)"
             />
           </mat-card>
 

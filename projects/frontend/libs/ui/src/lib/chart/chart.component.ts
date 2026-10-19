@@ -7,6 +7,7 @@ import {
   effect,
   inject,
   input,
+  output,
   viewChild,
 } from '@angular/core';
 import { BarChart, LineChart, ScatterChart } from 'echarts/charts';
@@ -47,6 +48,12 @@ export type StbChartOption = echarts.EChartsCoreOption;
 /** Builds an option from the resolved palette — charts are described as a function of the theme. */
 export type StbChartOptionFactory = (palette: ChartPalette) => StbChartOption;
 
+/** A click on a drawn item : which series, and which of its data points. */
+export interface StbChartItemClick {
+  seriesIndex: number;
+  dataIndex: number;
+}
+
 /**
  * The base every chart type is built on : it owns the ECharts instance and the three things every
  * chart needs and always gets wrong — resizing with its container, disposing with the view, and
@@ -79,6 +86,8 @@ export class StbChart {
   readonly optionFactory = input.required<StbChartOptionFactory>();
   /** Height of the drawing area. Charts have no intrinsic size. */
   readonly height = input(160);
+  /** A click on a drawn item ; the blank around the items and `silent` series emit nothing. */
+  readonly itemClick = output<StbChartItemClick>();
 
   private readonly canvas = viewChild.required<ElementRef<HTMLDivElement>>('canvas');
   private instance: echarts.ECharts | null = null;
@@ -123,9 +132,13 @@ export class StbChart {
       this.instance?.dispose();
       this.instance = null;
     }
-    this.instance ??= echarts.init(this.canvas().nativeElement, undefined, {
-      renderer: 'canvas',
-    });
+    if (!this.instance) {
+      this.instance = echarts.init(this.canvas().nativeElement, undefined, { renderer: 'canvas' });
+      // A theme rebuild disposes the instance and its handlers with it : bound on every init.
+      this.instance.on('click', (event) =>
+        this.itemClick.emit({ seriesIndex: event.seriesIndex ?? -1, dataIndex: event.dataIndex }),
+      );
+    }
     this.instance.setOption(
       { ...ANIMATION_DEFAULTS, ...factory(readChartPalette()), animation: !prefersReducedMotion() },
       { replaceMerge: ['series'] },

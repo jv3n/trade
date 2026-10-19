@@ -1233,6 +1233,19 @@ dialog.locate-dialog {
   font-size: 12px;
 }
 
+.flow-tooltip .tt-hint {
+  margin-top: 6px;
+  color: var(--text-faint);
+}
+
+.flow-chart .flow-segment {
+  cursor: pointer;
+}
+
+.flow-chart .flow-segment:hover {
+  filter: brightness(1.15);
+}
+
 .flow-tooltip .tt-title {
   font-weight: 600;
   margin-bottom: 6px;

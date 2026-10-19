@@ -1,7 +1,16 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  computed,
+  effect,
+  inject,
+  linkedSignal,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   AreaChartPoint,
@@ -26,7 +35,7 @@ import {
   stbLoadGate,
 } from '@portfolioai/ui';
 import { format } from 'date-fns';
-import { EMPTY, Observable, catchError, filter, switchMap, tap } from 'rxjs';
+import { EMPTY, Observable, catchError, filter, map, switchMap, tap } from 'rxjs';
 import {
   AccountMovement,
   AccountMovementFilter,
@@ -60,21 +69,13 @@ import {
 import { NewLocateDialog } from '../locates/new-locate-dialog/new-locate-dialog';
 import { MorningReconciliation } from './morning-reconciliation/morning-reconciliation';
 import { MovementDialog, MovementDialogData } from './movement-dialog/movement-dialog';
-
-/**
- * The type filter as the user reads it. `cash` groups deposits and withdrawals : from the ledger's
- * point of view they are the same question — money I put in or took out — and the mockup offers
- * them as one choice.
- */
-export type MovementTypeFilter = 'all' | 'trades' | 'cash' | 'corrections' | 'locates';
-
-export const MOVEMENT_TYPE_FILTERS: readonly MovementTypeFilter[] = [
-  'all',
-  'trades',
-  'cash',
-  'corrections',
-  'locates',
-];
+import {
+  MOVEMENTS_FRAGMENT,
+  MOVEMENT_TYPE_FILTERS,
+  MovementTypeFilter,
+  MovementsQuery,
+  movementsQueryFrom,
+} from './movements-query';
 
 const TYPES_BY_FILTER: Record<MovementTypeFilter, readonly AccountMovementType[] | null> = {
   all: null,
@@ -82,6 +83,7 @@ const TYPES_BY_FILTER: Record<MovementTypeFilter, readonly AccountMovementType[]
   cash: ['DEPOSIT', 'WITHDRAWAL'],
   corrections: ['ADJUSTMENT'],
   locates: ['LOCATE'],
+  fees: ['LOCATE', 'ADJUSTMENT'],
 };
 
 /** The period's locates as the tile reads them, unsigned — the label carries the direction. */
@@ -109,6 +111,16 @@ interface AccountFilter {
   dateFrom: Date | null;
   dateTo: Date | null;
   type: MovementTypeFilter;
+}
+
+/**
+ * Defaults to the running month's trades — what the page is opened for (#473, #629) ; locates,
+ * deposits and corrections have their own filters, and the KPI tiles keep counting them. A link
+ * from a report segment names its own days and type instead (#739).
+ */
+function initialFilter(query: MovementsQuery | null): AccountFilter {
+  if (query) return { period: 'custom', ...query };
+  return { period: 'thisMonth', ...computePeriodRange('thisMonth'), type: 'trades' };
 }
 
 /** Same day, or both open : a type change keeps the period, and must not reload the tiles. */
@@ -194,18 +206,18 @@ export class AccountPage {
   private readonly confirm = inject(ConfirmService);
   private readonly translate = inject(TranslateService);
   private readonly toasts = inject(StbToast);
+  private readonly route = inject(ActivatedRoute);
 
-  /**
-   * Defaults to the running month's trades — what the page is opened for (#473, #629) ; locates,
-   * deposits and corrections have their own filters, and the KPI tiles keep counting them.
-   */
-  readonly appliedFilter = signal<AccountFilter>({
-    period: 'thisMonth',
-    ...computePeriodRange('thisMonth'),
-    type: 'trades',
+  /** The filter a link names (#739), followed if the query changes under the same page. */
+  private readonly query = toSignal(this.route.queryParamMap.pipe(map(movementsQueryFrom)), {
+    requireSync: true,
   });
+  readonly appliedFilter = linkedSignal<AccountFilter>(() => initialFilter(this.query()));
 
-  readonly pageIndex = signal(0);
+  readonly pageIndex = linkedSignal(() => {
+    this.query();
+    return 0;
+  });
   readonly pageSize = signal(25);
   /**
    * Bumped by a write, and part of every resource's params : a new key supersedes a load in flight,
@@ -241,6 +253,8 @@ export class AccountPage {
     stream: ({ params }) => this.repo.findMovements(params.filter, params.page),
   });
   readonly loading = this.movementsResource.isLoading;
+  private readonly fragment = toSignal(this.route.fragment, { requireSync: true });
+  private readonly movementsCard = viewChild('movementsCard', { read: ElementRef });
 
   /** First load only (#539) : a refetch keeps the content on screen. */
   readonly gate = stbLoadGate(this.loading);
@@ -348,6 +362,16 @@ export class AccountPage {
       share: !credit && s.periodPnl > 0 ? (amount / s.periodPnl) * 100 : null,
     };
   });
+
+  constructor() {
+    // A link naming the movements lands on them once they are drawn (#739). The router's anchor
+    // scrolling reads the window, and the page scrolls inside the shell's sidenav content.
+    effect(() => {
+      const card = this.movementsCard();
+      if (this.fragment() !== MOVEMENTS_FRAGMENT || !card || this.gate.skeleton()) return;
+      card.nativeElement.scrollIntoView?.({ block: 'start' });
+    });
+  }
 
   /**
    * A 0 when nothing was located, unlike the gap's « — » : a period with nothing located measured

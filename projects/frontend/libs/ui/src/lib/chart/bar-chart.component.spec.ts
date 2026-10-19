@@ -14,6 +14,8 @@ import { ChartPalette } from './chart-theme';
  *  - **The net of each bar as a dot**, and a bucket where nothing moved as a flat tick instead — a
  *    net of zero and an empty week must not look alike.
  *  - **The tooltip** lists only the series that moved, then the net.
+ *  - **A segment answers a click only when asked to** (#739) — a pointer, and its bucket and series
+ *    key out ; ECharts' default pointer over a bar that does nothing is turned off otherwise.
  *  - **Nothing renders without a bucket** — the consumer shows its own empty state.
  */
 const PALETTE: ChartPalette = {
@@ -183,6 +185,64 @@ describe('StbBarChart', () => {
     };
 
     expect(built.tooltip.formatter([{ dataIndex: 2 }])).toContain('Deposits <b>1000 USD</b>');
+  });
+
+  describe('clicks (#739)', () => {
+    function clickable(enabled: boolean) {
+      const fixture = TestBed.createComponent(StbBarChart);
+      fixture.componentRef.setInput('series', SERIES);
+      fixture.componentRef.setInput('buckets', BUCKETS);
+      fixture.componentRef.setInput('format', usd);
+      fixture.componentRef.setInput('clickable', enabled);
+      fixture.componentRef.setInput('hint', enabled ? 'Click a segment' : null);
+      const clicks: unknown[] = [];
+      fixture.componentInstance.segmentClick.subscribe((c) => clicks.push(c));
+      return { chart: fixture.componentInstance, clicks };
+    }
+
+    function bars(chart: StbBarChart) {
+      return (
+        chart.option()(PALETTE) as { series: { type: string; cursor?: string }[] }
+      ).series.filter((s) => s.type === 'bar');
+    }
+
+    it('names the bucket and the series key of the segment clicked', () => {
+      const { chart, clicks } = clickable(true);
+
+      chart.onItemClick({ seriesIndex: 2, dataIndex: 0 });
+
+      expect(clicks).toEqual([{ bucket: 0, series: 'fees' }]);
+      expect(bars(chart).every((b) => b.cursor === 'pointer')).toBe(true);
+    });
+
+    // The net dot and the empty tick come after the bar series : a click there must not move.
+    it('ignores a click on the markers drawn after the bars', () => {
+      const { chart, clicks } = clickable(true);
+
+      chart.onItemClick({ seriesIndex: SERIES.length, dataIndex: 0 });
+      chart.onItemClick({ seriesIndex: -1, dataIndex: 0 });
+
+      expect(clicks).toEqual([]);
+    });
+
+    it('stays mute, with no pointer, unless clickable', () => {
+      const { chart, clicks } = clickable(false);
+
+      chart.onItemClick({ seriesIndex: 0, dataIndex: 0 });
+
+      expect(clicks).toEqual([]);
+      expect(bars(chart).every((b) => b.cursor === 'default')).toBe(true);
+    });
+
+    it('ends the tooltip on the hint, when one is given', () => {
+      const tooltip = (
+        clickable(true).chart.option()(PALETTE) as {
+          tooltip: { formatter: (params: unknown) => string };
+        }
+      ).tooltip.formatter([{ dataIndex: 0 }]);
+
+      expect(tooltip).toMatch(/Click a segment<\/span>$/);
+    });
   });
 
   describe('on screen', () => {

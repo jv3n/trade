@@ -8,6 +8,7 @@ import {
   bucketSizeAllowed,
   defaultBucketSize,
   fittingBucketSize,
+  movementTypeOf,
   nothingMoved,
   reportWindow,
   seriesKeys,
@@ -25,6 +26,8 @@ import {
  *    corrections one « fees » series.
  *  - **The breakdown** gives each type its share of the period's gross flows.
  *  - **An empty period** is told apart from a period whose net is zero.
+ *  - **A segment opens the account on its type** (#739) — the one whose list sums to the segment,
+ *    the merged fees included.
  */
 function bucket(overrides: Partial<CashFlowBucket> = {}): CashFlowBucket {
   return {
@@ -122,6 +125,22 @@ describe('the series', () => {
 
   it('adds the corrections to the locates in the fees', () => {
     expect(seriesValues(bucket({ locates: -262, adjustments: -12.4 })).fees).toBeCloseTo(-274.4);
+  });
+});
+
+describe('the account type a segment opens on', () => {
+  it('opens the trades on both sides, and deposits or withdrawals on their shared choice', () => {
+    expect(movementTypeOf('winning', REPORT_TYPES)).toBe('trades');
+    expect(movementTypeOf('losing', REPORT_TYPES)).toBe('trades');
+    expect(movementTypeOf('deposits', REPORT_TYPES)).toBe('cash');
+    expect(movementTypeOf('withdrawals', REPORT_TYPES)).toBe('cash');
+  });
+
+  // Locates and corrections are one series on the chart, and one choice on the account to match.
+  it('opens the merged fees on the fees, and the fees of one type on that type', () => {
+    expect(movementTypeOf('fees', REPORT_TYPES)).toBe('fees');
+    expect(movementTypeOf('fees', TRADING_ONLY)).toBe('locates');
+    expect(movementTypeOf('fees', ['TRADE', 'ADJUSTMENT'])).toBe('corrections');
   });
 });
 
