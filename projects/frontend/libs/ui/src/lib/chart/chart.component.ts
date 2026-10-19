@@ -91,6 +91,8 @@ export class StbChart {
 
   private readonly canvas = viewChild.required<ElementRef<HTMLDivElement>>('canvas');
   private instance: echarts.ECharts | null = null;
+  /** The series the live instance draws, by type and name — to tell a change of the set (#751). */
+  private seriesSet: string | null = null;
 
   constructor() {
     const destroyRef = inject(DestroyRef);
@@ -131,6 +133,7 @@ export class StbChart {
     if (rebuild) {
       this.instance?.dispose();
       this.instance = null;
+      this.seriesSet = null;
     }
     if (!this.instance) {
       this.instance = echarts.init(this.canvas().nativeElement, undefined, { renderer: 'canvas' });
@@ -139,9 +142,26 @@ export class StbChart {
         this.itemClick.emit({ seriesIndex: event.seriesIndex ?? -1, dataIndex: event.dataIndex }),
       );
     }
+    const option = factory(readChartPalette());
+    const seriesSet = seriesSetOf(option);
+    // A series removed under an open tooltip leaves it pointing past the new list : ECharts shows it
+    // again on the next tick and throws, still listing the series gone (#751). Hidden, it comes back
+    // on the next mouse move.
+    if (this.seriesSet !== null && seriesSet !== this.seriesSet) {
+      this.instance.dispatchAction({ type: 'hideTip' });
+    }
+    this.seriesSet = seriesSet;
     this.instance.setOption(
-      { ...ANIMATION_DEFAULTS, ...factory(readChartPalette()), animation: !prefersReducedMotion() },
+      { ...ANIMATION_DEFAULTS, ...option, animation: !prefersReducedMotion() },
       { replaceMerge: ['series'] },
     );
   }
+}
+
+function seriesSetOf(option: StbChartOption): string {
+  const series = option['series'];
+  const list = Array.isArray(series) ? series : series ? [series] : [];
+  return list
+    .map((s: { type?: string; name?: string }) => `${s.type ?? ''}:${s.name ?? ''}`)
+    .join('|');
 }
