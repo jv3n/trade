@@ -193,7 +193,7 @@
           </div>
         </section>
 
-        <section class="card">
+        <section class="card" id="mouvements">
           <h2>
             Mouvements
             <span class="actions">
@@ -214,12 +214,13 @@
                 <input class="input" type="date" aria-label="Du" value="2026-09-14" />
                 <input class="input" type="date" aria-label="Au" value="2026-09-18" />
               </span>
-              <select class="input" style="width: auto">
-                <option>Tous les types</option>
-                <option selected>Trades</option>
-                <option>Dépôts / retraits</option>
-                <option>Corrections</option>
-                <option>Locates</option>
+              <select class="input" style="width: auto" data-type aria-label="Type">
+                <option value="all">Tous les types</option>
+                <option value="trades" selected>Trades</option>
+                <option value="cash">Dépôts / retraits</option>
+                <option value="corrections">Corrections</option>
+                <option value="locates">Locates</option>
+                <option value="fees">Frais (locates + corrections)</option>
               </select>
             </span>
           </h2>
@@ -468,6 +469,23 @@
         };
         [shares, price, stock].forEach((el) => el.addEventListener('input', preview));
         document.querySelector('[data-open-locate-account]').addEventListener('click', () => dialog.showModal());
+      })();
+
+      // #739 : arrivé d'un segment des Rapports, les filtres viennent de l'URL — période en « Plage personnalisée », type —
+      // et la page s'ouvre sur les mouvements (#mouvements). « Retour » rend le rapport tel qu'il était.
+      (() => {
+        const params = new URLSearchParams(location.search);
+        const movements = document.getElementById('mouvements');
+        const from = params.get('from');
+        const to = params.get('to');
+        if (from && to) {
+          movements.querySelector('select[data-period]').value = 'custom';
+          const [fromInput, toInput] = movements.querySelectorAll('.period-range input');
+          fromInput.value = from;
+          toInput.value = to;
+        }
+        const type = params.get('type');
+        if (type) movements.querySelector('select[data-type]').value = type;
       })();
 
       // Filtre de période : « Plage personnalisée » révèle les deux dates, comme dans l'app.

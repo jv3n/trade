@@ -1,9 +1,11 @@
 import { DecimalPipe, formatDate, formatNumber } from '@angular/common';
 import { Component, LOCALE_ID, computed, inject, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   BarBucket,
+  BarSegmentClick,
   BarSeries,
   BarTone,
   StbBarChart,
@@ -32,6 +34,7 @@ import {
   computePeriodRange,
   selectPeriod,
 } from '../../shared/period-preset/period-preset';
+import { MOVEMENTS_FRAGMENT, toMovementsParams } from '../account/movements-query';
 import {
   BUCKET_SIZES,
   FlowSeriesKey,
@@ -41,6 +44,7 @@ import {
   bucketSizeAllowed,
   defaultBucketSize,
   fittingBucketSize,
+  movementTypeOf,
   nothingMoved,
   reportWindow,
   seriesKeys,
@@ -66,7 +70,7 @@ const TONES: Record<FlowSeriesKey, BarTone> = {
  * The period, the bar size and the type chips key one load ; a change keeps the previous chart on
  * screen until the next answer (`keptValue`), and only the first load shows a skeleton. The chips
  * filter the chart, the KPI row and the breakdown together — the balance tile excepted, a balance
- * being the whole account's.
+ * being the whole account's. A segment opens the account's movements behind it (#739).
  */
 @Component({
   selector: 'app-reports-page',
@@ -91,6 +95,7 @@ export class ReportsPage {
   private readonly repo = inject(AccountRepository);
   private readonly translate = inject(TranslateService);
   private readonly locale = inject(LOCALE_ID);
+  private readonly router = inject(Router);
 
   readonly bucketSizes = BUCKET_SIZES;
   readonly reportTypes = REPORT_TYPES;
@@ -224,6 +229,20 @@ export class ReportsPage {
 
   toggleTradingOnly(): void {
     this.storeTypes(this.tradingOnly() ? REPORT_TYPES : TRADING_ONLY);
+  }
+
+  /**
+   * The movements a segment is made of : its bucket's days, as clipped to the period, and its type
+   * — a real navigation, so « Back » gives the report back as it was.
+   */
+  openSegment({ bucket, series }: BarSegmentClick): void {
+    const b = this.flow()?.buckets[bucket];
+    if (!b) return;
+    const type = movementTypeOf(series as FlowSeriesKey, this.types());
+    void this.router.navigate(['/account'], {
+      queryParams: toMovementsParams({ dateFrom: b.from, dateTo: b.to, type }),
+      fragment: MOVEMENTS_FRAGMENT,
+    });
   }
 
   retry(): void {

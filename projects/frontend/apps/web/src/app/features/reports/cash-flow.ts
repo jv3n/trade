@@ -9,6 +9,7 @@ import {
   PeriodRange,
   PeriodSelection,
 } from '../../shared/period-preset/period-preset';
+import { MovementTypeFilter } from '../account/movements-query';
 
 /**
  * The window the report asks for. A preset never runs past [today] (#703) : « Ce mois », « Ce
@@ -132,6 +133,29 @@ export function seriesKeys(types: readonly AccountMovementType[]): FlowSeriesKey
   if (on.has('DEPOSIT')) keys.push('deposits');
   if (on.has('WITHDRAWAL')) keys.push('withdrawals');
   return keys;
+}
+
+/**
+ * The account's type filter a segment opens on (#739) — the one whose list sums to the segment.
+ * Deposits and withdrawals are one choice there, and so are locates and corrections, the fees
+ * series being one type only when the chips leave the other out.
+ */
+export function movementTypeOf(
+  key: FlowSeriesKey,
+  types: readonly AccountMovementType[],
+): MovementTypeFilter {
+  switch (key) {
+    case 'winning':
+    case 'losing':
+      return 'trades';
+    case 'deposits':
+    case 'withdrawals':
+      return 'cash';
+    case 'fees':
+      if (!types.includes('ADJUSTMENT')) return 'locates';
+      if (!types.includes('LOCATE')) return 'corrections';
+      return 'fees';
+  }
 }
 
 /** What one bucket moved per series. */

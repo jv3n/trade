@@ -435,7 +435,8 @@
         "trades": "Trades",
         "cash": "Deposits / withdrawals",
         "corrections": "Corrections",
-        "locates": "Locates"
+        "locates": "Locates",
+        "fees": "Fees (locates + corrections)"
       }
     },
     "direction": {
@@ -1480,6 +1481,7 @@
         "net": "Net"
       },
       "weekOf": "Week of {{from}} to {{to}}",
+      "clickHint": "Click a segment to open its movements in Account",
       "quarter": "Q{{quarter}} {{year}}",
       "breakdown": {
         "title": "Breakdown",

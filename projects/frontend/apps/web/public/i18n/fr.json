@@ -435,7 +435,8 @@
         "trades": "Trades",
         "cash": "Dépôts / retraits",
         "corrections": "Corrections",
-        "locates": "Locates"
+        "locates": "Locates",
+        "fees": "Frais (locates + corrections)"
       }
     },
     "direction": {
@@ -1480,6 +1481,7 @@
         "net": "Net"
       },
       "weekOf": "Semaine du {{from}} au {{to}}",
+      "clickHint": "Cliquer un segment ouvre ses mouvements sur Compte",
       "quarter": "T{{quarter}} {{year}}",
       "breakdown": {
         "title": "Répartition",

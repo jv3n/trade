@@ -1143,7 +1143,10 @@ schedule is in [`docs/notes/tradezero-fees.md`](../docs/notes/tradezero-fees.md)
 real month loaded the locates outnumber the trades, so they keep their own « Locates » filter and
 the « Locates » tile keeps them in sight. A locate typed from the page's « Locate » button switches
 the filter to « Locates » when the active one would hide it, so what was just typed is on screen ;
-« Tous les types » is one click away, and the period keeps its own default (« Ce mois »). Corrections are hidden by default, so the gap tile
+« Tous les types » is one click away, and the period keeps its own default (« Ce mois »). Arriving
+from a report segment (#739), the period and the type come from the URL instead, and the page opens
+on the table — « Frais (locates + corrections) » is the choice the report's merged fees series lands
+on, like « Dépôts / retraits » for its two neutral series. Corrections are hidden by default, so the gap tile
 above is what keeps them in sight. A filter that matches nothing says so — « Aucun mouvement pour
 ce filtre » with a button back to « Tous les types » — rather than the empty account's « ajoute
 un dépôt ».
@@ -1253,6 +1256,25 @@ of the amounts without their sign), then the net.
 **A period with no movement** shows an empty state — « Aucun mouvement sur cette période » and a
 way back to « Toutes périodes » — never an empty chart frame. Changing a filter keeps the previous
 chart on screen until the new one lands, no skeleton flash.
+
+**A segment opens the movements behind it** (#739) : the chart says *how much*, the account's
+movements table says *which ones*. Clicking a segment navigates to **Compte → Mouvements** with the
+bucket's days in « Plage personnalisée » (clipped to the period, like its label) and the segment's
+type, scrolled to the table — the filters travel in the URL, so « Retour » gives the report back as
+it was and the link can be kept.
+
+| Segment | Compte → Mouvements, Type |
+|---|---|
+| Trades gagnants / perdants | Trades |
+| Dépôts / Retraits | Dépôts / retraits — one option there, so either lands on both |
+| Frais — locates et corrections | **Frais (locates + corrections)** — one choice there too, so the series stays merged (see above) |
+| Frais — locates (corrections off the chips) | Locates |
+
+The list then sums to the segment's height — except a deposit or a withdrawal alone, which opens on
+both. **The net dot and the empty
+space of a bucket navigate nowhere** — an accidental click must not move the page. The segments show
+a pointer and brighten on hover, and the tooltip ends on « Cliquer un segment ouvre ses mouvements
+sur Compte ».
 
 **Screen** : [`rapports.html`](rapports.html) — the whole account over three months by week, a
 mockup-only switch for « Trading seul » and for a period without movement.

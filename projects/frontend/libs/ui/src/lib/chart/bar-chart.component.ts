@@ -1,6 +1,6 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { ChartPalette } from './chart-theme';
-import { StbChart, StbChartOptionFactory } from './chart.component';
+import { StbChart, StbChartItemClick, StbChartOptionFactory } from './chart.component';
 
 /**
  * What a series stands for, which sets its colour : `gain` / `loss` are outcomes (green / red),
@@ -25,6 +25,12 @@ export interface BarBucket {
   values: Readonly<Record<string, number>>;
 }
 
+/** A clicked segment : the bucket's index in [StbBarChart.buckets], and the series' key. */
+export interface BarSegmentClick {
+  bucket: number;
+  series: string;
+}
+
 /**
  * Stacked, signed bar chart (#685) — one bar per bucket around a zero line : what is positive
  * stacks above, what is negative below, each series in its tone's colour. Each bar carries its
@@ -35,6 +41,9 @@ export interface BarBucket {
  * The consumer hands over [series] and [buckets] ; the stacking, the axes, the colours and the
  * legend are the lib's business, like `StbAreaChart` (#228). It renders nothing without a bucket —
  * the consumer shows its own empty state.
+ *
+ * With [clickable], a segment takes a pointer and a click on it emits [segmentClick] (#739) ; the
+ * net dot, the empty tick and the blank around the bars emit nothing.
  */
 @Component({
   selector: 'ui-bar-chart',
@@ -42,7 +51,12 @@ export interface BarBucket {
   template: `
     @if (buckets().length) {
       <!-- A canvas says nothing to a screen reader : the table below is the chart, in text. -->
-      <ui-chart aria-hidden="true" [optionFactory]="option()" [height]="height()" />
+      <ui-chart
+        aria-hidden="true"
+        [optionFactory]="option()"
+        [height]="height()"
+        (itemClick)="onItemClick($event)"
+      />
       <table class="cdk-visually-hidden" data-testid="bar-chart-data">
         <thead>
           <tr>
@@ -91,6 +105,11 @@ export class StbBarChart {
   /** The tooltip's and the legend's name for the net — translated by the consumer. */
   readonly netLabel = input('Net');
   readonly height = input(240);
+  /** Whether a segment answers a click — a pointer over the segments, [segmentClick] on a click. */
+  readonly clickable = input(false);
+  /** A last line in the tooltip, plain text — e.g. what a click does. Translated by the consumer. */
+  readonly hint = input<string | null>(null);
+  readonly segmentClick = output<BarSegmentClick>();
 
   /**
    * The chart as text, one row per bar : its title, the amount of each series (empty where it did
@@ -108,11 +127,20 @@ export class StbBarChart {
     });
   });
 
+  onItemClick({ seriesIndex, dataIndex }: StbChartItemClick): void {
+    // The bar series come first, in the order of [series] ; the scatter markers after them are silent.
+    const series = this.series()[seriesIndex];
+    if (!this.clickable() || !series || !this.buckets()[dataIndex]) return;
+    this.segmentClick.emit({ bucket: dataIndex, series: series.key });
+  }
+
   readonly option = computed<StbChartOptionFactory>(() => {
     const series = this.series();
     const buckets = this.buckets();
     const format = this.format();
     const netLabel = this.netLabel();
+    const clickable = this.clickable();
+    const hint = this.hint();
     const nets = buckets.map((b) => series.reduce((sum, s) => sum + (b.values[s.key] ?? 0), 0));
     const moved = buckets.map((b) => series.some((s) => (b.values[s.key] ?? 0) !== 0));
     const ends = buckets.map((b) => stackEnds(series, b));
@@ -145,6 +173,9 @@ export class StbBarChart {
             escapeHtml(bucket.title),
             ...rows,
             `${escapeHtml(netLabel)} <b>${escapeHtml(format(nets[first.dataIndex]))}</b>`,
+            ...(hint
+              ? [`<span style="color:${palette.textMuted}">${escapeHtml(hint)}</span>`]
+              : []),
           ].join('<br>');
         },
       },
@@ -174,6 +205,8 @@ export class StbBarChart {
           // wide card do not turn into blocks.
           barCategoryGap: '40%',
           barMaxWidth: 96,
+          // ECharts' own default is a pointer, over a bar that would then do nothing.
+          cursor: clickable ? 'pointer' : 'default',
           data: buckets.map((b, i) => ({
             // A zero is no segment at all : drawn, its hairline would cut the zero line.
             value: b.values[s.key] || '-',

@@ -111,7 +111,7 @@
         <div class="report-body" data-group="view" data-value="all">
           <section class="card">
             <h2>Flux par semaine <span class="hint">18/06 → 18/09</span></h2>
-            <div class="flow-chart">
+            <div class="flow-chart" data-fees-type="fees">
 <svg viewBox="0 0 800 260" width="100%" height="260" role="img" aria-label="Flux du compte par semaine">
 
 <rect x="745.0" y="12" width="41.4" height="220.0" rx="4" fill="var(--surface-hover)"/>
@@ -199,7 +199,7 @@
 <text x="765.7" y="252" text-anchor="middle" font-size="11" fill="var(--text-faint)">14/09</text>
 <line x1="56" x2="792" y1="178.2" y2="178.2" stroke="var(--border-strong)" stroke-width="1.5"/>
 </svg>
-<div class="flow-tooltip" style="left: calc(93.9% - 232px)"><div class="tt-title">Semaine du 14/09</div><div class="tt-row"><span><i style="background:var(--gain)"></i>Trades gagnants</span><span>+312,00 $</span></div><div class="tt-row"><span><i style="background:var(--loss)"></i>Trades perdants</span><span>−405,00 $</span></div><div class="tt-row"><span><i style="background:var(--warn)"></i>Locates</span><span>−262,00 $</span></div><div class="tt-row"><span><i style="background:var(--neutral-bar)"></i>Retraits</span><span>−500,00 $</span></div><div class="tt-row tt-net"><span>Net</span><span class="loss">−855,00 $</span></div></div>
+<div class="flow-tooltip" style="left: calc(93.9% - 232px)"><div class="tt-title">Semaine du 14/09</div><div class="tt-row"><span><i style="background:var(--gain)"></i>Trades gagnants</span><span>+312,00 $</span></div><div class="tt-row"><span><i style="background:var(--loss)"></i>Trades perdants</span><span>−405,00 $</span></div><div class="tt-row"><span><i style="background:var(--warn)"></i>Locates</span><span>−262,00 $</span></div><div class="tt-row"><span><i style="background:var(--neutral-bar)"></i>Retraits</span><span>−500,00 $</span></div><div class="tt-row tt-net"><span>Net</span><span class="loss">−855,00 $</span></div><div class="tt-hint">Cliquer un segment ouvre ses mouvements sur Compte</div></div>
             </div>
             <div class="legend"><span class="legend-item"><i class="" style="background:var(--gain)"></i>Trades gagnants</span><span class="legend-item"><i class="" style="background:var(--loss)"></i>Trades perdants</span><span class="legend-item"><i class="" style="background:var(--warn)"></i>Frais — locates et corrections</span><span class="legend-item"><i class="" style="background:var(--neutral-bar)"></i>Dépôts / retraits</span><span class="legend-item"><i class="net-dot"></i>Net de la semaine</span></div>
           </section>
@@ -212,7 +212,7 @@
         <div class="report-body" data-group="view" data-value="trading" hidden>
           <section class="card">
             <h2>Flux par semaine <span class="hint">18/06 → 18/09 · trades + locates</span></h2>
-            <div class="flow-chart">
+            <div class="flow-chart" data-fees-type="locates">
 <svg viewBox="0 0 800 260" width="100%" height="260" role="img" aria-label="Flux du compte par semaine">
 
 <rect x="745.0" y="12" width="41.4" height="220.0" rx="4" fill="var(--surface-hover)"/>
@@ -291,7 +291,7 @@
 <text x="765.7" y="252" text-anchor="middle" font-size="11" fill="var(--text-faint)">14/09</text>
 <line x1="56" x2="792" y1="126.2" y2="126.2" stroke="var(--border-strong)" stroke-width="1.5"/>
 </svg>
-<div class="flow-tooltip" style="left: calc(93.9% - 232px)"><div class="tt-title">Semaine du 14/09</div><div class="tt-row"><span><i style="background:var(--gain)"></i>Trades gagnants</span><span>+312,00 $</span></div><div class="tt-row"><span><i style="background:var(--loss)"></i>Trades perdants</span><span>−405,00 $</span></div><div class="tt-row"><span><i style="background:var(--warn)"></i>Locates</span><span>−262,00 $</span></div><div class="tt-row tt-net"><span>Net</span><span class="loss">−355,00 $</span></div></div>
+<div class="flow-tooltip" style="left: calc(93.9% - 232px)"><div class="tt-title">Semaine du 14/09</div><div class="tt-row"><span><i style="background:var(--gain)"></i>Trades gagnants</span><span>+312,00 $</span></div><div class="tt-row"><span><i style="background:var(--loss)"></i>Trades perdants</span><span>−405,00 $</span></div><div class="tt-row"><span><i style="background:var(--warn)"></i>Locates</span><span>−262,00 $</span></div><div class="tt-row tt-net"><span>Net</span><span class="loss">−355,00 $</span></div><div class="tt-hint">Cliquer un segment ouvre ses mouvements sur Compte</div></div>
             </div>
             <div class="legend"><span class="legend-item"><i class="" style="background:var(--gain)"></i>Trades gagnants</span><span class="legend-item"><i class="" style="background:var(--loss)"></i>Trades perdants</span><span class="legend-item"><i class="" style="background:var(--warn)"></i>Frais — locates</span><span class="legend-item"><i class="net-dot"></i>Net de la semaine</span></div>
           </section>
@@ -309,5 +309,41 @@
         </section>
       </main>
     </div>
+    <script>
+      // #739 : un segment ouvre Compte → Mouvements sur ce qui le compose — la semaine du segment en « Plage personnalisée », son type.
+      // Le Net (le point) et le vide d'une semaine ne mènent nulle part : un clic accidentel ne doit pas déplacer.
+      (() => {
+        const PERIOD_FROM = '2026-06-18';
+        const PERIOD_TO = '2026-09-18';
+        const iso = (d) => d.toISOString().slice(0, 10);
+        const dayOf = (label) => {
+          const [dd, mm] = label.split('/');
+          return new Date(Date.UTC(2026, Number(mm) - 1, Number(dd)));
+        };
+        // Dépôts et retraits sont une seule option sur Compte, locates et corrections aussi (« Frais ») : la liste fait la
+        // hauteur du segment. Quand les corrections sont hors filtre, la série « Frais » n'est que des locates (data-fees-type).
+        const TYPE_BY_FILL = { 'var(--gain)': 'trades', 'var(--loss)': 'trades', 'var(--neutral-bar)': 'cash' };
+        document.querySelectorAll('.flow-chart').forEach((chart) => {
+          const labels = [...chart.querySelectorAll('svg text[text-anchor="middle"]')];
+          chart.querySelectorAll('svg rect[rx="2"]').forEach((seg) => {
+            const fill = seg.getAttribute('fill');
+            const type = fill === 'var(--warn)' ? chart.dataset.feesType : TYPE_BY_FILL[fill];
+            if (!type) return;
+            const center = Number(seg.getAttribute('x')) + Number(seg.getAttribute('width')) / 2;
+            const i = labels.findIndex((t) => Math.abs(Number(t.getAttribute('x')) - center) < 1);
+            if (i < 0) return;
+            seg.classList.add('flow-segment');
+            seg.addEventListener('click', () => {
+              // Les semaines au bord sont coupées par la période, comme leur libellé.
+              const from = iso(dayOf(labels[i].textContent));
+              const next = labels[i + 1] ? dayOf(labels[i + 1].textContent) : null;
+              const to = next ? iso(new Date(next.getTime() - 86400000)) : PERIOD_TO;
+              const params = new URLSearchParams({ from: from < PERIOD_FROM ? PERIOD_FROM : from, to, type });
+              location.href = 'compte.html?' + params + '#mouvements';
+            });
+          });
+        });
+      })();
+    </script>
   </body>
 </html>
