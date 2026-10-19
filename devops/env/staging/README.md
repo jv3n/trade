@@ -97,6 +97,23 @@ psql "postgresql://…pooler.supabase.com:5432/postgres?sslmode=require" \
 
 The script refuses to run on a user that already has data.
 
+### 8. Lifelike data (#730)
+
+For a recette that reads figures rather than a five-row sample : about six months of GUS and double
+tops (2026-04-20 → 2026-10-19, weekdays, US holidays off, days with nothing), trades on a third of
+them, their locates and an account that reconciles with them. The set straddles 2026-10-12, the day
+the double top's Sink became required. **It wipes the user's stats, trades, locates, movements and
+reconciliations first** ; the candidates stay.
+
+```bash
+psql "postgresql://…pooler.supabase.com:5432/postgres?sslmode=require" -v ON_ERROR_STOP=1 \
+  -v env=staging -v email=you@example.com -f devops/env/staging/seed-lifelike.sql
+```
+
+Deterministic : replayed after a reset, it writes the same set. Every row it writes is fabricated
+and marked — `[seed #730]` opens the note of each stat, trade, locate and manual movement. Never on
+production.
+
 ## Checking a deploy
 
 The run summary of `deploy.yml` names the environment it hit. The health check answers on
