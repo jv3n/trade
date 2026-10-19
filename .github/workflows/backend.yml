@@ -87,7 +87,7 @@ jobs:
       # failure and confuse the CI summary.
       - name: Upload Detekt SARIF to Code Scanning
         if: always() && hashFiles('projects/backend/build/reports/detekt/merged.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v4.38.3
+        uses: github/codeql-action/upload-sarif@v4.39.0
         with:
           sarif_file: projects/backend/build/reports/detekt/merged.sarif
           category: detekt
