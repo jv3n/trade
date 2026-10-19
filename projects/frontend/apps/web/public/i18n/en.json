@@ -1431,9 +1431,10 @@
   },
   "reports": {
     "title": "Reports",
-    "subtitle": "What the account already holds, period by period — nothing new is recorded here.",
+    "subtitle": "What the account and the stats already hold — nothing new is entered here.",
     "tabs": {
-      "cashFlow": "Account flow"
+      "cashFlow": "Account flow",
+      "rules": "GUS rules"
     },
     "flow": {
       "bucket": {
@@ -1502,6 +1503,39 @@
       "empty": "No movement in this period.",
       "loading": "Loading the account flow",
       "loadError": "The account flow could not be loaded.",
+      "retry": "Retry"
+    },
+    "rules": {
+      "title": "Mechanical rules",
+      "window": "{{from}} → {{to}} · {{count}} completed GUS",
+      "windowLabel": "Rules window",
+      "windowHint": "Rolling, up to today — independent of the stats period filter",
+      "months": {
+        "1": "1 month",
+        "2": "2 months",
+        "3": "3 months",
+        "6": "6 months",
+        "12": "1 year"
+      },
+      "columns": {
+        "rule": "Rule",
+        "ruleHint": "Entry at open + x %, stop at open + y %, covered at the EOD otherwise",
+        "triggered": "Triggered",
+        "triggeredHint": "GUS whose HOD reached the entry — the others did not trigger",
+        "wins": "Winners",
+        "winsHint": "Covered at the EOD below the entry",
+        "averageWin": "Average win",
+        "averageLoss": "Average loss",
+        "averageLossHint": "Stopped, or covered at the EOD at or above the entry",
+        "ratio": "Win / loss",
+        "ratioHint": "Average win ÷ average loss — a hit rate alone says nothing",
+        "expectancy": "Expectancy",
+        "expectancyHint": "What a trade makes on average, in % of the entry"
+      },
+      "ruleSub": "entry +{{entry}} % · stop +{{stop}} %",
+      "triggeredSub": "of {{count}} · {{stopped}} stopped",
+      "note": "Replayed on the open, HOD and EOD of every completed GUS — the rule, not my trades. Under {{min}} triggered trades, the row shows « — » and its n: a rate over a handful of rows says nothing.",
+      "loadError": "The rules could not be loaded.",
       "retry": "Retry"
     }
   },

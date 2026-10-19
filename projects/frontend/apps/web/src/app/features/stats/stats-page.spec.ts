@@ -17,6 +17,7 @@ import { Pattern } from '../../core/api/shared/pattern.model';
 import {
   PageRequest,
   PagedResult,
+  RuleScore,
   StatEntry,
   StatEntryFilter,
   StatEntryInput,
@@ -241,6 +242,7 @@ class MockStatsRepository extends StatsRepository {
   );
   freePatterns = vi.fn((_id: string): Observable<Pattern[]> => of(['DT']));
   exportCsv = vi.fn((): Observable<Blob> => of(new Blob()));
+  ruleScore = vi.fn((): Observable<RuleScore> => throwError(() => new Error('not used')));
 }
 
 async function setup(

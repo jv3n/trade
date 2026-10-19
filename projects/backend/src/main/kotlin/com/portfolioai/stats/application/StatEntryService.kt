@@ -6,6 +6,7 @@ import com.portfolioai.journal.application.dto.TradeEntryDto
 import com.portfolioai.journal.application.dto.TradeEntryRequest
 import com.portfolioai.shared.Pattern
 import com.portfolioai.shared.badRequest
+import com.portfolioai.stats.application.dto.RuleScoreDto
 import com.portfolioai.stats.application.dto.StatEntryDto
 import com.portfolioai.stats.application.dto.StatEntryRequest
 import com.portfolioai.stats.application.dto.StatSummaryDto
@@ -15,6 +16,7 @@ import com.portfolioai.stats.domain.Premarket
 import com.portfolioai.stats.domain.StatEntry
 import com.portfolioai.stats.domain.StatEntryFilter
 import com.portfolioai.stats.domain.StatMetrics
+import com.portfolioai.stats.domain.StatStatus
 import com.portfolioai.stats.infrastructure.persistence.StatEntryRepository
 import com.portfolioai.stats.infrastructure.persistence.StatEntrySpecifications
 import java.time.Instant
@@ -117,6 +119,33 @@ class StatEntryService(
     // times still counts once (#500).
     val traded = tradeEntryService.tradeLinksByStat(rows.map { it.id }).size
     return statSummaryOf(rows, filter.pattern, traded)
+  }
+
+  /**
+   * The mechanical GUS rules replayed over the last [months] months up to today (#205) — a rolling
+   * window of its own, not the stats page's filter : an edge is not stationary (#727). The
+   * completed GUS only ; [months] outside [RULE_SCORE_MONTHS] is a 400.
+   */
+  @Transactional(readOnly = true)
+  fun scoreRules(months: Int): RuleScoreDto {
+    if (months !in RULE_SCORE_MONTHS) {
+      throw badRequest("The rules are scored over ${RULE_SCORE_MONTHS.joinToString()} months")
+    }
+    val userId = authService.getCurrentUser().id
+    val dateTo = LocalDate.now()
+    val dateFrom = dateTo.minusMonths(months.toLong())
+    val window =
+      StatEntryFilter(
+        dateFrom = dateFrom,
+        dateTo = dateTo,
+        pattern = Pattern.GUS,
+        status = StatStatus.COMPLETED,
+      )
+    return ruleScoreOf(
+      repo.findAll(StatEntrySpecifications.matching(userId, window)),
+      dateFrom,
+      dateTo,
+    )
   }
 
   // ---- CRUD (user-scoped) --------------------------------------------------------------------

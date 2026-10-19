@@ -40,6 +40,18 @@ export const routes: Routes = [
     path: 'reports',
     canActivate: [authGuard],
     loadComponent: () => import('./features/reports/reports-page').then((m) => m.ReportsPage),
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/reports/cash-flow-report').then((m) => m.CashFlowReport),
+      },
+      {
+        path: 'rules',
+        loadComponent: () =>
+          import('./features/reports/rule-score-report').then((m) => m.RuleScoreReport),
+      },
+    ],
   },
   {
     path: 'candidates',

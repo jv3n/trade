@@ -495,7 +495,46 @@ for one effect, the final fall.
   its minutes after the open ; « Tous » adds the Sink to the GUS summary. The CSV export gains the
   push time, the drop and its time — the columns keep their names (`gus_drop_*`) : the word lives in
   the copy.
-- It gives #205 the ordering it lacked : a mechanical-rule score can read a real sequence.
+- It was thought to give #205 the ordering it lacked ; the rule score below turns out not to need
+  it.
+
+### Scoring the mechanical rules (#205)
+
+The question the GUS view could not answer : **does the rule work on what I watch, lately ?** The
+reference tracker replays every GUS through two mechanical rules — the same two stop presets as
+the position-size calculator — and that replay is the **second Reports tab, « Règles GUS »**
+(`rapports-regles.html`). Not on the stats page : it reads its own window, not the page's period
+filter, and a figure beside the table under another period would read as the table's.
+
+| Rule | Entry | Stop | Otherwise |
+|---|---|---|---|
+| **10 / 40** | open + 10 % | open + 40 % | covered at the EOD |
+| **7 / 31** | open + 7 % | open + 31 % | covered at the EOD |
+
+Per completed GUS : **triggered** when the HOD reached the entry, otherwise not a trade ;
+**stopped** when the HOD reached the stop — a loss of `(stop − entry) / entry` ; otherwise covered
+at the EOD, a win when the EOD is under the entry. **No ordering assumption** : from the open, the
+price passes the entry before it can reach the stop, so a HOD at the stop means stopped after the
+entry. Open, HOD and EOD are enough — every completed GUS counts, the history before #713 included.
+
+Each rule reads, side by side : the trades **triggered** (out of the GUS, and how many stopped),
+the **hit rate** with its x / n, the **average win** and **average loss** (in % of the entry, green
+/ red), their **ratio**, and the **expectancy** per trade. Never the hit rate alone : the reference
+tracker's « Custom » rule won 40 % of the time and earned four times what 10 / 40 did.
+
+**The window is rolling and ignores the page's period filter** — an edge is not stationary, and a
+figure over eighteen months of another market says nothing about now (#727). Its own toggle in the
+card : **1, 2, 3 or 6 months, or 1 year**, up to today ; **3 months by default**, the last choice
+remembered in the browser like the report's chips. Not 2 : at about eleven triggered trades a month,
+two months sit on the threshold below, and a figure that shows, vanishes after a quiet fortnight and
+comes back costs more trust than one never shown — 1 and 2 months stay as deliberate short views. The card's title spells out its dates and its
+count. A short window keeps the figure current, a long one gives it an n ; the toggle lets that
+trade-off be read rather than decided once. **Under 20 triggered
+trades** a rule shows « — » and its n (« 12 / 20 ») rather than a rate. GUS only : the double top
+has its own measure of what it paid (the Sink, #706), and too few rows for a rule of its own.
+
+It scores **the rule, not me** : « me against the rule » — the trades actually taken on those stats,
+beside the rule's result — is the next step, once enough trades match their stats.
 
 **Institutional ownership** came back as a flag (#349) — « Institutions > 20 % », ticked by hand
 like the other two (#369 fixed a label that read the other way round). Low ownership is a GUS entry
@@ -1187,8 +1226,8 @@ say which week carried it. A **« Rapports »** nav entry, below « Compte », a
 account as it stands — **nothing new is recorded**, and the trading's « what works » questions stay
 with the stats page (#205).
 
-**One tab for now, « Flux du compte »** — the tab bar is there for a second report, not designed
-for it.
+**Two tabs** : « Flux du compte », and « Règles GUS » (#205, under the GUS stat — « Scoring the
+mechanical rules »). Each keeps its own period control.
 
 **The chart** : one **stacked bar per bucket around a zero line**, over the chosen period.
 

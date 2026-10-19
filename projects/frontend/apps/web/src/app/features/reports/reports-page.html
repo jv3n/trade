@@ -6,229 +6,31 @@
     </div>
   </header>
 
-  <!-- One tab for now (#685) : the bar is there for a second report, not designed for it. -->
   <nav mat-tab-nav-bar [tabPanel]="tabPanel" class="report-tabs">
-    <a mat-tab-link [active]="true">{{ 'reports.tabs.cashFlow' | translate }}</a>
+    <a
+      mat-tab-link
+      routerLink="."
+      routerLinkActive
+      #cashFlow="routerLinkActive"
+      [routerLinkActiveOptions]="{ exact: true }"
+      [active]="cashFlow.isActive"
+      data-testid="tab-cash-flow"
+    >
+      {{ 'reports.tabs.cashFlow' | translate }}
+    </a>
+    <a
+      mat-tab-link
+      routerLink="rules"
+      routerLinkActive
+      #rules="routerLinkActive"
+      [active]="rules.isActive"
+      data-testid="tab-rules"
+    >
+      {{ 'reports.tabs.rules' | translate }}
+    </a>
   </nav>
 
-  <mat-tab-nav-panel #tabPanel class="report-panel">
-    <mat-card class="controls-card" appearance="outlined">
-      <div class="controls">
-        <div class="control">
-          <app-period-filter
-            labelled
-            [selection]="selection()"
-            (selectionChange)="setSelection($event)"
-          />
-        </div>
-
-        <div class="control">
-          <span class="control-label">{{ 'reports.flow.bucket.label' | translate }}</span>
-          <mat-button-toggle-group
-            hideSingleSelectionIndicator
-            [value]="bucketSize()"
-            (change)="chosenSize.set($event.value)"
-            [attr.aria-label]="'reports.flow.bucket.label' | translate"
-          >
-            @for (size of bucketSizes; track size) {
-              <mat-button-toggle
-                [value]="size"
-                [disabled]="!sizeAllowed(size)"
-                [attr.data-testid]="'bucket-' + size"
-              >
-                {{ 'reports.flow.bucket.' + size | translate }}
-              </mat-button-toggle>
-            }
-          </mat-button-toggle-group>
-        </div>
-
-        <div class="control">
-          <span class="control-label">{{ 'reports.flow.types.label' | translate }}</span>
-          <mat-button-toggle-group
-            multiple
-            hideMultipleSelectionIndicator
-            [value]="types()"
-            (change)="setTypes($event.value)"
-            [attr.aria-label]="'reports.flow.types.label' | translate"
-          >
-            @for (type of reportTypes; track type) {
-              <mat-button-toggle [value]="type" [attr.data-testid]="'type-' + type">
-                {{ 'reports.flow.types.' + type | translate }}
-              </mat-button-toggle>
-            }
-          </mat-button-toggle-group>
-          <mat-button-toggle
-            class="trading-only"
-            data-testid="trading-only"
-            [checked]="tradingOnly()"
-            (change)="toggleTradingOnly()"
-          >
-            {{ 'reports.flow.types.tradingOnly' | translate }}
-          </mat-button-toggle>
-        </div>
-      </div>
-    </mat-card>
-
-    @if (failed()) {
-      <div class="error-banner">
-        <mat-icon>error</mat-icon>
-        <span>{{ 'reports.flow.loadError' | translate }}</span>
-        <button mat-stroked-button type="button" [disabled]="loading()" (click)="retry()">
-          @if (loading()) {
-            <mat-spinner diameter="16" />
-          }
-          {{ 'reports.flow.retry' | translate }}
-        </button>
-      </div>
-    }
-
-    @if (gate.skeleton()) {
-      <ui-skeleton-kpi-row [count]="4" [label]="'reports.flow.loading' | translate" />
-      <ui-skeleton-card [lines]="6" />
-    } @else if (flow(); as f) {
-      @if (empty()) {
-        <div class="stb-fade-in empty-state" data-testid="reports-empty">
-          <mat-icon>bar_chart</mat-icon>
-          <p>{{ 'reports.flow.empty' | translate }}</p>
-          @if (selection().period !== 'all') {
-            <button mat-stroked-button type="button" (click)="showAllTime()">
-              {{ 'periods.presets.all' | translate }}
-            </button>
-          }
-        </div>
-      } @else {
-        @let t = totals();
-        <section class="stb-fade-in kpi-row" data-testid="reports-kpis">
-          <mat-card class="kpi" appearance="outlined">
-            <div class="kpi__label">{{ 'reports.flow.kpi.net' | translate }}</div>
-            <div class="kpi__value" [class.pos]="t.net > 0" [class.neg]="t.net < 0">
-              {{ formatAmount(t.net) }}
-            </div>
-            <div class="kpi__sub">{{ openingDate(f) }} → {{ closingDate(f) }}</div>
-          </mat-card>
-
-          <mat-card class="kpi" appearance="outlined" data-testid="kpi-trading">
-            <div class="kpi__label">{{ 'reports.flow.kpi.trading' | translate }}</div>
-            @if (showsTrading()) {
-              <div
-                class="kpi__value"
-                [class.pos]="tradingResult() > 0"
-                [class.neg]="tradingResult() < 0"
-              >
-                {{ formatAmount(tradingResult()) }}
-              </div>
-              <div class="kpi__sub">
-                {{
-                  'reports.flow.kpi.tradingSub'
-                    | translate
-                      : {
-                          trades: formatAmount(t.winningTrades + t.losingTrades),
-                          locates: formatAmount(t.locates),
-                        }
-                }}
-              </div>
-            } @else {
-              <div class="kpi__value kpi__value--muted">—</div>
-              <div class="kpi__sub">{{ 'reports.flow.kpi.filteredOut' | translate }}</div>
-            }
-          </mat-card>
-
-          <mat-card class="kpi" appearance="outlined" data-testid="kpi-injected">
-            <div class="kpi__label">{{ 'reports.flow.kpi.injected' | translate }}</div>
-            @if (showsCash()) {
-              <div class="kpi__value">{{ formatAmount(t.deposits + t.withdrawals) }}</div>
-              <div class="kpi__sub">
-                {{
-                  'reports.flow.kpi.injectedSub'
-                    | translate
-                      : {
-                          deposits: formatAmount(t.deposits),
-                          withdrawals: formatAmount(t.withdrawals),
-                        }
-                }}
-              </div>
-            } @else {
-              <div class="kpi__value kpi__value--muted">—</div>
-              <div class="kpi__sub">{{ 'reports.flow.kpi.filteredOut' | translate }}</div>
-            }
-          </mat-card>
-
-          <!-- The whole account, whatever the chips : a balance filtered to trades is none. -->
-          <mat-card class="kpi" appearance="outlined" data-testid="kpi-balance">
-            <div class="kpi__label">
-              {{ 'reports.flow.kpi.balance' | translate: { date: closingDate(f) } }}
-            </div>
-            <div class="kpi__value">
-              {{ f.closingBalance | number: '1.2-2' }}{{ 'account.usdSuffix' | translate }}
-            </div>
-            <div class="kpi__sub">
-              {{
-                'reports.flow.kpi.balanceSub'
-                  | translate
-                    : {
-                        amount:
-                          (f.openingBalance | number: '1.2-2') + ('account.usdSuffix' | translate),
-                        date: openingDate(f),
-                      }
-              }}
-            </div>
-          </mat-card>
-        </section>
-
-        <div class="report-body">
-          <mat-card class="chart-card" appearance="outlined">
-            <h3 class="card-title">
-              {{ 'reports.flow.chart.' + bucketSize() | translate }}
-              <span class="hint">{{ openingDate(f) }} → {{ closingDate(f) }}</span>
-            </h3>
-            <ui-bar-chart
-              [series]="chartSeries()"
-              [buckets]="chartBuckets()"
-              [format]="formatAmount"
-              [netLabel]="'reports.flow.series.net' | translate"
-              [height]="260"
-              [clickable]="true"
-              [hint]="'reports.flow.clickHint' | translate"
-              (segmentClick)="openSegment($event)"
-            />
-          </mat-card>
-
-          <mat-card class="breakdown-card" appearance="outlined">
-            <h3 class="card-title">{{ 'reports.flow.breakdown.title' | translate }}</h3>
-            <table class="breakdown" data-testid="breakdown">
-              <thead>
-                <tr>
-                  <th>{{ 'reports.flow.breakdown.type' | translate }}</th>
-                  <th class="num">{{ 'reports.flow.breakdown.amount' | translate }}</th>
-                  <th class="num">{{ 'reports.flow.breakdown.share' | translate }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (row of breakdown(); track row.key) {
-                  <tr [class.indent]="row.indent">
-                    <td>{{ 'reports.flow.breakdown.rows.' + row.key | translate }}</td>
-                    <td
-                      class="num"
-                      [class.pos]="row.indent && row.amount > 0"
-                      [class.neg]="row.indent && row.amount < 0"
-                    >
-                      {{ formatAmount(row.amount) }}
-                    </td>
-                    <td class="num muted">{{ row.share | number: '1.0-0' }} %</td>
-                  </tr>
-                }
-                <tr class="total">
-                  <td>{{ 'reports.flow.breakdown.net' | translate }}</td>
-                  <td class="num" [class.pos]="t.net > 0" [class.neg]="t.net < 0">
-                    {{ formatAmount(t.net) }}
-                  </td>
-                  <td></td>
-                </tr>
-              </tbody>
-            </table>
-          </mat-card>
-        </div>
-      }
-    }
+  <mat-tab-nav-panel #tabPanel>
+    <router-outlet />
   </mat-tab-nav-panel>
 </div>
