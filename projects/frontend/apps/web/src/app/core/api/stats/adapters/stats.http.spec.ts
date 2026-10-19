@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { StatEntry, StatEntryInput } from '../stat-entry.model';
+import { RuleScore, StatEntry, StatEntryInput } from '../stat-entry.model';
 import { HttpStatsRepository } from './stats.http';
 
 /**
@@ -16,6 +16,7 @@ import { HttpStatsRepository } from './stats.http';
  *  - **No params when no PageRequest** — relies on the backend `@PageableDefault`.
  *  - **Filter axes** — search / period / pattern / status travel as query params, and the summary
  *    endpoint reuses the very same ones.
+ *  - **Rule score (#205)** — the window travels as `months`, its dates come back as local days.
  *  - **`PageResponse` unwrap** — `number` is renamed to `pageIndex` on the way back.
  *  - **Date parsing preserves the local day** — `tradeDate: '2026-09-17'` comes back as midnight
  *    local (September 17), not UTC-shifted ; timestamps become `Date` instances.
@@ -100,6 +101,18 @@ describe('HttpStatsRepository', () => {
     const req = http.expectOne('/api/stats/stat-1');
     expect(req.request.method).toBe('GET');
     req.flush(wireStat());
+  });
+
+  it('ruleScore asks for its window in months and parses the dates as local days', () => {
+    let score: RuleScore | undefined;
+    repo.ruleScore(2).subscribe((s) => (score = s));
+
+    const req = http.expectOne((r) => r.url === '/api/stats/rule-score');
+    expect(req.request.params.get('months')).toBe('2');
+    req.flush({ dateFrom: '2026-08-19', dateTo: '2026-10-19', completed: 0, rules: [] });
+
+    expect(score?.dateFrom).toEqual(new Date(2026, 7, 19));
+    expect(score?.dateTo).toEqual(new Date(2026, 9, 19));
   });
 
   it('summary hits /api/stats/summary with the listing filter', () => {

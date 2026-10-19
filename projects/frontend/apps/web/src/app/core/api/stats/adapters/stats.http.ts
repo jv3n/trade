@@ -9,6 +9,9 @@ import {
   OutOfPatternReason,
   PageRequest,
   PagedResult,
+  RuleScore,
+  RuleScoreMonths,
+  RuleScoreRow,
   StatEntry,
   StatEntryFilter,
   StatEntryInput,
@@ -22,6 +25,13 @@ import { StatsRepository } from '../stats.repository';
 // see the domain [StatEntry] / [StatEntryInput]. Spring emits `LocalDate` as `YYYY-MM-DD` and
 // `Instant` as ISO-8601 with `Z` ; the request sends `LocalDate` strings back the same way.
 // ---------------------------------------------------------------------------
+
+interface RuleScoreWireDto {
+  dateFrom: string;
+  dateTo: string;
+  completed: number;
+  rules: RuleScoreRow[];
+}
 
 interface StatEntryWireDto {
   id: string;
@@ -181,6 +191,12 @@ export class HttpStatsRepository extends StatsRepository {
     return this.http.get<StatSummary>(`${this.base}/summary`, {
       params: buildFilterParams(filter),
     });
+  }
+
+  ruleScore(months: RuleScoreMonths): Observable<RuleScore> {
+    return this.http
+      .get<RuleScoreWireDto>(`${this.base}/rule-score`, { params: { months } })
+      .pipe(map((w) => ({ ...w, dateFrom: parseISO(w.dateFrom), dateTo: parseISO(w.dateTo) })));
   }
 
   create(input: StatEntryInput): Observable<StatEntry> {

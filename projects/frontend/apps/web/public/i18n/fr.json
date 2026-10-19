@@ -1431,9 +1431,10 @@
   },
   "reports": {
     "title": "Rapports",
-    "subtitle": "Ce que le compte contient déjà, période par période — rien de nouveau n'est saisi ici.",
+    "subtitle": "Ce que le compte et les stats contiennent déjà — rien de nouveau n'est saisi ici.",
     "tabs": {
-      "cashFlow": "Flux du compte"
+      "cashFlow": "Flux du compte",
+      "rules": "Règles GUS"
     },
     "flow": {
       "bucket": {
@@ -1502,6 +1503,39 @@
       "empty": "Aucun mouvement sur cette période.",
       "loading": "Chargement du flux du compte",
       "loadError": "Le flux du compte n'a pas pu être chargé.",
+      "retry": "Réessayer"
+    },
+    "rules": {
+      "title": "Règles mécaniques",
+      "window": "{{from}} → {{to}} · {{count}} GUS complétées",
+      "windowLabel": "Fenêtre des règles",
+      "windowHint": "Glissante, jusqu'à aujourd'hui — indépendante du filtre de période des stats",
+      "months": {
+        "1": "1 mois",
+        "2": "2 mois",
+        "3": "3 mois",
+        "6": "6 mois",
+        "12": "1 an"
+      },
+      "columns": {
+        "rule": "Règle",
+        "ruleHint": "Entrée à l'open + x %, stop à l'open + y %, couverture à l'EOD sinon",
+        "triggered": "Déclenchés",
+        "triggeredHint": "GUS dont le HOD a atteint l'entrée — les autres n'ont pas déclenché",
+        "wins": "Gagnants",
+        "winsHint": "Couverts à l'EOD sous l'entrée",
+        "averageWin": "Gain moyen",
+        "averageLoss": "Perte moyenne",
+        "averageLossHint": "Stoppés, ou couverts à l'EOD au niveau de l'entrée ou au-dessus",
+        "ratio": "Gain / perte",
+        "ratioHint": "Gain moyen ÷ perte moyenne — un taux de réussite seul ne dit rien",
+        "expectancy": "Espérance",
+        "expectancyHint": "Ce qu'un trade rapporte en moyenne, en % de l'entrée"
+      },
+      "ruleSub": "entrée +{{entry}} % · stop +{{stop}} %",
+      "triggeredSub": "sur {{count}} · {{stopped}} stoppés",
+      "note": "Rejoué sur l'open, le HOD et l'EOD de chaque GUS complétée — la règle, pas mes trades. Sous {{min}} trades déclenchés, la ligne affiche « — » et son n : un taux sur une poignée de lignes ne dit rien.",
+      "loadError": "Les règles n'ont pas pu être chargées.",
       "retry": "Réessayer"
     }
   },

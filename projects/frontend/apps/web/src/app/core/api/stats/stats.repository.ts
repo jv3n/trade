@@ -4,6 +4,8 @@ import { Pattern } from '../shared/pattern.model';
 import {
   PageRequest,
   PagedResult,
+  RuleScore,
+  RuleScoreMonths,
   StatEntry,
   StatEntryFilter,
   StatEntryInput,
@@ -38,6 +40,12 @@ export abstract class StatsRepository {
 
   /** KPIs over the same filter as the listing, computed on the whole filtered set. */
   abstract summary(filter?: StatEntryFilter): Observable<StatSummary>;
+
+  /**
+   * The mechanical GUS rules replayed on the completed GUS of the last [months] months, up to
+   * today (#205) — a rolling window of its own, not the listing's filter.
+   */
+  abstract ruleScore(months: RuleScoreMonths): Observable<RuleScore>;
 
   /**
    * Creates a stat typed by hand (#326) — premarket, session and flags in one go, for any day up to

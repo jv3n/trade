@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="fr" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Rapports — maquette</title>
+    <link rel="stylesheet" href="assets/mockup.css" />
+    <script src="assets/mockup.js" defer></script>
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidenav">
+        <div class="brand"><svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="12" fill="var(--logo-tile)"/><g stroke="var(--logo-mark)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"><line x1="22" y1="13" x2="22" y2="55"/><path d="M 22 13 L 34 13 A 9 9 0 0 1 34 31 L 22 31"/><line x1="27" y1="18" x2="34" y2="18" stroke-width="2"/><line x1="27" y1="22" x2="36" y2="22" stroke-width="2"/><line x1="27" y1="26" x2="31" y2="26" stroke-width="2"/></g></svg>Ticker Story</div>
+        <a class="nav-link" href="aujourdhui.html"><span class="nav-icon icon">today</span>Aujourd'hui</a>
+        <a class="nav-link" href="candidat.html"><span class="nav-icon icon">radar</span>Candidats GUS</a>
+        <a class="nav-link" href="stats.html"><span class="nav-icon icon">query_stats</span>Stats</a>
+        <a class="nav-link" href="journal.html"><span class="nav-icon icon">menu_book</span>Journal</a>
+        <a class="nav-link" href="compte.html"><span class="nav-icon icon">account_balance_wallet</span>Compte</a>
+        <a class="nav-link active" href="rapports.html"><span class="nav-icon icon">bar_chart</span>Rapports</a>
+        <div class="nav-spacer"></div>
+        <a class="nav-link" href="patterns.html"><span class="nav-icon icon">school</span>Patterns</a>
+        <a class="nav-link" href="lexique.html"><span class="nav-icon icon">dictionary</span>Lexique</a>
+        <a class="nav-link" href="parametres.html"><span class="nav-icon icon">settings</span>Paramètres</a>
+      </aside>
+
+      <main class="main">
+        <header class="page-header">
+          <div>
+            <h1>Rapports</h1>
+            <p>Ce que le compte et les stats contiennent déjà — rien de nouveau n'est saisi ici.</p>
+          </div>
+        </header>
+
+        <!-- #205 : le second onglet, « Règles GUS » — sa propre fenêtre, comme le flux a sa propre période. -->
+        <nav class="report-tabs" aria-label="Rapports">
+          <a class="report-tab" href="rapports.html">Flux du compte</a>
+          <a class="report-tab active" href="rapports-regles.html">Règles GUS</a>
+        </nav>
+
+        <!-- #205 : les deux règles du tracker de référence rejouées sur les GUS de la fenêtre choisie — open, HOD, EOD suffisent :
+             pour atteindre le stop depuis l'open, le prix passe par l'entrée, donc « HOD ≥ stop » veut dire stoppé après l'entrée. -->
+        <section class="card" id="rule-score">
+          <h2>
+            Règles mécaniques <span class="hint">19/07 → 19/10 · 58 GUS complétées</span>
+            <span class="actions">
+              <span class="segmented" aria-label="Fenêtre des règles" title="Glissante, jusqu'à aujourd'hui — indépendante du filtre de période de la page">
+                <button>1 mois</button>
+                <button>2 mois</button>
+                <button class="active">3 mois</button>
+                <button>6 mois</button>
+                <button>1 an</button>
+              </span>
+            </span>
+          </h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th title="Entrée à l'open + x %, stop à l'open + y %, couverture à l'EOD sinon">Règle</th>
+                  <th class="num" title="GUS dont le HOD a atteint l'entrée — les autres n'ont pas déclenché">Déclenchés</th>
+                  <th class="num" title="Couvert à l'EOD sous l'entrée">Gagnants</th>
+                  <th class="num">Gain moyen</th>
+                  <th class="num" title="Stoppés, ou couverts à l'EOD au-dessus de l'entrée">Perte moyenne</th>
+                  <th class="num" title="Gain moyen ÷ perte moyenne — un taux de réussite seul ne dit rien">Gain / perte</th>
+                  <th class="num" title="Ce qu'un trade rapporte en moyenne, en % de l'entrée">Espérance</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><b>10 / 40</b><small class="muted">entrée +10 % · stop +40 %</small></td>
+                  <td class="num">41<small class="muted">sur 58 · 7 stoppés</small></td>
+                  <td class="num">65,9 %<small class="muted">27 / 41</small></td>
+                  <td class="num gain">+16,8 %</td>
+                  <td class="num loss">−15,1 %</td>
+                  <td class="num">1,11</td>
+                  <td class="num gain">+5,9 %</td>
+                </tr>
+                <tr>
+                  <td><b>7 / 31</b><small class="muted">entrée +7 % · stop +31 %</small></td>
+                  <td class="num">47<small class="muted">sur 58 · 9 stoppés</small></td>
+                  <td class="num">61,7 %<small class="muted">29 / 47</small></td>
+                  <td class="num gain">+14,6 %</td>
+                  <td class="num loss">−12,7 %</td>
+                  <td class="num">1,15</td>
+                  <td class="num gain">+4,1 %</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="muted" style="font-size: 12px; margin: 8px 0 0">
+            Rejoué sur l'open, le HOD et l'EOD de chaque GUS complétée — la règle, pas mes trades. Sous 20 trades déclenchés, la ligne
+            affiche « — » et son n (« 12 / 20 ») : un taux sur une poignée de lignes ne dit rien.
+          </p>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

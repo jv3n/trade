@@ -5,6 +5,7 @@ import com.portfolioai.shared.PageResponse
 import com.portfolioai.shared.Pattern
 import com.portfolioai.shared.toPageResponse
 import com.portfolioai.stats.application.StatEntryService
+import com.portfolioai.stats.application.dto.RuleScoreDto
 import com.portfolioai.stats.application.dto.StatCompletionRequest
 import com.portfolioai.stats.application.dto.StatEntryDto
 import com.portfolioai.stats.application.dto.StatEntryRequest
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 
@@ -58,6 +60,14 @@ class StatEntryController(private val service: StatEntryService) {
   @GetMapping("/summary")
   fun summary(@ParameterObject query: StatListingQuery): StatSummaryDto =
     service.summarise(query.toFilter())
+
+  /**
+   * The mechanical GUS rules (10 / 40, 7 / 31) replayed on the completed GUS of the last [months]
+   * months (#205) — 1, 2, 3, 6 or 12, anything else is a 400.
+   */
+  @GetMapping("/rule-score")
+  fun ruleScore(@RequestParam(defaultValue = "3") months: Int): RuleScoreDto =
+    service.scoreRules(months)
 
   /**
    * Creates a stat typed by hand (#326) — premarket, session and flags in one go. A future day →

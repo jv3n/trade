@@ -1,0 +1,132 @@
+<div class="report-panel">
+  @if (failed()) {
+    <div class="error-banner">
+      <mat-icon>error</mat-icon>
+      <span>{{ 'reports.rules.loadError' | translate }}</span>
+      <button mat-stroked-button type="button" [disabled]="loading()" (click)="retry()">
+        @if (loading()) {
+          <mat-spinner diameter="16" />
+        }
+        {{ 'reports.rules.retry' | translate }}
+      </button>
+    </div>
+  }
+
+  <mat-card class="rules-card" appearance="outlined" data-testid="rule-score">
+    <h3 class="card-title">
+      <span>
+        {{ 'reports.rules.title' | translate }}
+        @if (score(); as s) {
+          <span class="hint" data-testid="rule-window">
+            {{
+              'reports.rules.window'
+                | translate: { from: day(s.dateFrom), to: day(s.dateTo), count: s.completed }
+            }}
+          </span>
+        }
+      </span>
+      <mat-button-toggle-group
+        hideSingleSelectionIndicator
+        [value]="months()"
+        (change)="setMonths($event.value)"
+        [attr.aria-label]="'reports.rules.windowLabel' | translate"
+        [title]="'reports.rules.windowHint' | translate"
+      >
+        @for (m of windows; track m) {
+          <mat-button-toggle [value]="m" [attr.data-testid]="'months-' + m">
+            {{ 'reports.rules.months.' + m | translate }}
+          </mat-button-toggle>
+        }
+      </mat-button-toggle-group>
+    </h3>
+
+    @if (gate.skeleton()) {
+      <ui-skeleton-card [lines]="3" />
+    } @else if (score(); as s) {
+      <div class="table-wrap stb-fade-in">
+        <table class="rules" data-testid="rules-table">
+          <thead>
+            <tr>
+              <th [title]="'reports.rules.columns.ruleHint' | translate">
+                {{ 'reports.rules.columns.rule' | translate }}
+              </th>
+              <th class="num" [title]="'reports.rules.columns.triggeredHint' | translate">
+                {{ 'reports.rules.columns.triggered' | translate }}
+              </th>
+              <th class="num" [title]="'reports.rules.columns.winsHint' | translate">
+                {{ 'reports.rules.columns.wins' | translate }}
+              </th>
+              <th class="num">{{ 'reports.rules.columns.averageWin' | translate }}</th>
+              <th class="num" [title]="'reports.rules.columns.averageLossHint' | translate">
+                {{ 'reports.rules.columns.averageLoss' | translate }}
+              </th>
+              <th class="num" [title]="'reports.rules.columns.ratioHint' | translate">
+                {{ 'reports.rules.columns.ratio' | translate }}
+              </th>
+              <th class="num" [title]="'reports.rules.columns.expectancyHint' | translate">
+                {{ 'reports.rules.columns.expectancy' | translate }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of s.rules; track row.rule) {
+              @let shown = readable(row);
+              <tr [attr.data-testid]="'rule-' + row.rule">
+                <td>
+                  <b>{{ row.entryPercent }} / {{ row.stopPercent }}</b>
+                  <small class="muted">
+                    {{
+                      'reports.rules.ruleSub'
+                        | translate: { entry: row.entryPercent, stop: row.stopPercent }
+                    }}
+                  </small>
+                </td>
+                <td class="num">
+                  {{ row.triggered }}
+                  <small class="muted">
+                    {{
+                      'reports.rules.triggeredSub'
+                        | translate: { count: s.completed, stopped: row.stopped }
+                    }}
+                  </small>
+                </td>
+                <td class="num" data-testid="hit-rate">
+                  @if (shown) {
+                    {{ hitRate(row) }}
+                    <small class="muted">{{ row.wins }} / {{ row.triggered }}</small>
+                  } @else {
+                    —
+                    <small class="muted">{{ row.triggered }} / {{ minTriggered }}</small>
+                  }
+                </td>
+                <td class="num" [class.pos]="shown && row.averageWinPercent !== null">
+                  {{ shown ? signed(row.averageWinPercent) : '—' }}
+                </td>
+                <td
+                  class="num"
+                  [class.neg]="
+                    shown && row.averageLossPercent !== null && row.averageLossPercent < 0
+                  "
+                >
+                  {{ shown ? signed(row.averageLossPercent) : '—' }}
+                </td>
+                <td class="num">{{ shown ? ratio(row.winLossRatio) : '—' }}</td>
+                <td
+                  class="num"
+                  [class.pos]="shown && (row.expectancyPercent ?? 0) > 0"
+                  [class.neg]="shown && (row.expectancyPercent ?? 0) < 0"
+                  data-testid="expectancy"
+                >
+                  {{ shown ? signed(row.expectancyPercent) : '—' }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <p class="note muted">
+        {{ 'reports.rules.note' | translate: { min: minTriggered } }}
+      </p>
+    }
+  </mat-card>
+</div>

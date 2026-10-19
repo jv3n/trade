@@ -256,3 +256,40 @@ export interface PagedResult<T> {
   totalElements: number;
   totalPages: number;
 }
+
+/** The windows the mechanical rules are scored over (#205), in months — 12 is the year. */
+export const RULE_SCORE_MONTHS = [1, 2, 3, 6, 12] as const;
+export type RuleScoreMonths = (typeof RULE_SCORE_MONTHS)[number];
+
+/** A mechanical GUS rule (#205) : short at open + entry %, stop at open + stop %, else EOD. */
+export type MechanicalRule = 'TEN_FORTY' | 'SEVEN_THIRTY_ONE';
+
+/**
+ * One rule replayed over the window. Percentages are of the entry and the short's result —
+ * positive is a gain ; every figure is null without a trade to read it from.
+ */
+export interface RuleScoreRow {
+  rule: MechanicalRule;
+  entryPercent: number;
+  stopPercent: number;
+  /** GUS whose HOD reached the entry — the rule's trades. */
+  triggered: number;
+  stopped: number;
+  /** Triggered trades covered at the EOD under the entry. */
+  wins: number;
+  averageWinPercent: number | null;
+  /** Stopped, or covered at or above the entry — negative or zero. */
+  averageLossPercent: number | null;
+  winLossRatio: number | null;
+  /** Average result per triggered trade. */
+  expectancyPercent: number | null;
+}
+
+/** The mechanical rules over a rolling window, [dateFrom] → [dateTo] inclusive (#205). */
+export interface RuleScore {
+  dateFrom: Date;
+  dateTo: Date;
+  /** Completed GUS in the window — what each rule's triggered is read against. */
+  completed: number;
+  rules: RuleScoreRow[];
+}

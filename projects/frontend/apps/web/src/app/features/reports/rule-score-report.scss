@@ -1,0 +1,78 @@
+// The « Règles GUS » tab after `mockup/rapports-regles.html` (#205) : one card, the window toggle
+// in its title, a row per rule.
+
+@use 'sizes' as s;
+
+.report-panel {
+  display: flex;
+  flex-direction: column;
+  gap: s.$space-lg;
+}
+
+.rules-card {
+  padding: s.$card-padding-y s.$card-padding-x;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.rules {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: s.$font-sm;
+
+  th {
+    padding: s.$space-xs s.$space-sm;
+    font-size: s.$font-xs;
+    font-weight: 500;
+    text-align: left;
+    white-space: nowrap;
+    color: var(--color-text-muted);
+  }
+
+  td {
+    padding: s.$space-sm;
+    border-top: 1px solid var(--color-border);
+    vertical-align: top;
+  }
+
+  th:first-child,
+  td:first-child {
+    padding-left: 0;
+  }
+
+  small {
+    display: block;
+    font-size: s.$font-xs;
+  }
+
+  .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+}
+
+.note {
+  margin: s.$space-sm 0 0;
+  font-size: s.$font-xs;
+}
+
+// ---- Colours : outcomes only (CLAUDE.md, colour rule) ----
+
+.pos {
+  color: var(--color-success);
+}
+
+.neg {
+  color: var(--color-danger);
+}
+
+.muted {
+  color: var(--color-text-muted);
+}
+
+.error-banner button {
+  margin-left: auto;
+}
