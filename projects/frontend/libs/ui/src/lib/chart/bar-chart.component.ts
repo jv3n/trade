@@ -128,7 +128,7 @@ export class StbBarChart {
   });
 
   onItemClick({ seriesIndex, dataIndex }: StbChartItemClick): void {
-    // The bar series come first, in the order of [series] ; the scatter markers after them are silent.
+    // The bar series come first, in the order of [series] ; the markers drawn after them emit nothing.
     const series = this.series()[seriesIndex];
     if (!this.clickable() || !series || !this.buckets()[dataIndex]) return;
     this.segmentClick.emit({ bucket: dataIndex, series: series.key });
@@ -229,7 +229,12 @@ export class StbBarChart {
           symbol: 'circle',
           symbolSize: 9,
           z: 10,
-          silent: true,
+          // Not silent : it takes the click aimed at it, which would otherwise reach the segment it
+          // sits on (#749) ; [onItemClick] then finds no bar series behind it and emits nothing.
+          cursor: 'default',
+          // Off its silence, ECharts' default hover would grow the dot : a reaction to the pointer
+          // where nothing is to be clicked.
+          emphasis: { disabled: true },
           data: nets.map((net, i) => (moved[i] ? net : '-')),
           itemStyle: {
             color: palette.surface,

@@ -57,6 +57,9 @@ function usd(value: number): string {
 
 interface SeriesOption {
   type: string;
+  silent?: boolean;
+  cursor?: string;
+  emphasis?: { disabled?: boolean };
   stack?: string;
   stackStrategy?: string;
   barCategoryGap?: string;
@@ -131,6 +134,17 @@ describe('StbBarChart', () => {
 
     expect(net.data).toEqual([-355, '-', 1000]);
     expect(tick.data).toEqual(['-', 0, '-']);
+  });
+
+  // #749 : silent, the dot let its click through to the segment it sits on — on staging, October's
+  // net inside the deposits opened the deposits.
+  it('keeps the click aimed at the net dot from reaching the segment under it, without a hover', () => {
+    const [net] = option().series.filter((s) => s.type === 'scatter');
+
+    expect(net.silent).not.toBe(true);
+    expect(net.cursor).toBe('default');
+    // Nor does it react to the pointer, the hover the silence used to suppress.
+    expect(net.emphasis?.disabled).toBe(true);
   });
 
   it('labels the axis with the buckets', () => {
