@@ -1,5 +1,5 @@
 import { Locator, Page } from '@playwright/test';
-import { Api, expect, isoToday, parseFrAmount, test, typeNumber } from '../fixtures';
+import { Api, expect, isoToday, openedDialog, parseFrAmount, test, typeNumber } from '../fixtures';
 
 /**
  * A reconciled morning stays true (#474, #482) — the seam the balance-drift bug lived in : a
@@ -179,7 +179,7 @@ async function reconcileWithGap(page: Page, brokerBalance: string): Promise<void
 /** Through the « add a movement » dialog, which dates a new movement today. */
 async function addDepositToday(page: Page, amount: string): Promise<void> {
   await page.getByRole('button', { name: 'Ajouter un mouvement' }).click();
-  const dialog = page.getByRole('dialog');
+  const dialog = await openedDialog(page);
   await typeNumber(dialog.getByLabel('Montant'), amount);
   await dialog.getByRole('button', { name: 'Enregistrer' }).click();
   await expect(page.getByText('Mouvement ajouté.')).toBeVisible();
@@ -191,7 +191,7 @@ async function editDeposit(page: Page, note: string, amount: string): Promise<vo
     .filter({ hasText: note })
     .getByRole('button', { name: 'Modifier' })
     .click();
-  const dialog = page.getByRole('dialog');
+  const dialog = await openedDialog(page);
   const field = dialog.getByLabel('Montant');
   await field.clear();
   await typeNumber(field, amount);
