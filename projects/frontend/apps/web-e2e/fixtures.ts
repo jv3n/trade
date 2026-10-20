@@ -1,4 +1,11 @@
-import { APIRequestContext, BrowserContext, Locator, test as base, expect } from '@playwright/test';
+import {
+  APIRequestContext,
+  BrowserContext,
+  Locator,
+  Page,
+  test as base,
+  expect,
+} from '@playwright/test';
 
 /**
  * The backend API, as the signed-in user : shares the browser context's cookies, and echoes the
@@ -85,6 +92,17 @@ export function parseFrAmount(text: string): number {
       .replace('−', '-')
       .replace(',', '.'),
   );
+}
+
+/**
+ * The dialog that just opened, once Material has placed its initial focus. That focus lands at the
+ * end of the open animation : typed into before it, a field loses the keys that follow the jump
+ * (« 500 » saved as « 5 » on a loaded runner).
+ */
+export async function openedDialog(page: Page): Promise<Locator> {
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.locator(':focus')).toHaveCount(1);
+  return dialog;
 }
 
 /**
