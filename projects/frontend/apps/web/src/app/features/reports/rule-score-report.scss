@@ -54,6 +54,22 @@
   }
 }
 
+// A no-break space holds the line box at the real text's height, the bar lies over it.
+.ghost-line {
+  display: block;
+  position: relative;
+
+  > ui-skeleton {
+    position: absolute;
+    inset: 0;
+    justify-content: center;
+  }
+}
+
+.num .ghost-line > ui-skeleton {
+  align-items: flex-end;
+}
+
 .note {
   margin: s.$space-sm 0 0;
   font-size: s.$font-xs;

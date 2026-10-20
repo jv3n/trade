@@ -23,6 +23,8 @@
                 | translate: { from: day(s.dateFrom), to: day(s.dateTo), count: s.completed }
             }}
           </span>
+        } @else if (gate.skeleton()) {
+          <span class="hint"><ui-skeleton width="17em" /></span>
         }
       </span>
       <mat-button-toggle-group
@@ -41,32 +43,35 @@
     </h3>
 
     @if (gate.skeleton()) {
-      <ui-skeleton-card [lines]="3" />
+      <div class="table-wrap" aria-busy="true" data-testid="rules-skeleton">
+        <span class="cdk-visually-hidden">{{ 'reports.rules.loading' | translate }}</span>
+        <table class="rules">
+          <thead>
+            <ng-container *ngTemplateOutlet="head" />
+          </thead>
+          <tbody>
+            @for (r of ghostRows; track r) {
+              <tr>
+                @for (c of ghostCells; track $index) {
+                  <td [class.num]="c.numeric">
+                    <span class="ghost-line">&nbsp;<ui-skeleton [width]="c.width" /></span>
+                    @if (c.sub) {
+                      <small class="ghost-line"
+                        >&nbsp;<ui-skeleton variant="line" width="80%"
+                      /></small>
+                    }
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
     } @else if (score(); as s) {
       <div class="table-wrap stb-fade-in">
         <table class="rules" data-testid="rules-table">
           <thead>
-            <tr>
-              <th [title]="'reports.rules.columns.ruleHint' | translate">
-                {{ 'reports.rules.columns.rule' | translate }}
-              </th>
-              <th class="num" [title]="'reports.rules.columns.triggeredHint' | translate">
-                {{ 'reports.rules.columns.triggered' | translate }}
-              </th>
-              <th class="num" [title]="'reports.rules.columns.winsHint' | translate">
-                {{ 'reports.rules.columns.wins' | translate }}
-              </th>
-              <th class="num">{{ 'reports.rules.columns.averageWin' | translate }}</th>
-              <th class="num" [title]="'reports.rules.columns.averageLossHint' | translate">
-                {{ 'reports.rules.columns.averageLoss' | translate }}
-              </th>
-              <th class="num" [title]="'reports.rules.columns.ratioHint' | translate">
-                {{ 'reports.rules.columns.ratio' | translate }}
-              </th>
-              <th class="num" [title]="'reports.rules.columns.expectancyHint' | translate">
-                {{ 'reports.rules.columns.expectancy' | translate }}
-              </th>
-            </tr>
+            <ng-container *ngTemplateOutlet="head" />
           </thead>
           <tbody>
             @for (row of s.rules; track row.rule) {
@@ -124,9 +129,36 @@
           </tbody>
         </table>
       </div>
+    }
+    @if (gate.skeleton() || score()) {
       <p class="note muted">
         {{ 'reports.rules.note' | translate: { min: minTriggered } }}
       </p>
     }
   </mat-card>
+
+  <!-- One header for the table and its skeleton, so the ghost is the real table's frame. -->
+  <ng-template #head>
+    <tr>
+      <th [title]="'reports.rules.columns.ruleHint' | translate">
+        {{ 'reports.rules.columns.rule' | translate }}
+      </th>
+      <th class="num" [title]="'reports.rules.columns.triggeredHint' | translate">
+        {{ 'reports.rules.columns.triggered' | translate }}
+      </th>
+      <th class="num" [title]="'reports.rules.columns.winsHint' | translate">
+        {{ 'reports.rules.columns.wins' | translate }}
+      </th>
+      <th class="num">{{ 'reports.rules.columns.averageWin' | translate }}</th>
+      <th class="num" [title]="'reports.rules.columns.averageLossHint' | translate">
+        {{ 'reports.rules.columns.averageLoss' | translate }}
+      </th>
+      <th class="num" [title]="'reports.rules.columns.ratioHint' | translate">
+        {{ 'reports.rules.columns.ratio' | translate }}
+      </th>
+      <th class="num" [title]="'reports.rules.columns.expectancyHint' | translate">
+        {{ 'reports.rules.columns.expectancy' | translate }}
+      </th>
+    </tr>
+  </ng-template>
 </div>

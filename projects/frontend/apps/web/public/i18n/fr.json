@@ -1535,6 +1535,7 @@
       "ruleSub": "entrée +{{entry}} % · stop +{{stop}} %",
       "triggeredSub": "sur {{count}} · {{stopped}} stoppés",
       "note": "Rejoué sur l'open, le HOD et l'EOD de chaque GUS complétée — la règle, pas mes trades. Sous {{min}} trades déclenchés, la ligne affiche « — » et son n : un taux sur une poignée de lignes ne dit rien.",
+      "loading": "Chargement des règles",
       "loadError": "Les règles n'ont pas pu être chargées.",
       "retry": "Réessayer"
     }
