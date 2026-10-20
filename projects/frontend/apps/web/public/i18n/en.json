@@ -1535,6 +1535,7 @@
       "ruleSub": "entry +{{entry}} % · stop +{{stop}} %",
       "triggeredSub": "of {{count}} · {{stopped}} stopped",
       "note": "Replayed on the open, HOD and EOD of every completed GUS — the rule, not my trades. Under {{min}} triggered trades, the row shows « — » and its n: a rate over a handful of rows says nothing.",
+      "loading": "Loading the rules",
       "loadError": "The rules could not be loaded.",
       "retry": "Retry"
     }

@@ -1,7 +1,7 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideTranslateService } from '@ngx-translate/core';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { RuleScore, RuleScoreMonths, RuleScoreRow } from '../../core/api/stats/stat-entry.model';
@@ -18,6 +18,8 @@ import { RuleScoreReport } from './rule-score-report';
  *  - **Under 20** the figures give way to « — » and the n against 20 : a rate over a handful of
  *    rows says nothing.
  *  - **A failed load** shows its banner, and « retry » asks again.
+ *  - **A slow first load** draws the table itself over ghost rows, inside the one card, announced,
+ *    with the window subtitle held — so nothing moves when the figures land (#757).
  */
 function row(overrides: Partial<RuleScoreRow> = {}): RuleScoreRow {
   return {
@@ -146,6 +148,41 @@ describe('RuleScoreReport', () => {
     await render();
 
     expect(ruleScore).toHaveBeenCalledExactlyOnceWith(3);
+  });
+
+  // #757 : a generic card skeleton drew a second card inside this one, said nothing to a screen
+  // reader and was half the table's height.
+  it('draws the real header over two ghost rows on a slow first load, inside the one card', async () => {
+    vi.useFakeTimers();
+    const answer = new Subject<RuleScore>();
+    ruleScore.mockReturnValueOnce(answer);
+    const fixture = TestBed.createComponent(RuleScoreReport);
+    fixture.detectChanges();
+    vi.advanceTimersByTime(200);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+
+    const skeleton = el.querySelector('[data-testid="rules-skeleton"]')!;
+    expect(skeleton.querySelectorAll('th').length).toBe(7);
+    expect(skeleton.querySelectorAll('tbody tr').length).toBe(2);
+    expect(el.querySelectorAll('mat-card').length).toBe(1);
+    expect(skeleton.getAttribute('aria-busy')).toBe('true');
+    expect(skeleton.querySelector('.cdk-visually-hidden')?.textContent).toBe(
+      'reports.rules.loading',
+    );
+    expect(el.querySelector('.card-title .hint ui-skeleton')).not.toBeNull();
+    expect(el.querySelector('.note')).not.toBeNull();
+
+    answer.next(makeScore());
+    answer.complete();
+    await vi.advanceTimersByTimeAsync(0);
+    fixture.detectChanges();
+    vi.advanceTimersByTime(300);
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="rules-skeleton"]')).toBeNull();
+    expect(el.querySelectorAll('[data-testid="rules-table"] tbody tr').length).toBe(2);
+    expect(el.querySelector('[data-testid="rule-window"]')).not.toBeNull();
+    vi.useRealTimers();
   });
 
   it('shows a banner on a failed load, and retry asks again', async () => {

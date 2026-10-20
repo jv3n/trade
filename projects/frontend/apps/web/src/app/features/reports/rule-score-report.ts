@@ -1,4 +1,4 @@
-import { formatDate, formatNumber } from '@angular/common';
+import { NgTemplateOutlet, formatDate, formatNumber } from '@angular/common';
 import { Component, LOCALE_ID, inject, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -8,7 +8,7 @@ import {
   StbCardModule,
   StbIconModule,
   StbProgressSpinnerModule,
-  StbSkeletonCard,
+  StbSkeleton,
   stbLoadGate,
 } from '@portfolioai/ui';
 import {
@@ -30,6 +30,17 @@ const DEFAULT_MONTHS: RuleScoreMonths = 3;
 /** Below this many triggered trades a rule shows its n, not a rate : a handful says nothing. */
 export const MIN_TRIGGERED = 20;
 
+/** One ghost per real cell : the rule, triggered and winners columns carry a second line. */
+const GHOST_CELLS = [
+  { numeric: false, sub: true, width: '50%' },
+  { numeric: true, sub: true, width: '40%' },
+  { numeric: true, sub: true, width: '55%' },
+  { numeric: true, sub: false, width: '50%' },
+  { numeric: true, sub: false, width: '45%' },
+  { numeric: true, sub: false, width: '40%' },
+  { numeric: true, sub: false, width: '50%' },
+] as const;
+
 /**
  * « Rapports », tab « Règles GUS » (#205) : the mechanical rules 10 / 40 and 7 / 31 replayed on the
  * completed GUS of a rolling window — the rule, not my trades. The window is the card's own toggle,
@@ -42,8 +53,9 @@ export const MIN_TRIGGERED = 20;
     StbButtonToggleModule,
     StbCardModule,
     StbIconModule,
+    NgTemplateOutlet,
     StbProgressSpinnerModule,
-    StbSkeletonCard,
+    StbSkeleton,
     TranslatePipe,
   ],
   templateUrl: './rule-score-report.html',
@@ -55,6 +67,9 @@ export class RuleScoreReport {
 
   readonly windows = RULE_SCORE_MONTHS;
   readonly minTriggered = MIN_TRIGGERED;
+  /** The two rules the backend scores, so the skeleton is as tall as the table. */
+  readonly ghostRows = [0, 1];
+  readonly ghostCells = GHOST_CELLS;
   readonly months = signal<RuleScoreMonths>(readStoredMonths());
   /** Bumped by « Réessayer » : a new key, where `reload()` is a no-op while a load runs. */
   private readonly retries = signal(0);
