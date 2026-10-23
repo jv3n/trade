@@ -272,6 +272,41 @@
           grid-template-columns: repeat(2, 1fr);
         }
       }
+      /* #760 : la stat du scanner à relire, et celle qu'on a rejetée (gardée pour ne pas revenir au scan suivant). */
+      tr.to-review td {
+        background: color-mix(in oklch, var(--accent) 7%, transparent);
+      }
+      tr.to-review td:first-child {
+        box-shadow: inset 3px 0 var(--accent);
+      }
+      tr.rejected td {
+        opacity: 0.55;
+      }
+      tr.rejected td:last-child {
+        opacity: 1;
+      }
+      td .tag > .icon {
+        margin-right: 3px;
+        font-size: 14px;
+      }
+      .review-banner {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        background: var(--accent-soft);
+        color: var(--text);
+        font-size: 13px;
+      }
+      .review-banner .icon {
+        color: var(--accent);
+      }
+      .row-actions {
+        display: flex;
+        gap: 4px;
+      }
     </style>
   </head>
   <body>
@@ -321,7 +356,7 @@
           <div class="card kpi">
             <div class="label">Sink depuis le Push</div>
             <div class="value gain">+20,0 %</div>
-            <div class="sub">médiane · haut du Push → Sink · <b>n = 9</b> sur 12 GUS complétées · sans Sink : 3 <span title="À saisir : le Sink peut encore être noté. Non relevé : il ne le sera pas (#729).">(à saisir 2 · non relevé 1)</span></div>
+            <div class="sub">médiane · haut du Push → Sink · <b>n = 9</b> sur 12 GUS complétées · sans Sink : 3 <span title="À saisir : le Sink peut encore être noté. Non relevé : il ne le sera pas (#729).">(à saisir 2 · non relevé 1)</span> · <span title="Déposées par le scanner, pas encore validées : hors de tous les chiffres (#760)">2 à relire, hors chiffres</span></div>
           </div>
           <div class="card kpi">
             <div class="label">15 % atteints</div>
@@ -345,7 +380,7 @@
           <div class="card kpi">
             <div class="label">Stats DT complétées</div>
             <div class="value">3</div>
-            <div class="sub">septembre · <span style="color: var(--warn)">1 à compléter</span></div>
+            <div class="sub">septembre · <span style="color: var(--warn)">1 à compléter</span> · <span title="Déposées par le scanner, pas encore validées : hors de tous les chiffres (#760)">2 à relire, hors chiffres</span></div>
           </div>
           <div class="card kpi">
             <div class="label">Extension moyenne (A)</div>
@@ -423,9 +458,18 @@
           <h2>
             <span data-mode="edit"><span data-group="panel" data-value="gus">Premarket</span><span data-group="panel" data-value="dt" hidden>Titre</span> — <span class="ticker">SGBX</span> <span class="muted" style="font-weight: 400">ven. 18/09</span><span class="save-state" id="premarket-state">✓ enregistré hier à 22:25</span></span>
             <span data-mode="new" hidden>Nouvelle stat</span>
-            <span class="hint" data-mode="edit"><span data-group="panel" data-value="gus">repris du candidat · modifiable · chaque champ s'enregistre à la sortie</span><span data-group="panel" data-value="dt" hidden>float et volume repris du candidat · pas de premarket : un double top se lit sur la séance (#649)</span></span>
+            <span class="hint" data-mode="edit"><span data-group="panel" data-value="gus"><span data-source>repris du candidat</span> · modifiable · chaque champ s'enregistre à la sortie</span><span data-group="panel" data-value="dt" hidden>float et volume repris du candidat · pas de premarket : un double top se lit sur la séance (#649)</span></span>
             <span class="hint" data-mode="new" hidden>un chart trouvé après coup · n'importe quel jour jusqu'à aujourd'hui</span>
           </h2>
+          <!-- #760 : une stat du scanner s'ouvre comme les autres ; le bandeau dit d'où elle vient et où elle en est. -->
+          <div class="review-banner" data-review hidden>
+            <span class="icon">radar</span>
+            <span><b>Déposée par le scanner</b> lun. 21/09 à 06:10, lue sur les barres 1 min du ven. 18/09 — vérifie ses prix sur le chart et corrige-les ici. Corriger ne la valide pas : elle reste à relire, hors des chiffres, jusqu'à « Valider ».</span>
+          </div>
+          <div class="review-banner" data-validated hidden>
+            <span class="icon">radar</span>
+            <span><b>Déposée par le scanner, validée</b> — une stat comme les autres, modifiable comme elles. « Repasser à relire » la sort des chiffres jusqu'à une nouvelle validation.</span>
+          </div>
           <div class="identity" data-mode="new" hidden>
             <div class="field"><label>Date</label><input class="input" type="date" id="n-date" max="2026-09-21" value="2026-09-18" /></div>
             <div class="field">
@@ -542,7 +586,10 @@
             <span style="flex: 1"></span>
             <span class="progress" id="dt-progress">3 / 5 prix · 3 / 5 heures</span>
             <button class="btn">Fermer</button>
-            <button class="btn btn-check" id="dt-check" disabled title="Il manque l'Echo"><span class="icon">check_circle</span> <span data-label>Marquer complétée</span></button>
+            <button class="btn btn-check" id="dt-check" disabled title="Il manque l'Echo" data-manual><span class="icon">check_circle</span> <span data-label>Marquer complétée</span></button>
+            <button class="btn" data-validated data-unvalidate hidden title="Annule la validation : elle repasse à relire, hors des chiffres"><span class="icon">undo</span> Repasser à relire</button>
+            <button class="btn" data-review data-reject hidden><span class="icon">close</span> Rejeter</button>
+            <button class="btn btn-primary" data-review data-validate hidden title="La stat rejoint les stats de son pattern, à compléter — « Marquer complétée » ensuite, comme une stat saisie"><span class="icon">check</span> Valider</button>
           </div>
         </section>
 
@@ -567,7 +614,7 @@
                   <td>Open</td>
                   <td class="muted">09:30</td>
                   <td><input class="input" id="c-open" data-price value="1,90" /></td>
-                  <td><span class="pct muted">repris du candidat · tenue −22,8 % · cumul +69,6 %</span></td>
+                  <td><span class="pct muted" id="c-open-hint">repris du candidat · tenue −22,8 % · cumul +69,6 %</span></td>
                 </tr>
                 <tr>
                   <td>Push</td>
@@ -614,7 +661,10 @@
             <span style="flex: 1"></span>
             <span class="progress" id="panel-progress">2 / 5 prix saisis · Sink à saisir</span>
             <button class="btn" id="panel-close">Fermer</button>
-            <button class="btn btn-check" id="panel-check" disabled title="Il manque HOD, LOD, EOD"><span class="icon">check_circle</span> <span data-label>Marquer complétée</span></button>
+            <button class="btn btn-check" id="panel-check" disabled title="Il manque HOD, LOD, EOD" data-manual><span class="icon">check_circle</span> <span data-label>Marquer complétée</span></button>
+            <button class="btn" data-validated data-unvalidate hidden title="Annule la validation : elle repasse à relire, hors des chiffres"><span class="icon">undo</span> Repasser à relire</button>
+            <button class="btn" data-review data-reject hidden><span class="icon">close</span> Rejeter</button>
+            <button class="btn btn-primary" data-review data-validate hidden title="La stat rejoint les stats de son pattern, à compléter — « Marquer complétée » ensuite, comme une stat saisie"><span class="icon">check</span> Valider</button>
           </div>
         </section>
 
@@ -640,6 +690,7 @@
             </span>
             <div class="segmented" data-group="status">
               <button class="active" data-value="all">Toutes</button>
+              <button data-value="all" id="tab-review" title="Les stats déposées par le scanner, pas encore validées — hors des chiffres (#760)">À relire · 4</button>
               <button data-value="all">À compléter</button>
               <button data-value="all">Tradées</button>
               <button data-value="all">Non tradées</button>
@@ -649,6 +700,7 @@
             <span class="filter-toggles">
               <button class="btn btn-sm filter-toggle" aria-pressed="false" title="Ce que les prix enregistrés disent ne pas être le setup — un DT dont l'Echo reprend l'Apex, un prix hors de la fourchette de la fiche. Se combine avec les onglets.">Hors pattern</button>
               <button class="btn btn-sm filter-toggle" aria-pressed="false" title="Open sous 1 $ — déduit du prix, plus une case à cocher. Se combine avec les onglets.">Sous 1 $</button>
+              <button class="btn btn-sm filter-toggle" aria-pressed="false" id="toggle-rejected" title="Les stats du scanner rejetées, avec leur motif — gardées pour qu'un nouveau scan ne les ramène pas (#760). Cachées partout ailleurs.">Rejetées</button>
             </span>
           </div>
 
@@ -694,6 +746,32 @@
                   <td><button class="check" disabled title="Il manque l'Echo"><span class="icon">radio_button_unchecked</span></button></td>
                   <td><button class="btn btn-sm"><span class="icon">edit</span> Double top</button></td>
                 </tr>
+                <tr class="to-review">
+                  <td>18/09</td><td><span class="ticker">BNRG</span></td><td><span class="tag tag-accent">DT</span> <span class="tag tag-accent" title="Déposée par le scanner lun. 21/09 à 06:10 — hors des chiffres jusqu'à validation"><span class="icon">radar</span>scanner · à relire</span></td>
+                  <td class="num sep muted" title="Pas de float sur le plan Massive gratuit : à saisir à la relecture si besoin">—</td><td class="num">12,4 M</td>
+                  <td class="num sep">2,10</td>
+                  <td class="num">3,30<small class="muted">+57,1 %</small></td>
+                  <td class="num">2,68<small class="muted">−18,8 %</small></td>
+                  <td class="num">3,21<small class="muted">+19,8 % · Apex −2,7 %</small></td>
+                  <td class="num">36 min<small class="muted">A 11 · R 8 · E 17</small></td>
+                  <td class="num sep">2,72<small class="gain">+15,3 % · entrée +13,2 %</small><small class="muted">31 min</small></td>
+                  <td class="sep"></td>
+                  <td><button class="check" disabled title="À relire d'abord : Valider ou Rejeter"><span class="icon">radio_button_unchecked</span></button></td>
+                  <td><span class="row-actions"><button class="btn btn-sm" data-review-open title="Ouvrir la stat pour vérifier et corriger ses prix avant de décider"><span class="icon">edit</span> Relire</button><button class="btn btn-sm btn-primary" data-validate title="Elle rejoint les stats du DT, à compléter : tu la coches ensuite, comme une stat saisie"><span class="icon">check</span> Valider</button><button class="btn btn-sm btn-icon" data-reject title="Rejeter — elle sort de tout et ne reviendra pas au prochain scan"><span class="icon">close</span></button></span></td>
+                </tr>
+                <tr class="to-review">
+                  <td>18/09</td><td><span class="ticker">CTNT</span></td><td><span class="tag tag-accent">DT</span> <span class="tag tag-accent" title="Déposée par le scanner lun. 21/09 à 06:10 — hors des chiffres jusqu'à validation"><span class="icon">radar</span>scanner · à relire</span></td>
+                  <td class="num sep muted" title="Pas de float sur le plan Massive gratuit : à saisir à la relecture si besoin">—</td><td class="num">4,8 M</td>
+                  <td class="num sep">4,20</td>
+                  <td class="num">6,45<small class="muted">+53,6 %</small></td>
+                  <td class="num">5,30<small class="muted">−17,8 %</small></td>
+                  <td class="num">6,18<small class="muted">+16,6 % · Apex −4,2 %</small></td>
+                  <td class="num">42 min<small class="muted">A 14 · R 7 · E 21</small></td>
+                  <td class="num sep">5,05<small class="gain">+18,3 % · entrée +17,6 %</small><small class="muted">2 h 10</small></td>
+                  <td class="sep"></td>
+                  <td><button class="check" disabled title="À relire d'abord : Valider ou Rejeter"><span class="icon">radio_button_unchecked</span></button></td>
+                  <td><span class="row-actions"><button class="btn btn-sm" data-review-open title="Ouvrir la stat pour vérifier et corriger ses prix avant de décider"><span class="icon">edit</span> Relire</button><button class="btn btn-sm btn-primary" data-validate title="Elle rejoint les stats du DT, à compléter : tu la coches ensuite, comme une stat saisie"><span class="icon">check</span> Valider</button><button class="btn btn-sm btn-icon" data-reject title="Rejeter — elle sort de tout et ne reviendra pas au prochain scan"><span class="icon">close</span></button></span></td>
+                </tr>
                 <tr>
                   <td>17/09</td><td><span class="ticker">MULN</span></td><td><span class="tag tag-accent">DT</span></td>
                   <td class="num sep">4,4 M</td><td class="num">2,2 M</td>
@@ -707,8 +785,21 @@
                   <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
                   <td><button class="btn btn-sm" data-confirm-title="Créer le trade {ticker} ?" data-confirm-body="Le trade hérite du pattern et du contexte de la stat. Tu ajouteras ensuite les exécutions, le P&amp;L réel, le post-mortem et la capture du chart." data-confirm-ok="Créer le trade"><span class="icon">arrow_forward</span> Trade</button></td>
                 </tr>
+                <tr class="rejected" hidden>
+                  <td>17/09</td><td><span class="ticker">ATXG</span></td><td><span class="tag tag-accent">DT</span> <span class="tag" title="Rejetée lun. 21/09 — gardée pour qu'un nouveau scan ne la ramène pas, et pour régler le détecteur sur ses points"><span class="icon">radar</span>scanner · rejetée · cassure</span></td>
+                  <td class="num sep muted">—</td><td class="num">7,9 M</td>
+                  <td class="num sep">1,60</td>
+                  <td class="num">2,45<small class="muted">+53,1 %</small></td>
+                  <td class="num">2,02<small class="muted">−17,6 %</small></td>
+                  <td class="num">2,51<small class="muted">+24,3 % · Apex repris +2,4 %</small></td>
+                  <td class="num">29 min<small class="muted">A 9 · R 6 · E 14</small></td>
+                  <td class="num sep muted">—</td>
+                  <td class="sep"></td>
+                  <td></td>
+                  <td><button class="btn btn-sm" data-restore title="Elle repasse à relire"><span class="icon">undo</span> Rétablir</button></td>
+                </tr>
                 <tr>
-                  <td>16/09</td><td><span class="ticker">PRSO</span></td><td><span class="tag tag-accent">DT</span></td>
+                  <td>16/09</td><td><span class="ticker">PRSO</span></td><td><span class="tag tag-accent">DT</span> <span class="tag" title="Déposée par le scanner, validée lun. 21/09 — une stat comme les autres, la provenance reste dite"><span class="icon">radar</span>scanner</span></td>
                   <td class="num sep">6,1 M</td><td class="num">1,4 M</td>
                   <td class="num sep">2,40</td>
                   <td class="num">3,80<small class="muted">+58,3 %</small></td>
@@ -796,6 +887,33 @@
                   <td><button class="btn btn-sm"><span class="icon">arrow_forward</span> Trade</button></td>
                   <td><button class="btn btn-sm btn-icon" title="Supprimer la stat" data-confirm-title="Supprimer la stat {ticker} ?" data-confirm-body="La stat est supprimée définitivement." data-confirm-ok="Supprimer" data-confirm-danger><span class="icon">delete</span></button></td>
                 </tr>
+                <tr class="to-review">
+                  <td>18/09</td><td><span class="ticker">NXTP</span></td><td><span class="tag tag-accent">GUS</span> <span class="tag tag-accent" title="Déposée par le scanner lun. 21/09 à 06:10 — hors des chiffres jusqu'à validation"><span class="icon">radar</span>scanner · à relire</span></td>
+                  <td class="num sep">+50,0 %</td><td class="num">+24,8 %</td><td class="num muted">—</td><td class="num">14,2 M</td>
+                  <td class="sep">Push +14,7 % · LOD −24,0 % · Sink <span class="gain">+33,7 %</span></td>
+                  <td class="sep"></td>
+                  <td><button class="check" disabled title="À relire d'abord : Valider ou Rejeter"><span class="icon">radio_button_unchecked</span></button></td>
+                  <td><span class="row-actions"><button class="btn btn-sm" data-review-open title="Ouvrir la stat pour vérifier et corriger ses prix avant de décider"><span class="icon">edit</span> Relire</button><button class="btn btn-sm btn-primary" data-validate title="Elle rejoint les stats du GUS, à compléter : tu la coches ensuite, comme une stat saisie"><span class="icon">check</span> Valider</button><button class="btn btn-sm btn-icon" data-reject title="Rejeter — elle sort de tout et ne reviendra pas au prochain scan"><span class="icon">close</span></button></span></td>
+                  <td></td>
+                </tr>
+                <tr class="to-review">
+                  <td>18/09</td><td><span class="ticker">ICCT</span></td><td><span class="tag tag-accent">GUS</span> <span class="tag tag-accent" title="Déposée par le scanner lun. 21/09 à 06:10 — hors des chiffres jusqu'à validation"><span class="icon">radar</span>scanner · à relire</span></td>
+                  <td class="num sep">+50,8 %</td><td class="num">+10,9 %</td><td class="num muted">—</td><td class="num">3,1 M</td>
+                  <td class="sep">Push +8,0 % · LOD −8,0 % · Sink <span class="gain">+14,7 %</span></td>
+                  <td class="sep"></td>
+                  <td><button class="check" disabled title="À relire d'abord : Valider ou Rejeter"><span class="icon">radio_button_unchecked</span></button></td>
+                  <td><span class="row-actions"><button class="btn btn-sm" data-review-open title="Ouvrir la stat pour vérifier et corriger ses prix avant de décider"><span class="icon">edit</span> Relire</button><button class="btn btn-sm btn-primary" data-validate title="Elle rejoint les stats du GUS, à compléter : tu la coches ensuite, comme une stat saisie"><span class="icon">check</span> Valider</button><button class="btn btn-sm btn-icon" data-reject title="Rejeter — elle sort de tout et ne reviendra pas au prochain scan"><span class="icon">close</span></button></span></td>
+                  <td></td>
+                </tr>
+                <tr class="to-review">
+                  <td>18/09</td><td><span class="ticker">BNRG</span></td><td><span class="tag tag-accent">DT</span> <span class="tag tag-accent" title="Déposée par le scanner lun. 21/09 à 06:10 — hors des chiffres jusqu'à validation"><span class="icon">radar</span>scanner · à relire</span></td>
+                  <td class="num sep muted">—</td><td class="num muted">—</td><td class="num muted">—</td><td class="num">12,4 M</td>
+                  <td class="sep">A +57,1 % · R −18,8 % · E Apex −2,7 % · S <span class="gain">+15,3 %</span></td>
+                  <td class="sep"></td>
+                  <td><button class="check" disabled title="À relire d'abord : Valider ou Rejeter"><span class="icon">radio_button_unchecked</span></button></td>
+                  <td><span class="row-actions"><button class="btn btn-sm" data-review-open title="Ouvrir la stat pour vérifier et corriger ses prix avant de décider"><span class="icon">edit</span> Relire</button><button class="btn btn-sm btn-primary" data-validate title="Elle rejoint les stats du DT, à compléter : tu la coches ensuite, comme une stat saisie"><span class="icon">check</span> Valider</button><button class="btn btn-sm btn-icon" data-reject title="Rejeter — elle sort de tout et ne reviendra pas au prochain scan"><span class="icon">close</span></button></span></td>
+                  <td></td>
+                </tr>
                 <tr class="pending">
                   <td>18/09</td><td><span class="ticker">SGBX</span></td><td><span class="tag tag-accent">DT</span></td>
                   <td class="num sep muted" title="Pas de premarket sur un double top (#649)">—</td><td class="num muted">—</td><td class="num">3,9 M</td><td class="num">9,7 M</td>
@@ -833,7 +951,7 @@
                   <td><button class="btn btn-sm btn-icon" title="Supprimer la stat" data-confirm-title="Supprimer la stat {ticker} ?" data-confirm-body="Définitif. Aucun trade n'y est rattaché." data-confirm-ok="Supprimer la stat" data-confirm-danger><span class="icon">delete</span></button></td>
                 </tr>
                 <tr>
-                  <td>16/09</td><td><span class="ticker">PRSO</span></td><td><span class="tag tag-accent">DT</span></td>
+                  <td>16/09</td><td><span class="ticker">PRSO</span></td><td><span class="tag tag-accent">DT</span> <span class="tag" title="Déposée par le scanner, validée lun. 21/09 — une stat comme les autres, la provenance reste dite"><span class="icon">radar</span>scanner</span></td>
                   <td class="num sep muted" title="Pas de premarket sur un double top (#649)">—</td><td class="num muted">—</td><td class="num">6,1 M</td><td class="num">1,4 M</td>
                   <td class="sep"><span class="leg">A</span>+58,3 % · <span class="leg">R</span>−20,5 % · <span class="leg">E</span>Apex −3,2 % · <span class="leg">S</span><span class="gain">+17,1 %</span></td>
                   <td class="sep"></td>
@@ -923,6 +1041,34 @@
                   <td class="sep"></td>
                   <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
                   <td><button class="btn btn-sm" data-confirm-title="Créer le trade {ticker} ?" data-confirm-body="Le trade hérite du pattern et du contexte de la stat. Tu ajouteras ensuite les exécutions, le P&amp;L réel, le post-mortem et la capture du chart." data-confirm-ok="Créer le trade"><span class="icon">arrow_forward</span> Trade</button></td>
+                </tr>
+                <tr class="to-review">
+                  <td>18/09</td><td><span class="ticker">NXTP</span></td><td><span class="tag tag-accent">GUS</span> <span class="tag tag-accent" title="Déposée par le scanner lun. 21/09 à 06:10 — hors des chiffres jusqu'à validation"><span class="icon">radar</span>scanner · à relire</span></td>
+                  <td class="num sep">+50,0 %<small class="muted">cumul +87,1 % au high PM</small></td><td class="num">+24,8 %</td><td class="num muted" title="Pas de float sur le plan Massive gratuit : à saisir à la relecture si besoin">—</td><td class="num">14,2 M</td>
+                  <td class="num sep">2,25<small class="muted">cumul +60,7 %</small></td>
+                  <td class="num">−14,1 %</td>
+                  <td class="num">2,58<small class="muted">+14,7 % · 6 min</small></td>
+                  <td class="num">2,62<small class="muted">+16,4 %</small></td>
+                  <td class="num">1,71<small class="muted">−24,0 %</small></td>
+                  <td class="num">1,80<small class="muted">−20,0 %</small></td>
+                  <td class="num sep">1,71<small class="gain">+33,7 % depuis le push</small><small class="muted">11:20 · 104 min</small></td>
+                  <td class="sep"></td>
+                  <td><button class="check" disabled title="À relire d'abord : Valider ou Rejeter"><span class="icon">radio_button_unchecked</span></button></td>
+                  <td><span class="row-actions"><button class="btn btn-sm" data-review-open title="Ouvrir la stat pour vérifier et corriger ses prix avant de décider"><span class="icon">edit</span> Relire</button><button class="btn btn-sm btn-primary" data-validate title="Elle rejoint les stats du GUS, à compléter : tu la coches ensuite, comme une stat saisie"><span class="icon">check</span> Valider</button><button class="btn btn-sm btn-icon" data-reject title="Rejeter — elle sort de tout et ne reviendra pas au prochain scan"><span class="icon">close</span></button></span></td>
+                </tr>
+                <tr class="to-review">
+                  <td>18/09</td><td><span class="ticker">ICCT</span></td><td><span class="tag tag-accent">GUS</span> <span class="tag tag-accent" title="Déposée par le scanner lun. 21/09 à 06:10 — hors des chiffres jusqu'à validation"><span class="icon">radar</span>scanner · à relire</span></td>
+                  <td class="num sep">+50,8 %<small class="muted">cumul +67,2 % au high PM</small></td><td class="num">+10,9 %</td><td class="num muted" title="Pas de float sur le plan Massive gratuit : à saisir à la relecture si besoin">—</td><td class="num">3,1 M</td>
+                  <td class="num sep">4,40<small class="muted">cumul +44,3 %</small></td>
+                  <td class="num">−13,7 %</td>
+                  <td class="num">4,75<small class="muted">+8,0 % · 12 min</small></td>
+                  <td class="num">5,02<small class="muted">+14,1 %</small></td>
+                  <td class="num">4,05<small class="muted">−8,0 %</small></td>
+                  <td class="num">4,90<small class="muted">+11,4 %</small></td>
+                  <td class="num sep">4,05<small class="gain">+14,7 % depuis le push</small><small class="muted">10:31 · 49 min</small></td>
+                  <td class="sep"></td>
+                  <td><button class="check" disabled title="À relire d'abord : Valider ou Rejeter"><span class="icon">radio_button_unchecked</span></button></td>
+                  <td><span class="row-actions"><button class="btn btn-sm" data-review-open title="Ouvrir la stat pour vérifier et corriger ses prix avant de décider"><span class="icon">edit</span> Relire</button><button class="btn btn-sm btn-primary" data-validate title="Elle rejoint les stats du GUS, à compléter : tu la coches ensuite, comme une stat saisie"><span class="icon">check</span> Valider</button><button class="btn btn-sm btn-icon" data-reject title="Rejeter — elle sort de tout et ne reviendra pas au prochain scan"><span class="icon">close</span></button></span></td>
                 </tr>
                 <tr class="pending">
                   <td>18/09</td><td><span class="ticker">SGBX</span></td><td><span class="tag tag-accent">GUS</span></td>
@@ -1190,8 +1336,60 @@
           déduire : « Prix &lt; 1 $ » disparaît (déduit de l'open, filtre « Sous 1 $ »). « Entrée après 11h » quitte aussi la stat (#647),
           case et tag, GUS comme DT : elle concerne le trade, pas le setup — la fiche trade la déduit de sa première entrée.
         </p>
+        <p class="mockup-note">
+          Les stats du scanner (#760) — <b>ts-scanner</b> relit chaque matin la séance précédente sur les barres 1 min et dépose
+          ici les GUS et les double tops qu'il y trouve : de vraies stats, remplies comme à la main — un GUS avec son premarket
+          (clôture veille, open PM, high PM, lus sur les barres hors séance) et sa séance (Open, Push, HOD, LOD, EOD, Sink),
+          un DT avec ses cinq points BARES (heure et prix) — et le volume du jour ; pas de float, le plan Massive gratuit ne le
+          donne pas. Un GUS du scanner n'a pas de candidat : il n'a pas été vu le matin (NXTP, ICCT). Elles arrivent <b>à relire</b> (tag indigo : un état) et restent
+          <b>hors de tous les chiffres</b> — KPIs, médianes, ligne du bas, score des règles — tant qu'elles ne sont pas validées ;
+          l'onglet « À relire » les isole, avec leur nombre. <b>« Relire »</b> sur la ligne ouvre son panneau (GUS ou DT), avec un
+          bandeau qui dit d'où elle vient ; ses prix se corrigent comme ceux d'une stat saisie, sans la valider. <b>Valider</b> (sur
+          la ligne ou dans le panneau, pas de confirmation : rien n'est créé ni supprimé) en fait une stat comme les autres,
+          <b>à compléter</b> : elle se reprend, puis se coche avec « Marquer complétée », comme une stat saisie — valider dit « c'est
+          bien un GUS / un DT », cocher dit « ses chiffres sont justes ». <b>« Repasser à relire »</b>, dans le panneau d'une stat
+          validée, annule la validation : elle ressort des chiffres. Validée, elle garde le tag neutre « scanner » — la provenance,
+          pas un état (PRSO). Le <b>radar</b> marque la stat du scanner dans tous ses
+          états — à relire (tag indigo et ligne teintée), validée (tag neutre), rejetée — et dans le panneau et sur Aujourd'hui. <b>Rejeter</b> demande confirmation, avec un motif
+          facultatif : cassure (l'Echo a repris l'Apex), rejet trop faible, Echo trop loin de l'Apex, bruit, autre. Une stat rejetée
+          n'est <b>pas supprimée</b> : elle sort de tout, et c'est elle qui empêche un nouveau scan de la ramener ; ses points et son
+          motif servent à régler le détecteur. La bascule « Rejetées » les montre, grisées, avec leur motif et « Rétablir » (ATXG).
+          Le scanner ne crée jamais une stat qui existe déjà — saisie, à relire, validée ou rejetée — pour le même jour, ticker et
+          pattern. Son premier passage rattrape <b>un mois</b> : ces stats-là arrivent à relire comme les autres.
+        </p>
       </main>
     </div>
+
+    <dialog class="confirm danger" id="reject-dialog">
+      <form method="dialog">
+        <div class="confirm-body">
+          <span class="confirm-icon"><span class="icon">close</span></span>
+          <div>
+            <h3>Rejeter la stat <span data-ticker>BNRG</span> ?</h3>
+            <p>Elle sort du tableau et de tous les chiffres, et un nouveau scan ne la ramènera pas. Elle reste sous « Rejetées », d'où elle se rétablit.</p>
+            <div class="field">
+              <label for="reject-reason">Motif (facultatif)</label>
+              <select class="input" id="reject-reason">
+                <option value="">—</option>
+                <option value="cassure" data-pattern="DT">Cassure — l'Echo a repris l'Apex</option>
+                <option value="rejet faible" data-pattern="DT">Rejet trop faible</option>
+                <option value="echo loin" data-pattern="DT">Echo trop loin de l'Apex</option>
+                <option value="bruit" data-pattern="DT">Bruit — pas un double top</option>
+                <option value="gap faible" data-pattern="GUS">Gap trop faible</option>
+                <option value="news" data-pattern="GUS">Une news derrière — un fondamental</option>
+                <option value="float" data-pattern="GUS">Float hors fourchette</option>
+                <option value="bruit" data-pattern="GUS">Bruit — pas un GUS</option>
+                <option value="autre">Autre</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="confirm-actions">
+          <button class="btn" value="cancel">Annuler</button>
+          <button class="btn btn-danger" value="ok">Rejeter</button>
+        </div>
+      </form>
+    </dialog>
 
     <script>
       // État d'enregistrement d'une carte : « enregistrement… » pendant l'envoi, puis l'heure, ou l'erreur si le serveur refuse.
@@ -1653,6 +1851,181 @@
           const dt = e.target.value.startsWith('DT');
           document.querySelector(`.segmented[data-group=panel] button[data-value=${dt ? 'dt' : 'gus'}]`).click();
         });
+      })();
+      // #760 — la relecture des stats du scanner : Valider, Rejeter (motif facultatif), Rétablir, et le panneau d'une stat à relire.
+      (function () {
+        const $ = (id) => document.getElementById(id);
+        const dialog = $('reject-dialog');
+        const reason = $('reject-reason');
+        const toggle = $('toggle-rejected');
+        const reviewTags = new Map([...document.querySelectorAll('tr.to-review')].map((r) => [r, r.cells[2].innerHTML]));
+        const reviewCheck = document.querySelector('tr.to-review .check').closest('td').innerHTML;
+        const reviewActions = document.querySelector('tr.to-review .row-actions').closest('td').innerHTML;
+        const patternTag = (row) => row.cells[2].querySelector('.tag').outerHTML;
+        let target = null;
+
+        // Une stat a une ligne par vue (son pattern, et « Tous ») : une action vaut pour toutes.
+        const key = (r) => r.querySelector('.ticker')?.textContent + ' ' + r.cells[2].querySelector('.tag')?.textContent;
+        const scannerRows = () => [...document.querySelectorAll('tbody tr')].filter((r) => r.cells[2]?.textContent.includes('scanner'));
+        const sameStat = (row) => scannerRows().filter((r) => key(r) === key(row));
+        const rowsOf = (ticker) => scannerRows().filter((r) => key(r) === ticker + ' DT');
+        const cells = (row) => {
+          const action = row.querySelector('.row-actions, [data-restore], [data-trade]').closest('td');
+          return { tag: row.cells[2], check: action.previousElementSibling, action };
+        };
+        const count = () => {
+          const n = document.querySelectorAll('[data-group="pattern"]:is([data-value="gus"], [data-value="dt"]) tr.to-review').length;
+          $('tab-review').textContent = 'À relire · ' + n;
+        };
+
+        function validate(row) {
+          const c = cells(row);
+          const dtTag = patternTag(row);
+          row.className = 'pending';
+          c.tag.innerHTML = dtTag + ' <span class="tag" title="Déposée par le scanner, validée à l\'instant"><span class="icon">radar</span>scanner</span>';
+          c.check.innerHTML = '<button class="check" data-complete title="Marquer complétée — ses prix y sont"><span class="icon">radio_button_unchecked</span></button>';
+          c.action.innerHTML = '<button class="btn btn-sm" data-trade><span class="icon">arrow_forward</span> Trade</button>';
+        }
+        function reject(row, why) {
+          const c = cells(row);
+          const dtTag = patternTag(row);
+          row.className = 'rejected';
+          row.hidden = toggle.getAttribute('aria-pressed') !== 'true';
+          c.tag.innerHTML = dtTag + ' <span class="tag"><span class="icon">radar</span>scanner · rejetée' + (why ? ' · ' + why : '') + '</span>';
+          c.check.innerHTML = '';
+          c.action.innerHTML = '<button class="btn btn-sm" data-restore title="Elle repasse à relire"><span class="icon">undo</span> Rétablir</button>';
+        }
+        function restore(row) {
+          const c = cells(row);
+          row.className = 'to-review';
+          row.hidden = false;
+          c.tag.innerHTML = reviewTags.get(row) ?? reviewTags.values().next().value;
+          c.check.innerHTML = reviewCheck;
+          c.action.innerHTML = reviewActions;
+        }
+        // Le panneau montre une stat du scanner dans l'un de trois modes : à relire, validée, ou aucune (stat saisie).
+        let panelRow = null;
+        let opening = false;
+        function panelMode(mode) {
+          document.querySelectorAll('[data-review]').forEach((el) => (el.hidden = mode !== 'review'));
+          document.querySelectorAll('[data-validated]').forEach((el) => (el.hidden = mode !== 'validated'));
+          document.querySelectorAll('[data-manual]').forEach((el) => (el.hidden = mode === 'review'));
+        }
+        const closeReviewPanel = () => panelMode(null);
+        const panelRows = () => (panelRow ? sameStat(panelRow) : rowsOf('BNRG'));
+        // Les prix d'un GUS du scanner, pour remplir le panneau GUS (le panneau DT a les siens, plus bas).
+        const gusFields = () => [$('p-close'), $('p-open'), $('p-high'), $('c-open'), $('c-push-time'), $('c-push'), ...[...document.querySelectorAll('#session-panel [data-pct][data-price]')].filter((i) => i.id !== 'c-push'), $('c-drop-time'), $('c-drop')];
+        const pmOpt = () => [...document.querySelectorAll('[data-pm-opt]')];
+        const gusSaved = [...gusFields(), ...pmOpt()].map((i) => i.value);
+        const gusHints = { source: 'repris du candidat', open: $('c-open-hint').textContent };
+        const gusScanned = {
+          NXTP: ['1,40', '2,10', '2,62', '2,25', '09:36', '2,58', '2,62', '1,71', '1,80', '11:20', '1,71', '', '14,2', ''],
+          ICCT: ['3,05', '4,60', '5,10', '4,40', '09:42', '4,75', '5,02', '4,05', '4,90', '10:31', '4,05', '', '3,1', ''],
+        };
+        const scannedHints = {
+          NXTP: { source: 'lu par le scanner sur les barres hors séance — pas de candidat, pas de float', open: 'lu par le scanner · tenue −14,1 % · cumul +60,7 %' },
+          ICCT: { source: 'lu par le scanner sur les barres hors séance — pas de candidat, pas de float', open: 'lu par le scanner · tenue −13,7 % · cumul +44,3 %' },
+        };
+        function fillGus(values, hints = gusHints) {
+          document.querySelector('[data-source]').textContent = hints.source;
+          $('c-open-hint').textContent = hints.open;
+          [...gusFields(), ...pmOpt()].forEach((i, n) => {
+            i.value = values[n];
+            i.dispatchEvent(new Event('input'));
+          });
+        }
+        function openReview(row) {
+          const pattern = row.cells[2].querySelector('.tag').textContent;
+          const ticker = row.querySelector('.ticker').textContent;
+          panelRow = row;
+          opening = true;
+          document.querySelector(`.segmented[data-group="panel"] [data-value="${pattern === 'DT' ? 'dt' : 'gus'}"]`).click();
+          setTimeout(() => {
+            if (pattern === 'GUS') fillGus(gusScanned[ticker], scannedHints[ticker]);
+            else fillDt(ticker, true);
+            panelMode(row.classList.contains('to-review') ? 'review' : 'validated');
+            document.querySelector('#premarket-panel h2 .ticker').textContent = ticker;
+            $('premarket-panel').scrollIntoView({ behavior: 'smooth' });
+          }, 10);
+        }
+
+        document.addEventListener('click', (e) => {
+          const v = e.target.closest('[data-validate]');
+          const r = e.target.closest('[data-reject]');
+          const back = e.target.closest('[data-restore]');
+          const open = e.target.closest('[data-review-open]');
+          const undo = e.target.closest('[data-unvalidate]');
+          const done = e.target.closest('[data-complete]');
+          if (open) {
+            openReview(open.closest('tr'));
+          } else if (undo) {
+            panelRows().forEach(restore);
+            panelMode('review');
+            count();
+          } else if (done || (panelRow && e.target.closest('#dt-check, #panel-check') && !panelRow.classList.contains('to-review'))) {
+            (done ? sameStat(done.closest('tr')) : panelRows()).forEach((r) => {
+              r.className = '';
+              cells(r).check.innerHTML = '<button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button>';
+            });
+          } else if (v) {
+            const row = v.closest('tr');
+            (row ? sameStat(row) : panelRows()).forEach(validate);
+            if (!row) panelMode('validated');
+            count();
+          } else if (r) {
+            target = r.closest('tr') ?? panelRow;
+            dialog.querySelector('[data-ticker]').textContent = target ? target.querySelector('.ticker').textContent : 'BNRG';
+            const pattern = target ? target.cells[2].querySelector('.tag').textContent : 'DT';
+            reason.querySelectorAll('[data-pattern]').forEach((o) => (o.hidden = o.dataset.pattern !== pattern));
+            reason.value = '';
+            dialog.showModal();
+          } else if (back) {
+            sameStat(back.closest('tr')).forEach(restore);
+            count();
+          } else if (e.target.closest('#tab-review')) {
+            // Le scanner dépose des GUS et des DT : « À relire » s'ouvre sur « Tous ».
+            document.querySelector('.segmented[data-group="pattern"] [data-value="all"]').click();
+          } else if (e.target === toggle) {
+            const show = toggle.getAttribute('aria-pressed') === 'true';
+            document.querySelectorAll('tr.rejected').forEach((row) => (row.hidden = !show));
+          }
+        });
+        dialog.addEventListener('close', () => {
+          if (dialog.returnValue !== 'ok') return;
+          const why = reason.value;
+          (target ? sameStat(target) : rowsOf('BNRG')).forEach((row) => reject(row, why));
+          if (!target || target === panelRow) closeReviewPanel();
+          count();
+        });
+
+        // Le panneau DT : SGBX saisie à la main, ou un DT du scanner ouvert par « Relire », chacun avec ses propres points.
+        const dtFields = ['dt-start', 'dt-start-time', 'dt-top', 'dt-top-time', 'dt-low', 'dt-low-time', 'dt-retest', 'dt-retest-time', 'dt-drop', 'dt-drop-time'];
+        const dtPoints = {
+          SGBX: ['1,90', '10:02', '2,95', '10:14', '2,36', '10:21', '', '', '', ''],
+          BNRG: ['2,10', '10:05', '3,30', '10:16', '2,68', '10:24', '3,21', '10:41', '2,72', '11:12'],
+          CTNT: ['4,20', '09:48', '6,45', '10:02', '5,30', '10:09', '6,18', '10:30', '5,05', '12:40'],
+        };
+        function fillDt(ticker, scanned) {
+          dtFields.forEach((id, n) => ($(id).value = dtPoints[ticker][n]));
+          $('dt-state').textContent = scanned ? 'déposée à 06:10' : '✓ enregistré à 11:48';
+          $('dt-start').dispatchEvent(new Event('input'));
+        }
+        document.addEventListener('click', (e) => {
+          const b = e.target.closest('.segmented[data-group="panel"] button');
+          if (!b) return;
+          // « Relire » passe par ces boutons pour afficher le bon panneau : ce clic-là ne ramène pas SGBX.
+          if (opening) return void (opening = false);
+          panelRow = null;
+          // mockup.js (defer) affiche le groupe après ce gestionnaire : on passe derrière lui.
+          setTimeout(() => {
+            closeReviewPanel();
+            document.querySelector('#premarket-panel h2 .ticker').textContent = 'SGBX';
+            if (b.dataset.value === 'dt') fillDt('SGBX', false);
+            else fillGus(gusSaved);
+          });
+        });
+
+        if (location.hash === '#a-relire') window.addEventListener('load', () => $('tab-review').click());
       })();
     </script>
   </body>
