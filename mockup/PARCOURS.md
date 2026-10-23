@@ -21,6 +21,9 @@ Legend : ✅ defined · 🟡 in progress · ❓ to define
 - **Broker : TradeZero.**
 - **Spotting : the radar** (an external tool) finds the day's tickers. The app doesn't replace the
   radar, it records what comes out of it.
+- **The scanner** (#760). `ts-scanner`, a separate Ticker Story service, reads the previous
+  session every morning and drops the GUS and the double tops it found into the stats sheet, to be
+  reviewed — see [Scanner stats](#scanner-stats--the-previous-sessions-double-tops-760-).
 
 ### Name and sign-in
 
@@ -135,6 +138,12 @@ type, no confirmation (a clean morning creates no correction) (#407).
   « À compléter » filter for whoever goes hunting. Its single action opens the stats sheet, where the session
   panel opens on the first stat to complete. The step is **done when nothing is left before
   today** — a morning with nothing to finish is simply done, whatever the day's candidates.
+  It also counts the **scanner's stats to review** (#760, an indigo tag beside the amber « à
+  compléter ») and is done only once neither is left ; « Relire » opens the sheet on « À relire ».
+  The one-month backfill's stats are counted apart (« dont n de l'historique »), never listed as
+  overdue — their age is not a lapse. A line says when the scanner last ran, on which day, how many
+  tickers it read and double tops it found — **amber** when it has not run for the previous trading
+  day, or failed. It blocks nothing : without it, the step reads what was typed.
 
 **A quiet day can be done too** (#407). Some days nothing on the radar is worth a candidate, and
 many days end without a trade : « nothing today » is an answer, not a step left undone.
@@ -801,6 +810,75 @@ the flags, the check column, and a « → Trade » button or one P&L tag per tra
 with « + » for the next one. The
 « SGBX · GUS / SGBX · DT » switch shows the two panels of one candidate's two stats, the pattern
 switch the six views of the page.
+
+---
+
+## Scanner stats — the previous session's GUS and double tops (#760) 🟡
+
+**Why** : the stats sheet only holds what was seen — the GUS caught on the radar in the morning,
+the double tops spotted by chance late in the morning. `ts-scanner` (a separate repo of the Ticker
+Story platform) reads the previous session on 1-min bars and records every **GUS** and **double
+top** it finds, so the sheet measures each pattern on all its cases, not only the noticed ones. `trade` stays free of market data : the
+scanner pushes, `trade` never pulls.
+
+**When** : every morning, on demand — a manual resource in `trade`'s Tilt (#766), run before
+opening the app ; it scans the **previous trading day** (Friday on a Monday). Not deployed for now,
+for cost : a D-1 batch does not need the cloud. Its data is end of day (Massive's free plan), so
+nothing is detected live — alerts while a double top forms are a later phase, on a paid real-time
+plan.
+
+**What it records** : real stats, filled as by hand, and the day's volume. No float (not on the
+free plan) : typed by hand on review if wanted.
+
+- **A GUS** — its premarket (previous close, PM open, PM high, read on the extended-hours bars) and
+  its session, OPS (Open, Push with its time, Sink with its time) plus HOD, LOD, EOD. Picked on
+  `docs/pattern/GUS.md`'s numbers the bars can give : price range and the gap read as the
+  TradeZero scanner does (previous close → price of the moment, #499). The rest of the sheet —
+  float, institutions, the company — is the review's job. A scanner GUS has **no candidate** : it
+  was not seen in the morning.
+- **A DT** — the five BARES points, a time and a price each, on `docs/pattern/DT.md` (A ≥ +50 %,
+  R ≥ 17 % off the Apex).
+
+Both patterns stay partly discretionary : the detector's job is to miss few, not to judge — the
+review is where the judgement happens.
+
+**Its life** :
+
+| State | Shown | In the figures | Actions |
+|-------|-------|----------------|---------|
+| **To review** | the row tinted indigo, a « scanner · à relire » indigo tag, the « À relire » tab with its count, the Today step 1 count | **No** — KPIs, medians, the footer row, the rule score all ignore it | Relire (opens its panel) · Valider · Rejeter ; its prices can be corrected as on any stat, without validating it |
+| **Validated** | a neutral « scanner » tag — the provenance, not a state | Yes, like any stat | the usual ones — edit, then « Marquer complétée » ; « Repasser à relire » |
+| **Rejected** | only under the « Rejetées » toggle, greyed, « scanner · rejetée · <reason> » | No | Rétablir (back to review) |
+
+**One mark for the scanner** : the **radar icon** with the word « scanner », in every state — the
+tag in the table, the panel's banner, the Today step 1 line — so a scanner stat is told from a typed
+one at a glance, before and after its review.
+
+- **« Relire »** on the row opens its panel — the GUS or DT panel, as for a typed stat — with a
+  banner saying where it comes from. Its prices are corrected there ; correcting does not validate.
+- **Valider** (on the row or in the panel) needs no confirmation — nothing is created or deleted.
+  It makes it an ordinary stat **to complete** : it can still be edited, then is ticked with
+  « Marquer complétée », as any typed stat. Two acts, two meanings : validating says « this is a
+  GUS / a DT », ticking says « its figures are right ».
+- **« Repasser à relire »**, in the panel of a validated scanner stat, undoes the validation : it
+  leaves the figures again until validated anew.
+- **Rejeter** asks for confirmation (danger), with an **optional reason**. DT : breakout (the Echo
+  took the Apex), rejection too weak, Echo too far from the Apex, noise, other. GUS : gap too small,
+  a news behind it (a fundamental), float out of range, noise, other. The reasons and the
+  rejected points are what the detector's thresholds will be tuned on.
+- **A rejected stat is kept, not deleted** : it is what stops a re-scan from bringing it back.
+- **The scanner never creates a stat that exists** for the same day, ticker and pattern — typed,
+  to review, validated or rejected. A stat already typed or promoted by hand wins — a GUS caught
+  in the morning stays the candidate's.
+- **Backfill** : the first run replays **one month** ; those stats arrive to review like the others.
+- The trade ↔ stat link (#732) applies to a scanner stat as to any other.
+
+**Screens** : [`stats.html`](stats.html) — NXTP and ICCT to review (GUS view), BNRG and CTNT
+(DT view), all four under « Tous », where the « À relire » tab opens ; « Relire » on each opens its
+own panel — its own prices, the banner, Rejeter / Valider, then « Marquer complétée » and « Repasser à
+relire » once validated ; ATXG rejected under « Rejetées », PRSO validated (« scanner ») ;
+[`aujourdhui.html`](aujourdhui.html) — step 1 at 8:00 (four to review,
+the scanner's line), at 16:15 (nothing left) and on the quiet day (scanner not run, amber).
 
 ---
 

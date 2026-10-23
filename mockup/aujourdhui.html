@@ -248,14 +248,21 @@
                   <div>
                     <div class="step-title">
                       Compléter les stats de la veille <span class="tag tag-warn">3 à compléter</span>
+                      <span class="tag tag-accent" title="Stats créées par ts-scanner, hors des chiffres tant qu'elles ne sont pas validées (#760)"><span class="icon">radar</span> 4 à relire</span>
                     </div>
                     <div class="step-body">
                       KTTA GUS attend son HOD, son LOD et son EOD.
                       <span style="color: var(--warn)">En retard : BNZI GUS (16/09), SNTG GUS (15/09).</span>
+                      <br />Le scanner a trouvé ven. 18/09 : NXTP, ICCT (GUS) · BNRG, CTNT (DT) — à relire sur le chart.
+                      <br /><span class="muted" title="ts-scanner rend compte de chaque passage à trade (#763) : jour scanné, tickers lus, DT trouvés, erreur éventuelle"><span class="icon" style="font-size: inherit; vertical-align: -2px">radar</span> Scanner passé à 06:10 · ven. 18/09 · 38 tickers lus, 2 GUS, 2 DT</span>
                     </div>
                   </div>
                   <!-- #337 : une stat laissée incomplète plus tôt que la veille reste visible ici, en ambre, jusqu'à ce qu'elle soit cochée — 30 jours au plus (#726), ensuite elle ne vit plus que sous le filtre « À compléter » des stats. -->
-                  <div class="step-action"><a class="btn btn-sm btn-primary" href="stats.html">Compléter</a></div>
+                  <!-- #760 : les stats du scanner à relire comptent ici aussi ; celles du rattrapage d'un mois sont comptées à part (« dont n de l'historique », affiché seulement s'il y en a), jamais « en retard » — leur âge n'est pas un oubli. -->
+                  <div class="step-action actions">
+                    <a class="btn btn-sm" href="stats.html#a-relire">Relire</a>
+                    <a class="btn btn-sm btn-primary" href="stats.html">Compléter</a>
+                  </div>
                 </li>
 
                 <li class="step">
@@ -344,7 +351,10 @@
                   <span class="step-dot"><span class="icon">check</span></span>
                   <div>
                     <div class="step-title">Compléter les stats de la veille</div>
-                    <div class="step-body">Rien à compléter d'avant aujourd'hui.</div>
+                    <div class="step-body">
+                      Rien à compléter ni à relire d'avant aujourd'hui.
+                      <br /><span class="muted"><span class="icon" style="font-size: inherit; vertical-align: -2px">radar</span> Scanner passé à 06:10 · ven. 18/09 · 2 GUS, 2 DT, relus</span>
+                    </div>
                   </div>
                   <div></div>
                 </li>
@@ -414,7 +424,10 @@
                   <span class="step-dot"><span class="icon">check</span></span>
                   <div>
                     <div class="step-title">Compléter les stats de la veille</div>
-                    <div class="step-body">Rien à compléter d'avant aujourd'hui.</div>
+                    <div class="step-body">
+                      Rien à compléter ni à relire d'avant aujourd'hui.
+                      <br /><span style="color: var(--warn)" title="Aucun passage du scanner pour la séance précédente : il tourne en local, depuis le Tilt de trade (#766)"><span class="icon" style="font-size: inherit; vertical-align: -2px">radar</span> Scanner pas passé pour ven. 18/09 — à lancer depuis Tilt (ressource ts-scanner).</span>
+                    </div>
                   </div>
                   <div></div>
                 </li>
@@ -538,6 +551,15 @@
           (l'écart se calcule en direct) ; le détail des mouvements reste dans Compte. L'étape des candidats n'est cochée qu'une fois tous les
           candidats passés en stats. L'étape 1 (#531) compte les stats à compléter d'avant aujourd'hui : la veille est le cas normal
           (l'app ne s'ouvre que le matin), les jours d'avant sont en retard, en ambre, pendant 30 jours (#726) : au-delà, la stat quitte la liste du matin — qui ne montre que ce qui se fait encore — et reste sous le filtre « À compléter » des stats. Sans rien d'avant aujourd'hui, elle est faite.
+        </p>
+        <p class="mockup-note">
+          Le scanner (#760) — ts-scanner relit chaque matin la séance précédente sur les barres 1 min et dépose les GUS et les double tops trouvés
+          dans les stats, <b>à relire</b>. L'étape 1 les compte à côté des stats à compléter (le tag indigo : un état, pas un résultat)
+          et n'est faite que quand il ne reste ni l'un ni l'autre. « Relire » ouvre les stats sur l'onglet « À relire ». Les stats du
+          <b>rattrapage d'un mois</b> (premier passage) sont comptées à part, « dont n de l'historique », et jamais listées en retard :
+          leur âge n'est pas un oubli. La ligne du scanner dit quand il est passé, sur quel jour, combien de tickers il a lus et de
+          DT trouvés ; en <b>ambre</b> quand il n'est pas passé pour la séance précédente ou qu'il a échoué (vue « Jour calme ») — il
+          tourne en local, à la main, depuis le Tilt de trade (#766). Il ne bloque rien : sans lui, l'étape se juge sur ce qui est saisi.
         </p>
       </main>
     </div>
