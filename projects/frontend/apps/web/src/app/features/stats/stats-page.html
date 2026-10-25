@@ -470,13 +470,19 @@
 
       <!-- A scanner stat opens like any other ; the banner says where it comes from (#764). -->
       @if (completing(); as stat) {
-        @if (stat.review === 'TO_REVIEW' || stat.review === 'VALIDATED') {
+        <!-- A review at all means the scanner dropped it (V30) : every state says so. -->
+        @if (stat.review !== null) {
           <div class="review-banner">
             <mat-icon>radar</mat-icon>
             @if (stat.review === 'TO_REVIEW') {
               <span
                 ><b>{{ 'stats.review.bannerTitle' | translate }}</b>
                 {{ 'stats.review.banner' | translate: reviewBannerParams(stat) }}</span
+              >
+            } @else if (stat.review === 'REJECTED') {
+              <span
+                ><b>{{ 'stats.review.bannerRejectedTitle' | translate }}</b>
+                {{ rejectedBanner(stat) }}</span
               >
             } @else {
               <span

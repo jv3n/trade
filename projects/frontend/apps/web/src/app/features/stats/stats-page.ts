@@ -1748,6 +1748,13 @@ export class StatsPage {
     });
   }
 
+  /** A rejected stat's banner : why it was rejected, when a reason was given. */
+  rejectedBanner(entry: StatEntry): string {
+    if (!entry.rejectionReason) return this.translate.instant('stats.review.bannerRejected');
+    const reason = this.translate.instant('stats.rejectionReason.' + entry.rejectionReason);
+    return this.translate.instant('stats.review.bannerRejectedBecause', { reason });
+  }
+
   /** When the scanner dropped the stat, and the session it read it on — the panel's banner. */
   reviewBannerParams(entry: StatEntry): Record<string, string> {
     return {
