@@ -35,6 +35,7 @@ describe('HttpScannerRepository', () => {
       gusFound: 2,
       dtFound: 2,
       error: null,
+      missedTickers: ['SGRX'],
     });
 
     expect(run).toEqual({
@@ -45,7 +46,25 @@ describe('HttpScannerRepository', () => {
       gusFound: 2,
       dtFound: 2,
       error: null,
+      missedTickers: ['SGRX'],
     });
+  });
+
+  it('reads a run reported before #779 as one that missed nothing', () => {
+    let run: ScannerRun | null = null;
+    repo.latestRun().subscribe((r) => (run = r));
+
+    http.expectOne('/api/scanner/runs/latest').flush({
+      tradingDate: '2026-09-18',
+      startedAt: '2026-09-21T10:10:00Z',
+      finishedAt: null,
+      tickersScanned: 38,
+      gusFound: 2,
+      dtFound: 2,
+      error: null,
+    });
+
+    expect(run!.missedTickers).toEqual([]);
   });
 
   it('reads « never ran » off the 204 as null', () => {

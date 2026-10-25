@@ -15,7 +15,7 @@ import java.util.UUID
 /**
  * One run of ts-scanner over [tradingDate] (#763), as the scanner reports it. It belongs to the
  * scanner's owner, whose Today page reads the latest one. A null [finishedAt] is a run cut short ;
- * [error] says why it failed.
+ * [error] says why it failed ; [missedTickers], which tickers a run that went on could not read.
  */
 @Entity
 @Table(name = "scanner_run")
@@ -29,6 +29,8 @@ class ScannerRun(
   @Column(name = "gus_found", nullable = false) val gusFound: Int,
   @Column(name = "dt_found", nullable = false) val dtFound: Int,
   @Column(length = 2000) val error: String? = null,
+  /** The tickers it could not read, comma-separated (#779) — a partial run, not a failed one. */
+  @Column(name = "missed_tickers", length = 2000) val missedTickers: String? = null,
   @Column(name = "created_at", nullable = false, updatable = false)
   val createdAt: Instant = Instant.now(),
 )
