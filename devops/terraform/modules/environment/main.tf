@@ -20,7 +20,8 @@ resource "google_service_account_iam_member" "deploy_acts_as_runtime" {
 # Containers only : values are added by hand (`gcloud secrets versions add`) and never reach the state.
 # The database password has its own secret, out of the URL : a logger printing the URL can't leak it (#659).
 resource "google_secret_manager_secret" "own" {
-  for_each = toset(["supabase-db-url", "supabase-db-password", "app-admin-emails"])
+  # `scanner-api-token` : the bearer ts-scanner pushes its stats with (#763, #777).
+  for_each = toset(["supabase-db-url", "supabase-db-password", "app-admin-emails", "scanner-api-token"])
 
   secret_id = "${each.value}${var.secret_suffix}"
 
