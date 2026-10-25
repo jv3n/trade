@@ -28,7 +28,7 @@ import {
   subBusinessDays,
   subDays,
 } from 'date-fns';
-import { EMPTY, catchError, filter, switchMap, tap } from 'rxjs';
+import { EMPTY, catchError, filter, map, switchMap, tap } from 'rxjs';
 import { AccountRepository } from '../../core/api/account/account.repository';
 import { Candidate } from '../../core/api/candidates/candidates.model';
 import { CandidatesRepository } from '../../core/api/candidates/candidates.repository';
@@ -36,6 +36,8 @@ import { JournalRepository } from '../../core/api/journal/journal.repository';
 import { TradeEntry } from '../../core/api/journal/trade-entry.model';
 import { Locate, LocateInput } from '../../core/api/locates/locates.model';
 import { LocatesRepository } from '../../core/api/locates/locates.repository';
+import { ScannerRun } from '../../core/api/scanner/scanner.model';
+import { ScannerRepository } from '../../core/api/scanner/scanner.repository';
 import { PATTERNS } from '../../core/api/shared/pattern.model';
 import { StatEntry } from '../../core/api/stats/stat-entry.model';
 import { StatsRepository } from '../../core/api/stats/stats.repository';
@@ -181,6 +183,7 @@ export class TodayPage {
   private readonly journalRepo = inject(JournalRepository);
   private readonly tradingDayRepo = inject(TradingDayRepository);
   private readonly locatesRepo = inject(LocatesRepository);
+  private readonly scannerRepo = inject(ScannerRepository);
   private readonly dialog = inject(MatDialog);
   private readonly confirm = inject(ConfirmService);
   private readonly translate = inject(TranslateService);
@@ -192,6 +195,9 @@ export class TodayPage {
   readonly marketStatus = marketStatusAt(this.today);
   readonly steps = STEPS;
   readonly requiredStepCount = REQUIRED_STEPS.length;
+  // Weekends only : the morning after a market holiday reads the day before it as overdue (amber),
+  // which leaves the count, the done state and the action untouched — accepted (#531).
+  private readonly previousTradingDay = subBusinessDays(this.today, 1);
 
   // ---- What the day is made of ----
   private readonly dayWrites = signal(0);
@@ -235,6 +241,48 @@ export class TodayPage {
         { pageIndex: 0, pageSize: 50, sortField: 'tradeDate', sortDirection: 'desc' },
       ),
   });
+  /** Wrapped, so « never ran » (`{ run: null }`) is told from « not known yet » (`null`). */
+  private readonly scannerRunResource = rxResource({
+    params: () => ({ day: this.dayWrites() }),
+    stream: () => this.scannerRepo.latestRun().pipe(map((run) => ({ run }))),
+  });
+  private readonly latestRun = keptValue(this.scannerRunResource);
+  /**
+   * The session the scanner's stats are of (#765) : the one its latest run read. The previous
+   * business day stands in when the run is unknown, stale or failed to load — on the morning after
+   * a market holiday that guess is the closed day, hence the run first. `undefined` while the run
+   * is on its way : the split waits for it.
+   */
+  private readonly scanDay = computed<Date | undefined>(() => {
+    const known = this.latestRun();
+    if (known === null) {
+      return this.scannerRunResource.status() === 'error' ? this.previousTradingDay : undefined;
+    }
+    const run = known.run;
+    return run && !this.scannerLate(run) ? run.tradingDate : this.previousTradingDay;
+  });
+  /**
+   * The scanner's stats to review of the session it read — named on step 1 (#765). Anything to
+   * review older than that is the one-month backfill, counted apart.
+   */
+  private readonly scannedResource = rxResource({
+    params: () => {
+      const day = this.scanDay();
+      return day && { day, writes: this.dayWrites() };
+    },
+    stream: ({ params }) =>
+      this.statsRepo.findAll(
+        { review: 'TO_REVIEW', dateFrom: params.day },
+        { pageIndex: 0, pageSize: 50, sortField: 'ticker', sortDirection: 'asc' },
+      ),
+  });
+  private readonly backfillResource = rxResource({
+    params: () => {
+      const day = this.scanDay();
+      return day && { day, writes: this.dayWrites() };
+    },
+    stream: ({ params }) => this.statsRepo.countToReview({ dateTo: subDays(params.day, 1) }),
+  });
   private readonly todayTradesResource = rxResource({
     params: () => ({ day: this.dayWrites() }),
     stream: () => this.journalRepo.findAll(this.dayRange, { pageIndex: 0, pageSize: 20 }),
@@ -274,6 +322,17 @@ export class TodayPage {
   readonly statsToComplete = computed<StatEntry[]>(() => this.statsPage()?.content ?? []);
   /** `null` until the stats answer, or when they fail : unknown is not « nothing left ». */
   readonly statsToCompleteTotal = computed(() => this.statsPage()?.totalElements ?? null);
+  private readonly scannedPage = keptValue(this.scannedResource);
+  private readonly scannedStats = computed<StatEntry[]>(() => this.scannedPage()?.content ?? []);
+  private readonly backfill = keptValue(this.backfillResource);
+  /** Stats of the one-month backfill still to review — history, never overdue (#765). */
+  readonly backfillCount = computed(() => this.backfill() ?? 0);
+  /** `null` until both answer, or when one fails : unknown is not « nothing left ». */
+  readonly statsToReviewTotal = computed(() => {
+    const recent = this.scannedPage();
+    const backfill = this.backfill();
+    return recent === null || backfill === null ? null : recent.totalElements + backfill;
+  });
   private readonly todayPage = keptValue(this.todayTradesResource);
   readonly todayTrades = computed<TradeEntry[]>(() => this.todayPage()?.content ?? []);
   private readonly weekPage = keptValue(this.weekTradesResource);
@@ -291,6 +350,9 @@ export class TodayPage {
     this.candidatesResource,
     this.locatesResource,
     this.statsResource,
+    this.scannerRunResource,
+    this.scannedResource,
+    this.backfillResource,
     this.todayTradesResource,
     this.tradingDayResource,
   ];
@@ -317,9 +379,6 @@ export class TodayPage {
    * completed before its session. The previous trading day is the normal case ; anything older is
    * overdue (#337), and nothing else in the daily flow would point at it — for 30 days (#726).
    */
-  // Weekends only : the morning after a market holiday reads the day before it as overdue (amber),
-  // which leaves the count, the done state and the action untouched — accepted (#531).
-  private readonly previousTradingDay = subBusinessDays(this.today, 1);
   readonly yesterdayStats = computed(() =>
     this.statsToComplete()
       .filter((s) => differenceInCalendarDays(s.tradeDate, this.previousTradingDay) >= 0)
@@ -348,6 +407,77 @@ export class TodayPage {
       more: this.overdueTotal() - shown.length,
     };
   });
+
+  /** « ven. 18/09 : NXTP, ICCT (GUS) · BNRG, CTNT (DT) » — what the scanner found, and when. */
+  readonly scannedLine = computed(() => {
+    const stats = this.scannedStats();
+    const scanDay = this.scanDay();
+    if (stats.length === 0 || !scanDay) return null;
+    const day = new Intl.DateTimeFormat(this.locale, {
+      weekday: 'short',
+      day: '2-digit',
+      month: '2-digit',
+    });
+    return {
+      day: day.format(scanDay),
+      stats: PATTERNS.map((pattern) => ({
+        pattern,
+        tickers: stats.filter((s) => s.pattern === pattern).map((s) => s.ticker),
+      }))
+        .filter((group) => group.tickers.length > 0)
+        .map(
+          (group) =>
+            `${group.tickers.join(', ')} (${this.translate.instant('patterns.short.' + group.pattern)})`,
+        )
+        .join(' · '),
+    };
+  });
+
+  /**
+   * When the scanner last ran and what it read (#765) — `late` and `failed` both amber. It blocks
+   * nothing : without it, the step reads what was typed. Nothing is said while the run is unknown.
+   */
+  readonly scannerLine = computed(() => {
+    const known = this.latestRun();
+    if (known === null) return null;
+    const run = known.run;
+    const day = new Intl.DateTimeFormat(this.locale, {
+      weekday: 'short',
+      day: '2-digit',
+      month: '2-digit',
+    });
+    const time = new Intl.DateTimeFormat(this.locale, { hour: '2-digit', minute: '2-digit' });
+    if (!run || this.scannerLate(run)) {
+      return {
+        key: 'scannerLate',
+        warn: true,
+        params: { day: day.format(this.previousTradingDay) },
+      };
+    }
+    const params = {
+      day: day.format(run.tradingDate),
+      time: time.format(run.startedAt),
+      tickers: run.tickersScanned,
+      gus: run.gusFound,
+      dt: run.dtFound,
+      error: run.error ?? '',
+    };
+    return run.error
+      ? { key: 'scannerFailed', warn: true, params }
+      : { key: 'scannerRan', warn: false, params };
+  });
+
+  /**
+   * Not run for the latest session : never, or its last run read an older one **and** was not
+   * today's. A run of this morning that read the session before a holiday is on time — the
+   * previous business day is the closed one.
+   */
+  private scannerLate(run: ScannerRun): boolean {
+    return (
+      differenceInCalendarDays(run.tradingDate, this.previousTradingDay) < 0 &&
+      !isSameDay(run.startedAt, this.today)
+    );
+  }
 
   /** The day's locates, one row per ticker. */
   readonly locatesByTicker = computed<TickerLocates[]>(() => {
@@ -382,9 +512,9 @@ export class TodayPage {
     // The session is behind us once New York has closed — there is nothing to do in the app while
     // it runs, so it can't be "done" any earlier.
     session: this.sessionOver,
-    // Nothing left before today — a morning with nothing to finish is simply done. Unknown is not
-    // « nothing left ».
-    stats: this.statsToCompleteTotal() === 0,
+    // Nothing left before today, to complete or to review (#765) — a morning with nothing to finish
+    // is simply done. Unknown is not « nothing left ».
+    stats: this.statsToCompleteTotal() === 0 && this.statsToReviewTotal() === 0,
     trades: this.todayTrades().length > 0,
   }));
 

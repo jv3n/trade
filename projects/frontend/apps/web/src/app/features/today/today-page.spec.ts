@@ -13,6 +13,8 @@ import { JournalRepository } from '../../core/api/journal/journal.repository';
 import { TradeEntry } from '../../core/api/journal/trade-entry.model';
 import { Locate, LocateInput } from '../../core/api/locates/locates.model';
 import { LocatesRepository } from '../../core/api/locates/locates.repository';
+import { ScannerRun } from '../../core/api/scanner/scanner.model';
+import { ScannerRepository } from '../../core/api/scanner/scanner.repository';
 import { StatEntry, StatEntryFilter } from '../../core/api/stats/stat-entry.model';
 import { StatsRepository } from '../../core/api/stats/stats.repository';
 import { TradingDay, TradingDayMarks } from '../../core/api/trading-day/trading-day.model';
@@ -30,6 +32,9 @@ import { TodayPage, marketStatusAt } from './today-page';
  *   one stat (#436), no stat left to complete in the last 30 days, a trade entered (#337) ;
  * - step 1 splits the stats to complete between yesterday's and the **overdue** ones, which carry
  *   their date — up to 30 days back (#726) ;
+ * - step 1 counts the **scanner's stats to review** too (#765) : done only once neither is left, the
+ *   one-month backfill counted apart and never overdue, « Relire » on « À relire », and a line on
+ *   when the scanner last ran — amber when it did not run for the previous session, or failed ;
  * - a quiet day can be **settled** (#407) : « no candidate » empties step 3, « no trade » step 5,
  *   and a candidate or a trade entered afterwards beats the mark ;
  * - the **locates** step (#625) is optional : done with a locate, never the current step nor
@@ -47,6 +52,11 @@ describe('TodayPage', () => {
 
   let candidates: Candidate[];
   let statsToComplete: StatEntry[];
+  /** The scanner's stats to review of the previous session (#765). */
+  let scannedToReview: StatEntry[];
+  /** The one-month backfill still to review — counted, never listed. */
+  let backfillToReview: number;
+  let latestRun: ScannerRun | null;
   let todayTrades: TradeEntry[];
   let reconciledToday: boolean;
   let confirmed: boolean;
@@ -66,6 +76,9 @@ describe('TodayPage', () => {
     createLocate = vi.fn((input: LocateInput) => of(makeLocate({ ticker: input.ticker })));
     dialogOpen = vi.fn(() => ({ afterClosed: () => of(undefined) }));
     statsToComplete = [];
+    scannedToReview = [];
+    backfillToReview = 0;
+    latestRun = makeRun();
     todayTrades = [];
     reconciledToday = false;
     confirmed = true;
@@ -103,8 +116,10 @@ describe('TodayPage', () => {
         {
           provide: StatsRepository,
           useValue: {
-            findAll: () => of(page(statsToComplete)),
+            findAll: (filter?: StatEntryFilter) =>
+              of(page(filter?.review === 'TO_REVIEW' ? scannedToReview : statsToComplete)),
             summary: () => of(makeStatSummary()),
+            countToReview: () => of(backfillToReview),
           } as unknown as StatsRepository,
         },
         {
@@ -118,6 +133,7 @@ describe('TodayPage', () => {
           provide: TradingDayRepository,
           useValue: { get: () => of(tradingDay), put: putTradingDay } as TradingDayRepository,
         },
+        { provide: ScannerRepository, useValue: { latestRun: () => of(latestRun) } },
         {
           provide: LocatesRepository,
           useValue: { listForDate: () => of(dayLocates), create: createLocate },
@@ -389,7 +405,11 @@ describe('TodayPage', () => {
   it("asks for the stats to complete of the 30 days before today — the day's own are not in it", async () => {
     const findAll = vi.fn((_filter: StatEntryFilter, _page: unknown) => of(page([])));
     TestBed.overrideProvider(StatsRepository, {
-      useValue: { findAll, summary: () => of(makeStatSummary()) } as unknown as StatsRepository,
+      useValue: {
+        findAll,
+        summary: () => of(makeStatSummary()),
+        countToReview: () => of(0),
+      } as unknown as StatsRepository,
     });
     await setup();
 
@@ -421,7 +441,11 @@ describe('TodayPage', () => {
       of({ ...page([makeStat({ tradeDate: YESTERDAY })]), totalElements: 63 }),
     );
     TestBed.overrideProvider(StatsRepository, {
-      useValue: { findAll, summary: () => of(makeStatSummary()) } as unknown as StatsRepository,
+      useValue: {
+        findAll,
+        summary: () => of(makeStatSummary()),
+        countToReview: () => of(0),
+      } as unknown as StatsRepository,
     });
     const today = await setup();
 
@@ -480,12 +504,190 @@ describe('TodayPage', () => {
       useValue: {
         findAll: () => throwError(() => new Error('500')),
         summary: () => of(makeStatSummary()),
+        countToReview: () => of(0),
       } as unknown as StatsRepository,
     });
     const page = await setup();
 
     expect(page.statsToCompleteTotal()).toBeNull();
     expect(page.stepStates().stats).not.toBe('done');
+  });
+
+  // ---------------------------------------------------------------------------
+  // Step 1 — the scanner's stats to review (#765)
+  // ---------------------------------------------------------------------------
+
+  it('a stat to review keeps step 1 open, with its count and « Relire » on « À relire »', async () => {
+    scannedToReview = [makeScanned({ ticker: 'NXTP' })];
+    const today = await setup();
+
+    expect(today.stepStates().stats).toBe('current');
+    expect(today.statsToReviewTotal()).toBe(1);
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('.tag-accent')?.textContent).toContain('today.steps.stats.toReview');
+    const review = el.querySelector<HTMLAnchorElement>('a[href*="status=TO_REVIEW"]');
+    expect(review?.textContent).toContain('today.actions.review');
+  });
+
+  it('asks for the stats to review from the previous session on, the older ones counted apart', async () => {
+    const findAll = vi.fn((_filter: StatEntryFilter, _page: unknown) => of(page([])));
+    const countToReview = vi.fn((_filter: StatEntryFilter) => of(0));
+    TestBed.overrideProvider(StatsRepository, {
+      useValue: {
+        findAll,
+        summary: () => of(makeStatSummary()),
+        countToReview,
+      } as unknown as StatsRepository,
+    });
+    await setup();
+
+    const scanned = findAll.mock.calls.find(([filter]) => filter.review === 'TO_REVIEW')![0];
+    expect(scanned.dateFrom?.getDate()).toBe(17);
+    // Friday 18/09 : the scanner read Thursday 17 ; Wednesday 16 and before is the backfill.
+    expect(countToReview.mock.calls[0][0].dateTo?.getDate()).toBe(16);
+  });
+
+  it('counts the backfill apart, and never lists it as overdue', async () => {
+    backfillToReview = 12;
+    const today = await setup();
+
+    expect(today.statsToReviewTotal()).toBe(12);
+    expect(today.backfillCount()).toBe(12);
+    expect(today.overdueStats()).toEqual([]);
+    expect(today.stepStates().stats).not.toBe('done');
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('.tag-accent')?.textContent).toContain(
+      'today.steps.stats.toReviewWithBackfill',
+    );
+    expect(el.querySelector('.overdue')).toBeNull();
+  });
+
+  it('names what the scanner found on the previous session, pattern by pattern', async () => {
+    scannedToReview = [
+      makeScanned({ id: 's1', ticker: 'NXTP' }),
+      makeScanned({ id: 's2', ticker: 'ICCT' }),
+      makeScanned({ id: 's3', ticker: 'BNRG', pattern: 'DT' }),
+    ];
+    const today = await setup();
+
+    expect(today.scannedLine()?.stats).toBe('NXTP, ICCT (GUS) · BNRG (DT)');
+  });
+
+  it('nothing to complete nor to review : step 1 is done', async () => {
+    const today = await setup();
+
+    expect(today.statsToReviewTotal()).toBe(0);
+    expect(today.stepStates().stats).toBe('done');
+  });
+
+  it('keeps step 1 open while the stats to review are unknown', async () => {
+    TestBed.overrideProvider(StatsRepository, {
+      useValue: {
+        findAll: () => of(page([])),
+        summary: () => of(makeStatSummary()),
+        countToReview: () => throwError(() => new Error('500')),
+      } as unknown as StatsRepository,
+    });
+    const today = await setup();
+
+    expect(today.statsToReviewTotal()).toBeNull();
+    expect(today.stepStates().stats).not.toBe('done');
+  });
+
+  it('says when the scanner ran on the previous session and what it read', async () => {
+    const today = await setup();
+
+    expect(today.scannerLine()).toEqual(
+      expect.objectContaining({
+        key: 'scannerRan',
+        warn: false,
+        params: expect.objectContaining({ tickers: 38, gus: 2, dt: 2 }),
+      }),
+    );
+  });
+
+  it('warns in amber when the scanner has not run for the previous session', async () => {
+    // Its last run was Thursday's, reading Wednesday : nothing for Thursday's session.
+    latestRun = makeRun({
+      tradingDate: new Date(2026, 8, 16),
+      startedAt: new Date('2026-09-17T10:10:00Z'),
+    });
+    const today = await setup();
+
+    expect(today.scannerLine()).toEqual(
+      expect.objectContaining({ key: 'scannerLate', warn: true }),
+    );
+    expect(fixture.nativeElement.querySelector('.scanner-line.warn')).not.toBeNull();
+  });
+
+  // #774 review : the morning after a holiday, the previous business day is the closed one. The run
+  // of this morning read the session before it — on time, its stats are not history.
+  it('the morning after a holiday reads the session the scanner read, not the closed day', async () => {
+    vi.setSystemTime(new Date('2026-09-08T12:30:00Z')); // Tuesday 08:30 NY, after Labor Day
+    const friday = new Date(2026, 8, 4);
+    latestRun = makeRun({ tradingDate: friday, startedAt: new Date('2026-09-08T10:10:00Z') });
+    scannedToReview = [makeScanned({ ticker: 'NXTP', tradeDate: friday })];
+    const findAll = vi.fn((filter: StatEntryFilter, _page: unknown) =>
+      of(page(filter.review === 'TO_REVIEW' ? scannedToReview : [])),
+    );
+    const countToReview = vi.fn((_filter: StatEntryFilter) => of(0));
+    TestBed.overrideProvider(StatsRepository, {
+      useValue: {
+        findAll,
+        summary: () => of(makeStatSummary()),
+        countToReview,
+      } as unknown as StatsRepository,
+    });
+    const today = await setup();
+
+    const scanned = findAll.mock.calls.find(([filter]) => filter.review === 'TO_REVIEW')![0];
+    expect(scanned.dateFrom?.getDate()).toBe(4);
+    expect(countToReview.mock.calls[0][0].dateTo?.getDate()).toBe(3);
+    expect(today.scannerLine()).toEqual(
+      expect.objectContaining({ key: 'scannerRan', warn: false }),
+    );
+    expect(today.scannedLine()?.day).toContain('04');
+    expect(today.backfillCount()).toBe(0);
+  });
+
+  it('a scanner endpoint that fails falls back on the previous business day, and holds nothing', async () => {
+    TestBed.overrideProvider(ScannerRepository, {
+      useValue: { latestRun: () => throwError(() => new Error('500')) },
+    });
+    const today = await setup();
+
+    expect(today.stepsLoaded()).toBe(true);
+    expect(today.scannerLine()).toBeNull();
+    expect(today.stepStates().stats).toBe('done');
+  });
+
+  it('warns the same before the scanner ever ran', async () => {
+    latestRun = null;
+    const today = await setup();
+
+    expect(today.scannerLine()).toEqual(
+      expect.objectContaining({ key: 'scannerLate', warn: true }),
+    );
+  });
+
+  it('warns in amber when the last run failed, with its error', async () => {
+    latestRun = makeRun({ error: 'Massive answered 429' });
+    const today = await setup();
+
+    expect(today.scannerLine()).toEqual(
+      expect.objectContaining({
+        key: 'scannerFailed',
+        warn: true,
+        params: expect.objectContaining({ error: 'Massive answered 429' }),
+      }),
+    );
+  });
+
+  it('the scanner blocks nothing : late, step 1 still reads what was typed', async () => {
+    latestRun = null;
+    const today = await setup();
+
+    expect(today.stepStates().stats).toBe('done');
   });
 
   // #451 : on the rc3 recette, « FRESH1, FRESH2, FRESH1 » read as a duplicate row — it was
@@ -830,6 +1032,31 @@ function makeCandidate(overrides: Partial<Candidate> = {}): Candidate {
     updatedAt: new Date(),
     ...overrides,
   };
+}
+
+/** Thursday's run, read at 06:10 on Friday : 38 tickers, 2 GUS, 2 DT. */
+function makeRun(overrides: Partial<ScannerRun> = {}): ScannerRun {
+  return {
+    tradingDate: YESTERDAY,
+    startedAt: new Date('2026-09-18T10:10:00Z'),
+    finishedAt: new Date('2026-09-18T10:14:00Z'),
+    tickersScanned: 38,
+    gusFound: 2,
+    dtFound: 2,
+    error: null,
+    ...overrides,
+  };
+}
+
+/** A GUS the scanner dropped on Thursday, waiting for its review. */
+function makeScanned(overrides: Partial<StatEntry> = {}): StatEntry {
+  return makeStat({
+    candidateId: null,
+    tradeDate: YESTERDAY,
+    source: 'SCANNER',
+    review: 'TO_REVIEW',
+    ...overrides,
+  });
 }
 
 function makeStat(overrides: Partial<StatEntry> = {}): StatEntry {

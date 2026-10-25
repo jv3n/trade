@@ -19,6 +19,8 @@ import { HttpLocatesRepository } from './api/locates/adapters/locates.http';
 import { LocatesRepository } from './api/locates/locates.repository';
 import { HttpPatternsRepository } from './api/patterns/adapters/patterns.http';
 import { PatternsRepository } from './api/patterns/patterns.repository';
+import { HttpScannerRepository } from './api/scanner/adapters/scanner.http';
+import { ScannerRepository } from './api/scanner/scanner.repository';
 import { HttpStatsRepository } from './api/stats/adapters/stats.http';
 import { StatsRepository } from './api/stats/stats.repository';
 import { HttpTradingDayRepository } from './api/trading-day/adapters/trading-day.http';
@@ -40,6 +42,7 @@ export function provideRepositories(): EnvironmentProviders {
     { provide: LocatesRepository, useClass: HttpLocatesRepository },
     { provide: StatsRepository, useClass: HttpStatsRepository },
     { provide: TradingDayRepository, useClass: HttpTradingDayRepository },
+    { provide: ScannerRepository, useClass: HttpScannerRepository },
     { provide: LexiconRepository, useClass: HttpLexiconRepository },
     { provide: PatternsRepository, useClass: HttpPatternsRepository },
     { provide: AppInfoRepository, useClass: HttpAppInfoRepository },
