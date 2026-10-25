@@ -23,7 +23,8 @@ import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler
  * The application's only filter chain. The exact route matrix lives in `authorizeHttpRequests`
  * below ; in short : health + OAuth callback routes are permitAll, the three back-office areas
  * (config, prompts, narrative observability) require ROLE_ADMIN, the rest of the API and of the
- * actuator require an authenticated session, and the SPA itself is public.
+ * actuator require an authenticated session, and the SPA itself is public. The scanner's `POST`s
+ * have their own token chain, ordered first (`ScannerSecurityConfig`).
  *
  * Unauthenticated requests get a HTTP 401, not the default 302 to the Google authorization URL —
  * the SPA's HTTP interceptor needs a clean status code to decide whether to redirect to /login. A
