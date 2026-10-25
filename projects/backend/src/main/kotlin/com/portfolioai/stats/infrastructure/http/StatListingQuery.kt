@@ -2,6 +2,7 @@ package com.portfolioai.stats.infrastructure.http
 
 import com.portfolioai.shared.Pattern
 import com.portfolioai.stats.domain.StatEntryFilter
+import com.portfolioai.stats.domain.StatReview
 import com.portfolioai.stats.domain.StatStatus
 import java.time.LocalDate
 import org.springframework.format.annotation.DateTimeFormat
@@ -19,6 +20,8 @@ data class StatListingQuery(
   val noPush: Boolean? = null,
   val outOfPattern: Boolean? = null,
   val under1Dollar: Boolean? = null,
+  val review: StatReview? = null,
+  val withRejected: Boolean? = null,
 ) {
   fun toFilter() =
     StatEntryFilter(
@@ -30,5 +33,7 @@ data class StatListingQuery(
       noPush = noPush,
       outOfPattern = outOfPattern,
       under1Dollar = under1Dollar,
+      review = review,
+      withRejected = withRejected,
     )
 }

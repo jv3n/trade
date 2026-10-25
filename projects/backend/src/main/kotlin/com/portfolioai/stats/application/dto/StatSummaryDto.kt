@@ -77,6 +77,8 @@ import java.math.BigDecimal
  * @param traded Stats of the filtered set that gave birth to a trade — the journal reads this pair
  *   as « 8 / 10 » and links to the ones left untraded (#195).
  * @param untraded Stats of the filtered set with no trade yet.
+ * @param toReview Scanner stats of the filtered set still to review (#762) — in none of the figures
+ *   above, the « 2 à relire, hors chiffres » of the KPIs.
  */
 data class StatSummaryDto(
   val completed: Int,
@@ -119,4 +121,5 @@ data class StatSummaryDto(
   val medianGusDropMinutes: BigDecimal?,
   val traded: Int,
   val untraded: Int,
+  val toReview: Int,
 )

@@ -2,6 +2,7 @@ package com.portfolioai.stats.infrastructure.persistence
 
 import com.portfolioai.stats.domain.StatEntry
 import com.portfolioai.stats.domain.StatEntryFilter
+import com.portfolioai.stats.domain.StatReview
 import com.portfolioai.stats.domain.StatStatus
 import jakarta.persistence.criteria.Predicate
 import java.util.UUID
@@ -43,6 +44,13 @@ object StatEntrySpecifications {
 
       filter.noPush?.let { noPush ->
         predicates += cb.equal(root.get<Boolean>("noPush"), noPush)
+      }
+
+      val review = root.get<StatReview>("review")
+      when {
+        filter.review != null -> predicates += cb.equal(review, filter.review)
+        filter.withRejected != true ->
+          predicates += cb.or(cb.isNull(review), cb.notEqual(review, StatReview.REJECTED))
       }
 
       cb.and(*predicates.toTypedArray())
