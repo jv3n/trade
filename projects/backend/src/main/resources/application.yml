@@ -94,6 +94,12 @@ app:
   # port : `application-local.yml` overrides it, or the user lands on a Whitelabel 404 after login.
   frontend-url: ${APP_FRONTEND_URL:/}
 
+# ts-scanner's way in (#763). An empty token keeps `POST /api/scanner/**` shut ; the stats it pushes
+# belong to the owner, an `app_user.id`.
+scanner:
+  api-token: ${SCANNER_API_TOKEN:}
+  owner-user-id: ${SCANNER_OWNER_USER_ID:}
+
 # ECB reference rates, published once per business day, keyless — enough for the cosmetic USD→CAD
 # conversion of the account balance.
 forex:
