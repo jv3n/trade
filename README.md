@@ -39,8 +39,9 @@ on demand, from a checkout next to this one.
 
 The resource's buttons :
 
-- **backfill (local)** — every trading day since a date ; one month back by default, for the first
-  run. Re-running a day is harmless : the push skips what exists and remembers rejections.
+- **backfill (local)** — every trading day from a first day to a last one (empty : up to the
+  previous one) ; the same day in both scans that day alone. Re-running a day is harmless : the
+  push skips what exists and remembers rejections.
 - **scan → staging** — the same, pushed to the staging API (`SCANNER_STAGING_URL`) : to try a scan
   on a deployed `trade` first.
 - **scan → production** — the same, pushed to the production API (`SCANNER_PROD_URL`), after a
@@ -74,4 +75,5 @@ the secret has no value.
    `SCANNER_PROD_URL=https://tickerstory.org`) in `.env`, then the button.
 
 What ts-scanner is given : `TRADE_URL` and `TRADE_API_TOKEN` in its environment, and `--from
-<YYYY-MM-DD>` for a backfill — nothing for the previous trading day.
+<YYYY-MM-DD>` (with `--to <YYYY-MM-DD>` for a range or one day) — nothing for the previous trading
+day.
