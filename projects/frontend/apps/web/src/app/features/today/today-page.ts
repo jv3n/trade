@@ -434,7 +434,8 @@ export class TodayPage {
   });
 
   /**
-   * When the scanner last ran and what it read (#765) — `late` and `failed` both amber. It blocks
+   * When the scanner last ran and what it read (#765) — `late` and `failed` both amber ; a
+   * `partial` run (#779) stays neutral, naming the tickers to check by hand : it worked. It blocks
    * nothing : without it, the step reads what was typed. Nothing is said while the run is unknown.
    */
   readonly scannerLine = computed(() => {
@@ -461,10 +462,15 @@ export class TodayPage {
       gus: run.gusFound,
       dt: run.dtFound,
       error: run.error ?? '',
+      count: run.missedTickers.length,
+      missed: run.missedTickers.join(', '),
     };
-    return run.error
-      ? { key: 'scannerFailed', warn: true, params }
-      : { key: 'scannerRan', warn: false, params };
+    if (run.error) return { key: 'scannerFailed', warn: true, params };
+    if (run.missedTickers.length > 0) {
+      const key = pluralKey('scannerPartial', run.missedTickers.length, this.locale);
+      return { key, warn: false, params };
+    }
+    return { key: 'scannerRan', warn: false, params };
   });
 
   /**

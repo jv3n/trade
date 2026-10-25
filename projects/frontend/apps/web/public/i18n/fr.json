@@ -94,7 +94,9 @@
         "scannerRan": "Scanner passé à {{time}} · {{day}} · {{tickers}} tickers lus, {{gus}} GUS, {{dt}} DT",
         "scannerLate": "Scanner pas passé pour {{day}} — à lancer depuis Tilt (ressource ts-scanner).",
         "scannerFailed": "Scanner en échec à {{time}} pour {{day}} : {{error}}",
-        "scannerHint": "ts-scanner rend compte de chaque passage : jour scanné, tickers lus, GUS et DT trouvés, erreur éventuelle. Il ne bloque rien : sans lui, l'étape se juge sur ce qui est saisi."
+        "scannerHint": "ts-scanner rend compte de chaque passage : jour scanné, tickers lus, GUS et DT trouvés, erreur éventuelle. Il ne bloque rien : sans lui, l'étape se juge sur ce qui est saisi.",
+        "scannerPartial": "Scanner passé à {{time}} · {{day}} · {{tickers}} tickers lus, {{gus}} GUS, {{dt}} DT · {{count}} non lus : {{missed}} — à regarder à la main",
+        "scannerPartialOne": "Scanner passé à {{time}} · {{day}} · {{tickers}} tickers lus, {{gus}} GUS, {{dt}} DT · {{count}} non lu : {{missed}} — à regarder à la main"
       },
       "trades": {
         "title": "Saisir les trades du jour",

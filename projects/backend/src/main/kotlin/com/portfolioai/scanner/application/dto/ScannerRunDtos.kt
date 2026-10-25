@@ -10,7 +10,8 @@ import java.util.UUID
 data class ScannedStatsRequest(val tradingDate: LocalDate, val stats: List<ScannedStat>)
 
 /**
- * Body of `POST /api/scanner/runs` — one run as the scanner reports it ; [error] when it failed.
+ * Body of `POST /api/scanner/runs` — one run as the scanner reports it ; [error] when it failed,
+ * [missedTickers] when it went on without some (#779).
  */
 data class ScannerRunRequest(
   val tradingDate: LocalDate,
@@ -20,6 +21,7 @@ data class ScannerRunRequest(
   val gusFound: Int,
   val dtFound: Int,
   val error: String? = null,
+  val missedTickers: List<String> = emptyList(),
 )
 
 data class ScannerRunDto(
@@ -31,6 +33,7 @@ data class ScannerRunDto(
   val gusFound: Int,
   val dtFound: Int,
   val error: String?,
+  val missedTickers: List<String>,
 )
 
 fun ScannerRun.toDto() =
@@ -43,4 +46,5 @@ fun ScannerRun.toDto() =
     gusFound = gusFound,
     dtFound = dtFound,
     error = error,
+    missedTickers = missedTickers?.split(",").orEmpty(),
   )

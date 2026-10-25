@@ -48,7 +48,8 @@ import tools.jackson.databind.ObjectMapper
  *   the second time, a rejected stat never comes back, a GUS typed or promoted by hand the same day
  *   is never duplicated — each skip reported with its reason.
  * - A stat its own rules refuse is skipped without losing the rest of the batch.
- * - Each run is recorded, and the owner's session reads the latest one for the Today page.
+ * - Each run is recorded, and the owner's session reads the latest one for the Today page — a
+ *   partial run with the tickers it missed (#779), apart from a failed one's error.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -237,6 +238,48 @@ class ScannerIntegrationTest {
   }
 
   @Test
+  fun `a partial run keeps the tickers it missed, each once and upper-cased, and no error`() {
+    pushRun(
+        run("2026-10-23T11:00:00Z", error = null, missedTickers = listOf(" sgrx", "AIXI", "SGRX"))
+      )
+      .andExpect(status().isCreated)
+
+    mvc
+      .perform(get("/api/scanner/runs/latest").with(ownerSession()))
+      .andExpect(jsonPath("$.missedTickers.length()").value(2))
+      .andExpect(jsonPath("$.missedTickers[0]").value("SGRX"))
+      .andExpect(jsonPath("$.missedTickers[1]").value("AIXI"))
+      .andExpect(jsonPath("$.error").doesNotExist())
+  }
+
+  @Test
+  fun `an entry carrying its reason keeps its ticker alone — a comma in the reason is no second ticker`() {
+    val withReason = "SGRX (Connect timeout has expired [url=…, connect_timeout=10000 ms])"
+    pushRun(
+        run(
+          "2026-10-23T11:00:00Z",
+          error = null,
+          missedTickers = listOf(withReason, "connect_timeout=10000 ms]"),
+        )
+      )
+      .andExpect(status().isCreated)
+
+    mvc
+      .perform(get("/api/scanner/runs/latest").with(ownerSession()))
+      .andExpect(jsonPath("$.missedTickers.length()").value(1))
+      .andExpect(jsonPath("$.missedTickers[0]").value("SGRX"))
+  }
+
+  @Test
+  fun `a run that missed nothing reads an empty list`() {
+    pushRun(run("2026-10-23T11:00:00Z", error = null)).andExpect(status().isCreated)
+
+    mvc
+      .perform(get("/api/scanner/runs/latest").with(ownerSession()))
+      .andExpect(jsonPath("$.missedTickers.length()").value(0))
+  }
+
+  @Test
   fun `a run with a negative count is a 400`() {
     pushRun(run("2026-10-23T11:00:00Z", error = null, gusFound = -1))
       .andExpect(status().isBadRequest)
@@ -310,7 +353,12 @@ class ScannerIntegrationTest {
       "dtDropTime" to "11:12",
     )
 
-  private fun run(startedAt: String, error: String?, gusFound: Int = 2) =
+  private fun run(
+    startedAt: String,
+    error: String?,
+    gusFound: Int = 2,
+    missedTickers: List<String> = emptyList(),
+  ) =
     json.writeValueAsString(
       mapOf(
         "tradingDate" to DAY,
@@ -320,6 +368,7 @@ class ScannerIntegrationTest {
         "gusFound" to gusFound,
         "dtFound" to 2,
         "error" to error,
+        "missedTickers" to missedTickers,
       )
     )
 }

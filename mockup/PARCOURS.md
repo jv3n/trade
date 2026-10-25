@@ -143,7 +143,8 @@ type, no confirmation (a clean morning creates no correction) (#407).
   The one-month backfill's stats are counted apart (« dont n de l'historique »), never listed as
   overdue — their age is not a lapse. A line says when the scanner last ran, on which day, how many
   tickers it read and double tops it found — **amber** when it has not run for the previous trading
-  day, or failed. It blocks nothing : without it, the step reads what was typed.
+  day, or failed. A run that went on without some tickers (#779) stays neutral and names them, to
+  check by hand : it worked. It blocks nothing : without it, the step reads what was typed.
 
 **A quiet day can be done too** (#407). Some days nothing on the radar is worth a candidate, and
 many days end without a trade : « nothing today » is an answer, not a step left undone.
