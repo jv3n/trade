@@ -35,6 +35,7 @@ import { TodayPage, marketStatusAt } from './today-page';
  * - step 1 counts the **scanner's stats to review** too (#765) : done only once neither is left, the
  *   one-month backfill counted apart and never overdue, « Relire » on « À relire », and a line on
  *   when the scanner last ran — amber when it did not run for the previous session, or failed ;
+ *   neutral when it ran partly, the tickers it missed named (#779) ;
  * - a quiet day can be **settled** (#407) : « no candidate » empties step 3, « no trade » step 5,
  *   and a candidate or a trade entered afterwards beats the mark ;
  * - the **locates** step (#625) is optional : done with a locate, never the current step nor
@@ -670,6 +671,29 @@ describe('TodayPage', () => {
     );
   });
 
+  it('a partial run stays neutral, naming the tickers it could not read', async () => {
+    latestRun = makeRun({ missedTickers: ['SGRX', 'AIXI'] });
+    const today = await setup();
+
+    expect(today.scannerLine()).toEqual(
+      expect.objectContaining({
+        key: 'scannerPartial',
+        warn: false,
+        params: expect.objectContaining({ count: 2, missed: 'SGRX, AIXI' }),
+      }),
+    );
+    expect(fixture.nativeElement.querySelector('.scanner-line.warn')).toBeNull();
+  });
+
+  it('a failed run stays amber, whatever it missed', async () => {
+    latestRun = makeRun({ error: 'no ticker read', missedTickers: ['SGRX'] });
+    const today = await setup();
+
+    expect(today.scannerLine()).toEqual(
+      expect.objectContaining({ key: 'scannerFailed', warn: true }),
+    );
+  });
+
   it('warns in amber when the last run failed, with its error', async () => {
     latestRun = makeRun({ error: 'Massive answered 429' });
     const today = await setup();
@@ -1044,6 +1068,7 @@ function makeRun(overrides: Partial<ScannerRun> = {}): ScannerRun {
     gusFound: 2,
     dtFound: 2,
     error: null,
+    missedTickers: [],
     ...overrides,
   };
 }

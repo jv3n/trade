@@ -13,6 +13,8 @@ interface ScannerRunWireDto {
   gusFound: number;
   dtFound: number;
   error: string | null;
+  /** Absent from a backend older than #779. */
+  missedTickers?: string[];
 }
 
 /** `GET /api/scanner/runs/latest` answers 204 — an empty body — before the first run. */
@@ -29,6 +31,7 @@ export class HttpScannerRepository extends ScannerRepository {
               tradingDate: parseISO(w.tradingDate),
               startedAt: parseISO(w.startedAt),
               finishedAt: w.finishedAt ? parseISO(w.finishedAt) : null,
+              missedTickers: w.missedTickers ?? [],
             }
           : null,
       ),

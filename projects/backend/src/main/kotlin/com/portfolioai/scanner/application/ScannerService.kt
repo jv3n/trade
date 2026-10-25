@@ -69,12 +69,14 @@ class ScannerService(
           gusFound = request.gusFound,
           dtFound = request.dtFound,
           error = request.error?.trim()?.take(ERROR_MAX)?.ifEmpty { null },
+          missedTickers = missedOf(request.missedTickers),
         )
       )
     log.info(
-      "Scanner run for {} reported, failed={}, userId={}",
+      "Scanner run for {} reported, failed={}, missed={}, userId={}",
       run.tradingDate,
       run.error != null,
+      request.missedTickers.size,
       owner.id,
     )
     return run.toDto()
@@ -84,6 +86,25 @@ class ScannerService(
   @Transactional(readOnly = true)
   fun latestRun(): ScannerRunDto? =
     runs.findFirstByUserIdOrderByStartedAtDesc(authService.getCurrentUser().id)?.toDto()
+
+  /**
+   * The tickers alone, each once : an entry is read down to its first word, kept when it is a
+   * ticker — a reason riding with it (« SGRX (timeout, …) ») would split on its own comma into a
+   * second, bogus ticker. Past the column's room, the list is cut on a whole ticker.
+   */
+  private fun missedOf(tickers: List<String>): String? {
+    val clean =
+      tickers
+        .map { it.trim().uppercase().split(' ', '(').first() }
+        .filter { TICKER.matches(it) }
+        .distinct()
+    val kept = mutableListOf<String>()
+    for (ticker in clean) {
+      if ((kept + ticker).joinToString(",").length > ERROR_MAX) break
+      kept += ticker
+    }
+    return kept.joinToString(",").ifEmpty { null }
+  }
 
   private fun owner(): User {
     val id =
@@ -97,5 +118,6 @@ class ScannerService(
 
   private companion object {
     const val ERROR_MAX = 2000
+    val TICKER = Regex("^[A-Z]{1,5}$")
   }
 }
