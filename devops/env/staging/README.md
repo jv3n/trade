@@ -11,7 +11,8 @@ the GlitchTip projects, where staging reports under its own environment (#462).
 | URL | https://tickerstory.org/ | https://staging.tickerstory.org/ |
 | Runtime account | `portfolioai-runtime@` | `portfolioai-staging-runtime@` |
 | Database | its Supabase project | Supabase project `trade-staging`, demo data |
-| Secrets | `supabase-db-url`, `app-admin-emails` | `supabase-db-url-staging`, `app-admin-emails-staging` |
+| Secrets | `supabase-db-url`, `app-admin-emails`, `scanner-api-token` | `supabase-db-url-staging`, `app-admin-emails-staging`, `scanner-api-token-staging` |
+| ts-scanner's token and owner (#777) | `scanner-api-token`, the `production` environment's `SCANNER_OWNER_USER_ID` | `scanner-api-token-staging`, the `staging` environment's |
 | Shared secrets | `google-oauth-client-id`, `google-oauth-client-secret`, `sentry-dsn-backend` | same |
 | Instances | 0 → 3 | 0 → 1 |
 | Error tracking | GlitchTip (`sentry-dsn-backend`) | same projects, same secret |
@@ -119,3 +120,6 @@ production.
 The run summary of `deploy.yml` names the environment it hit. The health check answers on
 https://staging.tickerstory.org/actuator/health. Staging reports no errors anywhere : read the Cloud
 Run logs of `portfolioai-staging` and the browser console.
+
+ts-scanner pushing to staging (#777) : see *Opening a deployed environment to the scanner* in the
+[root README](../../../README.md#opening-a-deployed-environment-to-the-scanner).
