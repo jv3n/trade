@@ -9,6 +9,7 @@ import com.portfolioai.stats.application.dto.RuleScoreDto
 import com.portfolioai.stats.application.dto.StatCompletionRequest
 import com.portfolioai.stats.application.dto.StatEntryDto
 import com.portfolioai.stats.application.dto.StatEntryRequest
+import com.portfolioai.stats.application.dto.StatRejectionRequest
 import com.portfolioai.stats.application.dto.StatSiblingRequest
 import com.portfolioai.stats.application.dto.StatSummaryDto
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -98,6 +99,30 @@ class StatEntryController(private val service: StatEntryService) {
     @PathVariable id: UUID,
     @RequestBody request: StatCompletionRequest,
   ): StatEntryDto = service.setCompleted(id, request.completed)
+
+  /**
+   * « Valider » a scanner stat (#762) — it joins the figures, to complete. A manual or rejected
+   * stat → 400 ; foreign id → 404.
+   */
+  @PostMapping("/{id}/validate")
+  fun validate(@PathVariable id: UUID): StatEntryDto = service.validate(id)
+
+  /**
+   * « Rejeter » a scanner stat, with an optional reason of its pattern — kept, hidden but from «
+   * Rejetées ». A manual or validated stat, or another pattern's reason → 400.
+   */
+  @PostMapping("/{id}/reject")
+  fun reject(
+    @PathVariable id: UUID,
+    @RequestBody(required = false) request: StatRejectionRequest?,
+  ): StatEntryDto = service.reject(id, request?.reason)
+
+  /**
+   * Back to review — a rejected stat, or a validated one (« Repasser à relire »). A manual or
+   * ticked stat → 400.
+   */
+  @PostMapping("/{id}/restore")
+  fun restore(@PathVariable id: UUID): StatEntryDto = service.restore(id)
 
   /** Deletes one of the caller's stats. Foreign id → 404. */
   @DeleteMapping("/{id}")

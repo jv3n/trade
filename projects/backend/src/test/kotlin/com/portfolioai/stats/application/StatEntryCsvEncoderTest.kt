@@ -4,6 +4,8 @@ import com.portfolioai.auth.domain.Role
 import com.portfolioai.auth.domain.User
 import com.portfolioai.shared.Pattern
 import com.portfolioai.stats.domain.StatEntry
+import com.portfolioai.stats.domain.StatReview
+import com.portfolioai.stats.domain.StatSource
 import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDate
@@ -16,10 +18,10 @@ import org.junit.jupiter.api.Test
  * Unit spec for [StatEntryCsvEncoder] — the CSV export behind the download button.
  *
  * Pins the format contract a spreadsheet relies on : the BOM + CRLF Excel affordances, the
- * **33-column layout** (premarket block, GUS session and its sequence, double top prices, times and
- * drop, flags — no derived percentage), `toPlainString` numbers, `true` / `false` flags, empty
- * cells for every absent value — including the session prices of a stat still to complete and the
- * prices of the other pattern — and RFC 4180 quoting of free-text notes.
+ * **35-column layout** (premarket block, GUS session and its sequence, double top prices, times and
+ * drop, flags, source and review — no derived percentage), `toPlainString` numbers, `true` /
+ * `false` flags, empty cells for every absent value — including the session prices of a stat still
+ * to complete and the prices of the other pattern — and RFC 4180 quoting of free-text notes.
  *
  * No Spring / DB here : the encoder is pure and the entity is built in memory.
  */
@@ -31,7 +33,7 @@ class StatEntryCsvEncoderTest {
     val header = csv.removePrefix("﻿").substringBefore("\r\n")
 
     assertEquals(StatEntryCsvEncoder.HEADERS, header.split(","))
-    assertEquals(33, StatEntryCsvEncoder.HEADERS.size)
+    assertEquals(35, StatEntryCsvEncoder.HEADERS.size)
   }
 
   @Test
@@ -43,12 +45,12 @@ class StatEntryCsvEncoderTest {
   }
 
   @Test
-  fun `a completed stat renders the 33 columns in order, numbers in plain form`() {
+  fun `a completed stat renders the 35 columns in order, numbers in plain form`() {
     val csv = StatEntryCsvEncoder.encode(listOf(makeEntry()))
 
     assertEquals(
       "2026-09-17,GUS,KTTA,2.65,4.05,4.65,8.2,3.1,Push rejeté sous 4.65," +
-        "4.20,4.62,4.62,3.41,3.52,,,,,,,,,,,,,,false,false,false,false,false,true",
+        "4.20,4.62,4.62,3.41,3.52,,,,,,,,,,,,,,false,false,false,false,false,true,MANUAL,",
       dataRowOf(csv),
     )
   }
@@ -60,7 +62,7 @@ class StatEntryCsvEncoderTest {
 
     assertEquals(
       "2026-09-18,GUS,SGBX,2.65,4.05,4.65,8.2,3.1,Push rejeté sous 4.65," +
-        ",,,,,,,,,,,,,,,,,,false,false,false,false,false,false",
+        ",,,,,,,,,,,,,,,,,,false,false,false,false,false,false,MANUAL,",
       dataRowOf(csv),
     )
   }
@@ -145,6 +147,18 @@ class StatEntryCsvEncoderTest {
   }
 
   @Test
+  fun `a scanner stat exports its review, so a rejected one is told apart (#762)`() {
+    val rejected =
+      makeEntry(completed = false, source = StatSource.SCANNER).apply {
+        review = StatReview.REJECTED
+      }
+
+    val cells = dataRowOf(StatEntryCsvEncoder.encode(listOf(rejected))).split(",")
+
+    assertEquals(listOf("SCANNER", "REJECTED"), cells.subList(33, 35))
+  }
+
+  @Test
   fun `a note containing a comma is wrapped in quotes`() {
     val csv = StatEntryCsvEncoder.encode(listOf(makeEntry(note = "Résistance 4,65 — pas de news")))
 
@@ -180,6 +194,7 @@ class StatEntryCsvEncoderTest {
     volumeMillions: BigDecimal? = BigDecimal("3.1"),
     ssr: Boolean = false,
     highInstitutions: Boolean = false,
+    source: StatSource = StatSource.MANUAL,
   ): StatEntry =
     StatEntry(
       user = owner,
@@ -200,6 +215,7 @@ class StatEntryCsvEncoderTest {
       eodPrice = if (completed) BigDecimal("3.52") else null,
       ssr = ssr,
       highInstitutions = highInstitutions,
+      source = source,
     )
 
   private val owner =

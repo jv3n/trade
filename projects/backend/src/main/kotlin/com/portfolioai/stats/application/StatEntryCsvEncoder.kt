@@ -11,8 +11,9 @@ import com.portfolioai.stats.domain.StatEntry
  * [java.math.BigDecimal.toPlainString] (no scientific notation).
  *
  * Export only — there is no stats CSV import : a stat is born from a candidate. The file is a
- * spreadsheet-friendly copy of the sheet : the session cells carry whatever is filled, and the last
- * column whether the stat was ticked as completed. No derived percentage is emitted : gap,
+ * spreadsheet-friendly copy of the sheet : the session cells carry whatever is filled, then whether
+ * the stat was ticked as completed. Every stat is exported, scanner ones to review and rejected
+ * included : the last two columns tell them apart (#762). No derived percentage is emitted : gap,
  * premarket push and the session percentages are recomputed from the prices wherever they are
  * displayed.
  */
@@ -21,7 +22,7 @@ object StatEntryCsvEncoder {
   /**
    * Export layout, order-locked : premarket block, GUS session then its push time and drop (#713),
    * double top prices then their times (#469), the drop low and its time (#706), the flags, then
-   * the status.
+   * the status, then the source and the review (#762).
    */
   val HEADERS: List<String> =
     listOf(
@@ -58,6 +59,8 @@ object StatEntryCsvEncoder {
       "Sink not read?",
       "Institutions >20%?",
       "Completed?",
+      "Source",
+      "Review",
     )
 
   fun encode(entries: List<StatEntry>): String {
@@ -107,6 +110,8 @@ object StatEntryCsvEncoder {
         e.dropNotRead.toString(),
         e.highInstitutions.toString(),
         e.isCompleted.toString(),
+        e.source.name,
+        e.review?.name.orEmpty(),
       )
       .joinToString(",") { escape(it) }
 
