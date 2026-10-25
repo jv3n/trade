@@ -694,6 +694,7 @@ function makeStatSummary(overrides: Partial<StatSummary> = {}): StatSummary {
     medianPushMinutes: null,
     medianGusDropMinutes: null,
     traded: 8,
+    toReview: 0,
     untraded: 2,
     ...overrides,
   };

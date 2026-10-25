@@ -1,11 +1,25 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSelectModule } from '@angular/material/select';
 import { StbDanger } from '../button/button.directives';
 
 /** `default` = accent confirm button (creations, copies) ; `danger` = red button (deletions). */
 export type StbConfirmVariant = 'default' | 'danger';
+
+/**
+ * An optional pick under the message — a reason, a category. The dialog adds an empty « — » first
+ * entry : picking nothing is always allowed.
+ */
+export interface StbConfirmChoice {
+  label: string;
+  options: readonly { value: string; label: string }[];
+}
+
+/** What a confirmation with a [StbConfirmChoice] closes with : the pick on confirm, null for none. */
+export type StbConfirmPick = { confirmed: false } | { confirmed: true; value: string | null };
 
 /**
  * Texts and variant of a [StbConfirmDialog]. The lib has no i18n : every string arrives
@@ -22,6 +36,8 @@ export interface StbConfirmDialogData {
   variant?: StbConfirmVariant;
   /** Material Symbols ligature ; defaults to `help` (default) / `delete` (danger). */
   icon?: string;
+  /** Open it through [StbConfirm.choose], which reads the pick back. */
+  choice?: StbConfirmChoice;
 }
 
 /**
@@ -35,7 +51,14 @@ export interface StbConfirmDialogData {
  */
 @Component({
   selector: 'ui-confirm-dialog',
-  imports: [MatButtonModule, MatDialogModule, MatIconModule, StbDanger],
+  imports: [
+    MatButtonModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatSelectModule,
+    StbDanger,
+  ],
   template: `
     <div class="confirm-body">
       <span class="confirm-icon" aria-hidden="true">
@@ -44,16 +67,27 @@ export interface StbConfirmDialogData {
       <div>
         <h2 mat-dialog-title class="confirm-title">{{ data.title }}</h2>
         <p class="confirm-message">{{ data.message }}</p>
+        @if (data.choice; as choice) {
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="confirm-choice">
+            <mat-label>{{ choice.label }}</mat-label>
+            <mat-select [value]="picked()" (selectionChange)="picked.set($event.value)">
+              <mat-option [value]="null">—</mat-option>
+              @for (option of choice.options; track option.value) {
+                <mat-option [value]="option.value">{{ option.label }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
       </div>
     </div>
     <div class="confirm-actions">
       <button mat-stroked-button type="button" mat-dialog-close>{{ data.cancelLabel }}</button>
       @if (danger()) {
-        <button mat-flat-button stbDanger type="button" [mat-dialog-close]="true">
+        <button mat-flat-button stbDanger type="button" [mat-dialog-close]="result()">
           {{ data.confirmLabel }}
         </button>
       } @else {
-        <button mat-flat-button type="button" [mat-dialog-close]="true">
+        <button mat-flat-button type="button" [mat-dialog-close]="result()">
           {{ data.confirmLabel }}
         </button>
       }
@@ -107,6 +141,11 @@ export interface StbConfirmDialogData {
       color: var(--color-text-muted);
     }
 
+    .confirm-choice {
+      width: 100%;
+      margin-top: 14px;
+    }
+
     .confirm-actions {
       display: flex;
       justify-content: flex-end;
@@ -123,4 +162,7 @@ export class StbConfirmDialog {
 
   protected readonly danger = computed(() => this.data.variant === 'danger');
   protected readonly icon = computed(() => this.data.icon ?? (this.danger() ? 'delete' : 'help'));
+  protected readonly picked = signal<string | null>(null);
+  /** `true`, or the pick when there is a choice — Cancel, Esc and the backdrop leave `undefined`. */
+  protected readonly result = computed(() => (this.data.choice ? { value: this.picked() } : true));
 }

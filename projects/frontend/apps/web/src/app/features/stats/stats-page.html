@@ -42,6 +42,13 @@
             } @else {
               {{ 'stats.kpi.allDone' | translate: { total: kpi.completed } }}
             }
+            <!-- Dropped by the scanner and not validated yet : counted apart, in no figure (#764). -->
+            @if (kpi.toReview > 0) {
+              ·
+              <span [matTooltip]="'stats.kpi.toReviewHint' | translate">{{
+                'stats.kpi.toReview' | translate: { count: kpi.toReview }
+              }}</span>
+            }
           </div>
         </div>
         <div class="card kpi">
@@ -200,6 +207,13 @@
             } @else {
               {{ 'stats.kpi.allDone' | translate: { total: kpi.completed } }}
             }
+            <!-- Dropped by the scanner and not validated yet : counted apart, in no figure (#764). -->
+            @if (kpi.toReview > 0) {
+              ·
+              <span [matTooltip]="'stats.kpi.toReviewHint' | translate">{{
+                'stats.kpi.toReview' | translate: { count: kpi.toReview }
+              }}</span>
+            }
           </div>
         </div>
         <div class="card kpi">
@@ -231,6 +245,13 @@
               }}</span>
             } @else {
               {{ 'stats.kpi.allDone' | translate: { total: kpi.completed } }}
+            }
+            <!-- Dropped by the scanner and not validated yet : counted apart, in no figure (#764). -->
+            @if (kpi.toReview > 0) {
+              ·
+              <span [matTooltip]="'stats.kpi.toReviewHint' | translate">{{
+                'stats.kpi.toReview' | translate: { count: kpi.toReview }
+              }}</span>
             }
           </div>
         </div>
@@ -446,6 +467,26 @@
           ) | translate
         }}</span>
       </h3>
+
+      <!-- A scanner stat opens like any other ; the banner says where it comes from (#764). -->
+      @if (completing(); as stat) {
+        @if (stat.review === 'TO_REVIEW' || stat.review === 'VALIDATED') {
+          <div class="review-banner">
+            <mat-icon>radar</mat-icon>
+            @if (stat.review === 'TO_REVIEW') {
+              <span
+                ><b>{{ 'stats.review.bannerTitle' | translate }}</b>
+                {{ 'stats.review.banner' | translate: reviewBannerParams(stat) }}</span
+              >
+            } @else {
+              <span
+                ><b>{{ 'stats.review.bannerValidatedTitle' | translate }}</b>
+                {{ 'stats.review.bannerValidated' | translate }}</span
+              >
+            }
+          </div>
+        }
+      }
 
       @if (creating()) {
         <div class="identity">
@@ -1314,19 +1355,66 @@
           <button mat-stroked-button type="button" (click)="close()">
             {{ 'stats.complete.close' | translate }}
           </button>
-          <!-- Same wrapper as the table's ✓ : a disabled button shows no tooltip of its own. -->
-          <span [matTooltip]="stat.completed ? '' : tickBlockedReason()">
+          @if (stat.review === 'TO_REVIEW') {
+            <button mat-stroked-button type="button" (click)="reject(stat)">
+              <mat-icon>close</mat-icon>
+              {{ 'stats.review.reject' | translate }}
+            </button>
+            <button
+              mat-flat-button
+              type="button"
+              [matTooltip]="'stats.review.validateHint' | translate"
+              (click)="validate(stat)"
+            >
+              <mat-icon>check</mat-icon>
+              {{ 'stats.review.validate' | translate }}
+            </button>
+          } @else if (stat.review === 'REJECTED') {
+            <!-- Opened through a link (?stat=) : a rejected stat is never ticked, only restored. -->
             <button
               mat-stroked-button
               type="button"
-              [stbTone]="stat.completed ? 'success' : null"
-              [disabled]="!stat.completed && tickBlockedReason() !== ''"
-              (click)="toggleCompleted(stat)"
+              [matTooltip]="'stats.review.restoreHint' | translate"
+              (click)="restore(stat)"
             >
-              <mat-icon>check_circle</mat-icon>
-              {{ (stat.completed ? 'stats.completion.done' : 'stats.completion.tick') | translate }}
+              <mat-icon>undo</mat-icon>
+              {{ 'stats.review.restore' | translate }}
             </button>
-          </span>
+          } @else {
+            @if (stat.review === 'VALIDATED') {
+              <span
+                [matTooltip]="
+                  (stat.completed ? 'stats.review.untickFirst' : 'stats.review.unvalidateHint')
+                    | translate
+                "
+              >
+                <button
+                  mat-stroked-button
+                  type="button"
+                  [disabled]="stat.completed"
+                  (click)="restore(stat)"
+                >
+                  <mat-icon>undo</mat-icon>
+                  {{ 'stats.review.unvalidate' | translate }}
+                </button>
+              </span>
+            }
+            <!-- Same wrapper as the table's ✓ : a disabled button shows no tooltip of its own. -->
+            <span [matTooltip]="stat.completed ? '' : tickBlockedReason()">
+              <button
+                mat-stroked-button
+                type="button"
+                [stbTone]="stat.completed ? 'success' : null"
+                [disabled]="!stat.completed && tickBlockedReason() !== ''"
+                (click)="toggleCompleted(stat)"
+              >
+                <mat-icon>check_circle</mat-icon>
+                {{
+                  (stat.completed ? 'stats.completion.done' : 'stats.completion.tick') | translate
+                }}
+              </button>
+            </span>
+          }
         }
       </div>
     </section>
@@ -1355,9 +1443,18 @@
         (change)="setStatus($event.value)"
       >
         @for (tab of statusTabs(); track tab) {
-          <mat-button-toggle [value]="tab">
-            {{ 'stats.status.' + (tab ?? 'ALL') | translate }}
-          </mat-button-toggle>
+          @if (tab === 'TO_REVIEW') {
+            <mat-button-toggle
+              [value]="tab"
+              [matTooltip]="'stats.status.TO_REVIEW_HINT' | translate"
+            >
+              {{ 'stats.status.TO_REVIEW' | translate: { count: reviewCount() } }}
+            </mat-button-toggle>
+          } @else {
+            <mat-button-toggle [value]="tab">
+              {{ 'stats.status.' + (tab ?? 'ALL') | translate }}
+            </mat-button-toggle>
+          }
         }
       </mat-button-toggle-group>
 
@@ -1377,6 +1474,19 @@
             {{ 'stats.derived.' + filter | translate }}
           </mat-button-toggle>
         }
+      </mat-button-toggle-group>
+
+      <!-- The rejected scanner stats (#764), hidden everywhere else : a toggle that combines with the
+           tabs, like the derived ones. -->
+      <mat-button-toggle-group
+        multiple
+        class="derived-filters"
+        [value]="withRejected() ? ['REJECTED'] : []"
+        (change)="setWithRejected($event.value.length > 0)"
+      >
+        <mat-button-toggle value="REJECTED" [matTooltip]="'stats.rejected.hint' | translate">
+          {{ 'stats.rejected.toggle' | translate }}
+        </mat-button-toggle>
       </mat-button-toggle-group>
     </div>
 
@@ -1428,6 +1538,16 @@
             </th>
             <td mat-cell *matCellDef="let s">
               <span class="pattern-tag">{{ 'patterns.short.' + s.pattern | translate }}</span>
+              <!-- One mark for the scanner (#764) : indigo while to review — a state — neutral after. -->
+              @if (s.source === 'SCANNER') {
+                <span
+                  class="review-tag"
+                  [class.review-tag--to-review]="s.review === 'TO_REVIEW'"
+                  [matTooltip]="reviewTagHint(s)"
+                  ><mat-icon aria-hidden="true">radar</mat-icon
+                  ><span>{{ reviewTag(s) }}</span></span
+                >
+              }
             </td>
           </ng-container>
 
@@ -2063,32 +2183,37 @@
               ✓
             </th>
             <td mat-cell *matCellDef="let s" class="tick-col">
-              <!-- The tooltip sits on a wrapper : a disabled Material button takes no pointer
+              @if (s.review !== 'REJECTED') {
+                <!-- The tooltip sits on a wrapper : a disabled Material button takes no pointer
                    events, so its own tooltip never shows — the control then reads as broken
                    rather than as « five prices needed » (#308). -->
-              <span
-                [matTooltip]="
-                  s.completed
-                    ? ('stats.completion.untick' | translate)
-                    : rowBlockedReason(s) || ('stats.completion.tick' | translate)
-                "
-              >
-                <!-- Green once ticked — the one status the colour rule lets be green. -->
-                <button
-                  mat-icon-button
-                  stbSize="sm"
-                  type="button"
-                  class="tick"
-                  [stbTone]="s.completed ? 'success' : null"
-                  [disabled]="!s.completed && rowBlockedReason(s) !== ''"
-                  [attr.aria-label]="
-                    (s.completed ? 'stats.completion.untick' : 'stats.completion.tick') | translate
+                <span
+                  [matTooltip]="
+                    s.completed
+                      ? ('stats.completion.untick' | translate)
+                      : rowBlockedReason(s) || ('stats.completion.tick' | translate)
                   "
-                  (click)="toggleCompleted(s)"
                 >
-                  <mat-icon>{{ s.completed ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
-                </button>
-              </span>
+                  <!-- Green once ticked — the one status the colour rule lets be green. -->
+                  <button
+                    mat-icon-button
+                    stbSize="sm"
+                    type="button"
+                    class="tick"
+                    [stbTone]="s.completed ? 'success' : null"
+                    [disabled]="!s.completed && rowBlockedReason(s) !== ''"
+                    [attr.aria-label]="
+                      (s.completed ? 'stats.completion.untick' : 'stats.completion.tick')
+                        | translate
+                    "
+                    (click)="toggleCompleted(s)"
+                  >
+                    <mat-icon>{{
+                      s.completed ? 'check_circle' : 'radio_button_unchecked'
+                    }}</mat-icon>
+                  </button>
+                </span>
+              }
             </td>
           </ng-container>
 
@@ -2123,7 +2248,7 @@
                     <mat-icon>add</mat-icon>
                   </button>
                 </span>
-              } @else {
+              } @else if (countsInFigures(s)) {
                 <button mat-stroked-button stbSize="sm" type="button" (click)="promoteToTrade(s)">
                   <mat-icon>arrow_forward</mat-icon>
                   {{ 'stats.actions.toTrade' | translate }}
@@ -2135,36 +2260,80 @@
           <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef stbCol="actions"></th>
             <td mat-cell *matCellDef="let s" stbCol="actions">
-              @if (!s.completed) {
-                <button mat-stroked-button stbSize="sm" type="button" (click)="open(s)">
+              @if (s.review === 'TO_REVIEW') {
+                <button
+                  mat-stroked-button
+                  stbSize="sm"
+                  type="button"
+                  (click)="open(s)"
+                  [matTooltip]="'stats.review.openHint' | translate"
+                >
                   <mat-icon>edit</mat-icon>
-                  {{
-                    (s.pattern === 'DT' ? 'stats.actions.doubleTop' : 'stats.actions.session')
-                      | translate
-                  }}
+                  {{ 'stats.review.open' | translate }}
                 </button>
-              } @else {
+                <button
+                  mat-flat-button
+                  stbSize="sm"
+                  type="button"
+                  (click)="validate(s)"
+                  [matTooltip]="'stats.review.validateHint' | translate"
+                >
+                  <mat-icon>check</mat-icon>
+                  {{ 'stats.review.validate' | translate }}
+                </button>
                 <button
                   mat-icon-button
                   stbSize="sm"
                   type="button"
-                  (click)="open(s)"
-                  [matTooltip]="'stats.actions.edit' | translate"
-                  [attr.aria-label]="'stats.actions.edit' | translate"
+                  (click)="reject(s)"
+                  [matTooltip]="'stats.review.rejectHint' | translate"
+                  [attr.aria-label]="'stats.review.reject' | translate"
                 >
-                  <mat-icon>edit</mat-icon>
+                  <mat-icon>close</mat-icon>
+                </button>
+              } @else if (s.review === 'REJECTED') {
+                <button
+                  mat-stroked-button
+                  stbSize="sm"
+                  type="button"
+                  (click)="restore(s)"
+                  [matTooltip]="'stats.review.restoreHint' | translate"
+                >
+                  <mat-icon>undo</mat-icon>
+                  {{ 'stats.review.restore' | translate }}
+                </button>
+              } @else {
+                @if (!s.completed) {
+                  <button mat-stroked-button stbSize="sm" type="button" (click)="open(s)">
+                    <mat-icon>edit</mat-icon>
+                    {{
+                      (s.pattern === 'DT' ? 'stats.actions.doubleTop' : 'stats.actions.session')
+                        | translate
+                    }}
+                  </button>
+                } @else {
+                  <button
+                    mat-icon-button
+                    stbSize="sm"
+                    type="button"
+                    (click)="open(s)"
+                    [matTooltip]="'stats.actions.edit' | translate"
+                    [attr.aria-label]="'stats.actions.edit' | translate"
+                  >
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                }
+                <button
+                  mat-icon-button
+                  stbSize="sm"
+                  type="button"
+                  (click)="delete(s)"
+                  [matTooltip]="'stats.actions.delete' | translate"
+                  [attr.aria-label]="'stats.actions.delete' | translate"
+                >
+                  <mat-icon>delete</mat-icon>
                 </button>
               }
-              <button
-                mat-icon-button
-                stbSize="sm"
-                type="button"
-                (click)="delete(s)"
-                [matTooltip]="'stats.actions.delete' | translate"
-                [attr.aria-label]="'stats.actions.delete' | translate"
-              >
-                <mat-icon>delete</mat-icon>
-              </button>
             </td>
           </ng-container>
 
@@ -2172,7 +2341,9 @@
           <tr
             mat-row
             *matRowDef="let s; columns: columns()"
-            [class.pending]="!s.completed"
+            [class.pending]="!s.completed && countsInFigures(s)"
+            [class.to-review]="s.review === 'TO_REVIEW'"
+            [class.rejected]="s.review === 'REJECTED'"
             [class.editing]="s.id === completing()?.id"
           ></tr>
           <!-- Always declared : the table renders no row def added after its first pass. On « All » it

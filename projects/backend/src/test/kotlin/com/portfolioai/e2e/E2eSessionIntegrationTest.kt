@@ -35,7 +35,8 @@ import tools.jackson.databind.ObjectMapper
  * - **delete** removes that user with their data — a stat carrying a trade included, the one link
  *   (`trade_entry → stat_entry`, ON DELETE RESTRICT) a plain cascade can trip on ;
  * - **only an e2e user** can be deleted : Tilt runs `local,e2e`, so the developer's own session
- *   reaches the route too.
+ *   reaches the route too ;
+ * - scanner stats are dropped for the e2e user through the scanner's own path (#764).
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -120,6 +121,43 @@ class E2eSessionIntegrationTest {
       )
       .andExpect(status().isForbidden)
     assertEquals(real.id, users.findByEmail(real.email)?.id)
+  }
+
+  @Test
+  fun `scanner stats are dropped for the e2e user, to review`() {
+    val session = login()
+
+    mvc
+      .perform(
+        post("/api/e2e/scanner-stats")
+          .cookie(session)
+          .with(csrf())
+          .contentType(MediaType.APPLICATION_JSON)
+          .content(
+            json.writeValueAsString(
+              mapOf(
+                "tradingDate" to LocalDate.now().minusDays(1),
+                "stats" to
+                  listOf(
+                    mapOf(
+                      "pattern" to "DT",
+                      "ticker" to "BNRG",
+                      "dtStartPrice" to 2.10,
+                      "dtStartTime" to "10:05",
+                      "dtTopPrice" to 3.30,
+                      "dtTopTime" to "10:16",
+                    )
+                  ),
+              )
+            )
+          )
+      )
+      .andExpect(status().isOk)
+      .andExpect(jsonPath("$.created.length()").value(1))
+    mvc
+      .perform(get("/api/stats").param("review", "TO_REVIEW").cookie(session))
+      .andExpect(jsonPath("$.content[0].ticker").value("BNRG"))
+      .andExpect(jsonPath("$.content[0].source").value("SCANNER"))
   }
 
   /** The session cookie : Spring Session resolves the session from it, not from the request. */

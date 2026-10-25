@@ -22,10 +22,17 @@ class ConfirmDialogDemo {
   private readonly confirm = inject(StbConfirm);
 
   readonly data = input.required<StbConfirmDialogData>();
-  protected readonly result = signal<boolean | null>(null);
+  protected readonly result = signal<string | null>(null);
 
   open(): void {
-    this.confirm.open(this.data()).subscribe((confirmed) => this.result.set(confirmed));
+    const data = this.data();
+    if (data.choice) {
+      this.confirm
+        .choose({ ...data, choice: data.choice })
+        .subscribe((pick) => this.result.set(JSON.stringify(pick)));
+      return;
+    }
+    this.confirm.open(data).subscribe((confirmed) => this.result.set(String(confirmed)));
   }
 }
 
@@ -36,7 +43,7 @@ const meta: Meta<ConfirmDialogDemo> = {
     docs: {
       description: {
         component:
-          'Confirmation modal for every action that creates or deletes something. Open it with `StbConfirm.open(data)` — emits `true` on confirm, `false` on Cancel / Esc / backdrop. Texts arrive already translated. Switch the Theme toolbar to check both palettes.',
+          'Confirmation modal for every action that creates or deletes something. Open it with `StbConfirm.open(data)` — emits `true` on confirm, `false` on Cancel / Esc / backdrop. With a `choice`, open it with `StbConfirm.choose(data)` — emits the pick on confirm (null for « — »). Texts arrive already translated. Switch the Theme toolbar to check both palettes.',
       },
     },
   },
@@ -67,6 +74,28 @@ export const Danger: Story = {
       confirmLabel: 'Delete the trade',
       cancelLabel: 'Cancel',
       variant: 'danger',
+    },
+  },
+};
+
+export const WithChoice: Story = {
+  args: {
+    data: {
+      title: 'Reject the BNRG stat?',
+      message:
+        'It leaves the table and every figure, and a new scan will not bring it back. It stays under « Rejected », where it can be restored.',
+      confirmLabel: 'Reject',
+      cancelLabel: 'Cancel',
+      variant: 'danger',
+      icon: 'close',
+      choice: {
+        label: 'Reason (optional)',
+        options: [
+          { value: 'BREAKOUT', label: 'Breakout — the Echo took the Apex' },
+          { value: 'WEAK_REJECTION', label: 'Rejection too weak' },
+          { value: 'NOISE', label: 'Noise — not a double top' },
+        ],
+      },
     },
   },
 };

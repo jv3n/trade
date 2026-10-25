@@ -11,6 +11,7 @@ import {
   StbButtonToggleModule,
   StbCheckboxModule,
   StbChipsModule,
+  StbConfirmPick,
   StbDatePickerModule,
   StbFormFieldModule,
   StbIconModule,
@@ -49,11 +50,14 @@ import {
 import {
   OutOfPatternReason,
   PageRequest,
+  REJECTION_REASONS,
   StatEntry,
   StatEntryFilter,
   StatEntryInput,
+  StatRejectionReason,
   StatStatus,
   StatSummary,
+  countsInFigures,
 } from '../../core/api/stats/stat-entry.model';
 import { StatsRepository } from '../../core/api/stats/stats.repository';
 import { ConfirmService } from '../../core/app-state/confirm.service';
@@ -192,10 +196,11 @@ export interface StatRow extends StatEntry {
 }
 
 /**
- * Tabs of the mockup : all / to complete / completed, then the no-push days (#302) — a separate axis
- * of the filter, singled out to compare their premarket with the days that pushed.
+ * Tabs of the mockup : all / the scanner's stats to review (#764) / to complete / completed, then the
+ * no-push days (#302) — a separate axis of the filter, singled out to compare their premarket with
+ * the days that pushed.
  */
-export type StatTab = StatStatus | 'NO_PUSH' | null;
+export type StatTab = StatStatus | 'TO_REVIEW' | 'NO_PUSH' | null;
 
 /**
  * Filters on a condition the app derives (#499) — toggles beside the tabs, not tabs : they combine
@@ -203,7 +208,7 @@ export type StatTab = StatStatus | 'NO_PUSH' | null;
  */
 export type DerivedFilter = 'OUT_OF_PATTERN' | 'UNDER_1_DOLLAR';
 const DERIVED_FILTERS: readonly DerivedFilter[] = ['OUT_OF_PATTERN', 'UNDER_1_DOLLAR'];
-const STATUS_TABS: readonly StatTab[] = [null, 'TO_COMPLETE', 'COMPLETED', 'NO_PUSH'];
+const STATUS_TABS: readonly StatTab[] = [null, 'TO_REVIEW', 'TO_COMPLETE', 'COMPLETED', 'NO_PUSH'];
 
 /**
  * The views of the page (#437) : the KPIs, the table's columns and the averages follow the pattern
@@ -787,12 +792,12 @@ export class StatsPage {
     { requireSync: true },
   );
   /**
-   * GUS by default ; a link naming the stats to complete or completed lands on « All », since a
-   * double top left to complete is one of them.
+   * GUS by default ; a link naming a status lands on « All », since a double top left to complete
+   * — or dropped by the scanner to review — is one of them.
    */
   readonly view = linkedSignal<StatView>(() => {
     const tab = this.queryTab();
-    return tab === 'TO_COMPLETE' || tab === 'COMPLETED' ? 'ALL' : 'GUS';
+    return tab === 'TO_COMPLETE' || tab === 'COMPLETED' || tab === 'TO_REVIEW' ? 'ALL' : 'GUS';
   });
   readonly status = linkedSignal<StatTab>(() => this.queryTab());
   readonly derivedFilters = DERIVED_FILTERS;
@@ -802,6 +807,8 @@ export class StatsPage {
     { requireSync: true },
   );
   readonly derived = linkedSignal<readonly DerivedFilter[]>(() => this.queryDerived());
+  /** « Rejetées » (#764) : the rejected scanner stats, hidden everywhere else — combines with a tab. */
+  readonly withRejected = signal(false);
   /** The views measured like a GUS session — their own tab, cumulative and medians row (#499). */
   readonly sessionView = computed(() => isSessionView(this.view()));
   /** « No push » belongs to the session views : a double top has no push at the open. */
@@ -831,8 +838,10 @@ export class StatsPage {
       dateFrom: range.dateFrom,
       dateTo: range.dateTo,
       pattern: view === 'ALL' ? null : view,
-      status: tab === 'NO_PUSH' ? null : tab,
+      status: tab === 'NO_PUSH' || tab === 'TO_REVIEW' ? null : tab,
       noPush: tab === 'NO_PUSH' || null,
+      review: tab === 'TO_REVIEW' ? 'TO_REVIEW' : null,
+      withRejected: this.withRejected() || null,
       outOfPattern: this.derived().includes('OUT_OF_PATTERN') || null,
       under1Dollar: this.derived().includes('UNDER_1_DOLLAR') || null,
     };
@@ -880,6 +889,19 @@ export class StatsPage {
     stream: ({ params }) => this.repo.summary(params.filter),
   });
   private readonly periodSummary = keptValue(this.periodSummaryResource);
+  /**
+   * The « À relire » tab's count (#764) : every pattern, whatever the view and the tab — the scanner
+   * drops GUS and double tops alike, and the tab opens on « All ».
+   */
+  private readonly reviewCountResource = rxResource({
+    params: () => {
+      const { query, dateFrom, dateTo } = this.criteria();
+      return { filter: { query, dateFrom, dateTo }, writes: this.kpiWrites() };
+    },
+    stream: ({ params }) => this.repo.countToReview(params.filter),
+  });
+  private readonly keptReviewCount = keptValue(this.reviewCountResource);
+  readonly reviewCount = computed(() => this.keptReviewCount() ?? 0);
   readonly noPushRate = computed(() => {
     const period = this.periodSummary();
     if (period === null) return null;
@@ -1163,8 +1185,15 @@ export class StatsPage {
     this.pageIndex.set(0);
   }
 
+  /** « À relire » opens on « All » : the scanner drops GUS and double tops alike (#764). */
   setStatus(status: StatTab): void {
     this.status.set(status);
+    if (status === 'TO_REVIEW') this.view.set('ALL');
+    this.pageIndex.set(0);
+  }
+
+  setWithRejected(withRejected: boolean): void {
+    this.withRejected.set(withRejected);
     this.pageIndex.set(0);
   }
 
@@ -1521,6 +1550,7 @@ export class StatsPage {
    */
   toggleCompleted(entry: StatEntry): void {
     const completed = !entry.completed;
+    if (completed && !countsInFigures(entry)) return;
     if (completed && missingPrices(entry, entry.pattern, entry.tradeDate).length > 0) return;
     this.enqueue(
       this.repo.setCompleted(entry.id, completed).pipe(
@@ -1581,6 +1611,8 @@ export class StatsPage {
    * Empty when nothing stands in the way, which is also what disables the button.
    */
   tickBlockedReason(): string {
+    const open = this.completing();
+    if (open && !countsInFigures(open)) return this.translate.instant('stats.review.tickBlocked');
     if (this.sessionMissing().length > 0) {
       return this.missingLabel(this.sessionMissing());
     }
@@ -1590,6 +1622,7 @@ export class StatsPage {
 
   /** The same answer for a row of the table, which has no panel model to read. */
   rowBlockedReason(row: StatRow): string {
+    if (!countsInFigures(row)) return this.translate.instant('stats.review.tickBlocked');
     if (row.missing.length > 0) return this.missingLabel(row.missing);
     return row.issue ? this.translate.instant(row.issue) : '';
   }
@@ -1665,6 +1698,89 @@ export class StatsPage {
       .subscribe();
   }
 
+  // ---- Review of a scanner stat (#764) ----
+
+  /** Exposed to the template : the rows and the panel ask the same question. */
+  readonly countsInFigures = countsInFigures;
+
+  /** « Valider » — an edit, no confirmation : the stat joins the figures, to complete. */
+  validate(entry: StatEntry): void {
+    this.changeReview(entry, this.repo.validate(entry.id), 'validate');
+  }
+
+  /** « Rétablir » a rejected stat, « Repasser à relire » a validated one — both back to review. */
+  restore(entry: StatEntry): void {
+    this.changeReview(entry, this.repo.restore(entry.id), 'restore');
+  }
+
+  /**
+   * « Rejeter » — confirmed (danger), with an optional reason of the stat's pattern. Its panel
+   * closes : a rejected stat leaves the table but under « Rejetées ».
+   */
+  reject(entry: StatEntry): void {
+    const reasons = REJECTION_REASONS[entry.pattern as StatPattern] ?? [];
+    this.confirm
+      .choose('stats.confirmReject', reasons, 'stats.rejectionReason', {
+        params: { ticker: entry.ticker },
+        variant: 'danger',
+        icon: 'close',
+      })
+      .pipe(filter((pick): pick is Extract<StbConfirmPick, { confirmed: true }> => pick.confirmed))
+      .subscribe((pick) => {
+        if (this.completing()?.id === entry.id) this.completing.set(null);
+        const reason = pick.value as StatRejectionReason | null;
+        this.changeReview(entry, this.repo.reject(entry.id, reason), 'reject');
+      });
+  }
+
+  /** The scanner's tag of a row : its state, and a rejection's reason. */
+  reviewTag(entry: StatEntry): string {
+    if (entry.review === 'REJECTED' && entry.rejectionReason) {
+      const reason = this.translate.instant('stats.rejectionReasonShort.' + entry.rejectionReason);
+      return this.translate.instant('stats.review.tag.REJECTED_BECAUSE', { reason });
+    }
+    return this.translate.instant('stats.review.tag.' + (entry.review ?? 'VALIDATED'));
+  }
+
+  reviewTagHint(entry: StatEntry): string {
+    return this.translate.instant('stats.review.tagHint.' + (entry.review ?? 'VALIDATED'), {
+      created: formatDate(entry.createdAt, 'short', this.locale),
+    });
+  }
+
+  /** When the scanner dropped the stat, and the session it read it on — the panel's banner. */
+  reviewBannerParams(entry: StatEntry): Record<string, string> {
+    return {
+      created: formatDate(entry.createdAt, 'short', this.locale),
+      day: formatDate(entry.tradeDate, 'fullDate', this.locale),
+    };
+  }
+
+  /**
+   * Through the write queue, so a field left right before the click is saved first. The listing
+   * and the KPIs reload : the stat moves between tabs and in or out of the figures.
+   */
+  private changeReview(
+    entry: StatEntry,
+    write: Observable<StatEntry>,
+    action: 'validate' | 'reject' | 'restore',
+  ): void {
+    const params = { ticker: entry.ticker };
+    this.enqueue(
+      write.pipe(
+        tap((saved) => {
+          this.patchRow(saved);
+          this.toasts.success(this.translate.instant(`stats.snackbar.${action}Success`, params));
+          this.refetch();
+        }),
+        catchError(() => {
+          this.toasts.error(this.translate.instant(`stats.snackbar.${action}Error`, params));
+          return EMPTY;
+        }),
+      ),
+    );
+  }
+
   // ---- Internals ----
 
   /**
@@ -1705,11 +1821,14 @@ export class StatsPage {
 
   /**
    * Opens the session panel on the first stat of the page still to complete. Stats closed during
-   * this visit are skipped, and an open panel is never replaced.
+   * this visit are skipped, and an open panel is never replaced. A scanner stat to review or
+   * rejected is not to complete : it waits for « Relire » (#764).
    */
   private autoOpenPending(rows: StatEntry[]): void {
     if (this.completing() || this.creating()) return;
-    const pending = rows.find((s) => !s.completed && !this.dismissed().has(s.id));
+    const pending = rows.find(
+      (s) => !s.completed && countsInFigures(s) && !this.dismissed().has(s.id),
+    );
     if (pending) this.open(pending);
   }
 

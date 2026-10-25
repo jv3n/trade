@@ -281,6 +281,72 @@ tr.editing td {
   background: var(--color-accent-soft);
 }
 
+// ---- Scanner stats (#764) ----
+// To review is a state : indigo, the row tinted and marked on its left edge. A rejected stat is kept
+// greyed under « Rejetées », its « Rétablir » left at full strength.
+tr.to-review td {
+  background: color-mix(in oklch, var(--color-accent) 7%, transparent);
+}
+
+tr.to-review td:first-child {
+  box-shadow: inset 3px 0 var(--color-accent);
+}
+
+tr.rejected td {
+  opacity: 0.55;
+}
+
+tr.rejected td:last-child {
+  opacity: 1;
+}
+
+// The scanner's one mark — the radar and the word, in every state. Neutral once validated or
+// rejected : the source, not a state.
+.review-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: s.$space-hairline;
+  margin-left: s.$space-xs;
+  padding: s.$space-hairline s.$space-sm;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+  font-size: s.$font-2xs;
+  font-weight: 550;
+  white-space: nowrap;
+
+  mat-icon {
+    font-size: s.$icon-xs;
+    width: s.$icon-xs;
+    height: s.$icon-xs;
+  }
+
+  &--to-review {
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+  }
+}
+
+.review-banner {
+  display: flex;
+  align-items: center;
+  gap: s.$space-sm;
+  margin-bottom: s.$space-md;
+  padding: s.$space-sm s.$space-md;
+  border-radius: var(--radius);
+  background: var(--color-accent-soft);
+  font-size: s.$font-sm;
+  color: var(--color-text);
+
+  mat-icon {
+    flex-shrink: 0;
+    font-size: s.$icon-sm;
+    width: s.$icon-sm;
+    height: s.$icon-sm;
+    color: var(--color-accent);
+  }
+}
+
 // ---- Journal link (#193) ----
 // The « → Trade » column shows the retained P&L of the trade the stat gave birth to. Green / red
 // here is legitimate : it is an outcome, the one case the colour rule reserves the pair for.

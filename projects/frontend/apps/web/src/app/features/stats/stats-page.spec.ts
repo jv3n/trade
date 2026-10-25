@@ -9,7 +9,7 @@ import {
   provideRouter,
 } from '@angular/router';
 import { TranslateService, provideTranslateService } from '@ngx-translate/core';
-import { StbToast, provideNativeDateAdapter } from '@portfolioai/ui';
+import { StbConfirmPick, StbToast, provideNativeDateAdapter } from '@portfolioai/ui';
 import { BehaviorSubject, Observable, Subject, of, throwError } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
 import { TradeEntry } from '../../core/api/journal/trade-entry.model';
@@ -17,10 +17,12 @@ import { Pattern } from '../../core/api/shared/pattern.model';
 import {
   PageRequest,
   PagedResult,
+  REJECTION_REASONS,
   RuleScore,
   StatEntry,
   StatEntryFilter,
   StatEntryInput,
+  StatRejectionReason,
   StatSummary,
 } from '../../core/api/stats/stat-entry.model';
 import { StatsRepository } from '../../core/api/stats/stats.repository';
@@ -59,6 +61,9 @@ import { StatsPage } from './stats-page';
  * - **No push (#302)** — ticking it empties the push and takes it out of the prices a stat needs ;
  *   unticking gives the typed push back ; the « No push » tab is its own filter axis, and its push
  *   KPI rates the no-push days over the whole period (#334).
+ * - **The scanner's stats (#764)** — tagged and tinted while to review, never opened on their own nor
+ *   ticked before « Valider » ; Valider needs no confirmation, Rejeter asks with the reasons of the
+ *   stat's pattern ; « À relire » opens on « All » with its count, « Rejetées » adds the rejected.
  *
  * The listing and the KPIs load through resources (#375), which answer a microtask after the call :
  * `setup()` and `settle()` wait for them before a test reads the page.
@@ -106,6 +111,9 @@ function makeStat(overrides: Partial<StatEntry> = {}): StatEntry {
     completed: true,
     outOfPattern: [],
     trades: [],
+    source: 'MANUAL',
+    review: null,
+    rejectionReason: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,
@@ -195,6 +203,7 @@ function makeSummary(overrides: Partial<StatSummary> = {}): StatSummary {
     medianPushMinutes: null,
     medianGusDropMinutes: null,
     traded: 8,
+    toReview: 0,
     untraded: 2,
     ...overrides,
   };
@@ -222,6 +231,7 @@ class MockStatsRepository extends StatsRepository {
   );
   findById = vi.fn((id: string): Observable<StatEntry> => of(makeStat({ id })));
   summary = vi.fn((_filter?: StatEntryFilter): Observable<StatSummary> => of(makeSummary()));
+  countToReview = vi.fn((_filter?: StatEntryFilter): Observable<number> => of(0));
   create = vi.fn((input: StatEntryInput): Observable<StatEntry> =>
     of(makeStat({ ...input, id: 'stat-new', candidateId: null, completed: false })),
   );
@@ -233,6 +243,15 @@ class MockStatsRepository extends StatsRepository {
   setCompleted = vi.fn((id: string, completed: boolean): Observable<StatEntry> =>
     of({ ...(this.rows.find((r) => r.id === id) ?? makeStat({ id })), completed }),
   );
+  validate = vi.fn((id: string): Observable<StatEntry> =>
+    of({ ...this.row(id), review: 'VALIDATED' as const }),
+  );
+  reject = vi.fn((id: string, reason: StatRejectionReason | null): Observable<StatEntry> =>
+    of({ ...this.row(id), review: 'REJECTED' as const, rejectionReason: reason }),
+  );
+  restore = vi.fn((id: string): Observable<StatEntry> =>
+    of({ ...this.row(id), review: 'TO_REVIEW' as const, rejectionReason: null }),
+  );
   delete = vi.fn((_id: string): Observable<void> => of(undefined));
   promoteToTrade = vi.fn((_id: string): Observable<TradeEntry> =>
     of({ id: 'trade-1' } as TradeEntry),
@@ -243,12 +262,18 @@ class MockStatsRepository extends StatsRepository {
   freePatterns = vi.fn((_id: string): Observable<Pattern[]> => of(['DT']));
   exportCsv = vi.fn((): Observable<Blob> => of(new Blob()));
   ruleScore = vi.fn((): Observable<RuleScore> => throwError(() => new Error('not used')));
+
+  private row(id: string): StatEntry {
+    return this.rows.find((r) => r.id === id) ?? makeStat({ id });
+  }
 }
 
 async function setup(
   options: {
     rows?: StatEntry[];
     confirmed?: boolean;
+    /** What the rejection's confirmation answers — confirmed with no reason by default. */
+    pick?: StbConfirmPick;
     query?: Record<string, string>;
     /** What `?stat=` fetches — by default a GUS stat with the asked id. */
     byId?: StatEntry;
@@ -279,7 +304,13 @@ async function setup(
           error: (message: string) => toastShown('error', message),
         },
       },
-      { provide: ConfirmService, useValue: { ask: () => of(options.confirmed ?? true) } },
+      {
+        provide: ConfirmService,
+        useValue: {
+          ask: () => of(options.confirmed ?? true),
+          choose: () => of(options.pick ?? { confirmed: true, value: null }),
+        },
+      },
       // Only when a test names a query : the rows' `routerLink` needs the real route otherwise.
       ...(options.query ? [{ provide: ActivatedRoute, useValue: { queryParamMap: query } }] : []),
     ],
@@ -2424,5 +2455,209 @@ describe('StatsPage — Sink not read (#729)', () => {
     expect(label).toBe(
       "median · Push's top → Sink · n = 9 of 12 completed GUS · no Sink : 3 (to fill 2 · not read 1)",
     );
+  });
+});
+
+/** NXTP, a GUS the scanner dropped on 09/18 — no candidate, waiting for its review. */
+function makeScanned(overrides: Partial<StatEntry> = {}): StatEntry {
+  return makeStat({
+    id: 'stat-nxtp',
+    candidateId: null,
+    ticker: 'NXTP',
+    completed: false,
+    source: 'SCANNER',
+    review: 'TO_REVIEW',
+    ...overrides,
+  });
+}
+
+describe('StatsPage — the scanner stats to review (#764)', () => {
+  it('tags and tints a stat to review, and blocks its ✓ until it is validated', async () => {
+    const { fixture, page } = await setup({ rows: [makeScanned()] });
+
+    const row = fixture.nativeElement.querySelector('tr.to-review');
+    expect(row).not.toBeNull();
+    expect(row.querySelector('.review-tag--to-review').textContent).toContain(
+      'stats.review.tag.TO_REVIEW',
+    );
+    expect(page.rowBlockedReason(page.rows()[0])).toBe('stats.review.tickBlocked');
+  });
+
+  it('never opens a stat to review on its own — it waits for « Relire »', async () => {
+    const { page } = await setup({ rows: [makeScanned()] });
+
+    expect(page.completing()).toBeNull();
+  });
+
+  it('a stat to review is never ticked, even with its whole session', async () => {
+    const { page, repo } = await setup({ rows: [makeScanned()] });
+
+    page.toggleCompleted(makeScanned());
+
+    expect(repo.setCompleted).not.toHaveBeenCalled();
+  });
+
+  it('« Valider » needs no confirmation, then reloads the listing and the KPIs', async () => {
+    const { fixture, page, repo, toastShown } = await setup({ rows: [makeScanned()] });
+    const ask = vi.spyOn(TestBed.inject(ConfirmService), 'ask');
+    const listings = repo.findAll.mock.calls.length;
+    const summaries = repo.summary.mock.calls.length;
+
+    page.validate(makeScanned());
+    await settle(fixture);
+
+    expect(ask).not.toHaveBeenCalled();
+    expect(repo.validate).toHaveBeenCalledWith('stat-nxtp');
+    expect(repo.findAll.mock.calls.length).toBeGreaterThan(listings);
+    expect(repo.summary.mock.calls.length).toBeGreaterThan(summaries);
+    expect(toastShown).toHaveBeenCalledWith('success', 'stats.snackbar.validateSuccess');
+  });
+
+  it("« Rejeter » asks with the reasons of the stat's pattern and sends the one picked", async () => {
+    // BNRG, a double top the Echo broke through.
+    const bnrg = makeScanned({ id: 'stat-bnrg', ticker: 'BNRG', pattern: 'DT' });
+    const { page, repo } = await setup({
+      rows: [bnrg],
+      pick: { confirmed: true, value: 'BREAKOUT' },
+    });
+    const choose = vi.spyOn(TestBed.inject(ConfirmService), 'choose');
+
+    page.reject(bnrg);
+
+    expect(choose).toHaveBeenCalledWith(
+      'stats.confirmReject',
+      REJECTION_REASONS.DT,
+      'stats.rejectionReason',
+      expect.objectContaining({ params: { ticker: 'BNRG' }, variant: 'danger' }),
+    );
+    expect(repo.reject).toHaveBeenCalledWith('stat-bnrg', 'BREAKOUT');
+  });
+
+  it('a rejection left without a reason is sent without one', async () => {
+    const { page, repo } = await setup({ rows: [makeScanned()] });
+
+    page.reject(makeScanned());
+
+    expect(repo.reject).toHaveBeenCalledWith('stat-nxtp', null);
+  });
+
+  it('cancelling the rejection never reaches the repository', async () => {
+    const { page, repo } = await setup({ rows: [makeScanned()], pick: { confirmed: false } });
+
+    page.reject(makeScanned());
+
+    expect(repo.reject).not.toHaveBeenCalled();
+  });
+
+  it('rejecting the stat open in the panel closes it', async () => {
+    const { fixture, page } = await setup({ rows: [makeScanned()] });
+    page.open(makeScanned());
+    await settle(fixture);
+
+    page.reject(makeScanned());
+
+    expect(page.completing()).toBeNull();
+  });
+
+  it('« Rétablir » sends a rejected stat back to review', async () => {
+    const rejected = makeScanned({ review: 'REJECTED', rejectionReason: 'NEWS' });
+    const { page, repo, toastShown } = await setup({ rows: [rejected] });
+
+    page.restore(rejected);
+
+    expect(repo.restore).toHaveBeenCalledWith('stat-nxtp');
+    expect(toastShown).toHaveBeenCalledWith('success', 'stats.snackbar.restoreSuccess');
+  });
+
+  it('a rejected stat reads its reason, and offers nothing but « Rétablir »', async () => {
+    const rejected = makeScanned({ review: 'REJECTED', rejectionReason: 'NEWS' });
+    const { fixture, page } = await setup({ rows: [rejected] });
+
+    expect(page.reviewTag(rejected)).toBe('stats.review.tag.REJECTED_BECAUSE');
+    const row: HTMLElement = fixture.nativeElement.querySelector('tr.rejected');
+    expect(row.querySelector('.tick')).toBeNull();
+    expect(row.textContent).toContain('stats.review.restore');
+    expect(row.textContent).not.toContain('stats.actions.toTrade');
+  });
+
+  it('« À relire » asks for the stats to review on « All », and shows their count', async () => {
+    const { fixture, page, repo } = await setup({ rows: [makeStat()] });
+    repo.countToReview.mockReturnValue(of(4));
+
+    page.setStatus('TO_REVIEW');
+    await settle(fixture);
+
+    expect(page.view()).toBe('ALL');
+    expect(repo.lastFilter).toEqual(
+      expect.objectContaining({ review: 'TO_REVIEW', status: null, pattern: null }),
+    );
+    expect(page.reviewCount()).toBe(4);
+  });
+
+  it('the count of « À relire » reads every pattern, whatever the view', async () => {
+    const { repo } = await setup({ rows: [makeStat()] });
+
+    expect(repo.countToReview).toHaveBeenLastCalledWith(
+      expect.not.objectContaining({ pattern: 'GUS' }),
+    );
+  });
+
+  it('a link to the stats to review lands on « All », the tab selected', async () => {
+    const { page, repo } = await setup({ query: { status: 'TO_REVIEW' } });
+
+    expect(page.view()).toBe('ALL');
+    expect(page.status()).toBe('TO_REVIEW');
+    expect(repo.lastFilter?.review).toBe('TO_REVIEW');
+  });
+
+  it('« Rejetées » adds the rejected stats to the listing', async () => {
+    const { fixture, page, repo } = await setup({ rows: [makeStat()] });
+
+    page.setWithRejected(true);
+    await settle(fixture);
+
+    expect(repo.lastFilter?.withRejected).toBe(true);
+  });
+
+  it('the panel of a stat to review says where it comes from, with Valider and Rejeter', async () => {
+    const { fixture, page } = await setup({ rows: [makeScanned()] });
+
+    page.open(makeScanned());
+    await settle(fixture);
+
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('.review-banner')?.textContent).toContain('stats.review.bannerTitle');
+    const panel = el.querySelector('.complete-card')!.textContent;
+    expect(panel).toContain('stats.review.validate');
+    expect(panel).toContain('stats.review.reject');
+    expect(panel).not.toContain('stats.completion.tick');
+  });
+
+  it('a rejected stat opened through a link offers « Rétablir », never the ✓', async () => {
+    const rejected = makeScanned({ review: 'REJECTED', rejectionReason: 'NEWS' });
+    const { fixture, page, repo } = await setup({ rows: [rejected] });
+
+    page.open(rejected);
+    await settle(fixture);
+    page.toggleCompleted(rejected);
+
+    const panel = fixture.nativeElement.querySelector('.complete-card')!.textContent;
+    expect(panel).toContain('stats.review.restore');
+    expect(panel).not.toContain('stats.completion.tick');
+    expect(page.tickBlockedReason()).toBe('stats.review.tickBlocked');
+    expect(repo.setCompleted).not.toHaveBeenCalled();
+  });
+
+  it('« Repasser à relire » waits until a ticked stat is unticked', async () => {
+    const ticked = makeScanned({ review: 'VALIDATED', completed: true });
+    const { fixture, page } = await setup({ rows: [ticked] });
+
+    page.open(ticked);
+    await settle(fixture);
+
+    const back = Array.from(fixture.nativeElement.querySelectorAll('.complete-card button')).find(
+      (b) => (b as HTMLElement).textContent?.includes('stats.review.unvalidate'),
+    );
+    expect((back as HTMLButtonElement).disabled).toBe(true);
   });
 });

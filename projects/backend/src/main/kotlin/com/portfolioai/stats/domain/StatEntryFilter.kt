@@ -19,7 +19,7 @@ enum class StatStatus {
  * - [query] — ticker `LIKE %query%` (case-insensitive).
  * - [dateFrom] / [dateTo] — inclusive `trade_date` range.
  * - [pattern] — keep a single pattern.
- * - [status] — to complete vs completed.
+ * - [status] — to complete vs completed ; a scanner stat to review or rejected is neither (#764).
  * - [noPush] — true keeps the « no push » days only (#302), to compare their premarket.
  * - [outOfPattern] — true keeps the stats the recorded prices say were not the setup (#499).
  * - [under1Dollar] — true keeps the stats opened under a dollar (#499).

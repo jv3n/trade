@@ -13,6 +13,7 @@ import com.portfolioai.stats.domain.StatEntryFilter
 import com.portfolioai.stats.domain.StatRejectionReason
 import com.portfolioai.stats.domain.StatReview
 import com.portfolioai.stats.domain.StatSource
+import com.portfolioai.stats.domain.StatStatus
 import com.portfolioai.stats.infrastructure.persistence.StatEntryRepository
 import java.math.BigDecimal
 import java.time.Instant
@@ -297,6 +298,28 @@ class StatReviewIntegrationTest {
     service.validate(repo.save(doubleTop(testUser, "PRSO")).id)
 
     assertEquals(setOf("NXTP", "BNRG"), tickers(StatEntryFilter(review = StatReview.TO_REVIEW)))
+  }
+
+  @Test
+  fun `« À compléter » leaves a stat to review out, and takes it once validated`() {
+    repo.save(gus(testUser, "KTTA", StatSource.MANUAL))
+    val scanned = repo.save(gus(testUser, "NXTP"))
+    val toComplete = StatEntryFilter(status = StatStatus.TO_COMPLETE)
+
+    assertEquals(setOf("KTTA"), tickers(toComplete))
+
+    service.validate(scanned.id)
+    assertEquals(setOf("KTTA", "NXTP"), tickers(toComplete))
+  }
+
+  @Test
+  fun `« À compléter » with « Rejetées » on still leaves a rejected stat out — it never will be`() {
+    repo.save(gus(testUser, "KTTA", StatSource.MANUAL))
+    service.reject(repo.save(gus(testUser, "ICCT")).id, StatRejectionReason.NEWS)
+
+    val listed = tickers(StatEntryFilter(status = StatStatus.TO_COMPLETE, withRejected = true))
+
+    assertEquals(setOf("KTTA"), listed)
   }
 
   // ---------------------------------------------------------------------------

@@ -20,6 +20,8 @@ import { HttpStatsRepository } from './stats.http';
  *  - **`PageResponse` unwrap** — `number` is renamed to `pageIndex` on the way back.
  *  - **Date parsing preserves the local day** — `tradeDate: '2026-09-17'` comes back as midnight
  *    local (September 17), not UTC-shifted ; timestamps become `Date` instances.
+ *  - **Review (#764)** — validate / reject / restore POST to their routes, a rejection carries its
+ *    reason (null for none), and the review axes of the filter travel like the others.
  *  - **Update payload** — the date is serialised as a plain `yyyy-MM-dd`, the ticker upper-cased,
  *    and the server-owned fields (id, candidateId, completed, audit) never leave.
  */
@@ -206,6 +208,52 @@ describe('HttpStatsRepository', () => {
     req.flush(wireStat());
   });
 
+  // ---- Review of a scanner stat (#764) ----
+
+  it('validate and restore POST to their route and parse the stat that comes back', () => {
+    let review: string | null = null;
+    repo.validate('stat-1').subscribe((stat) => (review = stat.review));
+    const validate = http.expectOne('/api/stats/stat-1/validate');
+    expect(validate.request.method).toBe('POST');
+    validate.flush({ ...wireStat(), source: 'SCANNER', review: 'VALIDATED' });
+    expect(review).toBe('VALIDATED');
+
+    repo.restore('stat-1').subscribe((stat) => (review = stat.review));
+    const restore = http.expectOne('/api/stats/stat-1/restore');
+    expect(restore.request.method).toBe('POST');
+    restore.flush({ ...wireStat(), source: 'SCANNER', review: 'TO_REVIEW' });
+    expect(review).toBe('TO_REVIEW');
+  });
+
+  it('reject sends its reason — null when none was picked', () => {
+    repo.reject('stat-1', 'BREAKOUT').subscribe();
+    expect(http.expectOne('/api/stats/stat-1/reject').request.body).toEqual({ reason: 'BREAKOUT' });
+
+    repo.reject('stat-1', null).subscribe();
+    const req = http.expectOne('/api/stats/stat-1/reject');
+    expect(req.request.body).toEqual({ reason: null });
+    req.flush(wireStat());
+  });
+
+  it('the review axes of the filter travel as query params', () => {
+    repo.findAll({ review: 'TO_REVIEW', withRejected: true }).subscribe();
+
+    const req = http.expectOne((r) => r.url === '/api/stats');
+    expect(req.request.params.get('review')).toBe('TO_REVIEW');
+    expect(req.request.params.get('withRejected')).toBe('true');
+    req.flush(wirePageFixture([]));
+  });
+
+  it('countToReview reads the to-review count off the summary of the filter', () => {
+    let count = -1;
+    repo.countToReview({ dateFrom: new Date(2026, 8, 14) }).subscribe((n) => (count = n));
+
+    const req = http.expectOne((r) => r.url === '/api/stats/summary');
+    expect(req.request.params.get('dateFrom')).toBe('2026-09-14');
+    req.flush({ toReview: 4 });
+    expect(count).toBe(4);
+  });
+
   it('createSibling POSTs the picked pattern to /:id/sibling and parses the stat born from it', () => {
     repo.createSibling('stat-1', 'DT').subscribe((stat) => {
       expect(stat.tradeDate).toBeInstanceOf(Date);
@@ -324,6 +372,9 @@ describe('HttpStatsRepository', () => {
       completed: true,
       outOfPattern: [],
       trades: [],
+      source: 'MANUAL',
+      review: null,
+      rejectionReason: null,
       createdAt: '2026-09-17T12:00:00Z',
       updatedAt: '2026-09-17T21:00:00Z',
     };

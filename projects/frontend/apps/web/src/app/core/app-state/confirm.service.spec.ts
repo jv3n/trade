@@ -8,6 +8,8 @@
  * - **Only an explicit confirmation emits `true`** — Cancel and Esc both emit `false`, so the
  *   caller's `filter(Boolean)` never reaches the repository.
  * - **Danger variant** — deletions get the red confirm button (`stbDanger`) and the `delete` icon.
+ * - **A choice** (#764) — `choose` shows the options under the message and emits the pick on
+ *   confirm, null when « — » is left, nothing confirmed on Cancel.
  *
  * Material animations are disabled so the dialog closes synchronously (jsdom never fires the
  * `animationend` a real close waits for).
@@ -15,12 +17,21 @@
 import { ApplicationRef, provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideTranslateService, TranslateService } from '@ngx-translate/core';
-import { MatDialog, MATERIAL_ANIMATIONS } from '@portfolioai/ui';
+import { MatDialog, MATERIAL_ANIMATIONS, StbConfirmPick } from '@portfolioai/ui';
 import { afterEach, describe, expect, it } from 'vitest';
 import { ConfirmOptions, ConfirmService } from './confirm.service';
 
 const EN = {
   common: { cancel: 'Cancel' },
+  stats: {
+    confirmReject: {
+      title: 'Reject the {{ticker}} stat?',
+      message: 'It leaves every figure and a new scan will not bring it back.',
+      confirm: 'Reject',
+      choice: 'Reason (optional)',
+    },
+    rejectionReason: { BREAKOUT: 'Breakout', NOISE: 'Noise' },
+  },
   journal: {
     confirmDelete: {
       title: 'Delete the {{ticker}} trade?',
@@ -134,4 +145,61 @@ describe('ConfirmService', () => {
     expect(button('Delete the trade').classList).not.toContain('stb-button--danger');
     expect(dialogEl().querySelector('mat-icon')?.textContent?.trim()).toBe('help');
   });
+
+  it('choose emits the reason picked under the message', async () => {
+    const service = setup();
+    const picks = await choose(service);
+    expect(dialogEl().textContent).toContain('Reason (optional)');
+
+    await pick('Breakout');
+    button('Reject').click();
+    await settle();
+
+    expect(picks).toEqual([{ confirmed: true, value: 'BREAKOUT' }]);
+  });
+
+  it('choose emits a null pick when the reason is left on —', async () => {
+    const service = setup();
+    const picks = await choose(service);
+
+    button('Reject').click();
+    await settle();
+
+    expect(picks).toEqual([{ confirmed: true, value: null }]);
+  });
+
+  it('choose confirms nothing on Cancel, whatever was picked', async () => {
+    const service = setup();
+    const picks = await choose(service);
+
+    await pick('Noise');
+    button('Cancel').click();
+    await settle();
+
+    expect(picks).toEqual([{ confirmed: false }]);
+  });
 });
+
+async function choose(service: ConfirmService) {
+  const picks: StbConfirmPick[] = [];
+  service
+    .choose('stats.confirmReject', ['BREAKOUT', 'NOISE'], 'stats.rejectionReason', {
+      params: { ticker: 'BNRG' },
+      variant: 'danger',
+    })
+    .subscribe((p) => picks.push(p));
+  await settle();
+  return picks;
+}
+
+/** Opens the select of the dialog and clicks the option labelled [label] in its overlay. */
+async function pick(label: string): Promise<void> {
+  dialogEl().querySelector<HTMLElement>('.mat-mdc-select-trigger')!.click();
+  await settle();
+  const option = Array.from(document.querySelectorAll<HTMLElement>('mat-option')).find(
+    (o) => o.textContent?.trim() === label,
+  );
+  if (!option) throw new Error(`option « ${label} » not found`);
+  option.click();
+  await settle();
+}

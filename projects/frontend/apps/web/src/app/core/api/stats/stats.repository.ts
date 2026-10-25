@@ -9,6 +9,7 @@ import {
   StatEntry,
   StatEntryFilter,
   StatEntryInput,
+  StatRejectionReason,
   StatSummary,
 } from './stat-entry.model';
 
@@ -41,6 +42,9 @@ export abstract class StatsRepository {
   /** KPIs over the same filter as the listing, computed on the whole filtered set. */
   abstract summary(filter?: StatEntryFilter): Observable<StatSummary>;
 
+  /** The scanner stats still to review under [filter] (#764) — the « À relire » count. */
+  abstract countToReview(filter?: StatEntryFilter): Observable<number>;
+
   /**
    * The mechanical GUS rules replayed on the completed GUS of the last [months] months, up to
    * today (#205) — a rolling window of its own, not the listing's filter.
@@ -65,6 +69,24 @@ export abstract class StatsRepository {
    * prices → 400.
    */
   abstract setCompleted(id: string, completed: boolean): Observable<StatEntry>;
+
+  /**
+   * « Valider » a scanner stat (#762) : it joins the figures, to complete — validating does not
+   * tick it. A manual or rejected stat → 400.
+   */
+  abstract validate(id: string): Observable<StatEntry>;
+
+  /**
+   * « Rejeter » a scanner stat, with an optional [reason] of its pattern : kept, hidden but from
+   * « Rejetées ». A manual or validated stat → 400.
+   */
+  abstract reject(id: string, reason: StatRejectionReason | null): Observable<StatEntry>;
+
+  /**
+   * Back to review — « Rétablir » a rejected stat, or « Repasser à relire » a validated one. A
+   * ticked stat → 400.
+   */
+  abstract restore(id: string): Observable<StatEntry>;
 
   abstract delete(id: string): Observable<void>;
 
