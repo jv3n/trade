@@ -69,6 +69,21 @@
                     {{ 'today.steps.stats.overdueTag' | translate: { count: overdueTotal() } }}
                   </span>
                 }
+                <!-- The scanner's stats to review (#765) : a state, so indigo — the backfill counted apart. -->
+                @if ((statsToReviewTotal() ?? 0) > 0) {
+                  <span
+                    class="tag tag-accent"
+                    [matTooltip]="'today.steps.stats.toReviewHint' | translate"
+                  >
+                    <mat-icon>radar</mat-icon>
+                    {{
+                      (backfillCount() > 0
+                        ? 'today.steps.stats.toReviewWithBackfill'
+                        : 'today.steps.stats.toReview'
+                      ) | translate: { count: statsToReviewTotal(), backfill: backfillCount() }
+                    }}
+                  </span>
+                }
               </div>
               <div class="step-body">
                 @if (yesterdayStats().length > 0) {
@@ -96,9 +111,30 @@
                     }
                   </span>
                 }
+                @if (scannedLine(); as found) {
+                  <span class="scanner-found">{{
+                    'today.steps.stats.scanned' | translate: found
+                  }}</span>
+                }
+                @if (scannerLine(); as scanner) {
+                  <span
+                    class="scanner-line"
+                    [class.warn]="scanner.warn"
+                    [matTooltip]="'today.steps.stats.scannerHint' | translate"
+                  >
+                    <mat-icon>radar</mat-icon>
+                    {{ 'today.steps.stats.' + scanner.key | translate: scanner.params }}
+                  </span>
+                }
               </div>
             </div>
-            <div class="step-action">
+            <div class="step-action actions">
+              @if ((statsToReviewTotal() ?? 0) > 0) {
+                <a mat-stroked-button routerLink="/stats" [queryParams]="{ status: 'TO_REVIEW' }">
+                  <mat-icon>radar</mat-icon>
+                  <span>{{ 'today.actions.review' | translate }}</span>
+                </a>
+              }
               @if ((statsToCompleteTotal() ?? 0) > 0) {
                 <a mat-flat-button routerLink="/stats" [queryParams]="{ status: 'TO_COMPLETE' }">
                   <mat-icon>edit_note</mat-icon>
