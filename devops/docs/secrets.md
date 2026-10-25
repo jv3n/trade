@@ -20,7 +20,8 @@ its readers are declared in Terraform ([`../terraform/`](../terraform/README.md)
 | `R2_ACCOUNT_ID` | GitHub, repo secret | `backup-postgres.yml` | R2 endpoint | no |
 | `GRADLE_ENCRYPTION_KEY` | GitHub — **not set** | `backend.yml` | encrypts the Gradle configuration cache | **yes** |
 | wrangler session | your machine (`wrangler login`) | `devops/cloudflare` deploys | Cloudflare Workers | **yes** |
-| `.env` | your machine | Tilt | local Google OAuth client, admin emails | **yes** |
+| `scanner-api-token` | GCP Secret Manager — **not created yet** | the production runtime, as `SCANNER_API_TOKEN` ; your `gcloud` session, at a « scan → production » from Tilt (#766) | the bearer ts-scanner pushes with (#763) ; until it exists, production's scanner door stays shut | **yes** |
+| `.env` | your machine | Tilt | local Google OAuth client, admin emails ; the **local** scanner token and owner, the production API's URL (#766) | **yes** |
 
 No long-lived GCP key exists : GitHub reaches GCP through Workload Identity Federation, Cloud Run
 reads Secret Manager as its runtime account. The GitHub *variables* (`GCP_*`, `GLITCHTIP_ORG`, `CLOUDFLARE_ZONE_ID`) hold
