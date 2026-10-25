@@ -1,7 +1,7 @@
 # PortfolioAI — local stack: Postgres in Docker, backend and frontend run natively.
 # The logic behind every button lives in devops/tools/tilt/ ; this file only declares and wires.
 
-load("ext://uibutton", "cmd_button")
+load("ext://uibutton", "cmd_button", "text_input")
 
 config.define_string("host", args=False, usage="Host used in the UI links (e.g. 192.168.18.13)")
 host = config.parse().get("host", "localhost")
@@ -286,6 +286,46 @@ cmd_button(
     text="Gradle — stop daemons + wipe caches",
     icon_name="restart_alt",
     argv=["./devops/tools/tilt/gradle-reset.sh"],
+)
+
+# ts-scanner (#766) : the previous session's GUS and double tops, pushed to trade as stats to review.
+# Not deployed (cost) — run from here, on demand, each morning ; the sibling checkout `../ts-scanner`
+# is what runs, local changes included. The resource scans D-1 into the local stack ; the buttons
+# replay a backfill, or push to production.
+local_resource(
+    name="ts-scanner 📡",
+    cmd="./devops/tools/tilt/ts-scanner.sh local",
+    env=tool_env,
+    resource_deps=["backend"],
+    auto_init=False,
+    trigger_mode=TRIGGER_MODE_MANUAL,
+    labels=["tools"],
+)
+
+# The first run replays a month : that is the default first day.
+month_ago = str(
+    local("date -d '1 month ago' +%F 2>/dev/null || date -v-1m +%F", quiet=True, echo_off=True)
+).strip()
+
+cmd_button(
+    name="ts-scanner-backfill",
+    resource="ts-scanner 📡",
+    text="backfill (local)",
+    icon_name="history",
+    argv=["sh", "-c", './devops/tools/tilt/ts-scanner.sh local "$FROM"'],
+    inputs=[text_input("FROM", "First trading day (YYYY-MM-DD)", default=month_ago)],
+)
+
+# Production : its URL from `.env` (SCANNER_PROD_URL), its token from Secret Manager through gcloud,
+# read at the run. An empty first day scans the previous trading day only.
+cmd_button(
+    name="ts-scanner-prod",
+    resource="ts-scanner 📡",
+    text="scan → production",
+    icon_name="cloud_upload",
+    argv=["sh", "-c", './devops/tools/tilt/ts-scanner.sh prod "$FROM"'],
+    inputs=[text_input("FROM", "First trading day (empty = the previous one)")],
+    requires_confirmation=True,
 )
 
 local_resource(name="checks 🧪", cmd="date", labels=["tools"])
