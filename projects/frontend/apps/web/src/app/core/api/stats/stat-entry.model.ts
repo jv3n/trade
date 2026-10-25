@@ -1,5 +1,5 @@
 import { TradeDirection } from '../journal/trade-entry.model';
-import { Pattern } from '../shared/pattern.model';
+import { Pattern, StatPattern } from '../shared/pattern.model';
 
 /**
  * Stats **domain** types — a candidate promoted to the stats sheet, filled as the day goes and
@@ -13,6 +13,39 @@ import { Pattern } from '../shared/pattern.model';
  */
 /** Why a stat was not the setup (#499) : a DT whose retest took the top, a price off the sheet. */
 export type OutOfPatternReason = 'RETEST_TOOK_TOP' | 'PRICE_OUT_OF_RANGE';
+
+/** Where a stat comes from (#762) : typed or promoted by hand, or dropped by ts-scanner (#760). */
+export type StatSource = 'MANUAL' | 'SCANNER';
+
+/**
+ * The review of a scanner stat (#762) — only a validated one counts in the figures and can be
+ * ticked ; a rejected one is kept, hidden but from « Rejetées », so a re-scan never brings it back.
+ */
+export type StatReview = 'TO_REVIEW' | 'VALIDATED' | 'REJECTED';
+
+export type StatRejectionReason =
+  | 'BREAKOUT'
+  | 'WEAK_REJECTION'
+  | 'ECHO_TOO_FAR'
+  | 'GAP_TOO_SMALL'
+  | 'NEWS'
+  | 'FLOAT_OUT_OF_RANGE'
+  | 'NOISE'
+  | 'OTHER';
+
+/** The reasons a stat of each pattern is rejected with — the backend refuses another pattern's. */
+export const REJECTION_REASONS: Record<StatPattern, readonly StatRejectionReason[]> = {
+  GUS: ['GAP_TOO_SMALL', 'NEWS', 'FLOAT_OUT_OF_RANGE', 'NOISE', 'OTHER'],
+  DT: ['BREAKOUT', 'WEAK_REJECTION', 'ECHO_TOO_FAR', 'NOISE', 'OTHER'],
+};
+
+/**
+ * In the figures — a manual stat, or a scanner one once validated (#762) : the mirror of the
+ * backend's `StatEntry.counts`. Only such a stat is to complete, ticked, or offered « → Trade ».
+ */
+export function countsInFigures(entry: Pick<StatEntry, 'review'>): boolean {
+  return entry.review === null || entry.review === 'VALIDATED';
+}
 
 export interface StatEntry {
   id: string;
@@ -102,6 +135,11 @@ export interface StatEntry {
    */
   trades: StatTradeLink[];
 
+  // ---- Source and review (#762) — [review] is null on a manual stat ----
+  source: StatSource;
+  review: StatReview | null;
+  rejectionReason: StatRejectionReason | null;
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -124,6 +162,9 @@ export type StatEntryInput = Omit<
   | 'under1Dollar'
   | 'outOfPattern'
   | 'trades'
+  | 'source'
+  | 'review'
+  | 'rejectionReason'
   | 'createdAt'
   | 'updatedAt'
 >;
@@ -147,6 +188,10 @@ export interface StatEntryFilter {
   outOfPattern?: boolean | null;
   /** True keeps the stats opened under a dollar only (#499). */
   under1Dollar?: boolean | null;
+  /** Keeps the scanner stats in one review state (#762) — « À relire ». */
+  review?: StatReview | null;
+  /** True adds the rejected stats, hidden from every listing otherwise (#762). */
+  withRejected?: boolean | null;
 }
 
 /**
@@ -235,6 +280,8 @@ export interface StatSummary {
   /** Stats of the filtered set that gave birth to a trade — the journal reads « traded / all ». */
   traded: number;
   untraded: number;
+  /** Scanner stats of the filtered set still to review (#762) — in none of the figures above. */
+  toReview: number;
 }
 
 /**

@@ -731,7 +731,9 @@
       "pushTime": "Push time",
       "pushTimeSub": "median · 9:30 → Push's top · n = {{count}}",
       "gusDropDuration": "Duration of the Sink",
-      "gusDropDurationSub": "median · Push's top → Sink"
+      "gusDropDurationSub": "median · Push's top → Sink",
+      "toReview": "{{count}} to review, out of the figures",
+      "toReviewHint": "Dropped by the scanner, not validated yet : out of every figure"
     },
     "complete": {
       "title": "Session",
@@ -755,7 +757,9 @@
       "ALL": "All",
       "TO_COMPLETE": "To complete",
       "COMPLETED": "Completed",
-      "NO_PUSH": "No push"
+      "NO_PUSH": "No push",
+      "TO_REVIEW": "To review · {{count}}",
+      "TO_REVIEW_HINT": "The stats the scanner dropped, not validated yet — out of the figures. GUS and DT : the tab opens on « All »."
     },
     "fields": {
       "tradeDate": "Date",
@@ -874,7 +878,13 @@
       "siblingAttachedOne": "{{pattern}} stat of {{ticker}} created — the trade already in the journal is attached to it.",
       "siblingAttached": "{{pattern}} stat of {{ticker}} created — the {{count}} trades already in the journal are attached to it.",
       "siblingConflict": "{{ticker}} already has a {{pattern}} stat that day.",
-      "siblingError": "Could not create the {{pattern}} stat of {{ticker}}. Try again."
+      "siblingError": "Could not create the {{pattern}} stat of {{ticker}}. Try again.",
+      "validateSuccess": "{{ticker}} validated — to complete.",
+      "validateError": "Couldn't validate {{ticker}}. Please retry.",
+      "rejectSuccess": "{{ticker}} rejected.",
+      "rejectError": "Couldn't reject {{ticker}}. Please retry.",
+      "restoreSuccess": "{{ticker}} back to review.",
+      "restoreError": "Couldn't send {{ticker}} back to review. Please retry."
     },
     "premarket": {
       "title": "Premarket —",
@@ -1032,6 +1042,65 @@
       "toFillHint": "Completed before the Sink existed : the low after the Push is still to record. Optional for now, it feeds « 15 % reached ».",
       "footer": "n = {{count}} · {{reached}} / {{count}} ≥ {{target}} % · {{minutes}} min",
       "brief": "Sink"
+    },
+    "rejected": {
+      "toggle": "Rejected",
+      "hint": "The scanner stats rejected, with their reason — kept so a new scan does not bring them back. Hidden everywhere else. Combines with the tabs."
+    },
+    "review": {
+      "tag": {
+        "TO_REVIEW": "scanner · to review",
+        "VALIDATED": "scanner",
+        "REJECTED": "scanner · rejected",
+        "REJECTED_BECAUSE": "scanner · rejected · {{reason}}"
+      },
+      "tagHint": {
+        "TO_REVIEW": "Dropped by the scanner on {{created}} — out of the figures until validated",
+        "VALIDATED": "Dropped by the scanner, validated — a stat like any other, its source still shown",
+        "REJECTED": "Rejected — kept so a new scan does not bring it back, and to tune the detector on its points"
+      },
+      "open": "Review",
+      "openHint": "Open the stat to check and correct its prices before deciding",
+      "validate": "Validate",
+      "validateHint": "It joins its pattern's stats, to complete : you tick it afterwards, like a typed stat",
+      "reject": "Reject",
+      "rejectHint": "Reject — it leaves everything and will not come back on the next scan",
+      "restore": "Restore",
+      "restoreHint": "Back to review",
+      "unvalidate": "Back to review",
+      "unvalidateHint": "Undoes the validation : back to review, out of the figures",
+      "untickFirst": "Completed : untick it before sending it back to review",
+      "tickBlocked": "To review first : Validate or Reject",
+      "bannerTitle": "Dropped by the scanner",
+      "banner": "on {{created}}, read on the 1-min bars of {{day}} — check its prices on the chart and correct them here. Correcting does not validate it : it stays to review, out of the figures, until « Validate ».",
+      "bannerValidatedTitle": "Dropped by the scanner, validated",
+      "bannerValidated": "— a stat like any other, edited like them. « Back to review » takes it out of the figures until validated again."
+    },
+    "rejectionReason": {
+      "BREAKOUT": "Breakout — the Echo took the Apex",
+      "WEAK_REJECTION": "Rejection too weak",
+      "ECHO_TOO_FAR": "Echo too far from the Apex",
+      "GAP_TOO_SMALL": "Gap too small",
+      "NEWS": "A news behind it — a fundamental",
+      "FLOAT_OUT_OF_RANGE": "Float out of range",
+      "NOISE": "Noise — not the pattern",
+      "OTHER": "Other"
+    },
+    "rejectionReasonShort": {
+      "BREAKOUT": "breakout",
+      "WEAK_REJECTION": "weak rejection",
+      "ECHO_TOO_FAR": "echo far",
+      "GAP_TOO_SMALL": "small gap",
+      "NEWS": "news",
+      "FLOAT_OUT_OF_RANGE": "float",
+      "NOISE": "noise",
+      "OTHER": "other"
+    },
+    "confirmReject": {
+      "title": "Reject the {{ticker}} stat?",
+      "message": "It leaves the table and every figure, and a new scan will not bring it back. It stays under « Rejected », where it can be restored.",
+      "confirm": "Reject",
+      "choice": "Reason (optional)"
     }
   },
   "calculator": {

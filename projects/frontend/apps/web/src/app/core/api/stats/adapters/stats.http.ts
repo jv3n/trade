@@ -15,6 +15,9 @@ import {
   StatEntry,
   StatEntryFilter,
   StatEntryInput,
+  StatRejectionReason,
+  StatReview,
+  StatSource,
   StatSummary,
   StatTradeLink,
 } from '../stat-entry.model';
@@ -72,6 +75,9 @@ interface StatEntryWireDto {
   completed: boolean;
   outOfPattern: OutOfPatternReason[];
   trades: StatTradeLink[];
+  source: StatSource;
+  review: StatReview | null;
+  rejectionReason: StatRejectionReason | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -85,6 +91,9 @@ type StatEntryWireRequest = Omit<
   | 'under1Dollar'
   | 'outOfPattern'
   | 'trades'
+  | 'source'
+  | 'review'
+  | 'rejectionReason'
   | 'createdAt'
   | 'updatedAt'
 >;
@@ -153,6 +162,8 @@ function buildFilterParams(filter?: StatEntryFilter): HttpParams {
   if (filter.noPush) params = params.set('noPush', true);
   if (filter.outOfPattern) params = params.set('outOfPattern', true);
   if (filter.under1Dollar) params = params.set('under1Dollar', true);
+  if (filter.review) params = params.set('review', filter.review);
+  if (filter.withRejected) params = params.set('withRejected', true);
   return params;
 }
 
@@ -193,6 +204,10 @@ export class HttpStatsRepository extends StatsRepository {
     });
   }
 
+  countToReview(filter?: StatEntryFilter): Observable<number> {
+    return this.summary(filter).pipe(map((kpi) => kpi.toReview));
+  }
+
   ruleScore(months: RuleScoreMonths): Observable<RuleScore> {
     return this.http
       .get<RuleScoreWireDto>(`${this.base}/rule-score`, { params: { months } })
@@ -211,6 +226,22 @@ export class HttpStatsRepository extends StatsRepository {
     return this.http
       .put<StatEntryWireDto>(`${this.base}/${id}/completion`, { completed })
       .pipe(map(fromWire));
+  }
+
+  validate(id: string): Observable<StatEntry> {
+    return this.http
+      .post<StatEntryWireDto>(`${this.base}/${id}/validate`, null)
+      .pipe(map(fromWire));
+  }
+
+  reject(id: string, reason: StatRejectionReason | null): Observable<StatEntry> {
+    return this.http
+      .post<StatEntryWireDto>(`${this.base}/${id}/reject`, { reason })
+      .pipe(map(fromWire));
+  }
+
+  restore(id: string): Observable<StatEntry> {
+    return this.http.post<StatEntryWireDto>(`${this.base}/${id}/restore`, null).pipe(map(fromWire));
   }
 
   delete(id: string): Observable<void> {
