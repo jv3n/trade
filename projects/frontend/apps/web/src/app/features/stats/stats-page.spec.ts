@@ -2648,6 +2648,27 @@ describe('StatsPage — the scanner stats to review (#764)', () => {
     expect(repo.setCompleted).not.toHaveBeenCalled();
   });
 
+  it('a rejected stat opened through a link says so in its banner, with its reason', async () => {
+    const rejected = makeScanned({ review: 'REJECTED', rejectionReason: 'NEWS' });
+    const { fixture, page } = await setup({ rows: [rejected] });
+
+    page.open(rejected);
+    await settle(fixture);
+
+    const banner = fixture.nativeElement.querySelector('.review-banner')?.textContent;
+    expect(banner).toContain('stats.review.bannerRejectedTitle');
+    expect(page.rejectedBanner(rejected)).toBe('stats.review.bannerRejectedBecause');
+  });
+
+  it('a manual stat opens with no scanner banner', async () => {
+    const { fixture, page } = await setup({ rows: [makeStat({ completed: false })] });
+
+    page.open(makeStat({ completed: false }));
+    await settle(fixture);
+
+    expect(fixture.nativeElement.querySelector('.review-banner')).toBeNull();
+  });
+
   it('« Repasser à relire » waits until a ticked stat is unticked', async () => {
     const ticked = makeScanned({ review: 'VALIDATED', completed: true });
     const { fixture, page } = await setup({ rows: [ticked] });

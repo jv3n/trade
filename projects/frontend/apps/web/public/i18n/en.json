@@ -1083,7 +1083,10 @@
       "bannerTitle": "Dropped by the scanner",
       "banner": "on {{created}}, read on the 1-min bars of {{day}} — check its prices on the chart and correct them here. Correcting does not validate it : it stays to review, out of the figures, until « Validate ».",
       "bannerValidatedTitle": "Dropped by the scanner, validated",
-      "bannerValidated": "— a stat like any other, edited like them. « Back to review » takes it out of the figures until validated again."
+      "bannerValidated": "— a stat like any other, edited like them. « Back to review » takes it out of the figures until validated again.",
+      "bannerRejectedTitle": "Dropped by the scanner, rejected",
+      "bannerRejected": "— out of every figure, kept so a new scan does not bring it back. « Restore » sends it back to review.",
+      "bannerRejectedBecause": "— reason : {{reason}}. Out of every figure, kept so a new scan does not bring it back. « Restore » sends it back to review."
     },
     "rejectionReason": {
       "BREAKOUT": "Breakout — the Echo took the Apex",
