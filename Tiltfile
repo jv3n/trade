@@ -316,8 +316,20 @@ cmd_button(
     inputs=[text_input("FROM", "First trading day (YYYY-MM-DD)", default=month_ago)],
 )
 
-# Production : its URL from `.env` (SCANNER_PROD_URL), its token from Secret Manager through gcloud,
-# read at the run. An empty first day scans the previous trading day only.
+# Staging, to try a scan on a deployed trade : its URL from `.env` (SCANNER_STAGING_URL), its token
+# from Secret Manager through gcloud, read at the run. An empty first day scans the previous trading
+# day only.
+cmd_button(
+    name="ts-scanner-staging",
+    resource="ts-scanner 📡",
+    text="scan → staging",
+    icon_name="science",
+    argv=["sh", "-c", './devops/tools/tilt/ts-scanner.sh staging "$FROM"'],
+    inputs=[text_input("FROM", "First trading day (empty = the previous one)")],
+)
+
+# Production : the same, from SCANNER_PROD_URL and the `scanner-api-token` secret, after a
+# confirmation.
 cmd_button(
     name="ts-scanner-prod",
     resource="ts-scanner 📡",

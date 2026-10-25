@@ -41,13 +41,37 @@ The resource's buttons :
 
 - **backfill (local)** — every trading day since a date ; one month back by default, for the first
   run. Re-running a day is harmless : the push skips what exists and remembers rejections.
-- **scan → production** — the same, pushed to the production API, after a confirmation. It takes
-  `SCANNER_PROD_URL` (the API's base URL) from `.env` and checks it answers before scanning ; the
-  token is read from Secret Manager (`scanner-api-token`) through your `gcloud` session at the
-  moment of the run, never kept on the machine. Production's backend reads the same secret as
-  `SCANNER_API_TOKEN`, and needs `SCANNER_OWNER_USER_ID` too (see
-  [`devops/docs/secrets.md`](devops/docs/secrets.md)) ; without them its door stays shut and the
-  push gets a 401.
+- **scan → staging** — the same, pushed to the staging API (`SCANNER_STAGING_URL`) : to try a scan
+  on a deployed `trade` first.
+- **scan → production** — the same, pushed to the production API (`SCANNER_PROD_URL`), after a
+  confirmation : the stats land in the real sheet.
+
+The scanner always **runs here** ; only where its stats land changes. A deployed target is checked
+to answer before the scan, and its token is read from Secret Manager through your `gcloud` session
+at the moment of the run — never kept on the machine.
+
+### Opening a deployed environment to the scanner
+
+Once per environment (#777) — `-staging` suffix and the `staging` GitHub environment for staging,
+none and `production` for production. In this order : a deploy mounts the secret, so it fails while
+the secret has no value.
+
+1. **Terraform** — `terraform apply` in `devops/env/<env>/` creates `scanner-api-token[-staging]`,
+   read by the environment's runtime account.
+2. **Its value** — any long random string, kept nowhere else :
+
+   ```bash
+   openssl rand -hex 32 | tr -d '\n' | gcloud secrets versions add scanner-api-token-staging --data-file=-
+   ```
+
+   (`scanner-api-token`, without the suffix, for production.)
+
+3. **The owner** — sign in to that `trade` once, read your `app_user.id` in its Supabase project
+   (*SQL editor* : `SELECT id FROM app_user`), and set it as the `SCANNER_OWNER_USER_ID` variable of
+   the GitHub environment.
+4. **A deploy** — the next release (`-rc` for staging) mounts the token and the owner.
+5. **Tilt** — `SCANNER_STAGING_URL=https://staging.tickerstory.org` (or
+   `SCANNER_PROD_URL=https://tickerstory.org`) in `.env`, then the button.
 
 What ts-scanner is given : `TRADE_URL` and `TRADE_API_TOKEN` in its environment, and `--from
 <YYYY-MM-DD>` for a backfill — nothing for the previous trading day.

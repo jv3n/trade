@@ -20,13 +20,15 @@ its readers are declared in Terraform ([`../terraform/`](../terraform/README.md)
 | `R2_ACCOUNT_ID` | GitHub, repo secret | `backup-postgres.yml` | R2 endpoint | no |
 | `GRADLE_ENCRYPTION_KEY` | GitHub — **not set** | `backend.yml` | encrypts the Gradle configuration cache | **yes** |
 | wrangler session | your machine (`wrangler login`) | `devops/cloudflare` deploys | Cloudflare Workers | **yes** |
-| `scanner-api-token` | GCP Secret Manager — **not created yet** | the production runtime, as `SCANNER_API_TOKEN` ; your `gcloud` session, at a « scan → production » from Tilt (#766) | the bearer ts-scanner pushes with (#763) ; until it exists, production's scanner door stays shut | **yes** |
-| `.env` | your machine | Tilt | local Google OAuth client, admin emails ; the **local** scanner token and owner, the production API's URL (#766) | **yes** |
+| `scanner-api-token` / `-staging` | GCP Secret Manager | its runtime, as `SCANNER_API_TOKEN` ; your `gcloud` session, at a « scan → production / staging » from Tilt (#777) | the bearer ts-scanner pushes its stats with (#763) | **yes** |
+| `.env` | your machine | Tilt | local Google OAuth client, admin emails ; the **local** scanner token and owner, the staging and production APIs' URLs (#777) | **yes** |
 
 No long-lived GCP key exists : GitHub reaches GCP through Workload Identity Federation, Cloud Run
 reads Secret Manager as its runtime account. The GitHub *variables* (`GCP_*`, `GLITCHTIP_ORG`, `CLOUDFLARE_ZONE_ID`) hold
 identifiers, not secrets.
 
 **Rotating** — Secret Manager : `gcloud secrets versions add <name> --data-file=-`, then a deploy
-(revisions read `:latest` at start). GitHub : `gh secret set <NAME> --repo jv3n/trade`, read at the
-next run.
+(revisions read `:latest` at start). Every secret `deploy.yml` mounts — `scanner-api-token` included
+(#777) — must keep an **enabled** latest version : disable or destroy the old one only after the new
+one is added, or that environment cannot be deployed at all. GitHub : `gh secret set <NAME> --repo
+jv3n/trade`, read at the next run.

@@ -27,8 +27,8 @@ Described in Terraform — this folder and [`../../terraform/project/`](../../te
 - Artifact Registry repository `northamerica-northeast1-docker.pkg.dev/trade-496613/backend`.
 - The Secret Manager containers `google-oauth-client-id`, `google-oauth-client-secret`,
   `app-admin-emails`, `supabase-db-url` (JDBC URL of the Supabase session pooler, user inline,
-  `sslmode=require`, **no password**), `supabase-db-password` (#659) and `sentry-dsn-backend` —
-  their values are added by hand.
+  `sslmode=require`, **no password**), `supabase-db-password` (#659), `sentry-dsn-backend` and
+  `scanner-api-token` (the bearer ts-scanner pushes with, #777) — their values are added by hand.
 - The Cloud Run service `portfolioai` and its public access ; its revisions belong to `deploy.yml`.
 
 By hand : the billing account, and the `run`, `artifactregistry`, `secretmanager`, `iam`,
@@ -39,7 +39,8 @@ By hand : the billing account, and the `run`, `artifactregistry`, `secretmanager
 - A `production` environment with a required reviewer, deployable from a version tag only
   (`v*.*.*`) — a branch can't deploy it. The same pattern also matches a candidate (`vX.Y.Z-rc1`) :
   keeping candidates out of production is the workflow's job, which routes them to staging.
-- Three non-secret environment variables : `GCP_PROJECT`, `GCP_WIF_PROVIDER`, `GCP_SA_EMAIL`.
+- Non-secret environment variables : `GCP_PROJECT`, `GCP_WIF_PROVIDER`, `GCP_SA_EMAIL`, and
+  `SCANNER_OWNER_USER_ID` — whose sheet ts-scanner's stats land in (see the [root README](../../../README.md#opening-a-deployed-environment-to-the-scanner)).
 - Secret scanning, push protection and Dependabot alerts on.
 
 ## Database
