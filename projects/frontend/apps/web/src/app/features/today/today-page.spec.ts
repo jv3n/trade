@@ -768,6 +768,7 @@ function makeStatSummary() {
     medianCumulativePmHighPercent: 74.9,
     medianCumulativeOpenPercent: 42.9,
     traded: 1,
+    toReview: 0,
     untraded: 0,
   };
 }
@@ -870,6 +871,9 @@ function makeStat(overrides: Partial<StatEntry> = {}): StatEntry {
     completed: false,
     outOfPattern: [],
     trades: [],
+    source: 'MANUAL',
+    review: null,
+    rejectionReason: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,

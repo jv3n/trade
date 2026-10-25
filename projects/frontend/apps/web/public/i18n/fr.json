@@ -731,7 +731,9 @@
       "pushTime": "Heure du Push",
       "pushTimeSub": "médiane · 9h30 → haut du Push · n = {{count}}",
       "gusDropDuration": "Durée du Sink",
-      "gusDropDurationSub": "médiane · haut du Push → Sink"
+      "gusDropDurationSub": "médiane · haut du Push → Sink",
+      "toReview": "{{count}} à relire, hors chiffres",
+      "toReviewHint": "Déposées par le scanner, pas encore validées : hors de tous les chiffres"
     },
     "complete": {
       "title": "Séance",
@@ -755,7 +757,9 @@
       "ALL": "Toutes",
       "TO_COMPLETE": "À compléter",
       "COMPLETED": "Complétées",
-      "NO_PUSH": "Sans push"
+      "NO_PUSH": "Sans push",
+      "TO_REVIEW": "À relire · {{count}}",
+      "TO_REVIEW_HINT": "Les stats déposées par le scanner, pas encore validées — hors des chiffres. GUS et DT : l'onglet s'ouvre sur « Tous »."
     },
     "fields": {
       "tradeDate": "Date",
@@ -874,7 +878,13 @@
       "siblingAttachedOne": "Stat {{pattern}} de {{ticker}} créée — le trade déjà au journal y est rattaché.",
       "siblingAttached": "Stat {{pattern}} de {{ticker}} créée — les {{count}} trades déjà au journal y sont rattachés.",
       "siblingConflict": "{{ticker}} a déjà une stat {{pattern}} ce jour-là.",
-      "siblingError": "Impossible de créer la stat {{pattern}} de {{ticker}}. Réessaie."
+      "siblingError": "Impossible de créer la stat {{pattern}} de {{ticker}}. Réessaie.",
+      "validateSuccess": "{{ticker}} validée — à compléter.",
+      "validateError": "Impossible de valider {{ticker}}. Réessaie.",
+      "rejectSuccess": "{{ticker}} rejetée.",
+      "rejectError": "Impossible de rejeter {{ticker}}. Réessaie.",
+      "restoreSuccess": "{{ticker}} repasse à relire.",
+      "restoreError": "Impossible de repasser {{ticker}} à relire. Réessaie."
     },
     "premarket": {
       "title": "Premarket —",
@@ -1032,6 +1042,65 @@
       "toFillHint": "Complétée avant que le Sink existe : le plus bas après le Push reste à noter. Facultatif pour l'instant, il alimente « 15 % atteints ».",
       "footer": "n = {{count}} · {{reached}} / {{count}} ≥ {{target}} % · {{minutes}} min",
       "brief": "Sink"
+    },
+    "rejected": {
+      "toggle": "Rejetées",
+      "hint": "Les stats du scanner rejetées, avec leur motif — gardées pour qu'un nouveau scan ne les ramène pas. Cachées partout ailleurs. Se combine avec les onglets."
+    },
+    "review": {
+      "tag": {
+        "TO_REVIEW": "scanner · à relire",
+        "VALIDATED": "scanner",
+        "REJECTED": "scanner · rejetée",
+        "REJECTED_BECAUSE": "scanner · rejetée · {{reason}}"
+      },
+      "tagHint": {
+        "TO_REVIEW": "Déposée par le scanner le {{created}} — hors des chiffres jusqu'à validation",
+        "VALIDATED": "Déposée par le scanner, validée — une stat comme les autres, la provenance reste dite",
+        "REJECTED": "Rejetée — gardée pour qu'un nouveau scan ne la ramène pas, et pour régler le détecteur sur ses points"
+      },
+      "open": "Relire",
+      "openHint": "Ouvrir la stat pour vérifier et corriger ses prix avant de décider",
+      "validate": "Valider",
+      "validateHint": "Elle rejoint les stats de son pattern, à compléter : tu la coches ensuite, comme une stat saisie",
+      "reject": "Rejeter",
+      "rejectHint": "Rejeter — elle sort de tout et ne reviendra pas au prochain scan",
+      "restore": "Rétablir",
+      "restoreHint": "Elle repasse à relire",
+      "unvalidate": "Repasser à relire",
+      "unvalidateHint": "Annule la validation : elle repasse à relire, hors des chiffres",
+      "untickFirst": "Complétée : décoche-la avant de la repasser à relire",
+      "tickBlocked": "À relire d'abord : Valider ou Rejeter",
+      "bannerTitle": "Déposée par le scanner",
+      "banner": "le {{created}}, lue sur les barres 1 min du {{day}} — vérifie ses prix sur le chart et corrige-les ici. Corriger ne la valide pas : elle reste à relire, hors des chiffres, jusqu'à « Valider ».",
+      "bannerValidatedTitle": "Déposée par le scanner, validée",
+      "bannerValidated": "— une stat comme les autres, modifiable comme elles. « Repasser à relire » la sort des chiffres jusqu'à une nouvelle validation."
+    },
+    "rejectionReason": {
+      "BREAKOUT": "Cassure — l'Echo a repris l'Apex",
+      "WEAK_REJECTION": "Rejet trop faible",
+      "ECHO_TOO_FAR": "Echo trop loin de l'Apex",
+      "GAP_TOO_SMALL": "Gap trop faible",
+      "NEWS": "Une news derrière — un fondamental",
+      "FLOAT_OUT_OF_RANGE": "Float hors fourchette",
+      "NOISE": "Bruit — pas le pattern",
+      "OTHER": "Autre"
+    },
+    "rejectionReasonShort": {
+      "BREAKOUT": "cassure",
+      "WEAK_REJECTION": "rejet faible",
+      "ECHO_TOO_FAR": "echo loin",
+      "GAP_TOO_SMALL": "gap faible",
+      "NEWS": "news",
+      "FLOAT_OUT_OF_RANGE": "float",
+      "NOISE": "bruit",
+      "OTHER": "autre"
+    },
+    "confirmReject": {
+      "title": "Rejeter la stat {{ticker}} ?",
+      "message": "Elle sort du tableau et de tous les chiffres, et un nouveau scan ne la ramènera pas. Elle reste sous « Rejetées », d'où elle se rétablit.",
+      "confirm": "Rejeter",
+      "choice": "Motif (facultatif)"
     }
   },
   "calculator": {

@@ -866,6 +866,8 @@ one at a glance, before and after its review.
   took the Apex), rejection too weak, Echo too far from the Apex, noise, other. GUS : gap too small,
   a news behind it (a fundamental), float out of range, noise, other. The reasons and the
   rejected points are what the detector's thresholds will be tuned on.
+- **Only a stat that counts is to complete** : the « À compléter » tab, like its KPI, leaves a stat
+  to review out until it is validated, and a rejected one always, « Rejetées » on or not (#764).
 - **A rejected stat is kept, not deleted** : it is what stops a re-scan from bringing it back.
 - **The scanner never creates a stat that exists** for the same day, ticker and pattern — typed,
   to review, validated or rejected. A stat already typed or promoted by hand wins — a GUS caught

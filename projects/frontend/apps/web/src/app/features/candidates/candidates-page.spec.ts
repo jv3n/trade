@@ -151,6 +151,7 @@ class MockStatsRepository extends StatsRepository {
       medianPushMinutes: null,
       medianGusDropMinutes: null,
       traded: 8,
+      toReview: 0,
       untraded: 2,
     }),
   );
@@ -160,6 +161,10 @@ class MockStatsRepository extends StatsRepository {
   setCompleted = vi.fn((_id: string, _completed: boolean): Observable<StatEntry> =>
     throwError(() => new Error('not used')),
   );
+  countToReview = vi.fn((): Observable<number> => throwError(() => new Error('not used')));
+  validate = vi.fn((_id: string): Observable<StatEntry> => throwError(() => new Error('not used')));
+  reject = vi.fn((_id: string): Observable<StatEntry> => throwError(() => new Error('not used')));
+  restore = vi.fn((_id: string): Observable<StatEntry> => throwError(() => new Error('not used')));
   delete = vi.fn((_id: string): Observable<void> => throwError(() => new Error('not used')));
   promoteToTrade = vi.fn((_id: string): Observable<TradeEntry> =>
     throwError(() => new Error('not used')),

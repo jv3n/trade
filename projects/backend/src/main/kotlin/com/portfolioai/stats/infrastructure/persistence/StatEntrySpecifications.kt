@@ -33,12 +33,19 @@ object StatEntrySpecifications {
 
       filter.pattern?.let { pattern -> predicates += cb.equal(root.get<Any>("pattern"), pattern) }
 
+      val review = root.get<StatReview>("review")
       filter.status?.let { status ->
         val completedAt = root.get<Any>("completedAt")
         predicates +=
           when (status) {
             StatStatus.COMPLETED -> cb.isNotNull(completedAt)
-            StatStatus.TO_COMPLETE -> cb.isNull(completedAt)
+            // Only a stat that counts is to complete (#764), as in the KPI's `toComplete` : one to
+            // review is not yet, one rejected never will be — `StatEntry.counts` in SQL.
+            StatStatus.TO_COMPLETE ->
+              cb.and(
+                cb.isNull(completedAt),
+                cb.or(cb.isNull(review), cb.equal(review, StatReview.VALIDATED)),
+              )
           }
       }
 
@@ -46,7 +53,6 @@ object StatEntrySpecifications {
         predicates += cb.equal(root.get<Boolean>("noPush"), noPush)
       }
 
-      val review = root.get<StatReview>("review")
       when {
         filter.review != null -> predicates += cb.equal(review, filter.review)
         filter.withRejected != true ->
