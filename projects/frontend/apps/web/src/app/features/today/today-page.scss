@@ -171,6 +171,29 @@
   .overdue {
     color: var(--color-warning);
   }
+
+  // What the scanner found, then when it ran (#765) — each on a line of its own.
+  .scanner-found,
+  .scanner-line {
+    display: block;
+  }
+
+  .scanner-line {
+    display: flex;
+    align-items: center;
+    gap: s.$space-xs;
+
+    mat-icon {
+      font-size: s.$icon-xs;
+      width: s.$icon-xs;
+      height: s.$icon-xs;
+    }
+
+    // Not run for the previous session, or failed : a warning, never a block.
+    &.warn {
+      color: var(--color-warning);
+    }
+  }
 }
 
 // Step 1 hosts the reconciliation block ; it only earns its space while the step is current.
@@ -246,6 +269,21 @@
 .tag-warn {
   background: color-mix(in srgb, var(--color-warning) 16%, transparent);
   color: var(--color-warning);
+}
+
+// The scanner's stats to review (#765) : a state, so indigo, per the colour rule.
+.tag-accent {
+  display: inline-flex;
+  align-items: center;
+  gap: s.$space-hairline;
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+
+  mat-icon {
+    font-size: s.$icon-xs;
+    width: s.$icon-xs;
+    height: s.$icon-xs;
+  }
 }
 
 .warn {

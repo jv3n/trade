@@ -86,7 +86,15 @@
         "overdueMore": "En retard : {{tickers}} et {{count}} autres.",
         "overdueMoreOne": "En retard : {{tickers}} et {{count}} autre.",
         "overdueTag": "{{count}} en retard",
-        "done": "Rien à compléter d'avant aujourd'hui."
+        "done": "Rien à compléter ni à relire d'avant aujourd'hui.",
+        "toReview": "{{count}} à relire",
+        "toReviewWithBackfill": "{{count}} à relire · dont {{backfill}} de l'historique",
+        "toReviewHint": "Stats déposées par le scanner, hors des chiffres tant qu'elles ne sont pas validées. Celles du rattrapage d'un mois sont l'historique : leur âge n'est pas un retard.",
+        "scanned": "Le scanner a trouvé {{day}} : {{stats}} — à relire sur le chart.",
+        "scannerRan": "Scanner passé à {{time}} · {{day}} · {{tickers}} tickers lus, {{gus}} GUS, {{dt}} DT",
+        "scannerLate": "Scanner pas passé pour {{day}} — à lancer depuis Tilt (ressource ts-scanner).",
+        "scannerFailed": "Scanner en échec à {{time}} pour {{day}} : {{error}}",
+        "scannerHint": "ts-scanner rend compte de chaque passage : jour scanné, tickers lus, GUS et DT trouvés, erreur éventuelle. Il ne bloque rien : sans lui, l'étape se juge sur ce qui est saisi."
       },
       "trades": {
         "title": "Saisir les trades du jour",
@@ -107,7 +115,8 @@
       "noCandidate": "Aucun candidat aujourd'hui",
       "locate": "Louer",
       "noTrade": "Pas de trade aujourd'hui",
-      "undo": "Annuler"
+      "undo": "Annuler",
+      "review": "Relire"
     },
     "account": {
       "title": "Compte",

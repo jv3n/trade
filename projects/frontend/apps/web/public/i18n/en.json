@@ -86,7 +86,15 @@
         "overdueMore": "Overdue: {{tickers}} and {{count}} more.",
         "overdueMoreOne": "Overdue: {{tickers}} and {{count}} more.",
         "overdueTag": "{{count}} overdue",
-        "done": "Nothing to complete from before today."
+        "done": "Nothing to complete or review from before today.",
+        "toReview": "{{count}} to review",
+        "toReviewWithBackfill": "{{count}} to review · {{backfill}} from the backfill",
+        "toReviewHint": "Stats the scanner dropped, out of the figures until validated. The one-month backfill's are history : their age is not a delay.",
+        "scanned": "The scanner found on {{day}}: {{stats}} — to review on the chart.",
+        "scannerRan": "Scanner ran at {{time}} · {{day}} · {{tickers}} tickers read, {{gus}} GUS, {{dt}} DT",
+        "scannerLate": "Scanner not run for {{day}} — start it from Tilt (ts-scanner resource).",
+        "scannerFailed": "Scanner failed at {{time}} for {{day}}: {{error}}",
+        "scannerHint": "ts-scanner reports each run: day scanned, tickers read, GUS and DT found, any error. It blocks nothing: without it, the step reads what was typed."
       },
       "trades": {
         "title": "Enter the day's trades",
@@ -107,7 +115,8 @@
       "noCandidate": "No candidate today",
       "locate": "Locate",
       "noTrade": "No trade today",
-      "undo": "Undo"
+      "undo": "Undo",
+      "review": "Review"
     },
     "account": {
       "title": "Account",
