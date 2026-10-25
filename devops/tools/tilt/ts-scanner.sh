@@ -5,8 +5,9 @@
 # shellcheck source=_common.sh
 . "$(dirname "${BASH_SOURCE[0]}")/_common.sh"
 
-target="${1:?usage: ts-scanner.sh <local|staging|prod> [YYYY-MM-DD]}"
+target="${1:?usage: ts-scanner.sh <local|staging|prod> [first YYYY-MM-DD] [last YYYY-MM-DD]}"
 from="${2:-}"
+to="${3:-}"
 checkout="${SCANNER_CHECKOUT:-$(dirname "$REPO_ROOT")/ts-scanner}"
 
 [ -x "$checkout/gradlew" ] ||
@@ -51,11 +52,23 @@ prod) remote SCANNER_PROD_URL scanner-api-token ;;
   ;;
 esac
 
+is_day() { [[ "$1" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; }
+[ -z "$to" ] || [ -n "$from" ] || { ko "a last day needs a first one"; exit 1; }
 args=()
 if [ -n "$from" ]; then
-  [[ "$from" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] || { ko "the first day reads YYYY-MM-DD, not '$from'"; exit 1; }
-  args=(--args="--from $from")
-  step "ts-scanner → $target ($url), every trading day since $from"
+  is_day "$from" || { ko "the first day reads YYYY-MM-DD, not '$from'"; exit 1; }
+  if [ -n "$to" ]; then
+    is_day "$to" || { ko "the last day reads YYYY-MM-DD, not '$to'"; exit 1; }
+    args=(--args="--from $from --to $to")
+    if [ "$from" = "$to" ]; then
+      step "ts-scanner → $target ($url), $from alone"
+    else
+      step "ts-scanner → $target ($url), every trading day from $from to $to"
+    fi
+  else
+    args=(--args="--from $from")
+    step "ts-scanner → $target ($url), every trading day since $from"
+  fi
 else
   step "ts-scanner → $target ($url), the previous trading day"
 fi
