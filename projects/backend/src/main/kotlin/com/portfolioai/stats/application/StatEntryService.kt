@@ -16,6 +16,9 @@ import com.portfolioai.stats.domain.Premarket
 import com.portfolioai.stats.domain.StatEntry
 import com.portfolioai.stats.domain.StatEntryFilter
 import com.portfolioai.stats.domain.StatMetrics
+import com.portfolioai.stats.domain.StatRejectionReason
+import com.portfolioai.stats.domain.StatReview
+import com.portfolioai.stats.domain.StatSource
 import com.portfolioai.stats.domain.StatStatus
 import com.portfolioai.stats.infrastructure.persistence.StatEntryRepository
 import com.portfolioai.stats.infrastructure.persistence.StatEntrySpecifications
@@ -38,10 +41,10 @@ import org.springframework.web.server.ResponseStatusException
  * Stats service — the sheet filled as the day goes and ticked once complete (cf.
  * `mockup/PARCOURS.md`, step 5).
  *
- * Every stat **belongs to a user** since #187 : there is no shared community dataset and no RADAR /
- * MANUAL / IMPORT source any more. Reads, edits and deletes are user-scoped and a
- * missing-or-foreign id returns 404 (never 403) so we don't leak existence — same contract as the
- * journal / candidates / account.
+ * Every stat **belongs to a user** since #187 : there is no shared community dataset. A stat is
+ * manual, or dropped by the scanner and reviewed here (#762). Reads, edits and deletes are
+ * user-scoped and a missing-or-foreign id returns 404 (never 403) so we don't leak existence — same
+ * contract as the journal / candidates / account.
  *
  * **One stat per (user, day, ticker, pattern)** — creating a second one is a 409 ; the DB unique
  * constraint `ux_stat_entry_user_day_ticker_pattern` is the race-safe backstop (#434). A stat is a
@@ -117,7 +120,7 @@ class StatEntryService(
     // The journal's "8 of 10 stats traded" KPI (#195) : one query for the whole filtered set,
     // the same read the listing already uses row by row. Keyed by stat, so a stat traded three
     // times still counts once (#500).
-    val traded = tradeEntryService.tradeLinksByStat(rows.map { it.id }).size
+    val traded = tradeEntryService.tradeLinksByStat(rows.filter { it.counts }.map { it.id }).size
     return statSummaryOf(rows, filter.pattern, traded)
   }
 
@@ -142,7 +145,7 @@ class StatEntryService(
         status = StatStatus.COMPLETED,
       )
     return ruleScoreOf(
-      repo.findAll(StatEntrySpecifications.matching(userId, window)),
+      repo.findAll(StatEntrySpecifications.matching(userId, window)).filter { it.counts },
       dateFrom,
       dateTo,
     )
@@ -292,12 +295,15 @@ class StatEntryService(
   /**
    * Ticks a stat as completed, or unticks it back to "to complete" — the ✓ of the sheet (#263).
    * Ticking needs the session prices of its pattern — four on a « no push » day, the four prices of
-   * a double top — (400 naming the missing ones) ; ticking twice keeps the first date. Unticking is
-   * always allowed.
+   * a double top — (400 naming the missing ones), and a scanner stat validated first (#762) ;
+   * ticking twice keeps the first date. Unticking is always allowed.
    */
   @Transactional
   fun setCompleted(id: UUID, completed: Boolean): StatEntryDto {
     val entry = loadOwned(id)
+    if (completed && !entry.counts) {
+      throw badRequest("Stat ${entry.ticker} is ${entry.review} — validate it before ticking it")
+    }
     if (completed && !entry.hasFullSession) {
       throw badRequest(
         "Stat ${entry.ticker} can't be completed yet — missing " +
@@ -339,6 +345,66 @@ class StatEntryService(
       )
     }
     entry.completedAt = if (completed) entry.completedAt ?: Instant.now() else null
+    entry.updatedAt = Instant.now()
+    val saved = repo.save(entry)
+    return saved.toDto(tradeEntryService.tradeLinksByStat(listOf(saved.id))[saved.id].orEmpty())
+  }
+
+  // ---- Review of a scanner stat (#762) -------------------------------------------------------
+
+  /**
+   * « Valider » — this is the pattern : the scanner stat joins the figures as an ordinary stat to
+   * complete, edited then ticked like any other. Validating does not tick it. A manual stat has
+   * nothing to review, a rejected one is restored first : both are a 400.
+   */
+  @Transactional
+  fun validate(id: UUID): StatEntryDto =
+    changeReview(id) { entry ->
+      if (entry.review == StatReview.REJECTED) {
+        throw badRequest("Stat ${entry.ticker} is rejected — put it back to review first")
+      }
+      entry.review = StatReview.VALIDATED
+    }
+
+  /**
+   * « Rejeter » — not the pattern. The stat is **kept**, hidden but from « Rejetées » : it stops a
+   * re-scan from bringing it back, and its points are what the detector is tuned on. The [reason]
+   * is optional and of the stat's pattern ; rejecting again changes it. A validated stat is put
+   * back to review first : a 400.
+   */
+  @Transactional
+  fun reject(id: UUID, reason: StatRejectionReason?): StatEntryDto =
+    changeReview(id) { entry ->
+      if (entry.review == StatReview.VALIDATED) {
+        throw badRequest("Stat ${entry.ticker} is validated — put it back to review first")
+      }
+      if (reason != null && entry.pattern !in reason.patterns) {
+        throw badRequest("$reason is not a reason to reject a ${entry.pattern}")
+      }
+      entry.review = StatReview.REJECTED
+      entry.rejectionReason = reason
+    }
+
+  /**
+   * Back to review — out of « Rejetées », or « Repasser à relire » undoing a validation. A ticked
+   * stat is unticked first : a 400.
+   */
+  @Transactional
+  fun restore(id: UUID): StatEntryDto =
+    changeReview(id) { entry ->
+      if (entry.isCompleted) {
+        throw badRequest("Stat ${entry.ticker} is completed — untick it before reviewing it again")
+      }
+      entry.review = StatReview.TO_REVIEW
+      entry.rejectionReason = null
+    }
+
+  private fun changeReview(id: UUID, change: (StatEntry) -> Unit): StatEntryDto {
+    val entry = loadOwned(id)
+    if (entry.source != StatSource.SCANNER) {
+      throw badRequest("Stat ${entry.ticker} was not dropped by the scanner — nothing to review")
+    }
+    change(entry)
     entry.updatedAt = Instant.now()
     val saved = repo.save(entry)
     return saved.toDto(tradeEntryService.tradeLinksByStat(listOf(saved.id))[saved.id].orEmpty())

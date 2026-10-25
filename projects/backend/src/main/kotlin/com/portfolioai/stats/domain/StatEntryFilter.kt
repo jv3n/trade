@@ -23,9 +23,12 @@ enum class StatStatus {
  * - [noPush] — true keeps the « no push » days only (#302), to compare their premarket.
  * - [outOfPattern] — true keeps the stats the recorded prices say were not the setup (#499).
  * - [under1Dollar] — true keeps the stats opened under a dollar (#499).
+ * - [review] — keep the scanner stats in one review state (#762) — « À relire ».
+ * - [withRejected] — true adds the rejected stats, which every listing hides otherwise (#762) ;
+ *   moot once [review] is set.
  *
- * The last two are derived from the prices and read off [StatEntry] in memory, not in SQL : one
- * rule, one place.
+ * [outOfPattern] and [under1Dollar] are derived from the prices and read off [StatEntry] in memory,
+ * not in SQL : one rule, one place.
  *
  * The "traded / not traded" axis of the mockup needs the journal link and lands with the stat ->
  * trade flow (#193).
@@ -39,6 +42,8 @@ data class StatEntryFilter(
   val noPush: Boolean? = null,
   val outOfPattern: Boolean? = null,
   val under1Dollar: Boolean? = null,
+  val review: StatReview? = null,
+  val withRejected: Boolean? = null,
 ) {
   /** A derived toggle is on — the listing then pages in memory. */
   val hasDerived: Boolean

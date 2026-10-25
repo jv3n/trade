@@ -4,6 +4,7 @@ import com.portfolioai.shared.Pattern
 import com.portfolioai.stats.application.dto.StatSummaryDto
 import com.portfolioai.stats.domain.StatEntry
 import com.portfolioai.stats.domain.StatMetrics
+import com.portfolioai.stats.domain.StatReview
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.LocalTime
@@ -25,10 +26,16 @@ private val MARKET_OPEN: LocalTime = LocalTime.of(9, 30)
 private val GUS_DROP_TARGET = BigDecimal("15")
 
 /**
- * The KPIs of [StatEntryService.summarise] over the filtered [rows] ; [traded] is how many of them
- * carry a trade. Averages are measured on [pattern]'s stats only, none without one.
+ * The KPIs of [StatEntryService.summarise] over the filtered [rows] ; [traded] is how many of the
+ * counted ones carry a trade. Averages are measured on [pattern]'s stats only, none without one. A
+ * scanner stat to review or rejected is only in [StatSummaryDto.toReview] (#762).
  */
-internal fun statSummaryOf(rows: List<StatEntry>, pattern: Pattern?, traded: Int): StatSummaryDto {
+internal fun statSummaryOf(
+  filtered: List<StatEntry>,
+  pattern: Pattern?,
+  traded: Int,
+): StatSummaryDto {
+  val rows = filtered.filter { it.counts }
   val completed = rows.filter { it.isCompleted }
   val measured = if (pattern == null) emptyList() else completed
   val sessions = measured.filterNot { it.isDoubleTop }
@@ -97,6 +104,7 @@ internal fun statSummaryOf(rows: List<StatEntry>, pattern: Pattern?, traded: Int
     medianGusDropMinutes = gusDrops.medianMinutes { gusDropMinutes(it) },
     traded = traded,
     untraded = rows.size - traded,
+    toReview = filtered.count { it.review == StatReview.TO_REVIEW },
   )
 }
 

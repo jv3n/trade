@@ -36,6 +36,9 @@ import org.hibernate.type.SqlTypes
  *   needs the whole session of its pattern ([hasFullSession]) — the `ck_stat_entry_completed_whole`
  *   CHECK backs it up. A [noPush] stat has no push price, and is whole with the four others (#302).
  *
+ * A stat is typed or promoted by hand, or dropped by the scanner (#760) and then waits for its
+ * [review] ; only [counts] puts it in the figures.
+ *
  * No percentage is stored : gap, premarket push, push at open, HOD / LOD / EOD are all derived from
  * the prices ([StatMetrics] server-side for the KPIs, `stats.math` on the front).
  */
@@ -118,6 +121,16 @@ class StatEntry(
   /** When the owner ticked the stat as completed — null = to complete. */
   @Column(name = "completed_at") var completedAt: Instant? = null,
 
+  // ---- Source and review (#762) ----
+  @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+  @Column(nullable = false)
+  val source: StatSource = StatSource.MANUAL,
+  /** Null on a manual stat — `ck_stat_entry_review_on_scanner`. */
+  @JdbcTypeCode(SqlTypes.NAMED_ENUM) var review: StatReview? = null,
+  @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+  @Column(name = "rejection_reason")
+  var rejectionReason: StatRejectionReason? = null,
+
   // ---- Audit ----
   @Column(name = "created_at", nullable = false, updatable = false)
   val createdAt: Instant = Instant.now(),
@@ -127,6 +140,13 @@ class StatEntry(
   /** Ticked by its owner — "to complete" is its negation. */
   val isCompleted: Boolean
     get() = completedAt != null
+
+  /**
+   * In the figures — a manual stat, or a scanner one once validated (#762). A stat to review or
+   * rejected is in no KPI, average, median nor rule score.
+   */
+  val counts: Boolean
+    get() = review == null || review == StatReview.VALIDATED
 
   val isDoubleTop: Boolean
     get() = pattern == Pattern.DT
