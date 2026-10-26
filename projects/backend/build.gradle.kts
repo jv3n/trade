@@ -1,7 +1,7 @@
 plugins {
   kotlin("jvm") version "2.4.21"
   kotlin("plugin.spring") version "2.4.21"
-  id("org.springframework.boot") version "4.1.1"
+  id("org.springframework.boot") version "4.1.2"
   id("io.spring.dependency-management") version "1.1.7"
   kotlin("plugin.jpa") version "2.4.21"
   id("com.diffplug.spotless") version "8.10.4"
@@ -105,7 +105,7 @@ dependencies {
   // Spring Boot starter auto-instruments uncaught controller exceptions and pulls in the Logback
   // appender so MDC values (notably `userId`) become event extras automatically. The `-4` artifact
   // is the Spring Boot 4 one ; the `-jakarta` starter targets Boot 3 and doesn't wire on Boot 4.
-  implementation("io.sentry:sentry-spring-boot-4-starter:8.61.0")
+  implementation("io.sentry:sentry-spring-boot-4-starter:8.61.1")
   runtimeOnly("org.postgresql:postgresql")
   developmentOnly("org.springframework.boot:spring-boot-devtools")
   testImplementation("org.springframework.boot:spring-boot-starter-test")
@@ -118,7 +118,7 @@ dependencies {
   // Local HTTP server for testing outbound clients without hitting the real internet — used by
   // FrankfurterForexClientTest to assert the upstream failures deterministically. `mockwebserver3`
   // is OkHttp 5's API ; the `mockwebserver` artifact only survives there for JUnit 4 code.
-  testImplementation("com.squareup.okhttp3:mockwebserver3:5.5.0")
+  testImplementation("com.squareup.okhttp3:mockwebserver3:5.5.1")
   // Testcontainers — boots a real Postgres in Docker for `@SpringBootTest` integration tests so
   // `./gradlew test` no longer needs Tilt / docker-compose orchestrated by the dev infra. A single
   // container is shared across the JVM via a JUnit Platform LauncherSessionListener (singleton in
