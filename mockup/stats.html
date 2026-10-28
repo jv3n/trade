@@ -307,6 +307,47 @@
         display: flex;
         gap: 4px;
       }
+      /* #784 : le graphique 1 min du jour de la stat — bougies neutres (un mouvement de prix, pas un résultat), points en indigo. */
+      .day-chart svg {
+        display: block;
+        width: 100%;
+        height: auto;
+        touch-action: none;
+      }
+      .day-chart .chart-bar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 8px;
+        font-size: 12px;
+      }
+      .day-chart .chart-bar [hidden] {
+        display: none !important;
+      }
+      .day-chart .chart-read {
+        font-family: var(--mono);
+        color: var(--text-muted);
+        min-height: 1.4em;
+      }
+      .day-chart .chart-missing {
+        color: var(--text-muted);
+        font-size: 12px;
+        margin-top: 6px;
+      }
+      .day-chart .chart-empty {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 28px 16px;
+        border: 1px dashed var(--border-strong);
+        border-radius: var(--radius-sm);
+        color: var(--text-muted);
+        font-size: 13px;
+      }
+      .day-chart .chart-empty .icon {
+        font-size: 22px;
+      }
     </style>
   </head>
   <body>
@@ -524,6 +565,43 @@
             >
               <span class="icon">add</span> Créer la stat
             </button>
+          </div>
+        </section>
+
+        <!-- #784 : le graphique 1 min du jour, dans chaque stat — celle du scanner comme celle saisie à la main. Les barres viennent de ts-scanner, trade n'appelle aucun fournisseur. -->
+        <section class="card day-chart" style="margin-bottom: 16px" id="chart-panel">
+          <h2>
+            <span>Graphique <span class="muted" style="font-weight: 400" id="chart-day">ven. 18/09</span></span>
+            <span class="hint" data-group="chart-state" data-value="bars">barres 1 min — en 5 min sur la journée · 4h–20h, heure de New York · hors séance grisé · les points suivent les champs ; un point hors de sa bougie passe en ambre</span>
+            <span class="hint" data-group="chart-state" data-value="pending" hidden>pas encore de barres</span>
+            <span class="hint" data-group="chart-state" data-value="none" hidden>pas de barres pour ce jour</span>
+          </h2>
+          <div class="chart-bar">
+            <div data-group="chart-state" data-value="bars" style="display: flex; align-items: center; gap: 12px">
+            <div class="segmented" data-group="chart-range" title="La journée entière (4h–20h) ou la séance seule (9h30–16h) — un GUS s'ouvre sur la journée, son premarket compte ; un DT sur la séance">
+              <button class="active" data-value="day">Journée</button>
+              <button data-value="session">Séance</button>
+            </div>
+            <span class="chart-read" id="chart-read">survole une bougie : heure · O H L C · volume</span>
+            </div>
+            <span style="flex: 1"></span>
+            <div class="segmented" data-group="chart-state" title="Maquette : la stat a ses barres ; pas encore (une stat du jour, avant le passage du scanner du lendemain) ; jamais (Massive n'a rien pour ce ticker ce jour-là)">
+              <button class="active" data-value="bars">Barres</button>
+              <button data-value="pending">Pas encore</button>
+              <button data-value="none">Introuvables</button>
+            </div>
+          </div>
+          <div data-group="chart-state" data-value="bars">
+            <svg id="chart-svg" viewBox="0 0 1000 320" role="img" aria-label="Graphique 1 minute du jour de la stat"></svg>
+            <div class="chart-missing" id="chart-missing"></div>
+          </div>
+          <div class="chart-empty" data-group="chart-state" data-value="pending" hidden>
+            <span class="icon">schedule</span>
+            <span><b>Le graphique arrive demain matin.</b> Les barres 1 min d'une journée sont servies une fois la séance finie : le prochain passage du scanner les récupère pour cette stat, comme pour toute stat qui n'en a pas encore. Rien à faire de ton côté.</span>
+          </div>
+          <div class="chart-empty" data-group="chart-state" data-value="none" hidden>
+            <span class="icon">visibility_off</span>
+            <span><b>Pas de barres pour <span class="ticker">SGBX</span> le 18/09.</b> Le scanner les a demandées et Massive n'a rien servi — un ticker retiré de la cote ou qui a changé de symbole depuis. La stat se lit sans graphique ; le scanner ne les redemande plus.</span>
           </div>
         </section>
 
@@ -2026,6 +2104,247 @@
         });
 
         if (location.hash === '#a-relire') window.addEventListener('load', () => $('tab-review').click());
+      })();
+    </script>
+    <script>
+      // #784 — le graphique du jour : des barres 1 min fabriquées à partir des prix du panneau (maquette),
+      // pour que chaque point tombe sur sa bougie. Les champs vides prennent leur placeholder pour les barres,
+      // mais n'ont pas de marque : la barre est là, le point reste à lire dessus.
+      (() => {
+        const $ = (id) => document.getElementById(id);
+        const svg = $('chart-svg');
+        const W = 1000, PRICE_TOP = 12, PRICE_H = 228, VOL_TOP = 252, VOL_H = 52, PAD_L = 8, PAD_R = 52;
+        const START = 4 * 60, BARS = 16 * 60, OPEN = 330, CLOSE = 720;
+        const num = (t) => (t ? parseFloat(t.replace(/\s/g, '').replace(',', '.')) : NaN);
+        const minute = (t) => { const m = /^(\d{1,2}):(\d{2})/.exec(t || ''); return m ? +m[1] * 60 + +m[2] - START : NaN; };
+        const hhmm = (m) => { const t = m + START; return String(Math.floor(t / 60)).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0'); };
+        const fmt = (v) => v.toFixed(v < 1 ? 4 : 2).replace('.', ',');
+        let range = null, rebuild = true, cache = null, wasNew = false;
+
+        function field(id) {
+          const el = $(id);
+          const typed = num(el?.value);
+          return { typed: Number.isFinite(typed) ? typed : null, price: Number.isFinite(typed) ? typed : num(el?.placeholder) };
+        }
+        function timeOf(id, fallback) {
+          const m = minute($(id)?.value);
+          return { typed: Number.isFinite(m), at: Number.isFinite(m) ? m : fallback };
+        }
+        const sessionCell = (label) => [...document.querySelectorAll('#session-panel tbody tr')].find((r) => r.cells[0].textContent.trim() === label)?.querySelector('input');
+        const eod = () => { const i = sessionCell('EOD'); const v = num(i?.value); return Number.isFinite(v) ? v : num(i?.placeholder); };
+
+        // Les ancres du jour, et les points marqués — OPS pour un GUS, BARES pour un DT.
+        // SGBX : le Push saisi (2,20) n'est pas sur sa bougie (2,02) — le cas qu'un vrai graphique révèle.
+        const truth = { SGBX: { push: 2.02 } };
+        function readGus(ticker) {
+          const close = field('p-close').price, pmOpen = field('p-open').price, pmHigh = field('p-high').price;
+          const open = field('c-open'), push = field('c-push'), sink = field('c-drop');
+          const noPush = $('c-no-push')?.checked;
+          const pushAt = timeOf('c-push-time', OPEN + 11), sinkAt = timeOf('c-drop-time', OPEN + 55);
+          const end = eod();
+          const anchors = [[0, pmOpen * 0.97], [120, pmOpen], [280, pmHigh], [329, open.price * 1.02], [OPEN, open.price]];
+          if (!noPush) anchors.push([pushAt.at, truth[ticker]?.push ?? push.price]);
+          anchors.push([sinkAt.at, sink.price], [sinkAt.at + 22, sink.price * 1.13], [sinkAt.at + 70, sink.price * 1.03], [CLOSE, end], [BARS - 1, end * 0.98]);
+          const points = [{ name: 'Open', short: 'O', at: OPEN, price: open.typed, up: false }];
+          if (!noPush) points.push({ name: 'Push', short: 'P', at: pushAt.at, price: push.typed, up: true, timed: pushAt.typed });
+          points.push({ name: 'Sink', short: 'S', at: sinkAt.at, price: sink.typed, up: false, timed: sinkAt.typed });
+          return { anchors, points, close };
+        }
+        function readDt() {
+          const names = [['Base', 'B', 'dt-start', false], ['Apex', 'A', 'dt-top', true], ['Rejection', 'R', 'dt-low', false], ['Echo', 'E', 'dt-retest', true], ['Sink', 'S', 'dt-drop', false]];
+          let last = OPEN;
+          const points = names.map(([name, short, id, up], n) => {
+            const f = field(id), t = timeOf(id + '-time', last + [0, 14, 8, 17, 35][n]);
+            last = t.at;
+            return { name, short, at: t.at, price: f.typed, guess: f.price, up, timed: t.typed };
+          });
+          const [b, , , , s] = points;
+          const anchors = [[0, b.guess * 0.92], [OPEN - 1, b.guess * 1.01], [OPEN, b.guess * 1.02]];
+          points.forEach((p) => anchors.push([p.at, p.guess]));
+          anchors.push([s.at + 25, s.guess * 1.12], [s.at + 80, s.guess * 1.02], [CLOSE, s.guess * 1.05], [BARS - 1, s.guess * 1.03]);
+          return { anchors, points, close: null };
+        }
+
+        // Une marche entre les ancres, bruitée mais reproductible (graine = ticker + pattern).
+        function bars(anchors, seed) {
+          let a = seed >>> 0;
+          const rnd = () => { a = (a + 0x6d2b79f5) >>> 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t ^= t + Math.imul(t ^ (t >>> 7), 61 | t); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+          anchors = anchors.filter((x) => Number.isFinite(x[0]) && Number.isFinite(x[1])).sort((x, y) => x[0] - y[0]);
+          const path = new Array(BARS);
+          for (let k = 0; k < anchors.length - 1; k++) {
+            const [m0, p0] = anchors[k], [m1, p1] = anchors[k + 1];
+            for (let m = Math.max(0, m0); m <= Math.min(BARS - 1, m1); m++) {
+              const f = m1 === m0 ? 1 : (m - m0) / (m1 - m0);
+              path[m] = p0 + (p1 - p0) * (0.5 - Math.cos(Math.PI * f) / 2);
+            }
+          }
+          let drift = 0, prev = path[0];
+          const out = [];
+          for (let m = 0; m < BARS; m++) {
+            const ext = m < OPEN || m >= CLOSE;
+            const vol = path[m] * (ext ? 0.005 : 0.016);
+            drift = drift * 0.9 + (rnd() - 0.5) * vol;
+            const c = path[m] + drift;
+            const o = prev;
+            const h = Math.max(o, c) + rnd() * vol * 0.8, l = Math.min(o, c) - rnd() * vol * 0.8;
+            const near = anchors.reduce((d, x) => Math.min(d, Math.abs(x[0] - m)), 99);
+            const v = (ext ? 8 : 40) * (0.4 + rnd()) * (1 + (m >= OPEN && m < OPEN + 30 ? 4 : 0) + (near < 4 ? 3 : 0));
+            out.push({ m, o, h, l, c, v: Math.round(v * 1000) });
+            prev = c;
+          }
+          // Chaque ancre est l'extrême de son voisinage : un haut n'est dépassé par aucune bougie proche, un bas non plus.
+          anchors.forEach(([m, p], k) => {
+            const before = anchors[k - 1]?.[1] ?? p, after = anchors[k + 1]?.[1] ?? p;
+            const peak = p >= before && p >= after, trough = p <= before && p <= after;
+            if (!peak && !trough) return;
+            const from = Math.max(0, anchors[k - 1]?.[0] ?? m), to = Math.min(BARS - 1, anchors[k + 1]?.[0] ?? m);
+            for (let i = from; i <= to; i++) {
+              const b = out[i];
+              if (peak) { b.h = Math.min(b.h, p); b.o = Math.min(b.o, p); b.c = Math.min(b.c, p); }
+              else { b.l = Math.max(b.l, p); b.o = Math.max(b.o, p); b.c = Math.max(b.c, p); }
+              b.h = Math.max(b.h, b.o, b.c); b.l = Math.min(b.l, b.o, b.c);
+            }
+            if (out[m]) { if (peak) out[m].h = p; else out[m].l = p; }
+          });
+          return out;
+        }
+
+        const el = (tag, attrs, text) => {
+          const n = document.createElementNS('http://www.w3.org/2000/svg', tag);
+          for (const k in attrs) n.setAttribute(k, attrs[k]);
+          if (text != null) n.textContent = text;
+          return n;
+        };
+
+        function render() {
+          const pattern = document.querySelector('.segmented[data-group="panel"] button.active')?.dataset.value || 'gus';
+          const ticker = document.querySelector('#premarket-panel h2 .ticker')?.textContent.trim() || 'SGBX';
+          const isNew = !document.querySelector('#premarket-panel h2 [data-mode="new"]').hidden;
+          $('chart-day').textContent = document.querySelector('#premarket-panel h2 .muted')?.textContent || '';
+          document.querySelectorAll('#chart-panel .chart-empty .ticker').forEach((t) => (t.textContent = ticker));
+          const stateBtns = [...document.querySelectorAll('.segmented[data-group="chart-state"] button')];
+          stateBtns.forEach((b) => (b.disabled = isNew && b.dataset.value !== 'pending'));
+          if (isNew !== wasNew) stateBtns.find((b) => b.dataset.value === (isNew ? 'pending' : 'bars')).click();
+          wasNew = isNew;
+          const r = range ?? (pattern === 'dt' ? 'session' : 'day');
+          document.querySelectorAll('.segmented[data-group="chart-range"] button').forEach((b) => b.classList.toggle('active', b.dataset.value === r));
+          const { anchors, points, close } = pattern === 'dt' ? readDt() : readGus(ticker);
+          const key = ticker + pattern;
+          if (rebuild || cache?.key !== key) {
+            const seed = [...key].reduce((h, ch) => Math.imul(h ^ ch.charCodeAt(0), 16777619), 2166136261);
+            cache = { key, all: bars(anchors, seed) };
+            rebuild = false;
+          }
+          const all = cache.all;
+          // 3 — la journée en bougies de 5 min : à 1 min, 960 bougies sur ~940 px ne sont plus que des mèches.
+          const first = r === 'session' ? OPEN : 0, span = r === 'session' ? CLOSE - OPEN : BARS, agg = r === 'session' ? 1 : 5;
+          const shown = [];
+          for (let m = first; m < first + span; m += agg) {
+            const part = all.slice(m, m + agg);
+            shown.push({ m, o: part[0].o, c: part.at(-1).c, h: Math.max(...part.map((b) => b.h)), l: Math.min(...part.map((b) => b.l)), v: part.reduce((t, b) => t + b.v, 0) });
+          }
+          const n = span, plotW = W - PAD_L - PAD_R, step = plotW / n;
+          const x = (m) => PAD_L + (m - first + 0.5) * step;
+          const mid = (b) => x(b.m + (agg - 1) / 2);
+          let lo = Math.min(...shown.map((b) => b.l)), hi = Math.max(...shown.map((b) => b.h));
+          if (close && r === 'day') { lo = Math.min(lo, close); hi = Math.max(hi, close); }
+          // Un point saisi loin de sa bougie reste à l'échelle : c'est lui qu'on doit voir.
+          points.forEach((p) => { if (p.price != null && p.at >= first && p.at < first + span) { lo = Math.min(lo, p.price); hi = Math.max(hi, p.price); } });
+          const pad = (hi - lo) * 0.08; lo -= pad; hi += pad;
+          const dec = Math.max(lo, 0) < 1 ? 4 : 2;
+          const fmtP = (v) => v.toFixed(dec).replace('.', ',');
+          const y = (p) => PRICE_TOP + ((hi - p) / (hi - lo)) * PRICE_H;
+          const vMax = Math.max(...shown.map((b) => b.v));
+          svg.replaceChildren();
+
+          // Hors séance grisé, grille, échelle de prix à droite, heures en bas.
+          [[0, OPEN], [CLOSE, BARS]].forEach(([a, b]) => {
+            const from = Math.max(a, first), to = Math.min(b, first + n);
+            if (to > from) svg.append(el('rect', { x: x(from) - step / 2, y: PRICE_TOP, width: (to - from) * step, height: VOL_TOP + VOL_H - PRICE_TOP, fill: 'var(--text-muted)', 'fill-opacity': 0.07 }));
+          });
+          for (let k = 0; k <= 4; k++) {
+            const p = lo + ((hi - lo) * k) / 4, yy = y(p);
+            svg.append(el('line', { x1: PAD_L, x2: W - PAD_R, y1: yy, y2: yy, stroke: 'var(--border)', 'stroke-width': 1 }));
+            svg.append(el('text', { x: W - PAD_R + 6, y: yy + 4, 'font-size': 11, fill: 'var(--text-muted)', 'font-family': 'var(--mono)' }, fmtP(p)));
+          }
+          const every = r === 'session' ? 30 : 120;
+          for (let m = first; m < first + n; m++) {
+            if ((m + START) % every !== 0 && !(r === 'session' && m === OPEN)) continue;
+            svg.append(el('line', { x1: x(m), x2: x(m), y1: PRICE_TOP, y2: VOL_TOP + VOL_H, stroke: 'var(--border)', 'stroke-width': 1, 'stroke-dasharray': '2 4' }));
+            svg.append(el('text', { x: x(m), y: VOL_TOP + VOL_H + 13, 'font-size': 11, fill: 'var(--text-muted)', 'text-anchor': m === first ? 'start' : 'middle' }, hhmm(m).replace(/^0/, '').replace(':00', 'h').replace(':', 'h')));
+          }
+
+          // La clôture de la veille, d'où se lit le gap.
+          if (close && r === 'day') {
+            svg.append(el('line', { x1: PAD_L, x2: W - PAD_R, y1: y(close), y2: y(close), stroke: 'var(--text-muted)', 'stroke-dasharray': '5 4', 'stroke-width': 1 }));
+            svg.append(el('text', { x: PAD_L + 4, y: y(close) - 5, 'font-size': 11, fill: 'var(--text-muted)' }, 'clôture veille ' + fmtP(close)));
+          }
+
+          // Bougies et volume, neutres : creuses à la hausse, pleines à la baisse.
+          const g = el('g', {});
+          const bw = Math.max(1, step * agg * 0.7);
+          shown.forEach((b) => {
+            const cx = mid(b), up = b.c >= b.o;
+            g.append(el('line', { x1: cx, x2: cx, y1: y(b.h), y2: y(b.l), stroke: 'var(--text-muted)', 'stroke-width': 1 }));
+            if (step * agg >= 2) g.append(el('rect', { x: cx - bw / 2, y: y(Math.max(b.o, b.c)), width: bw, height: Math.max(0.8, Math.abs(y(b.o) - y(b.c))), fill: up ? 'var(--surface)' : 'var(--text-muted)', stroke: 'var(--text-muted)', 'stroke-width': 0.6 }));
+            const vh = (b.v / vMax) * VOL_H;
+            g.append(el('rect', { x: cx - bw / 2, y: VOL_TOP + VOL_H - vh, width: bw, height: vh, fill: 'var(--neutral-bar)' }));
+          });
+          svg.append(g);
+
+          // Les points du pattern, en indigo — seulement ceux saisis.
+          const missing = [], off = [];
+          points.forEach((p) => {
+            if (p.price == null || (p.timed === false && p.short !== 'O')) return void missing.push(p.name);
+            if (p.at < first || p.at >= first + n) return;
+            // Hors de sa bougie 1 min (à 0,3 % près) : le prix ou l'heure saisis ne sont pas ce que dit le graphique.
+            const bar = all[p.at], away = p.price > bar.h * 1.003 || p.price < bar.l * 0.997;
+            const colour = away ? 'var(--warn)' : 'var(--accent)';
+            const cx = x(p.at), cy = y(p.price), ly = p.up ? cy - 12 : cy + 20;
+            if (away) {
+              off.push(`${p.name} ${fmtP(p.price)} à ${hhmm(p.at)}, la bougie ${fmtP(bar.l)}–${fmtP(bar.h)}`);
+              svg.append(el('line', { x1: cx, x2: cx, y1: cy, y2: y(p.price > bar.h ? bar.h : bar.l), stroke: 'var(--warn)', 'stroke-width': 1.5, 'stroke-dasharray': '3 3' }));
+            }
+            svg.append(el('line', { x1: cx, x2: cx, y1: cy, y2: p.up ? cy - 6 : cy + 6, stroke: colour, 'stroke-width': 1.5 }));
+            svg.append(el('circle', { cx, cy, r: 4, fill: colour, stroke: 'var(--surface)', 'stroke-width': 1.5 }));
+            const t = el('text', { x: cx, y: ly, 'font-size': 12, 'font-weight': 650, fill: colour, 'text-anchor': 'middle', 'paint-order': 'stroke', stroke: 'var(--surface)', 'stroke-width': 3 }, p.short);
+            t.append(el('title', {}, `${p.name} · ${hhmm(p.at)} · ${fmtP(p.price)}`));
+            svg.append(t);
+          });
+          // 4 — « Open, Push et Sink ».
+          const list = (xs) => (xs.length > 1 ? xs.slice(0, -1).join(', ') + ' et ' + xs.at(-1) : xs[0]);
+          const notes = [];
+          if (off.length) notes.push(`<span style="color: var(--warn)">Hors de sa bougie : ${off.join(' ; ')} — vérifie le prix ou l'heure.</span>`);
+          if (missing.length) notes.push(`${list(missing)} pas encore saisi${missing.length > 1 ? 's' : ''} — lis-le${missing.length > 1 ? 's' : ''} sur les bougies, la marque apparaît avec l'heure et le prix.`);
+          $('chart-missing').innerHTML = notes.join('<br />');
+
+          // Survol : la bougie sous le curseur, lue en clair au-dessus du graphique.
+          const cross = el('line', { y1: PRICE_TOP, y2: VOL_TOP + VOL_H, stroke: 'var(--text-faint)', 'stroke-width': 1, visibility: 'hidden' });
+          svg.append(cross);
+          svg.onpointermove = (e) => {
+            const box = svg.getBoundingClientRect();
+            const vx = ((e.clientX - box.left) / box.width) * W;
+            const i = Math.floor((vx - PAD_L) / step / agg);
+            const b = shown[i];
+            if (!b) return;
+            cross.setAttribute('x1', mid(b)); cross.setAttribute('x2', mid(b)); cross.setAttribute('visibility', 'visible');
+            const when = agg > 1 ? `${hhmm(b.m)}–${hhmm(b.m + agg - 1)}` : hhmm(b.m);
+            $('chart-read').textContent = `${when} · O ${fmtP(b.o)} H ${fmtP(b.h)} L ${fmtP(b.l)} C ${fmtP(b.c)} · ${(b.v / 1000).toFixed(0)} k`;
+          };
+          svg.onpointerleave = () => { cross.setAttribute('visibility', 'hidden'); $('chart-read').textContent = 'survole une bougie : heure · O H L C · volume'; };
+        }
+
+        let timer;
+        const later = () => { clearTimeout(timer); timer = setTimeout(render, 40); };
+        document.addEventListener('input', later);
+        document.addEventListener('change', later);
+        document.addEventListener('click', (e) => {
+          const b = e.target.closest('.segmented[data-group="chart-range"] button');
+          if (b) range = b.dataset.value;
+          else if (e.target.closest('.segmented[data-group="panel"] button, tbody button, #new-stat, #new-cancel')) (range = null), (rebuild = true);
+          later();
+        });
+        window.addEventListener('load', render);
       })();
     </script>
   </body>
