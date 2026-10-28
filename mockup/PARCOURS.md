@@ -1108,6 +1108,66 @@ Reachable from the bottom of the menu (under Lexicon). A secondary menu on the l
 
 ---
 
+## The day's chart in a stat (#784) 🟡
+
+**Why** : a stat is read against its chart, and TradeZero keeps only the **previous day** at 1-min
+resolution. A stat of any older day — one typed by hand weeks later, a scanner stat reviewed late, a
+comparison on a past day — cannot be checked against its bars. The chart belongs **in the stat**,
+every stat, the scanner's and the typed ones alike. **Trades keep their screenshot** (journal
+attachments) : the TradeZero capture shows the positions, the rebuilt chart is for stats only.
+
+**Where** : a « Graphique » card in the stat's panel, between the identity / premarket card and the
+points card (OPS or BARES) — read the bars, then type or correct the points right under them.
+
+**What it shows** :
+
+- **1-min candles** of the stat's day, 4:00–20:00 New York time, the extended hours shaded, the
+  volume underneath. **Neutral** : a price move is not an outcome — hollow up, filled down, no
+  green / red.
+- **The pattern's points in indigo**, each on its candle : **O · P · S** for a GUS, **B · A · R · E ·
+  S** for a DT. A point is marked once its price and time are typed (the Open has its fixed 9:30) ;
+  the marks **follow the fields** — correcting a price moves its mark. Under the chart, the points
+  not typed yet (« Echo et Sink pas encore saisis — lis-les sur les bougies »).
+- For a GUS, the **previous close** as a dashed line : the gap reads off it.
+- **A point off its candle reads amber** — a price outside its 1-min candle's low–high, at the time
+  typed, is a mistyped price or time : the mark turns amber, a dashed leader joins it to its candle,
+  and the line under the chart names it (« Push 2,20 à 09:41, la bougie 1,99–2,02 — vérifie le prix
+  ou l'heure »). The scale keeps it in view. This is what reviewing a stat against its bars means.
+- **Journée / Séance** : the whole day in **5-min candles** (960 one-minute candles would be wicks
+  only at this width) or 9:30–16:00 in 1-min. A GUS opens on the day (its premarket counts), a DT on
+  the session (#649). The price axis takes one precision for all its labels — 4 decimals once its
+  low is under $1, else 2.
+- **Hover** : the candle under the cursor, read in clear above the chart — time, O H L C, volume.
+
+**Where the bars come from** — `trade` calls no market-data provider and does not start
+(#760) :
+
+- **A scanner stat** — ts-scanner already holds the day's bars when it detects : they are pushed
+  **with the stat**.
+- **Any other stat** — typed by hand, or older than this feature : each scanner run also asks
+  `trade`, through its machine door, for the stats **still without bars**, fetches them and pushes
+  them. A stat typed today has its chart **the next morning** — the free plan serves a day's bars
+  once it is over.
+
+**Three states** :
+
+| State | Shown |
+|-------|-------|
+| **Bars** | the chart |
+| **Not yet** — a stat of the day, or one the scanner has not reached ; a stat being created | « Le graphique arrive demain matin » — neutral, nothing to do |
+| **Not found** — the provider served nothing (a delisted or renamed ticker) | « Pas de barres pour SGBX le 18/09 » — neutral ; the scanner does not ask again |
+
+**Open — to settle with the epic** : the storage shape (a table of bars per stat, or one
+compressed column — ~960 bars a stat), and the missing-bars pass (every run or its own Tilt action,
+how many stats a run fills at most, within the 5-a-minute quota).
+
+**Screens** : [`stats.html`](stats.html) — the « Graphique » card of SGBX : GUS on the day (O marked,
+the Push typed at 2,20 off its 2,02 candle in amber, the Sink still to type), DT on the session (B, A, R marked ; Echo and Sink to read) ;
+« Relire » on a scanner stat draws its own points ; the « Pas encore » and « Introuvables »
+states from the card's mockup switch.
+
+---
+
 ## Interface principles ✅
 
 - **Confirmation modal** for anything that creates or deletes : « → Stat », "promote them all",
