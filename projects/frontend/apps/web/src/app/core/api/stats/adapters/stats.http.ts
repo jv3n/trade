@@ -5,6 +5,7 @@ import { Observable, map } from 'rxjs';
 import { TradeEntryWireDto, tradeEntryFromWire } from '../../journal/adapters/journal.http';
 import { TradeEntry } from '../../journal/trade-entry.model';
 import { Pattern } from '../../shared/pattern.model';
+import { DayChart, DayChartState } from '../day-chart.model';
 import {
   OutOfPatternReason,
   PageRequest,
@@ -28,6 +29,14 @@ import { StatsRepository } from '../stats.repository';
 // see the domain [StatEntry] / [StatEntryInput]. Spring emits `LocalDate` as `YYYY-MM-DD` and
 // `Instant` as ISO-8601 with `Z` ; the request sends `LocalDate` strings back the same way.
 // ---------------------------------------------------------------------------
+
+/** `GET /api/stats/{id}/bars` — prices as JSON numbers, the minute as an ISO instant. */
+interface DayChartWireDto {
+  tradingDate: string;
+  ticker: string;
+  state: DayChartState;
+  bars: { time: string; open: number; high: number; low: number; close: number; volume: number }[];
+}
 
 interface RuleScoreWireDto {
   dateFrom: string;
@@ -196,6 +205,16 @@ export class HttpStatsRepository extends StatsRepository {
 
   findById(id: string): Observable<StatEntry> {
     return this.http.get<StatEntryWireDto>(`${this.base}/${id}`).pipe(map(fromWire));
+  }
+
+  dayChart(id: string): Observable<DayChart> {
+    return this.http.get<DayChartWireDto>(`${this.base}/${id}/bars`).pipe(
+      map((w) => ({
+        ticker: w.ticker,
+        state: w.state,
+        bars: w.bars.map((b) => ({ ...b, time: Date.parse(b.time) })),
+      })),
+    );
   }
 
   summary(filter?: StatEntryFilter): Observable<StatSummary> {

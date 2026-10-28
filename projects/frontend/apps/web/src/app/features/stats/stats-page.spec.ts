@@ -14,6 +14,7 @@ import { BehaviorSubject, Observable, Subject, of, throwError } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
 import { TradeEntry } from '../../core/api/journal/trade-entry.model';
 import { Pattern } from '../../core/api/shared/pattern.model';
+import { DayChart } from '../../core/api/stats/day-chart.model';
 import {
   PageRequest,
   PagedResult,
@@ -230,6 +231,9 @@ class MockStatsRepository extends StatsRepository {
     },
   );
   findById = vi.fn((id: string): Observable<StatEntry> => of(makeStat({ id })));
+  dayChart = vi.fn((_id: string): Observable<DayChart> =>
+    of({ ticker: 'KTTA', state: 'PENDING', bars: [] }),
+  );
   summary = vi.fn((_filter?: StatEntryFilter): Observable<StatSummary> => of(makeSummary()));
   countToReview = vi.fn((_filter?: StatEntryFilter): Observable<number> => of(0));
   create = vi.fn((input: StatEntryInput): Observable<StatEntry> =>

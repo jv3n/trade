@@ -1,0 +1,63 @@
+<section class="card stat-chart">
+  <h3>
+    <span>{{ 'stats.chart.title' | translate }}</span>
+    <span class="hint">{{ 'stats.chart.hint' | translate }}</span>
+  </h3>
+
+  @switch (state()) {
+    @case ('FOUND') {
+      <div class="stat-chart__bar">
+        <mat-button-toggle-group
+          [value]="range()"
+          (change)="range.set($event.value)"
+          [hideSingleSelectionIndicator]="true"
+          data-testid="chart-range"
+        >
+          <mat-button-toggle value="day">{{
+            'stats.chart.range.day' | translate
+          }}</mat-button-toggle>
+          <mat-button-toggle value="session">{{
+            'stats.chart.range.session' | translate
+          }}</mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
+      <ui-candle-chart
+        [bars]="candles()"
+        [marks]="marks()"
+        [line]="line()"
+        [shades]="shades()"
+        [formatPrice]="formatPrice()"
+      />
+      @if (off(); as off) {
+        <p class="stat-chart__note stat-chart__note--warn" data-testid="chart-off">{{ off }}</p>
+      }
+      @if (missing(); as missing) {
+        <p class="stat-chart__note" data-testid="chart-missing">{{ missing }}</p>
+      }
+    }
+    @case ('PENDING') {
+      <div class="empty-state" data-testid="chart-pending">
+        <mat-icon>schedule</mat-icon>
+        <p>
+          <b>{{ 'stats.chart.pending.title' | translate }}</b>
+          {{ 'stats.chart.pending.body' | translate }}
+        </p>
+      </div>
+    }
+    @case ('NOT_FOUND') {
+      <div class="empty-state" data-testid="chart-not-found">
+        <mat-icon>visibility_off</mat-icon>
+        <p>
+          <b>{{ 'stats.chart.notFound.title' | translate: { ticker: ticker() } }}</b>
+          {{ 'stats.chart.notFound.body' | translate }}
+        </p>
+      </div>
+    }
+    @case ('UNAVAILABLE') {
+      <div class="empty-state" data-testid="chart-unavailable">
+        <mat-icon>cloud_off</mat-icon>
+        <p>{{ 'stats.chart.unavailable' | translate }}</p>
+      </div>
+    }
+  }
+</section>
