@@ -307,7 +307,7 @@
         display: flex;
         gap: 4px;
       }
-      /* #784 : le graphique 1 min du jour de la stat — bougies neutres (un mouvement de prix, pas un résultat), points en indigo. */
+      /* #784 : le graphique 1 min du jour de la stat — bougies vertes et rouges comme sur tout outil de trading (#804), points en indigo. */
       .day-chart svg {
         display: block;
         width: 100%;
@@ -2280,15 +2280,16 @@
             svg.append(el('text', { x: PAD_L + 4, y: y(close) - 5, 'font-size': 11, fill: 'var(--text-muted)' }, 'clôture veille ' + fmtP(close)));
           }
 
-          // Bougies et volume, neutres : creuses à la hausse, pleines à la baisse.
+          // Bougies et volume en vert et rouge, comme sur tout outil de trading (#804) — l'exception à la règle des couleurs.
           const g = el('g', {});
           const bw = Math.max(1, step * agg * 0.7);
           shown.forEach((b) => {
             const cx = mid(b), up = b.c >= b.o;
-            g.append(el('line', { x1: cx, x2: cx, y1: y(b.h), y2: y(b.l), stroke: 'var(--text-muted)', 'stroke-width': 1 }));
-            if (step * agg >= 2) g.append(el('rect', { x: cx - bw / 2, y: y(Math.max(b.o, b.c)), width: bw, height: Math.max(0.8, Math.abs(y(b.o) - y(b.c))), fill: up ? 'var(--surface)' : 'var(--text-muted)', stroke: 'var(--text-muted)', 'stroke-width': 0.6 }));
+            const tone = up ? 'var(--gain)' : 'var(--loss)';
+            g.append(el('line', { x1: cx, x2: cx, y1: y(b.h), y2: y(b.l), stroke: tone, 'stroke-width': 1 }));
+            if (step * agg >= 2) g.append(el('rect', { x: cx - bw / 2, y: y(Math.max(b.o, b.c)), width: bw, height: Math.max(0.8, Math.abs(y(b.o) - y(b.c))), fill: tone, stroke: tone, 'stroke-width': 0.6 }));
             const vh = (b.v / vMax) * VOL_H;
-            g.append(el('rect', { x: cx - bw / 2, y: VOL_TOP + VOL_H - vh, width: bw, height: vh, fill: 'var(--neutral-bar)' }));
+            g.append(el('rect', { x: cx - bw / 2, y: VOL_TOP + VOL_H - vh, width: bw, height: vh, fill: tone, 'fill-opacity': 0.45 }));
           });
           svg.append(g);
 
