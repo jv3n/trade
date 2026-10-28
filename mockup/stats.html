@@ -571,7 +571,7 @@
         <!-- #784 : le graphique 1 min du jour, dans chaque stat — celle du scanner comme celle saisie à la main. Les barres viennent de ts-scanner, trade n'appelle aucun fournisseur. -->
         <section class="card day-chart" style="margin-bottom: 16px" id="chart-panel">
           <h2>
-            <span>Graphique <span class="muted" style="font-weight: 400" id="chart-day">ven. 18/09</span></span>
+            <span><button class="btn btn-sm" type="button" data-group="chart-state" data-value="bars" title="Voir le graphique en plein écran" aria-label="Voir le graphique en plein écran" onclick="document.getElementById('chart-panel').requestFullscreen()"><span class="icon">open_in_full</span></button> Graphique <span class="muted" style="font-weight: 400" id="chart-day">ven. 18/09</span></span>
             <span class="hint" data-group="chart-state" data-value="bars">barres 1 min — en 5 min sur la journée · 4h–20h, heure de New York · hors séance grisé · les points suivent les champs ; un point hors de sa bougie passe en ambre</span>
             <span class="hint" data-group="chart-state" data-value="pending" hidden>pas encore de barres</span>
             <span class="hint" data-group="chart-state" data-value="none" hidden>pas de barres pour ce jour</span>

@@ -14,6 +14,18 @@
   color: var(--color-text-muted);
 }
 
+// Full screen (the browser's) : the card fills it, on its own background, its notes scrolled if need be.
+.stat-chart:fullscreen {
+  overflow: auto;
+  border-radius: 0;
+}
+
+.stat-chart__title {
+  display: flex;
+  align-items: center;
+  gap: s.$space-xs;
+}
+
 // Amber = warning : a typed point that is not on its candle.
 .stat-chart__note--warn {
   color: var(--color-warning);

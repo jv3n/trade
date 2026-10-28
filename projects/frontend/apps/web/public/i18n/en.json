@@ -899,6 +899,8 @@
     },
     "chart": {
       "title": "Chart",
+      "fullscreen": "Show the chart full screen",
+      "exitFullscreen": "Leave full screen",
       "hint": "1-min bars — 5-min over the day · New York time · extended hours shaded · a point off its candle turns amber",
       "range": { "day": "Day", "session": "Session" },
       "previousClose": "previous close {{price}}",

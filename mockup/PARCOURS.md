@@ -1141,8 +1141,11 @@ points card (OPS or BARES) — read the bars, then type or correct the points ri
   the session (#649). The price axis takes one precision for all its labels — 4 decimals once its
   low is under $1, else 2.
 - **Hover** : the candle under the cursor, read in clear above the chart — time, O H L C, volume.
-- **Zoom** : the wheel or a pinch zooms the time ; the slider beside the price axis zooms the price
-  (#804) — one wheel can't serve both axes apart.
+- **Zoom** : the wheel over the candles (or a pinch) zooms the time ; over the price scale on the
+  right, the price, around the price under the cursor (#807) — the slider beside the scale too.
+  Dragging the candles moves a zoomed chart, along the time and the price.
+- **Full screen** : a button at the top left of the card puts it on the whole screen, the chart
+  grown to its height ; the same button, or Échap, brings it back (#807).
 
 **Where the bars come from** — `trade` calls no market-data provider and does not start
 (#760) :
