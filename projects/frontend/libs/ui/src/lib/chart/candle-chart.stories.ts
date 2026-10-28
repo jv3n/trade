@@ -102,9 +102,10 @@ const meta: Meta<CandleChartArgs> = {
     docs: {
       description: {
         component: [
-          "A day's candles with their volume, for a stat read against its bars (#784). **Neutral**",
-          ': a price move is no outcome — hollow up, filled down. The marks are the accent ; a',
-          'point off its candle is amber, with a dashed leader to the candle. Wheel or pinch to zoom.',
+          "A day's candles with their volume, for a stat read against its bars (#784). **Green up,",
+          'red down**, the volume in its candle colour — the one exception to the colour rule, as on',
+          'every trading tool (#804). The marks are the accent ; a point off its candle is amber, with a',
+          'dashed leader to the candle. The wheel zooms the time, the slider beside the prices the price.',
         ].join('\n'),
       },
     },

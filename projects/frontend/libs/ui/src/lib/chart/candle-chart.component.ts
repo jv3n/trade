@@ -1,7 +1,8 @@
 import { Component, computed, input } from '@angular/core';
 import { BarChart, CandlestickChart, ScatterChart } from 'echarts/charts';
 import {
-  DataZoomComponent,
+  DataZoomInsideComponent,
+  DataZoomSliderComponent,
   GridComponent,
   MarkAreaComponent,
   MarkLineComponent,
@@ -16,7 +17,8 @@ echarts.use([
   ScatterChart,
   GridComponent,
   TooltipComponent,
-  DataZoomComponent,
+  DataZoomInsideComponent,
+  DataZoomSliderComponent,
   MarkAreaComponent,
   MarkLineComponent,
 ]);
@@ -62,9 +64,11 @@ export interface CandleShade {
 }
 
 /**
- * Candlestick chart with its volume underneath, for a day of bars read point by point. **Neutral**
- * on purpose : a price move is no outcome (`CLAUDE.md`, colour rule) — hollow up, filled down, the
- * marks in the accent, a point off its candle in amber. Zooms with the wheel or a pinch.
+ * Candlestick chart with its volume underneath, for a day of bars read point by point. Green up, red
+ * down, each volume bar in its candle's colour — the one exception to the colour rule, as on every
+ * trading tool (`CLAUDE.md`, #804). The marks in the accent, a point off its candle in amber, so
+ * neither reads as a candle. The wheel or a pinch zooms the time, the slider beside the price axis
+ * the price.
  */
 @Component({
   selector: 'ui-candle-chart',
@@ -104,8 +108,8 @@ export class StbCandleChart {
     return (palette) => ({
       textStyle: { fontFamily: palette.fontFamily },
       grid: [
-        { left: 8, right: 64, top: 12, height: '68%' },
-        { left: 8, right: 64, top: '80%', bottom: 24 },
+        { left: 8, right: 84, top: 12, height: '68%' },
+        { left: 8, right: 84, top: '80%', bottom: 24 },
       ],
       axisPointer: { link: [{ xAxisIndex: 'all' }], lineStyle: { color: palette.border } },
       tooltip: {
@@ -124,7 +128,28 @@ export class StbCandleChart {
           );
         },
       },
-      dataZoom: [{ type: 'inside', xAxisIndex: [0, 1] }],
+      dataZoom: [
+        { type: 'inside', xAxisIndex: [0, 1] },
+        // The wheel zooms the time ; the price has a slider of its own — an inside zoom on both
+        // axes would answer the same wheel, Shift or not, and zoom them together.
+        {
+          type: 'slider',
+          yAxisIndex: 0,
+          filterMode: 'none',
+          right: 6,
+          top: 12,
+          height: '68%',
+          width: 12,
+          showDetail: false,
+          brushSelect: false,
+          borderColor: palette.border,
+          backgroundColor: 'transparent',
+          fillerColor: palette.accentFade(0.15),
+          dataBackground: { lineStyle: { opacity: 0 }, areaStyle: { opacity: 0 } },
+          handleStyle: { color: palette.surface, borderColor: palette.textMuted },
+          moveHandleStyle: { color: palette.border },
+        },
+      ],
       xAxis: [
         {
           type: 'category',
@@ -160,10 +185,10 @@ export class StbCandleChart {
           // ECharts reads a candle as [open, close, low, high].
           data: bars.map((b) => [b.open, b.close, b.low, b.high]),
           itemStyle: {
-            color: palette.surface,
-            color0: palette.textMuted,
-            borderColor: palette.textMuted,
-            borderColor0: palette.textMuted,
+            color: palette.gain,
+            color0: palette.loss,
+            borderColor: palette.gain,
+            borderColor0: palette.loss,
           },
           markArea: {
             silent: true,
@@ -184,8 +209,11 @@ export class StbCandleChart {
           xAxisIndex: 1,
           yAxisIndex: 1,
           silent: true,
-          data: bars.map((b) => b.volume),
-          itemStyle: { color: palette.neutral },
+          data: bars.map((b) => ({
+            value: b.volume,
+            itemStyle: { color: b.close >= b.open ? palette.gain : palette.loss },
+          })),
+          itemStyle: { opacity: 0.45 },
         },
         {
           type: 'scatter',

@@ -6,6 +6,7 @@ import com.portfolioai.account.infrastructure.persistence.AccountMovementReposit
 import com.portfolioai.auth.application.UserCreatedEvent
 import com.portfolioai.auth.domain.User
 import com.portfolioai.auth.infrastructure.persistence.UserRepository
+import com.portfolioai.daybars.application.DayBarsService
 import com.portfolioai.journal.application.TradeChangedEvent
 import com.portfolioai.journal.domain.ExecutionKind
 import com.portfolioai.journal.domain.TradeEntry
@@ -51,6 +52,7 @@ class LocalDataSeeder(
   private val trades: TradeEntryRepository,
   private val movements: AccountMovementRepository,
   private val events: ApplicationEventPublisher,
+  private val dayBars: DayBarsService,
 ) {
 
   private val log = LoggerFactory.getLogger(javaClass)
@@ -72,8 +74,9 @@ class LocalDataSeeder(
     val days = tradingDays(today.minusYears(1), today)
     seedCashFlow(user, days.first())
     var seeded = 0
-    for (day in days) {
+    for ((index, day) in days.withIndex()) {
       val stat = stats.save(newStat(user, day))
+      seedBars(stat, daysLeft = days.size - 1 - index)
       // A stat without a trade is the normal case : most candidates are watched, not traded.
       if (random.nextDouble() < TRADE_RATE) {
         seedTrade(user, stat, isLast = day == days.last())
@@ -81,6 +84,19 @@ class LocalDataSeeder(
       }
     }
     log.info("Seeded local dev data : userId={} stats={} trades={}", user.id, days.size, seeded)
+  }
+
+  /**
+   * The stat's day of 1-min bars, for its chart (#804) — what ts-scanner pushes on a deployed
+   * stack. The last two days have none yet (« demain matin »), and one day a month back none
+   * served, so the chart's three states all show.
+   */
+  private fun seedBars(stat: StatEntry, daysLeft: Int) {
+    when {
+      daysLeft < PENDING_DAYS -> Unit
+      daysLeft == NOT_FOUND_DAY -> dayBars.markNotFound(stat.tradeDate, stat.ticker)
+      else -> dayBars.store(stat.tradeDate, stat.ticker, SeedDayBars.of(stat))
+    }
   }
 
   /** Weekdays only — holidays aren't worth modelling for a dev fixture. */
@@ -138,6 +154,8 @@ class LocalDataSeeder(
       volumeMillions = amount(rnd(3.0, 90.0)),
       openPrice = price(open),
       pushOpenPrice = price(pushOpen),
+      // Read off the bars a few minutes after the bell — where the seeded chart puts the push.
+      pushOpenTime = LocalTime.of(9, 33 + (day.toEpochDay() % 12).toInt()),
       hodPrice = price(hod),
       lodPrice = price(lod),
       eodPrice = price(eod),
@@ -215,6 +233,8 @@ class LocalDataSeeder(
 
   private companion object {
     const val TRADE_RATE = 0.45
+    const val PENDING_DAYS = 2
+    const val NOT_FOUND_DAY = 21
     const val WIN_RATE = 0.62
     val MIN_PRICE: BigDecimal = BigDecimal("0.0100")
     val TICKERS =

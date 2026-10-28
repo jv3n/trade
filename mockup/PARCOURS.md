@@ -1122,8 +1122,9 @@ points card (OPS or BARES) — read the bars, then type or correct the points ri
 **What it shows** :
 
 - **1-min candles** of the stat's day, 4:00–20:00 New York time, the extended hours shaded, the
-  volume underneath. **Neutral** : a price move is not an outcome — hollow up, filled down, no
-  green / red.
+  volume underneath. **Green up, red down**, each volume bar in its candle's colour, faded — the
+  colours of every trading tool, so the stat reads against its chart as against TradeZero's (#804,
+  the one exception to « green / red for outcomes »).
 - **The pattern's points in indigo**, each on its candle : **O · P · S** for a GUS, **B · A · R · E ·
   S** for a DT. A point is marked once its price and time are typed (the Open has its fixed 9:30) ;
   the marks **follow the fields** — correcting a price moves its mark. Under the chart, the points
@@ -1140,6 +1141,8 @@ points card (OPS or BARES) — read the bars, then type or correct the points ri
   the session (#649). The price axis takes one precision for all its labels — 4 decimals once its
   low is under $1, else 2.
 - **Hover** : the candle under the cursor, read in clear above the chart — time, O H L C, volume.
+- **Zoom** : the wheel or a pinch zooms the time ; the slider beside the price axis zooms the price
+  (#804) — one wheel can't serve both axes apart.
 
 **Where the bars come from** — `trade` calls no market-data provider and does not start
 (#760) :
@@ -1183,7 +1186,8 @@ states from the card's mockup switch.
   a completed stat ; amber for warnings (SSR, < $1, to complete, locates paid for nothing) and for
   **costs** on a chart (locates, fees and corrections in the reports, #685) ;
   indigo for statuses and categories (pattern, "in stats") ; the rest neutral, price moves and
-  tickers included.
+  tickers included — but for **a chart's candles**, green up and red down with their volume, as on
+  every trading tool the stat is compared with (#804).
 - **Icons** : Material Symbols Rounded — the mapping is in `README.md`.
 - **On a phone** (#456) : **viewable, not a mobile app** — enough to open a screen and read it on
   the move ; the morning capture and the completion panel stay desktop work, and a cross-platform
