@@ -569,7 +569,7 @@
                   <td><span class="pct muted" id="dt-c">—</span></td>
                 </tr>
                 <tr>
-                  <td title="Le plus bas après l'Echo, avant la clôture — requis pour la coche, sauf quand l'Echo reprend l'Apex (pas de Sink à mesurer), pour une DT d'avant le 12/10 (pas demandé à l'époque) ou quand il est marqué « non relevé »">Sink</td>
+                  <td title="Le bas de la première chute après l'Echo — requis pour la coche, sauf quand l'Echo reprend l'Apex (pas de Sink à mesurer), pour une DT d'avant le 12/10 (pas demandé à l'époque) ou quand il est marqué « non relevé »">Sink</td>
                   <td><input class="input" type="time" id="dt-drop-time" data-dt-time /></td>
                   <td>
                     <input class="input" id="dt-drop" placeholder="2,30" />
@@ -626,7 +626,7 @@
                   <td><span class="pct muted">—</span><small class="muted" id="c-push-span"></small></td>
                 </tr>
                 <tr>
-                  <td title="Le plus bas après le Push, avant la clôture — facultatif pour l'instant : la coche ne l'attend pas">Sink</td>
+                  <td title="Le bas de la première chute après le Push — facultatif pour l'instant : la coche ne l'attend pas">Sink</td>
                   <td><input class="input" type="time" id="c-drop-time" /></td>
                   <td>
                     <input class="input" id="c-drop" placeholder="1,52" />
@@ -726,7 +726,7 @@
                   <th class="num" title="De l'Apex à la Rejection">R — rejection</th>
                   <th class="num" title="De la Rejection à l'Echo ; en dessous, l'écart à l'Apex">E — echo</th>
                   <th class="num" title="De la Base à l'Echo ; en dessous, les trois jambes">Durée</th>
-                  <th class="num sep" title="Le plus bas après l'Echo ; en dessous, ce que le short en tire depuis l'Echo, depuis l'entrée de la fiche (Apex −5 %), et la durée">S — sink</th>
+                  <th class="num sep" title="Le bas de la première chute après l'Echo ; en dessous, ce que le short en tire depuis l'Echo, depuis l'entrée de la fiche (Apex −5 %), et la durée">S — sink</th>
                   <th class="sep">Flags</th>
                   <th title="Complétée">✓</th>
                   <th>Trade</th>
@@ -1007,7 +1007,7 @@
                   <th class="num">HOD</th>
                   <th class="num">LOD</th>
                   <th class="num">EOD</th>
-                  <th class="num sep" title="Le plus bas après le Push, avant la clôture ; en dessous, ce que le short en tire depuis le haut du Push (depuis l'open un jour sans push), puis l'heure et la durée">Sink</th>
+                  <th class="num sep" title="Le bas de la première chute après le Push ; en dessous, ce que le short en tire depuis le haut du Push (depuis l'open un jour sans push), puis l'heure et la durée">Sink</th>
                   <th class="sep">Flags</th>
                   <th title="Complétée">✓</th>
                   <th>Trade</th>
@@ -1293,7 +1293,7 @@
         <p class="mockup-note">
           Le GUS en points (#713), nommés <b>OPS</b> (#717) — <b>Open · Push · Sink</b>, les mêmes mots en français et en anglais. La
           carte Séance devient une liste verticale, une ligne par point comme le double top. Le <b>Push</b> gagne son heure, et un
-          point s'ajoute : le <b>Sink</b>, le plus bas après le Push (heure et prix, avant la clôture), souvent le LOD — différent quand
+          point s'ajoute : le <b>Sink</b>, le bas de la première chute après le Push (heure et prix), souvent le LOD — différent quand
           le LOD est venu avant le Push. Le reste sert à <b>repérer</b> le GUS (clôture veille, open PM, high PM, gap, push PM, tenue)
           ou est un <b>repère de la journée</b> (HOD, LOD, EOD, sans heure) : hors du mnémonique. Le Sink se lit côté short <b>depuis
           le haut du Push</b> (depuis l'open un jour sans push), en vert ; le GUS a fonctionné à <b>15 %</b>, le bas de la fourchette de
@@ -1308,7 +1308,7 @@
         </p>
         <p class="mockup-note">
           Ce que rapporte un double top (#706) — Base, Apex, Rejection et Echo décrivent le setup jusqu'à l'entrée ; le cinquième
-          point, le <b>Sink</b> (le plus bas après l'Echo, heure et prix, avant la clôture), dit ce qu'il a payé : la jambe <b>S</b>,
+          point, le <b>Sink</b> (le bas de la première chute après l'Echo, heure et prix), dit ce qu'il a payé : la jambe <b>S</b>,
           Echo → Sink. Lu côté short : la baisse est le gain, affichée <b>+17,1 %</b> en vert, jamais −17,1 % en rouge (la valeur
           stockée garde son signe). Trois KPIs en médianes, comme le GUS : le Sink depuis l'Echo, le Sink <b>depuis l'entrée de la
           fiche</b> (Apex −5 %, le prix où la fiche dit de shorter — c'est lui qui répond à la question), la durée du Sink, et combien de

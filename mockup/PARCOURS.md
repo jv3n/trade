@@ -480,7 +480,7 @@ for one effect, the final fall.
 |-------|------|-------|------|
 | Open | 9:30 | 1.90 | Fixed time — pre-filled from the candidate |
 | Push | 9:41 | 2.20 | **Now with its time** — « no push » greys both out |
-| Sink | 10:25 | 1.52 | **New, optional** — the lowest print after the Push, before the close |
+| Sink | 10:25 | 1.52 | **New, optional** — the low of the first fall after the Push, not the day's low (#776) |
 | HOD / LOD / EOD | — | | Unchanged, no time : day-wide references, the KPIs and the history read them as before |
 
 - **The Sink is often the LOD** — it differs when the LOD came before the Push (a dip at the bell,
@@ -723,7 +723,7 @@ the word lives in the copy.
 | **A** | Apex | 10:14 | 2.95 | The top of the first push |
 | **R** | Rejection | 10:21 | 2.36 | The low of the rejection off the Apex |
 | **E** | Echo | 10:38 | 2.85 | The second test, echoing the Apex |
-| **S** | Sink | 11:03 | 2.30 | The lowest print after the Echo, before the close (#706) |
+| **S** | Sink | 11:03 | 2.30 | The low of the first fall after the Echo (#706, #776) |
 
 The times are wall-clock on the stat's day, to the minute. They go **in order** — Base ≤ Apex ≤
 Rejection ≤ Echo ≤ Sink — and a time that goes back is refused, the field at fault pointed out like a
@@ -742,7 +742,7 @@ go with the old names) :
 - **Each leg also has a duration** (#469) : A Base → Apex, R Apex → Rejection (how fast the rejection
   comes — the one the entry depends on), E Rejection → Echo, and the **total** Base → Echo. The
   question behind it : does a double top really play out over about half an hour ?
-- **S, the sink** (#706) — the **fifth point** : the lowest print **after the Echo**, before the close,
+- **S, the sink** (#706) — the **fifth point** : the low of the **first fall after the Echo** — not the day's low, which can come later after a bounce (#776),
   with its time (Echo ≤ Sink in time). The four others describe the setup up to the entry ; S says
   what the pattern paid, traded or not. Read **as the short** : the fall is the gain, shown `+17.1 %`
   in green, never `−17.1 %` in red (the stored value keeps its sign). **No price bound against the
