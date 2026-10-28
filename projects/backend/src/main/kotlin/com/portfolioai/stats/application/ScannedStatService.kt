@@ -35,6 +35,13 @@ class ScannedStatService(
   private val clock: Clock,
 ) {
 
+  /** Whether [owner] holds a stat of [ticker] on [tradingDate], whatever its pattern or review. */
+  @Transactional(readOnly = true)
+  fun hasStat(owner: User, tradingDate: LocalDate, ticker: String): Boolean =
+    repo
+      .findByUserIdAndTradeDateAndTicker(owner.id, tradingDate, ticker.trim().uppercase())
+      .isNotEmpty()
+
   @Transactional
   fun record(owner: User, tradingDate: LocalDate, stats: List<ScannedStat>): ScannedStatsResult {
     if (tradingDate.isAfter(LocalDate.now(clock))) {
