@@ -899,6 +899,8 @@
     },
     "chart": {
       "title": "Graphique",
+      "fullscreen": "Voir le graphique en plein écran",
+      "exitFullscreen": "Quitter le plein écran",
       "hint": "barres 1 min — en 5 min sur la journée · heure de New York · hors séance grisé · un point hors de sa bougie passe en ambre",
       "range": { "day": "Journée", "session": "Séance" },
       "previousClose": "clôture veille {{price}}",

@@ -13,6 +13,7 @@ import { StatChart, StatChartPoint } from './stat-chart';
  * - **a new stat, or a day not fetched yet, reads « tomorrow morning »** — a stat being created
  *   asks for no bars at all ; a day the provider served nothing for says so, with its ticker ;
  * - with bars, **a GUS opens on the day, a DT on the session** (#649) ;
+ * - the chart goes **full screen** from the card's button, offered only when there is a chart ;
  * - **a typed point off its candle is named** — the mistyped price or time this chart is for — and
  *   the points not typed yet are listed, to be read off the candles.
  */
@@ -29,6 +30,11 @@ class Host {
   readonly statId = signal<string | null>('stat-1');
   readonly pattern = signal<Pattern>('GUS');
   readonly points = signal<readonly StatChartPoint[]>([]);
+}
+
+/** jsdom has no `document.fullscreenEnabled`. */
+function fullscreenEnabled(value: boolean): void {
+  Object.defineProperty(document, 'fullscreenEnabled', { value, configurable: true });
 }
 
 /** OLOX 21/10 around the open, in UTC (13:30 is the New York open) — one bar a minute. */
@@ -154,6 +160,36 @@ describe('StatChart', () => {
     expect(view.marks()[0].towards).toBeUndefined();
     view.range.set('session');
     expect(view.marks()[0].towards).toBe(1.2);
+  });
+
+  it('puts the card on the whole screen from its button', async () => {
+    fullscreenEnabled(true);
+    const { el } = await render();
+    const card = el.querySelector('.stat-chart') as HTMLElement;
+    const requestFullscreen = vi.fn(() => Promise.resolve());
+    card.requestFullscreen = requestFullscreen;
+
+    (el.querySelector('[data-testid="chart-fullscreen"]') as HTMLButtonElement).click();
+
+    expect(requestFullscreen).toHaveBeenCalled();
+  });
+
+  it('offers no full screen while there is no chart', async () => {
+    fullscreenEnabled(true);
+    dayChart.mockReturnValue(of(chart({ state: 'PENDING', bars: [] })));
+
+    const { el } = await render();
+
+    expect(el.querySelector('[data-testid="chart-fullscreen"]')).toBeNull();
+  });
+
+  // Safari on an iPhone : a click would throw, `requestFullscreen` does not exist on the card.
+  it('offers no full screen where the browser has none', async () => {
+    fullscreenEnabled(false);
+
+    const { el } = await render();
+
+    expect(el.querySelector('[data-testid="chart-fullscreen"]')).toBeNull();
   });
 
   it('lists the points not typed yet, to read off the candles', async () => {

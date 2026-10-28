@@ -1,17 +1,29 @@
 import { formatNumber } from '@angular/common';
-import { Component, LOCALE_ID, computed, inject, input, linkedSignal } from '@angular/core';
-import { rxResource } from '@angular/core/rxjs-interop';
+import {
+  Component,
+  DOCUMENT,
+  ElementRef,
+  LOCALE_ID,
+  computed,
+  inject,
+  input,
+  linkedSignal,
+  viewChild,
+} from '@angular/core';
+import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   CandleBar,
   CandleLine,
   CandleMark,
   CandleShade,
+  StbButtonModule,
   StbButtonToggleModule,
   StbCandleChart,
   StbIconModule,
+  StbTooltipModule,
 } from '@portfolioai/ui';
-import { of } from 'rxjs';
+import { fromEvent, map, of } from 'rxjs';
 import { Pattern } from '../../../core/api/shared/pattern.model';
 import { DayBar } from '../../../core/api/stats/day-chart.model';
 import { StatsRepository } from '../../../core/api/stats/stats.repository';
@@ -34,6 +46,9 @@ const OPEN = 9 * 60 + 30;
 const CLOSE = 16 * 60;
 /** The day view's candle : 960 one-minute candles across a panel would be wicks only. */
 const DAY_CANDLE = 5;
+const CHART_HEIGHT = 320;
+/** What the full-screen card keeps above and below its chart : the title, the switch, the notes. */
+const FULLSCREEN_CHROME = 200;
 /** A typed price this far outside its candle's low–high is off it — rounding stays on it. */
 const OFF_TOLERANCE = 0.003;
 
@@ -89,7 +104,14 @@ function aggregate(bars: readonly MinuteBar[], size: number): CandleBar[] {
  */
 @Component({
   selector: 'app-stat-chart',
-  imports: [StbCandleChart, StbButtonToggleModule, StbIconModule, TranslatePipe],
+  imports: [
+    StbCandleChart,
+    StbButtonModule,
+    StbButtonToggleModule,
+    StbIconModule,
+    StbTooltipModule,
+    TranslatePipe,
+  ],
   templateUrl: './stat-chart.html',
   styleUrl: './stat-chart.scss',
 })
@@ -97,6 +119,26 @@ export class StatChart {
   private readonly repo = inject(StatsRepository);
   private readonly translate = inject(TranslateService);
   private readonly locale = inject(LOCALE_ID);
+  private readonly document = inject(DOCUMENT);
+  private readonly card = viewChild.required<ElementRef<HTMLElement>>('card');
+
+  /** Safari on an iPhone has no full screen for an element : no button there. */
+  readonly canFullscreen = this.document.fullscreenEnabled;
+
+  /** The card on the whole screen — the browser's full screen, left with the button or Échap. */
+  readonly fullscreen = toSignal(
+    fromEvent(this.document, 'fullscreenchange').pipe(
+      map(() => this.document.fullscreenElement === this.card().nativeElement),
+    ),
+    { initialValue: false },
+  );
+
+  /** The chart's height : the panel's, or the screen's less the card's title and notes. */
+  readonly chartHeight = computed(() =>
+    this.fullscreen()
+      ? Math.max(CHART_HEIGHT, window.innerHeight - FULLSCREEN_CHROME)
+      : CHART_HEIGHT,
+  );
 
   /** The stat in the panel — null while it is being created. */
   readonly statId = input.required<string | null>();
@@ -244,6 +286,11 @@ export class StatChart {
       ? null
       : this.translate.instant('stats.chart.off', { points: lines.join(' ; ') });
   });
+
+  toggleFullscreen(): void {
+    if (this.fullscreen()) void this.document.exitFullscreen();
+    else void this.card().nativeElement.requestFullscreen();
+  }
 
   private list(names: string[]): string {
     const and = this.translate.instant('stats.chart.and');

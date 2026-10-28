@@ -1,6 +1,24 @@
-<section class="card stat-chart">
+<section class="card stat-chart" #card>
   <h3>
-    <span>{{ 'stats.chart.title' | translate }}</span>
+    <span class="stat-chart__title">
+      @if (state() === 'FOUND' && canFullscreen) {
+        <button
+          mat-icon-button
+          type="button"
+          (click)="toggleFullscreen()"
+          [matTooltip]="
+            (fullscreen() ? 'stats.chart.exitFullscreen' : 'stats.chart.fullscreen') | translate
+          "
+          [attr.aria-label]="
+            (fullscreen() ? 'stats.chart.exitFullscreen' : 'stats.chart.fullscreen') | translate
+          "
+          data-testid="chart-fullscreen"
+        >
+          <mat-icon>{{ fullscreen() ? 'close_fullscreen' : 'open_in_full' }}</mat-icon>
+        </button>
+      }
+      {{ 'stats.chart.title' | translate }}
+    </span>
     <span class="hint">{{ 'stats.chart.hint' | translate }}</span>
   </h3>
 
@@ -27,6 +45,7 @@
         [line]="line()"
         [shades]="shades()"
         [formatPrice]="formatPrice()"
+        [height]="chartHeight()"
       />
       @if (off(); as off) {
         <p class="stat-chart__note stat-chart__note--warn" data-testid="chart-off">{{ off }}</p>

@@ -1,4 +1,4 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, DestroyRef, ElementRef, computed, inject, input } from '@angular/core';
 import { BarChart, CandlestickChart, ScatterChart } from 'echarts/charts';
 import {
   DataZoomInsideComponent,
@@ -22,6 +22,13 @@ echarts.use([
   MarkAreaComponent,
   MarkLineComponent,
 ]);
+
+/** The price grid : its top, its share of the height, and the room on its right for the scale. */
+const GRID_TOP = 12;
+const PRICE_GRID_SHARE = 0.68;
+const GRID_RIGHT = 84;
+/** The tightest price zoom, in percent of the scale. */
+const MIN_PRICE_SPAN = 2;
 
 /** One candle. [label] is its place on the time axis (e.g. `09:41`), unique across the series. */
 export interface CandleBar {
@@ -67,15 +74,15 @@ export interface CandleShade {
  * Candlestick chart with its volume underneath, for a day of bars read point by point. Green up, red
  * down, each volume bar in its candle's colour — the one exception to the colour rule, as on every
  * trading tool (`CLAUDE.md`, #804). The marks in the accent, a point off its candle in amber, so
- * neither reads as a candle. The wheel or a pinch zooms the time, the slider beside the price axis
- * the price.
+ * neither reads as a candle. The wheel over the candles (or a pinch) zooms the time, over the price
+ * scale the price — the slider beside it too. Dragging moves a zoomed chart along both axes.
  */
 @Component({
   selector: 'ui-candle-chart',
   imports: [StbChart],
   template: `
     @if (bars().length > 0) {
-      <ui-chart [optionFactory]="option()" [height]="height()" />
+      <ui-chart [optionFactory]="option()" [height]="height()" (ready)="instance = $event" />
     }
   `,
   styles: `
@@ -86,6 +93,16 @@ export interface CandleShade {
   `,
 })
 export class StbCandleChart {
+  private instance: echarts.ECharts | null = null;
+
+  constructor() {
+    const host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
+    const onWheel = (event: WheelEvent) => this.zoomPrice(event, host);
+    // Not passive : the wheel over the price scale zooms the chart, not the page.
+    host.addEventListener('wheel', onWheel, { passive: false });
+    inject(DestroyRef).onDestroy(() => host.removeEventListener('wheel', onWheel));
+  }
+
   readonly bars = input.required<readonly CandleBar[]>();
   readonly marks = input<readonly CandleMark[]>([]);
   readonly line = input<CandleLine | null>(null);
@@ -96,6 +113,35 @@ export class StbCandleChart {
    */
   readonly formatPrice = input<(value: number) => string>((value) => value.toFixed(2));
   readonly height = input(320);
+
+  /**
+   * The wheel over the price scale zooms the price, around the price under the cursor — over the
+   * candles it stays ECharts' own, on the time. An inside zoom can't do it : it only hears the wheel
+   * over the grid, and there every inside zoom answers it at once.
+   */
+  private zoomPrice(event: WheelEvent, host: HTMLElement): void {
+    const chart = this.instance;
+    if (!chart || event.deltaY === 0) return;
+    const box = host.getBoundingClientRect();
+    const x = event.clientX - box.left;
+    const y = event.clientY - box.top;
+    const gridTop = GRID_TOP;
+    const gridHeight = box.height * PRICE_GRID_SHARE;
+    if (x < box.width - GRID_RIGHT || y < gridTop || y > gridTop + gridHeight) return;
+    event.preventDefault();
+    const zoom = (chart.getOption()['dataZoom'] as { start?: number; end?: number }[])[1] ?? {};
+    const start = zoom.start ?? 0;
+    const end = zoom.end ?? 100;
+    // The share of the scale under the cursor, from its bottom — the price that stays put.
+    const at = 1 - (y - gridTop) / gridHeight;
+    const pivot = start + at * (end - start);
+    const span = Math.min(
+      100,
+      Math.max(MIN_PRICE_SPAN, (end - start) * (event.deltaY > 0 ? 1.15 : 1 / 1.15)),
+    );
+    const from = Math.min(Math.max(pivot - at * span, 0), 100 - span);
+    chart.dispatchAction({ type: 'dataZoom', dataZoomIndex: 1, start: from, end: from + span });
+  }
 
   readonly option = computed<StbChartOptionFactory>(() => {
     const bars = this.bars();
@@ -108,8 +154,8 @@ export class StbCandleChart {
     return (palette) => ({
       textStyle: { fontFamily: palette.fontFamily },
       grid: [
-        { left: 8, right: 84, top: 12, height: '68%' },
-        { left: 8, right: 84, top: '80%', bottom: 24 },
+        { left: 8, right: GRID_RIGHT, top: GRID_TOP, height: `${PRICE_GRID_SHARE * 100}%` },
+        { left: 8, right: GRID_RIGHT, top: '80%', bottom: 24 },
       ],
       axisPointer: { link: [{ xAxisIndex: 'all' }], lineStyle: { color: palette.border } },
       tooltip: {
@@ -130,15 +176,14 @@ export class StbCandleChart {
       },
       dataZoom: [
         { type: 'inside', xAxisIndex: [0, 1] },
-        // The wheel zooms the time ; the price has a slider of its own — an inside zoom on both
-        // axes would answer the same wheel, Shift or not, and zoom them together.
+        // The price zooms with the wheel over its scale ([zoomPrice]) and with this slider.
         {
           type: 'slider',
           yAxisIndex: 0,
           filterMode: 'none',
           right: 6,
-          top: 12,
-          height: '68%',
+          top: GRID_TOP,
+          height: `${PRICE_GRID_SHARE * 100}%`,
           width: 12,
           showDetail: false,
           brushSelect: false,
@@ -149,6 +194,8 @@ export class StbCandleChart {
           handleStyle: { color: palette.surface, borderColor: palette.textMuted },
           moveHandleStyle: { color: palette.border },
         },
+        // After the slider : [zoomPrice] addresses it by index. Locked, so it only hears the drag.
+        { type: 'inside', yAxisIndex: 0, filterMode: 'none', zoomLock: true },
       ],
       xAxis: [
         {

@@ -88,6 +88,8 @@ export class StbChart {
   readonly height = input(160);
   /** A click on a drawn item ; the blank around the items and `silent` series emit nothing. */
   readonly itemClick = output<StbChartItemClick>();
+  /** The live instance, on every (re)build — for a chart type that drives it beyond its option. */
+  readonly ready = output<echarts.ECharts>();
 
   private readonly canvas = viewChild.required<ElementRef<HTMLDivElement>>('canvas');
   private instance: echarts.ECharts | null = null;
@@ -141,6 +143,7 @@ export class StbChart {
       this.instance.on('click', (event) =>
         this.itemClick.emit({ seriesIndex: event.seriesIndex ?? -1, dataIndex: event.dataIndex }),
       );
+      this.ready.emit(this.instance);
     }
     const option = factory(readChartPalette());
     const seriesSet = seriesSetOf(option);
