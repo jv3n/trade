@@ -89,7 +89,7 @@ dependencies {
   // application-local.yml) ; the root application.yml keeps both `springdoc.api-docs.enabled` and
   // `springdoc.swagger-ui.enabled` to false so no env reachable from the outside ever exposes the
   // schema. Surfaced in Tilt as a link on the `backend` resource for one-click access during dev.
-  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1")
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.2.0")
   // Sessions in Postgres rather than in the JVM (#460) : Cloud Run serves up to three instances
   // with no affinity and scales to zero, so an in-memory session was lost on the wrong instance,
   // after every idle period and on every deploy. The tables come from `V14__spring_session.sql`.
