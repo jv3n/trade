@@ -3,7 +3,7 @@
 > **Shorter** un titre qui a fortement monté en intraday, s'est fait rejeter, et revient tester son
 > high. Le pari : le deuxième test échoue, parce que le rejet a convaincu le marché que le top est fait.
 
-*Dernière révision : 2026-10-13 (les points nommés BARES, #716) ; 2026-10-12 (la chute mesurée, #706) ; 2026-09-25, d'après la séance du Trading Desk du 14 septembre, « Les Patterns ».*
+*Dernière révision : 2026-10-27 (le Sink est le bas de la première chute ; ce que propose le scanner, #776) ; 2026-10-13 (les points nommés BARES, #716) ; 2026-10-12 (la chute mesurée, #706) ; 2026-09-25, d'après la séance du Trading Desk du 14 septembre, « Les Patterns ».*
 
 ---
 
@@ -17,10 +17,10 @@ Cinq points, les mêmes mots en français et en anglais, nommés d'après ce qu'
 | **A** | **Apex** | Le haut de la première poussée |
 | **R** | **Rejection** | Le bas du rejet depuis l'Apex |
 | **E** | **Echo** | Le second test, l'écho de l'Apex — le trade |
-| **S** | **Sink** | Le plus bas après l'Echo, avant la clôture — ce que le pattern a payé |
+| **S** | **Sink** | Le bas de la première chute après l'Echo — ce que le pattern a payé. Pas le plus bas du jour : après un rebond, le prix peut descendre plus bas (ZTG 16/10 : 0,75, puis 0,58). La chute finit au premier vrai rebond depuis son bas — **10 %** tel que le lit le scanner ; sans ce rebond, le plus bas jusqu'à la clôture. |
 
 Les jambes se nomment du point qu'elles atteignent : **A** l'extension (Base → Apex), **R** le rejet
-(Apex → Rejection), **E** l'echo (Rejection → Echo), **S** le sink (Echo → Sink). **Sink** est aussi
+(Apex → Rejection), **E** l'echo (Rejection → Echo), **S** le sink, la première chute (Echo → Sink). **Sink** est aussi
 le dernier point du GUS (Open · Push · Sink) : la chute finale porte le même nom dans chaque pattern.
 
 ---
@@ -46,6 +46,25 @@ de 10 % ne prouve rien.
 À **17-20 %**, les gens commencent à croire que le top est fait. Les longs qui ont raté leur sortie, et
 ceux qui perdent de l'argent maintenant, décident de vendre la prochaine fois qu'il revient — c'est
 cette croyance qui crée la vente sur l'Echo (voir les [quatre vendeurs](../notes/four-sellers.fr.md)).
+
+---
+
+## Ce que propose le scanner
+
+[`ts-scanner`](https://github.com/jv3n/ts-scanner) relit la séance précédente sur les barres 1 min
+et propose des double tops à relire sur la page stats. Ses bandes sont **les siennes, pas la
+checklist d'entrée** : larges exprès, car un faux positif coûte un « Rejeter » alors qu'un faux
+négatif ne se voit jamais. Chaque jambe est une cible ± une tolérance, dans son temps :
+
+| Jambe | Bande | Temps |
+|-------|-------|-------|
+| **A** — Base → Apex | 40–200 % | ≤ 60 min |
+| **R** — sous l'Apex | 15–32 % | ≤ 30 min |
+| **E** — Rejection → Echo | 15–40 % | ≤ 60 min |
+
+L'Echo peut dépasser l'Apex de **6 %** au plus — la fausse sortie du dernier top ; au-delà, il a
+cassé et ce n'est pas un double top. La séance seulement, Base comprise : aucun double top ne se
+prend hors séance.
 
 ---
 

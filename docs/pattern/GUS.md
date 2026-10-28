@@ -3,7 +3,7 @@
 > **Short** a US small-cap that gapped up in premarket with no fundamental behind it. The bet : the
 > price falls back during the session because the pump is artificial.
 
-*Last revised : 2026-10-13 (the sequence named OPS, #717) ; 2026-10-01 (gap read as the scanner does, #499), from the Trading Desk session of 14 September, « Les Patterns ».*
+*Last revised : 2026-10-27 (the Sink is the low of the first fall ; what the scanner proposes, #776) ; 2026-10-13 (the sequence named OPS, #717) ; 2026-10-01 (gap read as the scanner does, #499), from the Trading Desk session of 14 September, « Les Patterns ».*
 
 ---
 
@@ -16,7 +16,7 @@ English :
 |---|-------|------------|
 | **O** | **Open** | The 9:30 open |
 | **P** | **Push** | The top of the push after the open, usually within ~10 minutes — none on a no-push day |
-| **S** | **Sink** | The lowest print after the Push, before the close — what the pattern paid, read from the Push's top (from the Open on a no-push day) |
+| **S** | **Sink** | The low of the first fall after the Push (after the Open on a no-push day) — what the pattern paid, read from the Push's top. Not the day's low : after a bounce the price can go lower (OLOX 21/10 : Sink 0.95 at 9:45, LOD 0.87 later). The fall ends at the first clear bounce off its low — **10 %** as the scanner reads it ; with no such bounce, the lowest print to the close. |
 
 Everything else **spots** the GUS (previous close, PM open, PM high, gap, PM push, hold) or is a
 **day-wide reference** (HOD, LOD, EOD). **Sink** is also the last point of the double top (BARES) :
@@ -41,6 +41,26 @@ Every criterion has to hold **at the same time**. One KO → no trade.
 
 The thresholds move with the statistics : they are re-run every few months, and the sheet follows
 them, not the other way round.
+
+---
+
+## What the scanner proposes
+
+[`ts-scanner`](https://github.com/jv3n/ts-scanner) reads the previous session on 1-min bars and
+proposes GUS to review on the stats page. Its filters are **its own, not the entry checklist** :
+loose on purpose, since a false positive costs one « Rejeter » while a false negative is never seen.
+
+| Filter | Value | Measured |
+|--------|-------|----------|
+| **Gap** | ≥ +45 % | Previous close → PM high, as the TradeZero scanner reads it |
+| **PM push** | ≥ +15 % | PM open → PM high : the day's own premarket push |
+| **Open gap** | ≥ +15 % | Previous close → open : the gap still alive at the bell |
+| **Hold** | ≥ −55 % | PM high → open : a premarket that diluted before the bell left nothing to short |
+| **Price** | $0.30 – $10 | At the open |
+
+The **Push** is the top within 10 minutes of the bell, and at least 1 % over the open — else a
+no-push day. The float, the daily chart, the company and the institutions are the review's job : the
+bars do not carry them.
 
 ---
 

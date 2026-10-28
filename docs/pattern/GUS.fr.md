@@ -3,7 +3,7 @@
 > **Shorter** une small-cap américaine qui a gappé en premarket sans fondamental derrière. Le pari :
 > le prix retombe pendant la séance, parce que le pump est artificiel.
 
-*Dernière révision : 2026-10-13 (la séquence nommée OPS, #717) ; 2026-10-01 (gap lu comme le scanner, #499), d'après la séance du Trading Desk du 14 septembre, « Les Patterns ».*
+*Dernière révision : 2026-10-27 (le Sink est le bas de la première chute ; ce que propose le scanner, #776) ; 2026-10-13 (la séquence nommée OPS, #717) ; 2026-10-01 (gap lu comme le scanner, #499), d'après la séance du Trading Desk du 14 septembre, « Les Patterns ».*
 
 ---
 
@@ -16,7 +16,7 @@ en anglais :
 |---|-------|--------------|
 | **O** | **Open** | L'open de 9h30 |
 | **P** | **Push** | Le haut de la poussée après l'open, en général dans les ~10 minutes — aucun un jour sans push |
-| **S** | **Sink** | Le plus bas après le Push, avant la clôture — ce que le pattern a payé, lu depuis le haut du Push (depuis l'Open un jour sans push) |
+| **S** | **Sink** | Le bas de la première chute après le Push (après l'Open un jour sans push) — ce que le pattern a payé, lu depuis le haut du Push. Pas le plus bas du jour : après un rebond, le prix peut descendre plus bas (OLOX 21/10 : Sink 0,95 à 9h45, LOD 0,87 plus tard). La chute finit au premier vrai rebond depuis son bas — **10 %** tel que le lit le scanner ; sans ce rebond, le plus bas jusqu'à la clôture. |
 
 Le reste sert à **repérer** le GUS (clôture veille, open PM, high PM, gap, push PM, tenue) ou est un
 **repère de la journée** (HOD, LOD, EOD). **Sink** est aussi le dernier point du double top
@@ -41,6 +41,27 @@ Tous les critères doivent tenir **en même temps**. Un KO → pas de trade.
 
 Les seuils suivent les statistiques : elles sont refaites tous les quelques mois, et la fiche les suit,
 pas l'inverse.
+
+---
+
+## Ce que propose le scanner
+
+[`ts-scanner`](https://github.com/jv3n/ts-scanner) relit la séance précédente sur les barres 1 min
+et propose des GUS à relire sur la page stats. Ses filtres sont **les siens, pas la checklist
+d'entrée** : larges exprès, car un faux positif coûte un « Rejeter » alors qu'un faux négatif ne se
+voit jamais.
+
+| Filtre | Valeur | Mesuré |
+|--------|--------|--------|
+| **Gap** | ≥ +45 % | Clôture veille → high PM, comme le lit le scanner TradeZero |
+| **Push PM** | ≥ +15 % | Open PM → high PM : la poussée premarket du jour |
+| **Gap à l'open** | ≥ +15 % | Clôture veille → open : le gap encore vivant à la cloche |
+| **Tenue** | ≥ −55 % | High PM → open : un premarket dilué avant la cloche ne laisse rien à shorter |
+| **Prix** | 0,30 $ – 10 $ | À l'open |
+
+Le **Push** est le haut dans les 10 minutes après la cloche, au moins 1 % au-dessus de l'open — sinon
+un jour sans push. Le float, le daily, l'entreprise et les institutions sont le travail de la
+relecture : les barres ne les portent pas.
 
 ---
 

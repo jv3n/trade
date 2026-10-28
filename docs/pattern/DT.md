@@ -3,7 +3,7 @@
 > **Short** a stock that ran hard intraday, got rejected, and comes back to test its high. The bet :
 > the second test fails, because the rejection convinced the market the top is in.
 
-*Last revised : 2026-10-13 (the points named BARES, #716) ; 2026-10-12 (the measured drop, #706) ; 2026-09-25, from the Trading Desk session of 14 September, « Les Patterns ».*
+*Last revised : 2026-10-27 (the Sink is the low of the first fall ; what the scanner proposes, #776) ; 2026-10-13 (the points named BARES, #716) ; 2026-10-12 (the measured drop, #706) ; 2026-09-25, from the Trading Desk session of 14 September, « Les Patterns ».*
 
 ---
 
@@ -17,10 +17,10 @@ Five points, the same words in French and English, named after what they are :
 | **A** | **Apex** | The top of the first push |
 | **R** | **Rejection** | The low of the rejection off the Apex |
 | **E** | **Echo** | The second test, echoing the Apex — the trade |
-| **S** | **Sink** | The lowest print after the Echo, before the close — what the pattern paid |
+| **S** | **Sink** | The low of the first fall after the Echo — what the pattern paid. Not the day's low : after a bounce the price can go lower (ZTG 16/10 : 0.75, then 0.58). The fall ends at the first clear bounce off its low — **10 %** as the scanner reads it ; with no such bounce, the lowest print to the close. |
 
 The legs are named by the point they reach : **A** the extension (Base → Apex), **R** the rejection
-(Apex → Rejection), **E** the echo (Rejection → Echo), **S** the sink (Echo → Sink). **Sink** is
+(Apex → Rejection), **E** the echo (Rejection → Echo), **S** the sink, the first fall (Echo → Sink). **Sink** is
 also the last point of the GUS (Open · Push · Sink) : the final fall has one name in every pattern.
 
 ---
@@ -45,6 +45,25 @@ you know it, you see 10 % breaths everywhere, and a 10 % rejection proves nothin
 At **17-20 %**, people start believing the top is in. The longs who missed their exit, and the ones
 now losing money, decide to sell the next time it comes back — that belief is what creates the
 selling on the Echo (see the [four sellers](../notes/four-sellers.md)).
+
+---
+
+## What the scanner proposes
+
+[`ts-scanner`](https://github.com/jv3n/ts-scanner) reads the previous session on 1-min bars and
+proposes double tops to review on the stats page. Its bands are **its own, not the entry
+checklist** : loose on purpose, since a false positive costs one « Rejeter » while a false negative
+is never seen. Each leg is a target ± an acceptance, within its time :
+
+| Leg | Band | Time |
+|-----|------|------|
+| **A** — Base → Apex | 40–200 % | ≤ 60 min |
+| **R** — off the Apex | 15–32 % | ≤ 30 min |
+| **E** — Rejection → Echo | 15–40 % | ≤ 60 min |
+
+The Echo may clear the Apex by up to **6 %** — the fake-out of the last top ; past that, it broke
+out and there is no double top. The session only, the Base included : no double top is taken in the
+extended hours.
 
 ---
 
