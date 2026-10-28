@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { DayChart } from '../day-chart.model';
 import { RuleScore, StatEntry, StatEntryInput } from '../stat-entry.model';
 import { HttpStatsRepository } from './stats.http';
 
@@ -103,6 +104,33 @@ describe('HttpStatsRepository', () => {
     const req = http.expectOne('/api/stats/stat-1');
     expect(req.request.method).toBe('GET');
     req.flush(wireStat());
+  });
+
+  it('dayChart reads the bars of a stat, each minute as epoch ms', () => {
+    let chart: DayChart | undefined;
+    repo.dayChart('stat-1').subscribe((c) => (chart = c));
+
+    const req = http.expectOne('/api/stats/stat-1/bars');
+    expect(req.request.method).toBe('GET');
+    req.flush({
+      tradingDate: '2026-10-21',
+      ticker: 'OLOX',
+      state: 'FOUND',
+      bars: [
+        {
+          time: '2026-10-21T13:30:00Z',
+          open: 1.1,
+          high: 1.14,
+          low: 1.02,
+          close: 1.04,
+          volume: 182340,
+        },
+      ],
+    });
+
+    expect(chart?.state).toBe('FOUND');
+    expect(chart?.bars[0].time).toBe(Date.UTC(2026, 9, 21, 13, 30));
+    expect(chart?.bars[0].high).toBe(1.14);
   });
 
   it('ruleScore asks for its window in months and parses the dates as local days', () => {

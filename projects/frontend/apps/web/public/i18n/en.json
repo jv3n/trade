@@ -897,6 +897,26 @@
       "restoreSuccess": "{{ticker}} back to review.",
       "restoreError": "Couldn't send {{ticker}} back to review. Please retry."
     },
+    "chart": {
+      "title": "Chart",
+      "hint": "1-min bars — 5-min over the day · New York time · extended hours shaded · a point off its candle turns amber",
+      "range": { "day": "Day", "session": "Session" },
+      "previousClose": "previous close {{price}}",
+      "pending": {
+        "title": "The chart arrives tomorrow morning.",
+        "body": "A day's 1-min bars are served once the session is over : the scanner's next run fetches them for this stat. Nothing to do on your side."
+      },
+      "notFound": {
+        "title": "No bars for {{ticker}} that day.",
+        "body": "The scanner asked for them and nothing was served — a delisted ticker, or one that changed symbol. The stat reads without a chart."
+      },
+      "unavailable": "Chart unavailable for now.",
+      "missingOne": "{{points}} not typed yet — read it off the candles, its mark shows with the time and the price.",
+      "missing": "{{points}} not typed yet — read them off the candles, their marks show with the time and the price.",
+      "off": "Off its candle : {{points}} — check the price or the time.",
+      "offPoint": "{{name}} {{price}} at {{time}}, its 1-min candle {{low}}–{{high}}",
+      "and": " and "
+    },
     "premarket": {
       "title": "Premarket —",
       "titleDoubleTop": "Stock —",

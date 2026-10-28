@@ -73,6 +73,7 @@ import {
   type SkeletonColumnDefs,
 } from '../../shared/skeleton-columns/skeleton-columns';
 import { ShortGainPipe } from './short-gain.pipe';
+import { StatChart, StatChartPoint } from './stat-chart/stat-chart';
 import {
   DT_DROP_TARGET,
   DT_EXTENSION_CRITERION,
@@ -749,6 +750,7 @@ const SKELETON_COLUMNS: SkeletonColumnDefs = {
     StbTooltipModule,
     PluralPipe,
     ShortGainPipe,
+    StatChart,
     TranslatePipe,
   ],
   templateUrl: './stats-page.html',
@@ -1050,6 +1052,27 @@ export class StatsPage {
   );
   /** A DT stat shows the « Double top » card in place of the session one. */
   readonly isDoubleTop = computed(() => this.panelPattern() === 'DT');
+
+  /** The pattern's points as typed, for the chart — BARES for a DT, OPS for a GUS (#784). */
+  readonly chartPoints = computed<StatChartPoint[]>(() => {
+    const m = this.session();
+    if (this.isDoubleTop()) {
+      return [
+        { name: 'Base', time: m.dtStartTime, price: m.dtStartPrice, above: false },
+        { name: 'Apex', time: m.dtTopTime, price: m.dtTopPrice, above: true },
+        { name: 'Rejection', time: m.dtLowTime, price: m.dtLowPrice, above: false },
+        { name: 'Echo', time: m.dtRetestTime, price: m.dtRetestPrice, above: true },
+        { name: 'Sink', time: m.dtDropTime, price: m.dtDropPrice, above: false },
+      ];
+    }
+    return [
+      { name: 'Open', time: null, price: m.openPrice, above: false },
+      ...(m.noPush
+        ? []
+        : [{ name: 'Push', time: m.pushOpenTime, price: m.pushOpenPrice, above: true }]),
+      { name: 'Sink', time: m.gusDropTime, price: m.gusDropPrice, above: false },
+    ];
+  });
 
   /** The legs of the double top being typed, live. */
   readonly doubleTopLegs = computed(() => doubleTopLegs(this.session()));

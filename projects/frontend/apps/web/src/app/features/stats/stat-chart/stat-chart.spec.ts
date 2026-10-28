@@ -1,0 +1,172 @@
+import { Component, provideZonelessChangeDetection, signal } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { TranslateService, provideTranslateService } from '@ngx-translate/core';
+import { Observable, of } from 'rxjs';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { Pattern } from '../../../core/api/shared/pattern.model';
+import { DayChart } from '../../../core/api/stats/day-chart.model';
+import { StatsRepository } from '../../../core/api/stats/stats.repository';
+import { StatChart, StatChartPoint } from './stat-chart';
+
+/**
+ * The day's chart of a stat (#784), as the panel feeds it :
+ * - **a new stat, or a day not fetched yet, reads « tomorrow morning »** — a stat being created
+ *   asks for no bars at all ; a day the provider served nothing for says so, with its ticker ;
+ * - with bars, **a GUS opens on the day, a DT on the session** (#649) ;
+ * - **a typed point off its candle is named** — the mistyped price or time this chart is for — and
+ *   the points not typed yet are listed, to be read off the candles.
+ */
+@Component({
+  imports: [StatChart],
+  template: `<app-stat-chart
+    [statId]="statId()"
+    [pattern]="pattern()"
+    [points]="points()"
+    [previousClose]="0.62"
+  />`,
+})
+class Host {
+  readonly statId = signal<string | null>('stat-1');
+  readonly pattern = signal<Pattern>('GUS');
+  readonly points = signal<readonly StatChartPoint[]>([]);
+}
+
+/** OLOX 21/10 around the open, in UTC (13:30 is the New York open) — one bar a minute. */
+const BARS = [
+  {
+    time: Date.UTC(2026, 9, 21, 12, 0),
+    open: 0.9,
+    high: 0.92,
+    low: 0.89,
+    close: 0.91,
+    volume: 8_000,
+  },
+  {
+    time: Date.UTC(2026, 9, 21, 13, 30),
+    open: 1.1,
+    high: 1.14,
+    low: 1.02,
+    close: 1.04,
+    volume: 182_340,
+  },
+  {
+    time: Date.UTC(2026, 9, 21, 13, 31),
+    open: 1.04,
+    high: 1.2,
+    low: 1.03,
+    close: 1.18,
+    volume: 96_015,
+  },
+];
+
+function chart(overrides: Partial<DayChart> = {}): DayChart {
+  return { ticker: 'OLOX', state: 'FOUND', bars: BARS, ...overrides };
+}
+
+describe('StatChart', () => {
+  let dayChart: ReturnType<typeof vi.fn<(id: string) => Observable<DayChart>>>;
+
+  beforeEach(() => {
+    dayChart = vi.fn(() => of(chart()));
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        provideTranslateService({ lang: 'en' }),
+        { provide: StatsRepository, useValue: { dayChart } as unknown as StatsRepository },
+      ],
+    });
+    TestBed.inject(TranslateService).setTranslation('en', {
+      stats: {
+        chart: {
+          and: ' and ',
+          missingOne: '{{points}} not typed yet',
+          missing: '{{points}} not typed yet',
+          off: 'Off its candle : {{points}}',
+          offPoint: '{{name}} {{price}} at {{time}}',
+        },
+      },
+    });
+  });
+
+  async function render(setup?: (host: Host) => void) {
+    const fixture = TestBed.createComponent(Host);
+    setup?.(fixture.componentInstance);
+    await fixture.whenStable();
+    const view = fixture.debugElement.children[0].componentInstance as StatChart;
+    return { fixture, view, el: fixture.nativeElement as HTMLElement };
+  }
+
+  it('reads « tomorrow morning » for a stat being created, without asking for bars', async () => {
+    const { el } = await render((h) => h.statId.set(null));
+
+    expect(el.querySelector('[data-testid="chart-pending"]')).not.toBeNull();
+    expect(dayChart).not.toHaveBeenCalled();
+  });
+
+  it('reads « tomorrow morning » for a day the scanner has not fetched yet', async () => {
+    dayChart.mockReturnValue(of(chart({ state: 'PENDING', bars: [] })));
+
+    const { el } = await render();
+
+    expect(el.querySelector('[data-testid="chart-pending"]')).not.toBeNull();
+  });
+
+  it('says no bars were served for the day', async () => {
+    dayChart.mockReturnValue(of(chart({ state: 'NOT_FOUND', bars: [] })));
+
+    const { el } = await render();
+
+    expect(el.querySelector('[data-testid="chart-not-found"]')).not.toBeNull();
+  });
+
+  it('opens a GUS on the whole day, its premarket in 5-min candles', async () => {
+    const { el, view } = await render();
+
+    expect(el.querySelector('ui-candle-chart')).not.toBeNull();
+    expect(view.range()).toBe('day');
+    expect(view.candles().map((c) => c.label)).toEqual(['08:00', '09:30']);
+  });
+
+  it('opens a double top on the session, one candle a minute', async () => {
+    const { view } = await render((h) => h.pattern.set('DT'));
+
+    expect(view.range()).toBe('session');
+    expect(view.candles().map((c) => c.label)).toEqual(['09:30', '09:31']);
+  });
+
+  it('names a typed point off its candle — the Push typed at 2.20 on a 1.20 top', async () => {
+    const { el, view } = await render((h) =>
+      h.points.set([
+        { name: 'Open', time: null, price: 1.1, above: false },
+        { name: 'Push', time: '09:31', price: 2.2, above: true },
+      ]),
+    );
+
+    expect(view.marks().find((m) => m.short === 'P')?.tone).toBe('warn');
+    expect(view.marks().find((m) => m.short === 'O')?.tone).toBe('accent');
+    expect(el.querySelector('[data-testid="chart-off"]')?.textContent).toContain('Push');
+  });
+
+  it('draws the leader of an off point on the session only — a 5-min candle would bury it', async () => {
+    const points: StatChartPoint[] = [{ name: 'Push', time: '09:31', price: 2.2, above: true }];
+    const { view } = await render((h) => h.points.set(points));
+
+    expect(view.marks()[0].towards).toBeUndefined();
+    view.range.set('session');
+    expect(view.marks()[0].towards).toBe(1.2);
+  });
+
+  it('lists the points not typed yet, to read off the candles', async () => {
+    const { el } = await render((h) =>
+      h.points.set([
+        { name: 'Open', time: null, price: 1.1, above: false },
+        { name: 'Push', time: null, price: null, above: true },
+        { name: 'Sink', time: null, price: null, above: false },
+      ]),
+    );
+
+    expect(el.querySelector('[data-testid="chart-missing"]')?.textContent?.trim()).toBe(
+      'Push and Sink not typed yet',
+    );
+  });
+});

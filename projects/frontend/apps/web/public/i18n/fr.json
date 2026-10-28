@@ -897,6 +897,26 @@
       "restoreSuccess": "{{ticker}} repasse à relire.",
       "restoreError": "Impossible de repasser {{ticker}} à relire. Réessaie."
     },
+    "chart": {
+      "title": "Graphique",
+      "hint": "barres 1 min — en 5 min sur la journée · heure de New York · hors séance grisé · un point hors de sa bougie passe en ambre",
+      "range": { "day": "Journée", "session": "Séance" },
+      "previousClose": "clôture veille {{price}}",
+      "pending": {
+        "title": "Le graphique arrive demain matin.",
+        "body": "Les barres 1 min d'une journée sont servies une fois la séance finie : le prochain passage du scanner les récupère pour cette stat. Rien à faire de ton côté."
+      },
+      "notFound": {
+        "title": "Pas de barres pour {{ticker}} ce jour-là.",
+        "body": "Le scanner les a demandées et rien n'a été servi — un ticker retiré de la cote ou qui a changé de symbole. La stat se lit sans graphique."
+      },
+      "unavailable": "Graphique indisponible pour le moment.",
+      "missingOne": "{{points}} pas encore saisi — lis-le sur les bougies, la marque apparaît avec l'heure et le prix.",
+      "missing": "{{points}} pas encore saisis — lis-les sur les bougies, la marque apparaît avec l'heure et le prix.",
+      "off": "Hors de sa bougie : {{points}} — vérifie le prix ou l'heure.",
+      "offPoint": "{{name}} {{price}} à {{time}}, sa bougie 1 min {{low}}–{{high}}",
+      "and": " et "
+    },
     "premarket": {
       "title": "Premarket —",
       "titleDoubleTop": "Titre —",

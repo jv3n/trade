@@ -709,6 +709,14 @@
       }
     </section>
 
+    <!-- The day's chart, read before typing the points right under it (#784). -->
+    <app-stat-chart
+      [statId]="completing()?.id ?? null"
+      [pattern]="panelPattern()"
+      [points]="chartPoints()"
+      [previousClose]="premarket().previousClose"
+    />
+
     <section class="card complete-card">
       <h3>
         <span class="complete-title">
