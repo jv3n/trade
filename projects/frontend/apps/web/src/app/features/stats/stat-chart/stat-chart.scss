@@ -1,0 +1,20 @@
+// The day's chart of a stat (#784) — a card of the panel, between the premarket and the points.
+
+@use 'sizes' as s;
+
+.stat-chart__bar {
+  display: flex;
+  align-items: center;
+  margin-bottom: s.$space-sm;
+}
+
+.stat-chart__note {
+  margin: s.$space-sm 0 0;
+  font-size: s.$font-xs;
+  color: var(--color-text-muted);
+}
+
+// Amber = warning : a typed point that is not on its candle.
+.stat-chart__note--warn {
+  color: var(--color-warning);
+}

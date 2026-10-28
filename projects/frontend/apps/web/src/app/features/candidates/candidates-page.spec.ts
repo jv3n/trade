@@ -15,6 +15,7 @@ import {
 import { CandidatesRepository } from '../../core/api/candidates/candidates.repository';
 import { TradeEntry } from '../../core/api/journal/trade-entry.model';
 import { Pattern } from '../../core/api/shared/pattern.model';
+import { DayChart } from '../../core/api/stats/day-chart.model';
 import {
   PagedResult,
   PageRequest,
@@ -107,6 +108,7 @@ class MockStatsRepository extends StatsRepository {
       throwError(() => new Error('not used')),
   );
   findById = vi.fn((_id: string): Observable<StatEntry> => throwError(() => new Error('not used')));
+  dayChart = vi.fn((_id: string): Observable<DayChart> => throwError(() => new Error('not used')));
   create = vi.fn((_input: StatEntryInput): Observable<StatEntry> =>
     throwError(() => new Error('not used')),
   );

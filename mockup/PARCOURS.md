@@ -1130,9 +1130,11 @@ points card (OPS or BARES) — read the bars, then type or correct the points ri
   not typed yet (« Echo et Sink pas encore saisis — lis-les sur les bougies »).
 - For a GUS, the **previous close** as a dashed line : the gap reads off it.
 - **A point off its candle reads amber** — a price outside its 1-min candle's low–high, at the time
-  typed, is a mistyped price or time : the mark turns amber, a dashed leader joins it to its candle,
-  and the line under the chart names it (« Push 2,20 à 09:41, la bougie 1,99–2,02 — vérifie le prix
-  ou l'heure »). The scale keeps it in view. This is what reviewing a stat against its bars means.
+  typed, is a mistyped price or time : the mark turns amber, a dashed leader joins it to its candle
+  on « Séance », and the line under the chart names it (« Push 2,20 à 09:41, sa bougie 1 min
+  1,99–2,02 — vérifie le prix ou l'heure »). It is judged on the **1-min** candle whatever the view :
+  on « Journée » the 5-min candle can hold the point — a right price on the wrong minute — so the
+  line says which candle it means. The scale keeps it in view. This is what reviewing a stat against its bars means.
 - **Journée / Séance** : the whole day in **5-min candles** (960 one-minute candles would be wicks
   only at this width) or 9:30–16:00 in 1-min. A GUS opens on the day (its premarket counts), a DT on
   the session (#649). The price axis takes one precision for all its labels — 4 decimals once its

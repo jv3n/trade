@@ -1,6 +1,7 @@
 import { Observable } from 'rxjs';
 import { TradeEntry } from '../journal/trade-entry.model';
 import { Pattern } from '../shared/pattern.model';
+import { DayChart } from './day-chart.model';
 import {
   PageRequest,
   PagedResult,
@@ -38,6 +39,12 @@ export abstract class StatsRepository {
    * trade was born from, read-only. Foreign id / unknown id → 404.
    */
   abstract findById(id: string): Observable<StatEntry>;
+
+  /**
+   * The 1-min bars of a stat's day, for its chart (#784) — `PENDING` until the scanner fetched
+   * them, `NOT_FOUND` when none were served. Foreign id / unknown id → 404.
+   */
+  abstract dayChart(id: string): Observable<DayChart>;
 
   /** KPIs over the same filter as the listing, computed on the whole filtered set. */
   abstract summary(filter?: StatEntryFilter): Observable<StatSummary>;
