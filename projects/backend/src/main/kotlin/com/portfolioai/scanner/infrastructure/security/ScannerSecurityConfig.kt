@@ -20,10 +20,12 @@ import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.AnonymousAuthenticationFilter
 import org.springframework.security.web.authentication.HttpStatusEntryPoint
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher
+import org.springframework.security.web.util.matcher.OrRequestMatcher
 import org.springframework.web.filter.OncePerRequestFilter
 
 /**
- * ts-scanner's door (#763) : the `POST`s under `/api/scanner/` take its static bearer token
+ * ts-scanner's door (#763) : the `POST`s under `/api/scanner/`, and the list of the ticker-days it
+ * must fetch bars for (`GET /api/scanner/bars/missing`, #798), take its static bearer token
  * (`SCANNER_API_TOKEN`) and nothing else — no session, no CSRF. Ordered before the session chain of
  * `SecurityConfig`, which never reads the token : on any other path it is a 401. An empty token
  * keeps the door shut.
@@ -35,7 +37,12 @@ class ScannerSecurityConfig(@Value("\${scanner.api-token:}") private val token: 
   @Order(1)
   fun scannerFilterChain(http: HttpSecurity): SecurityFilterChain {
     http
-      .securityMatcher(PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/scanner/**"))
+      .securityMatcher(
+        OrRequestMatcher(
+          PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/scanner/**"),
+          PathPatternRequestMatcher.pathPattern(HttpMethod.GET, "/api/scanner/bars/missing"),
+        )
+      )
       .csrf { it.disable() }
       .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
       .addFilterBefore(ScannerTokenFilter(token), AnonymousAuthenticationFilter::class.java)

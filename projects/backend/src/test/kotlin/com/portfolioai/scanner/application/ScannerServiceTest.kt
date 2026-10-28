@@ -2,6 +2,7 @@ package com.portfolioai.scanner.application
 
 import com.portfolioai.auth.application.AuthService
 import com.portfolioai.auth.infrastructure.persistence.UserRepository
+import com.portfolioai.daybars.application.DayBarsService
 import com.portfolioai.scanner.application.dto.ScannedStatsRequest
 import com.portfolioai.scanner.infrastructure.persistence.ScannerRunRepository
 import com.portfolioai.stats.application.ScannedStatService
@@ -43,6 +44,7 @@ class ScannerServiceTest {
         mock<ScannedStatService>(),
         mock<ScannerRunRepository>(),
         mock<AuthService>(),
+        mock<DayBarsService>(),
         ownerUserId,
       )
     val error =
