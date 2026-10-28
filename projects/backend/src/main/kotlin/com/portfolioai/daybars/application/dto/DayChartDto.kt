@@ -31,3 +31,5 @@ data class BarDto(
 )
 
 fun Bar.toDto() = BarDto(time, open, high, low, close, volume)
+
+fun BarDto.toDomain() = Bar(time, open, high, low, close, volume)
