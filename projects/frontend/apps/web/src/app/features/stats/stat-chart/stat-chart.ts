@@ -299,8 +299,9 @@ export class StatChart {
     const request = this.fullscreen()
       ? this.document.exitFullscreen()
       : this.card().nativeElement.requestFullscreen();
-    // A refusal leaves the card where it is, and is nothing to report (#814).
-    request.catch(() => undefined);
+    // A refusal leaves the card where it is, and is nothing to report (#814). An older WebKit's
+    // `exitFullscreen` returns no promise, whatever its type says (#817).
+    request?.catch(() => undefined);
   }
 
   private list(names: string[]): string {
