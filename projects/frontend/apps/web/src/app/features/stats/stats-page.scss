@@ -296,7 +296,7 @@ tr.rejected td {
   opacity: 0.55;
 }
 
-tr.rejected td:last-child {
+tr.rejected td.mat-column-actions {
   opacity: 1;
 }
 

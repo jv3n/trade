@@ -229,16 +229,16 @@ function isSessionView(view: StatView): boolean {
   return view === 'GUS';
 }
 
+/** What names a row and what acts on it (#821) : on arrival, with no sideways scroll. */
 const LEADING_COLUMNS = [
   'tradeDate',
   'ticker',
   'pattern',
-  'gap',
-  'pmPush',
-  'float',
-  'volume',
+  'completed',
+  'trade',
+  'actions',
 ] as const;
-const TRAILING_COLUMNS = ['flags', 'completed', 'trade', 'actions'] as const;
+const PREMARKET_COLUMNS = ['gap', 'pmPush', 'float', 'volume'] as const;
 const DOUBLE_TOP_FOOTER_COLUMNS: readonly string[] = [
   'dtAveragesLabel',
   'dtTop',
@@ -262,6 +262,7 @@ const SESSION_FOOTER_COLUMNS: readonly string[] = [
 ];
 const SESSION_COLUMNS: readonly string[] = [
   ...LEADING_COLUMNS,
+  ...PREMARKET_COLUMNS,
   'openPrice',
   'hold',
   'pushOpen',
@@ -269,22 +270,23 @@ const SESSION_COLUMNS: readonly string[] = [
   'lod',
   'eod',
   'gusDrop',
-  ...TRAILING_COLUMNS,
+  'flags',
 ];
 const COLUMNS: Record<StatView, readonly string[]> = {
   GUS: SESSION_COLUMNS,
   // A double top has no premarket prices (#649) : no gap, no PM push.
   DT: [
-    ...LEADING_COLUMNS.filter((c) => c !== 'gap' && c !== 'pmPush'),
+    ...LEADING_COLUMNS,
+    ...PREMARKET_COLUMNS.filter((c) => c !== 'gap' && c !== 'pmPush'),
     'dtStart',
     'dtTop',
     'dtLow',
     'dtRetest',
     'dtDuration',
     'dtDrop',
-    ...TRAILING_COLUMNS,
+    'flags',
   ],
-  ALL: [...LEADING_COLUMNS, 'brief', ...TRAILING_COLUMNS],
+  ALL: [...LEADING_COLUMNS, ...PREMARKET_COLUMNS, 'brief', 'flags'],
 };
 
 function tabFromQuery(value: string | null): StatTab {

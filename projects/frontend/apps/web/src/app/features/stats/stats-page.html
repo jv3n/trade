@@ -1949,7 +1949,12 @@
 
           <!-- The averages row of the DT view : a label over the columns before the legs. -->
           <ng-container matColumnDef="dtAveragesLabel">
-            <td mat-footer-cell *matFooterCellDef colspan="6" class="averages-label">
+            <td
+              mat-footer-cell
+              *matFooterCellDef
+              [attr.colspan]="columns().indexOf('dtTop')"
+              class="averages-label"
+            >
               {{
                 'stats.doubleTop.averages'
                   | plural: summary()?.completedDoubleTops ?? 0
@@ -2072,12 +2077,17 @@
           </ng-container>
 
           <ng-container matColumnDef="dtAveragesEnd">
-            <td mat-footer-cell *matFooterCellDef colspan="4"></td>
+            <td mat-footer-cell *matFooterCellDef></td>
           </ng-container>
 
           <!-- The medians row of a session view (#499) : medians, not means, like the cards. -->
           <ng-container matColumnDef="sessionMediansLabel">
-            <td mat-footer-cell *matFooterCellDef colspan="8" class="averages-label">
+            <td
+              mat-footer-cell
+              *matFooterCellDef
+              [attr.colspan]="columns().indexOf('hold')"
+              class="averages-label"
+            >
               {{
                 'stats.complete.medians'
                   | plural: summary()?.completed ?? 0
@@ -2086,7 +2096,7 @@
             </td>
           </ng-container>
           <ng-container matColumnDef="sessionMediansEnd">
-            <td mat-footer-cell *matFooterCellDef colspan="4"></td>
+            <td mat-footer-cell *matFooterCellDef></td>
           </ng-container>
 
           <!-- « All » sums each stat up in its own pattern — a push and an extension don't add up. -->

@@ -1630,6 +1630,44 @@ describe('StatsPage', () => {
     expect(page.columns()).not.toContain('dtTop');
   });
 
+  // #821 : they sat past every figure, a sideways scroll away.
+  it('keeps what acts on a row right after the date, the ticker and the pattern, in every view', async () => {
+    const { page } = await setup();
+
+    for (const view of ['GUS', 'DT', 'ALL'] as const) {
+      page.setView(view);
+
+      expect(page.columns().slice(0, 6)).toEqual([
+        'tradeDate',
+        'ticker',
+        'pattern',
+        'completed',
+        'trade',
+        'actions',
+      ]);
+      expect(page.columns().at(-1)).toBe('flags');
+    }
+  });
+
+  it('keeps the bottom row under its columns, in the views that have one', async () => {
+    const { fixture, page } = await setup({ rows: [makeStat()] });
+
+    for (const [view, firstFigure] of [
+      ['GUS', 'hold'],
+      ['DT', 'dtTop'],
+    ] as const) {
+      page.setView(view);
+      await settle(fixture);
+      await fixture.whenStable();
+
+      const cells = [
+        ...fixture.nativeElement.querySelectorAll('tr.averages-row td'),
+      ] as HTMLTableCellElement[];
+      expect(cells[0].colSpan).toBe(page.columns().indexOf(firstFigure));
+      expect(cells.reduce((sum, cell) => sum + cell.colSpan, 0)).toBe(page.columns().length);
+    }
+  });
+
   // #499 : one or two big movers dragged the averages by up to 7 points.
   it('the GUS view shows a hold column next to the open and a medians row', async () => {
     const { fixture, page } = await setup({ rows: [makeStat()] });

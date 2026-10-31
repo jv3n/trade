@@ -806,9 +806,10 @@ go with the old names) :
 **Screen** : [`stats.html`](stats.html) — a « Premarket » card and a « Session » card for the stat
 being filled (live percentage preview, fields saved one by one with the save state next to each
 title, "n / 5 prices" — 4 with « No push » — and the check button), a « New stat » button, a table
-with the premarket data, the session data (partial for the stats in progress),
-the flags, the check column, and a « → Trade » button or one P&L tag per trade, each a link to it,
-with « + » for the next one. The
+with, right after the date, the ticker and the pattern, what acts on the row, visible without
+scrolling sideways (#821) : the check column, a « → Trade » button or one P&L tag per trade, each a
+link to it, with « + » for the next one, and the row's actions ; then the premarket data, the
+session data (partial for the stats in progress), and the flags last. The
 « SGBX · GUS / SGBX · DT » switch shows the two panels of one candidate's two stats, the pattern
 switch the six views of the page.
 
