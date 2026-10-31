@@ -31,7 +31,8 @@ internal object SeedDayBars {
     val hod = stat.hodPrice.typed()
     val lod = stat.lodPrice.typed()
     val eod = stat.eodPrice.typed()
-    val pushAt = checkNotNull(stat.pushOpenTime).let { it.hour * 60 + it.minute }
+    // A typed time is its candle's end (#806) : the push tops on the bar opening a minute earlier.
+    val pushAt = checkNotNull(stat.pushOpenTime).let { it.hour * 60 + it.minute - 1 }
     val hodAt = if (hod > push) pushAt + 35 else pushAt
     val lodAt = hodAt + 90 + random.nextInt(120)
     // Peaks and troughs : each is the extreme of the stretch between its neighbours.
