@@ -850,7 +850,7 @@ review is where the judgement happens.
 |-------|-------|----------------|---------|
 | **To review** | the row tinted indigo, a « scanner · à relire » indigo tag, the « À relire » tab with its count, the Today step 1 count | **No** — KPIs, medians, the footer row, the rule score all ignore it | Relire (opens its panel) · Valider · Rejeter ; its prices can be corrected as on any stat, without validating it |
 | **Validated** | a neutral « scanner » tag — the provenance, not a state | Yes, like any stat | the usual ones — edit, then « Marquer complétée » ; « Repasser à relire » |
-| **Rejected** | only under the « Rejetées » toggle, greyed, « scanner · rejetée · <reason> » | No | Rétablir (back to review) |
+| **Rejected** | only under the « Rejetées » toggle, greyed, « scanner · rejetée · <reason> », its note on hover | No | Rétablir (back to review) |
 
 **One mark for the scanner** : the **radar icon** with the word « scanner », in every state — the
 tag in the table, the panel's banner, the Today step 1 line — so a scanner stat is told from a typed
@@ -864,10 +864,13 @@ one at a glance, before and after its review.
   GUS / a DT », ticking says « its figures are right ».
 - **« Repasser à relire »**, in the panel of a validated scanner stat, undoes the validation : it
   leaves the figures again until validated anew.
-- **Rejeter** asks for confirmation (danger), with an **optional reason**. DT : breakout (the Echo
-  took the Apex), rejection too weak, Echo too far from the Apex, noise, other. GUS : gap too small,
+- **Rejeter** asks for confirmation (danger), with an **optional reason** and an **optional free
+  note** (#787, 500 characters), beside the reason or alone. DT : breakout (the Echo broke above the
+  Apex), rejection too weak, Echo too far from the Apex, noise, other. GUS : gap too small,
   a news behind it (a fundamental), float out of range, noise, other. The reasons and the
-  rejected points are what the detector's thresholds will be tuned on.
+  rejected points are what the detector's thresholds will be tuned on. The note says the case the
+  reason only names : a tooltip on the row's tag, in full in the panel's banner. « Rétablir » clears
+  it with the reason.
 - **Only a stat that counts is to complete** : the « À compléter » tab, like its KPI, leaves a stat
   to review out until it is validated, and a rejected one always, « Rejetées » on or not (#764).
 - **A rejected stat is kept, not deleted** : it is what stops a re-scan from bringing it back.

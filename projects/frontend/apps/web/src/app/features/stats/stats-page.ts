@@ -50,6 +50,7 @@ import {
 import {
   OutOfPatternReason,
   PageRequest,
+  REJECTION_NOTE_MAX_LENGTH,
   REJECTION_REASONS,
   StatEntry,
   StatEntryFilter,
@@ -1186,6 +1187,8 @@ export class StatsPage {
         takeUntilDestroyed(),
       )
       .subscribe((entry) => {
+        // Off the table otherwise : the next listing would close the panel it just opened (#383).
+        if (entry.review === 'REJECTED') this.withRejected.set(true);
         this.followView(entry);
         this.open(entry);
       });
@@ -1749,12 +1752,13 @@ export class StatsPage {
         params: { ticker: entry.ticker },
         variant: 'danger',
         icon: 'close',
+        noteMaxLength: REJECTION_NOTE_MAX_LENGTH,
       })
       .pipe(filter((pick): pick is Extract<StbConfirmPick, { confirmed: true }> => pick.confirmed))
       .subscribe((pick) => {
         if (this.completing()?.id === entry.id) this.completing.set(null);
         const reason = pick.value as StatRejectionReason | null;
-        this.changeReview(entry, this.repo.reject(entry.id, reason), 'reject');
+        this.changeReview(entry, this.repo.reject(entry.id, reason, pick.note), 'reject');
       });
   }
 
@@ -1768,6 +1772,9 @@ export class StatsPage {
   }
 
   reviewTagHint(entry: StatEntry): string {
+    if (entry.review === 'REJECTED' && entry.rejectionNote) {
+      return this.translate.instant('stats.review.note', { note: entry.rejectionNote });
+    }
     return this.translate.instant('stats.review.tagHint.' + (entry.review ?? 'VALIDATED'), {
       created: formatDate(entry.createdAt, 'short', this.locale),
     });

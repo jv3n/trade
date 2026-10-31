@@ -924,6 +924,7 @@ function makeStat(overrides: Partial<StatEntry> = {}): StatEntry {
     source: 'MANUAL',
     review: null,
     rejectionReason: null,
+    rejectionNote: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,

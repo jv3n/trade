@@ -29,6 +29,8 @@ const EN = {
       message: 'It leaves every figure and a new scan will not bring it back.',
       confirm: 'Reject',
       choice: 'Reason (optional)',
+      note: 'Note (optional)',
+      notePlaceholder: 'What the chart shows',
     },
     rejectionReason: { BREAKOUT: 'Breakout', NOISE: 'Noise' },
   },
@@ -155,7 +157,7 @@ describe('ConfirmService', () => {
     button('Reject').click();
     await settle();
 
-    expect(picks).toEqual([{ confirmed: true, value: 'BREAKOUT' }]);
+    expect(picks).toEqual([{ confirmed: true, value: 'BREAKOUT', note: null }]);
   });
 
   it('choose emits a null pick when the reason is left on —', async () => {
@@ -165,7 +167,45 @@ describe('ConfirmService', () => {
     button('Reject').click();
     await settle();
 
-    expect(picks).toEqual([{ confirmed: true, value: null }]);
+    expect(picks).toEqual([{ confirmed: true, value: null, note: null }]);
+  });
+
+  // #787 : the words are what the detectors get tuned on.
+  it('choose emits the note typed under the reason, trimmed', async () => {
+    const service = setup();
+    const picks = await choose(service, 500);
+    const note = dialogEl().querySelector('textarea')!;
+
+    note.value = '  The Echo clears the Apex by 12 %  ';
+    note.dispatchEvent(new Event('input'));
+    await settle();
+    button('Reject').click();
+    await settle();
+
+    expect(picks).toEqual([
+      { confirmed: true, value: null, note: 'The Echo clears the Apex by 12 %' },
+    ]);
+  });
+
+  it('choose caps the note, and reads a blank one as none', async () => {
+    const service = setup();
+    const picks = await choose(service, 500);
+    const note = dialogEl().querySelector('textarea')!;
+    expect(note.maxLength).toBe(500);
+
+    note.value = '   ';
+    note.dispatchEvent(new Event('input'));
+    await settle();
+    button('Reject').click();
+    await settle();
+
+    expect(picks).toEqual([{ confirmed: true, value: null, note: null }]);
+  });
+
+  it('choose shows no note unless asked for one', async () => {
+    await choose(setup());
+
+    expect(dialogEl().querySelector('textarea')).toBeNull();
   });
 
   it('choose confirms nothing on Cancel, whatever was picked', async () => {
@@ -180,12 +220,13 @@ describe('ConfirmService', () => {
   });
 });
 
-async function choose(service: ConfirmService) {
+async function choose(service: ConfirmService, noteMaxLength?: number) {
   const picks: StbConfirmPick[] = [];
   service
     .choose('stats.confirmReject', ['BREAKOUT', 'NOISE'], 'stats.rejectionReason', {
       params: { ticker: 'BNRG' },
       variant: 'danger',
+      noteMaxLength,
     })
     .subscribe((p) => picks.push(p));
   await settle();

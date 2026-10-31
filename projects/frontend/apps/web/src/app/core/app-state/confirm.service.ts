@@ -9,6 +9,8 @@ export interface ConfirmOptions {
   variant?: StbConfirmVariant;
   /** Material Symbols ligature, when the variant's own icon says the wrong thing. */
   icon?: string;
+  /** [ConfirmService.choose] : a free text under the pick, read from `note` / `notePlaceholder`. */
+  noteMaxLength?: number;
 }
 
 /**
@@ -52,6 +54,14 @@ export class ConfirmService {
           value,
           label: this.translate.instant(`${choicePrefix}.${value}`),
         })),
+        note:
+          options.noteMaxLength === undefined
+            ? undefined
+            : {
+                label: this.translate.instant(`${key}.note`),
+                placeholder: this.translate.instant(`${key}.notePlaceholder`),
+                maxLength: options.noteMaxLength,
+              },
       },
     });
   }

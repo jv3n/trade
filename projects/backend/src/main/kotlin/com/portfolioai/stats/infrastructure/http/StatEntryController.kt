@@ -108,14 +108,15 @@ class StatEntryController(private val service: StatEntryService) {
   fun validate(@PathVariable id: UUID): StatEntryDto = service.validate(id)
 
   /**
-   * « Rejeter » a scanner stat, with an optional reason of its pattern — kept, hidden but from «
-   * Rejetées ». A manual or validated stat, or another pattern's reason → 400.
+   * « Rejeter » a scanner stat, with an optional reason of its pattern and an optional note — kept,
+   * hidden but from « Rejetées ». A manual or validated stat, another pattern's reason or a note
+   * over its length → 400.
    */
   @PostMapping("/{id}/reject")
   fun reject(
     @PathVariable id: UUID,
     @RequestBody(required = false) request: StatRejectionRequest?,
-  ): StatEntryDto = service.reject(id, request?.reason)
+  ): StatEntryDto = service.reject(id, request?.reason, request?.note)
 
   /**
    * Back to review — a rejected stat, or a validated one (« Repasser à relire »). A manual or

@@ -91,10 +91,15 @@ export const WithChoice: Story = {
       choice: {
         label: 'Reason (optional)',
         options: [
-          { value: 'BREAKOUT', label: 'Breakout — the Echo took the Apex' },
+          { value: 'BREAKOUT', label: 'Breakout — the Echo broke above the Apex' },
           { value: 'WEAK_REJECTION', label: 'Rejection too weak' },
           { value: 'NOISE', label: 'Noise — not a double top' },
         ],
+        note: {
+          label: 'Note (optional)',
+          placeholder: 'What the chart shows, which threshold feels wrong…',
+          maxLength: 500,
+        },
       },
     },
   },

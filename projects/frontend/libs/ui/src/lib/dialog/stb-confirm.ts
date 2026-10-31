@@ -29,13 +29,14 @@ export class StbConfirm {
 
   /**
    * [open] with a pick under the message (a rejection reason…) : emits once, the pick on confirm —
-   * null when « — » is left — or `{ confirmed: false }` on Cancel / Esc / backdrop click.
+   * null when « — » is left — with its note, or `{ confirmed: false }` on Cancel / Esc / backdrop
+   * click.
    */
   choose(data: StbConfirmDialogData & { choice: StbConfirmChoice }): Observable<StbConfirmPick> {
     return this.afterClosed(data).pipe(
       map((result): StbConfirmPick =>
         result && typeof result === 'object'
-          ? { confirmed: true, value: result.value }
+          ? { confirmed: true, value: result.value, note: result.note }
           : { confirmed: false },
       ),
     );
@@ -43,10 +44,11 @@ export class StbConfirm {
 
   private afterClosed(data: StbConfirmDialogData) {
     return this.dialog
-      .open<StbConfirmDialog, StbConfirmDialogData, true | { value: string | null }>(
+      .open<
         StbConfirmDialog,
-        { data, width: '440px', maxWidth: 'calc(100vw - 32px)' },
-      )
+        StbConfirmDialogData,
+        true | { value: string | null; note: string | null }
+      >(StbConfirmDialog, { data, width: '440px', maxWidth: 'calc(100vw - 32px)' })
       .afterClosed();
   }
 }

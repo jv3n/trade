@@ -87,6 +87,7 @@ interface StatEntryWireDto {
   source: StatSource;
   review: StatReview | null;
   rejectionReason: StatRejectionReason | null;
+  rejectionNote: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -103,6 +104,7 @@ type StatEntryWireRequest = Omit<
   | 'source'
   | 'review'
   | 'rejectionReason'
+  | 'rejectionNote'
   | 'createdAt'
   | 'updatedAt'
 >;
@@ -253,9 +255,13 @@ export class HttpStatsRepository extends StatsRepository {
       .pipe(map(fromWire));
   }
 
-  reject(id: string, reason: StatRejectionReason | null): Observable<StatEntry> {
+  reject(
+    id: string,
+    reason: StatRejectionReason | null,
+    note: string | null,
+  ): Observable<StatEntry> {
     return this.http
-      .post<StatEntryWireDto>(`${this.base}/${id}/reject`, { reason })
+      .post<StatEntryWireDto>(`${this.base}/${id}/reject`, { reason, note })
       .pipe(map(fromWire));
   }
 

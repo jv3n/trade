@@ -253,13 +253,16 @@ describe('HttpStatsRepository', () => {
     expect(review).toBe('TO_REVIEW');
   });
 
-  it('reject sends its reason — null when none was picked', () => {
-    repo.reject('stat-1', 'BREAKOUT').subscribe();
-    expect(http.expectOne('/api/stats/stat-1/reject').request.body).toEqual({ reason: 'BREAKOUT' });
+  it('reject sends its reason and its note — null when left out', () => {
+    repo.reject('stat-1', 'BREAKOUT', 'The Echo clears the Apex').subscribe();
+    expect(http.expectOne('/api/stats/stat-1/reject').request.body).toEqual({
+      reason: 'BREAKOUT',
+      note: 'The Echo clears the Apex',
+    });
 
-    repo.reject('stat-1', null).subscribe();
+    repo.reject('stat-1', null, null).subscribe();
     const req = http.expectOne('/api/stats/stat-1/reject');
-    expect(req.request.body).toEqual({ reason: null });
+    expect(req.request.body).toEqual({ reason: null, note: null });
     req.flush(wireStat());
   });
 
@@ -403,6 +406,7 @@ describe('HttpStatsRepository', () => {
       source: 'MANUAL',
       review: null,
       rejectionReason: null,
+      rejectionNote: null,
       createdAt: '2026-09-17T12:00:00Z',
       updatedAt: '2026-09-17T21:00:00Z',
     };

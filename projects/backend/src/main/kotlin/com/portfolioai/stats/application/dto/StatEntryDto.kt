@@ -72,10 +72,13 @@ data class StatEntryDto(
   /** Why the recorded prices say this was not the setup (#499) — empty when nothing does. */
   val outOfPattern: List<OutOfPatternReason>,
   val trades: List<TradeLinkDto>,
-  /** Manual or scanner (#762) ; [review] is null on a manual stat, [rejectionReason] optional. */
+  /**
+   * Manual or scanner (#762) ; [review] is null on a manual stat, the rejection's words optional.
+   */
   val source: StatSource,
   val review: StatReview?,
   val rejectionReason: StatRejectionReason?,
+  val rejectionNote: String?,
   val createdAt: Instant,
   val updatedAt: Instant,
 )
@@ -122,6 +125,7 @@ fun StatEntry.toDto(trades: List<TradeLinkDto> = emptyList()) =
     source = source,
     review = review,
     rejectionReason = rejectionReason,
+    rejectionNote = rejectionNote,
     createdAt = createdAt,
     updatedAt = updatedAt,
   )

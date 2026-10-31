@@ -300,6 +300,12 @@ tr.rejected td.mat-column-actions {
   opacity: 1;
 }
 
+.review-note {
+  display: block;
+  margin-top: s.$space-xs;
+  white-space: pre-line;
+}
+
 // The scanner's one mark — the radar and the word, in every state. Neutral once validated or
 // rejected : the source, not a state.
 .review-tag {
