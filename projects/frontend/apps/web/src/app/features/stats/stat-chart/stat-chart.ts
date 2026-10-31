@@ -14,6 +14,7 @@ import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   CandleBar,
+  CandleLeg,
   CandleLine,
   CandleMark,
   CandleShade,
@@ -232,14 +233,22 @@ export class StatChart {
     }),
   );
 
+  private readonly candleSize = computed(() => (this.range() === 'session' ? 1 : DAY_CANDLE));
+
+  /** The candle of the view a point sits on — null when the view doesn't show it. */
+  private candleOf(point: { name: string; minute: number }): string | null {
+    const size = this.candleSize();
+    const at = label(Math.floor(barMinuteOf(point) / size) * size);
+    return this.candles().some((c) => c.label === at) ? at : null;
+  }
+
   readonly marks = computed<CandleMark[]>(() => {
-    const labels = new Set(this.candles().map((c) => c.label));
-    const size = this.range() === 'session' ? 1 : DAY_CANDLE;
+    const size = this.candleSize();
     const off = new Map(this.offPoints().map((o) => [o.point.name, o.edge]));
     const format = this.formatPrice();
     return this.placed().flatMap((p) => {
-      const at = label(Math.floor(barMinuteOf(p) / size) * size);
-      if (!labels.has(at)) return [];
+      const at = this.candleOf(p);
+      if (at === null) return [];
       const edge = off.get(p.name);
       return [
         {
@@ -251,6 +260,36 @@ export class StatChart {
           above: p.above,
           // Off is judged on the 1-min candle : a 5-min one can hold the point and bury the leader.
           towards: size === 1 ? edge : undefined,
+        },
+      ];
+    });
+  });
+
+  /**
+   * The lines between the typed points, in time order (#818) : a point not typed is skipped, a leg
+   * the view doesn't show both ends of is not drawn. The move reads from its first point, as the
+   * scanner's bands do.
+   */
+  readonly legs = computed<CandleLeg[]>(() => {
+    const off = new Set(this.offPoints().map((o) => o.point.name));
+    const ordered = [...this.placed()].sort((a, b) => a.minute - b.minute);
+    return ordered.slice(1).flatMap((to, index) => {
+      const from = ordered[index];
+      const start = this.candleOf(from);
+      const end = this.candleOf(to);
+      if (start === null || end === null || from.price === 0) return [];
+      const move = ((to.price - from.price) / from.price) * 100;
+      return [
+        {
+          title: this.translate.instant('stats.chart.leg', {
+            from: from.name,
+            to: to.name,
+            move: `${move < 0 ? '−' : '+'}${formatNumber(Math.abs(move), this.locale, '1.1-1')}`,
+            minutes: to.minute - from.minute,
+          }),
+          from: { at: start, price: from.price },
+          to: { at: end, price: to.price },
+          tone: off.has(from.name) || off.has(to.name) ? ('warn' as const) : ('accent' as const),
         },
       ];
     });

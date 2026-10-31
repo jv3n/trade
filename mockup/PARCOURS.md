@@ -1136,6 +1136,14 @@ points card (OPS or BARES) — read the bars, then type or correct the points ri
 - **A typed time is its candle's end**, as a chart reads it and ts-scanner records it (#806) : a
   point at 10:24 sits on the candle opening at 10:23. The Open is the exception, the opening of the
   9:30 candle.
+- **The legs between the points** (#818) : a thin line through the typed points, in time order —
+  Open → Push → Sink, Base → Apex → Rejection → Echo → Sink. A point not typed yet is skipped, the
+  leg joins the two around it. **Hovering a leg** gives its move, `Base → Apex · +52,3 % · 8 min`,
+  taken from its first point as the scanner's bands read it — nothing written on the chart, which
+  already carries its letters. Indigo, a price move being neutral ; **amber when one of its two
+  points is off its candle**, its percentage doubtful until the point is corrected. Both views ; on
+  « Journée » a leg can fall inside one 5-min candle, the tooltip stays right and « Séance » remains
+  the view to read legs on.
 - For a GUS, the **previous close** as a dashed line : the gap reads off it.
 - **A point off its candle reads amber** — a price outside its 1-min candle's low–high, at the time
   typed, is a mistyped price or time : the mark turns amber, a dashed leader joins it to its candle

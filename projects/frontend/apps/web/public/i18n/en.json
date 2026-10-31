@@ -916,6 +916,7 @@
       "missingOne": "{{points}} not typed yet — read it off the candles, its mark shows with the time and the price.",
       "missing": "{{points}} not typed yet — read them off the candles, their marks show with the time and the price.",
       "off": "Off its candle : {{points}} — check the price or the time.",
+      "leg": "{{from}} → {{to}} · {{move}}% · {{minutes}} min",
       "offPoint": "{{name}} {{price}} at {{time}}, its 1-min candle {{low}}–{{high}}",
       "and": " and "
     },
