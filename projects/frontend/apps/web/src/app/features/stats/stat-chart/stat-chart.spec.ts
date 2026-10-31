@@ -207,11 +207,15 @@ describe('StatChart', () => {
     fullscreenEnabled(true);
     const { el, fixture, view } = await render();
     const card = el.querySelector('.stat-chart') as HTMLElement;
-    card.requestFullscreen = vi.fn(() => Promise.reject(new TypeError('not granted')));
+    const refusal = Promise.reject(new TypeError('not granted'));
+    const handled = vi.spyOn(refusal, 'catch');
+    card.requestFullscreen = vi.fn(() => refusal);
 
     (el.querySelector('[data-testid="chart-fullscreen"]') as HTMLButtonElement).click();
     await fixture.whenStable();
 
+    // The state alone would hold without the `catch` : it is the rejection that must not escape.
+    expect(handled).toHaveBeenCalled();
     expect(view.fullscreen()).toBe(false);
   });
 
