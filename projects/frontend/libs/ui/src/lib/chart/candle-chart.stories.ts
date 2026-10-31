@@ -3,6 +3,7 @@ import { moduleMetadata, type Meta, type StoryObj } from '@storybook/angular';
 import {
   StbCandleChart,
   type CandleBar,
+  type CandleLeg,
   type CandleLine,
   type CandleMark,
   type CandleShade,
@@ -11,6 +12,7 @@ import {
 interface CandleChartArgs {
   bars: readonly CandleBar[];
   marks: readonly CandleMark[];
+  legs: readonly CandleLeg[];
   line: CandleLine | null;
   shades: readonly CandleShade[];
   height: number;
@@ -52,12 +54,25 @@ const meta: Meta<CandleChartArgs> = {
         'Points on their candle : `{ short, title, at, price, tone, above, towards? }` — `warn` ' +
         'with `towards` draws a point off its candle, with a leader to its edge.',
     },
+    legs: {
+      description:
+        'Lines between the points, hovered for their move : `{ title, from, to, tone }` — `warn` ' +
+        'for a leg touching a point off its candle.',
+    },
     line: { description: 'A dashed reference — `{ price, label }`.' },
     shades: { description: 'Stretches shaded, from one bar label to another.' },
     height: { control: { type: 'range', min: 200, max: 480, step: 20 } },
   },
   args: {
     bars: session(),
+    legs: [
+      {
+        title: 'Open → Push · +15.8% · 11 min',
+        from: { at: '09:30', price: 1.9 },
+        to: { at: '09:40', price: 2.2 },
+        tone: 'accent',
+      },
+    ],
     marks: [
       {
         short: 'O',

@@ -89,6 +89,7 @@ describe('StatChart', () => {
           missing: '{{points}} not typed yet',
           off: 'Off its candle : {{points}}',
           offPoint: '{{name}} {{price}} at {{time}}',
+          leg: '{{from}} → {{to}} · {{move}}% · {{minutes}} min',
         },
       },
     });
@@ -235,6 +236,65 @@ describe('StatChart', () => {
     const { el } = await render();
 
     expect(el.querySelector('[data-testid="chart-fullscreen"]')).toBeNull();
+  });
+
+  // ---- Legs (#818) ----
+
+  it('joins the typed points in time order, its move read from the first', async () => {
+    const { view } = await render((h) =>
+      h.points.set([
+        { name: 'Push', time: '09:32', price: 1.2, above: true },
+        { name: 'Open', time: null, price: 1.1, above: false },
+      ]),
+    );
+
+    view.range.set('session');
+
+    expect(view.legs()).toEqual([
+      {
+        title: 'Open → Push · +9.1% · 2 min',
+        from: { at: '09:30', price: 1.1 },
+        to: { at: '09:31', price: 1.2 },
+        tone: 'accent',
+      },
+    ]);
+  });
+
+  it('skips a point not typed : the leg joins the two around it', async () => {
+    const { view } = await render((h) => {
+      h.pattern.set('DT');
+      h.points.set([
+        { name: 'Base', time: '09:31', price: 1.1, above: false },
+        { name: 'Apex', time: null, price: null, above: true },
+        { name: 'Rejection', time: '09:32', price: 1.04, above: false },
+      ]);
+    });
+
+    expect(view.legs()).toHaveLength(1);
+    expect(view.legs()[0].title).toBe('Base → Rejection · −5.5% · 1 min');
+  });
+
+  it('turns a leg amber when one of its points is off its candle', async () => {
+    const { view } = await render((h) =>
+      h.points.set([
+        { name: 'Open', time: null, price: 1.1, above: false },
+        { name: 'Push', time: '09:31', price: 2.2, above: true },
+      ]),
+    );
+
+    expect(view.legs()[0].tone).toBe('warn');
+  });
+
+  it('draws no leg whose end the view does not show', async () => {
+    const { view } = await render((h) => {
+      h.pattern.set('DT');
+      h.points.set([
+        { name: 'Base', time: '08:03', price: 1.1, above: false },
+        { name: 'Apex', time: '09:32', price: 1.2, above: true },
+      ]);
+    });
+
+    expect(view.legs()).toEqual([]);
   });
 
   it('lists the points not typed yet, to read off the candles', async () => {

@@ -314,6 +314,13 @@
         height: auto;
         touch-action: none;
       }
+      /* #818 : une jambe entre deux points — fine, épaissie au survol, sur une zone de survol plus large que le trait. */
+      .day-chart .chart-leg line:first-child {
+        pointer-events: none;
+      }
+      .day-chart .chart-leg:hover line:first-child {
+        stroke-width: 2.5;
+      }
       .day-chart .chart-bar {
         display: flex;
         align-items: center;
@@ -2300,6 +2307,24 @@
             g.append(el('rect', { x: cx - bw / 2, y: VOL_TOP + VOL_H - vh, width: bw, height: vh, fill: tone, 'fill-opacity': 0.45 }));
           });
           svg.append(g);
+
+          // #818 — les jambes entre les points saisis, dans l'ordre du temps : un point pas saisi est sauté. Le % se lit depuis le
+          // premier point et ne s'écrit pas sur le graphique, le survol le donne. Neutre, un mouvement de prix : indigo, ambre si
+          // l'un des deux points est hors de sa bougie — son % est douteux.
+          const isOff = (p) => all[p.at] && (p.price > all[p.at].h * 1.003 || p.price < all[p.at].l * 0.997);
+          const placed = points.filter((p) => p.price != null && (p.timed !== false || p.short === 'O')).sort((a, b) => a.at - b.at);
+          placed.slice(1).forEach((to, k) => {
+            const from = placed[k];
+            if (from.at < first || to.at >= first + n) return;
+            const move = ((to.price - from.price) / from.price) * 100;
+            const read = `${from.name} → ${to.name} · ${move >= 0 ? '+' : '−'}${Math.abs(move).toFixed(1).replace('.', ',')} % · ${to.at - from.at} min`;
+            const ends = { x1: x(from.at), y1: y(from.price), x2: x(to.at), y2: y(to.price) };
+            const leg = el('g', { class: 'chart-leg' });
+            leg.append(el('line', { ...ends, stroke: isOff(from) || isOff(to) ? 'var(--warn)' : 'var(--accent)', 'stroke-width': 1.5 }));
+            leg.append(el('line', { ...ends, stroke: 'transparent', 'stroke-width': 12 }));
+            leg.append(el('title', {}, read));
+            svg.append(leg);
+          });
 
           // Les points du pattern, en indigo — seulement ceux saisis.
           const missing = [], off = [];

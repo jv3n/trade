@@ -916,6 +916,7 @@
       "missingOne": "{{points}} pas encore saisi — lis-le sur les bougies, la marque apparaît avec l'heure et le prix.",
       "missing": "{{points}} pas encore saisis — lis-les sur les bougies, la marque apparaît avec l'heure et le prix.",
       "off": "Hors de sa bougie : {{points}} — vérifie le prix ou l'heure.",
+      "leg": "{{from}} → {{to}} · {{move}} % · {{minutes}} min",
       "offPoint": "{{name}} {{price}} à {{time}}, sa bougie 1 min {{low}}–{{high}}",
       "and": " et "
     },

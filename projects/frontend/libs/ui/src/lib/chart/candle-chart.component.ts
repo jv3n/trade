@@ -58,6 +58,18 @@ export interface CandleMark {
   towards?: number;
 }
 
+/**
+ * A line between two points of the pattern, hovered for its move. [tone] `warn` is a leg touching a
+ * point off its candle : what [title] says of it is doubtful.
+ */
+export interface CandleLeg {
+  /** What the tooltip says of it — `Base → Apex · +52.3% · 8 min`. */
+  title: string;
+  from: { at: string; price: number };
+  to: { at: string; price: number };
+  tone: 'accent' | 'warn';
+}
+
 /** A horizontal reference — the previous close a gap is read from. */
 export interface CandleLine {
   price: number;
@@ -105,6 +117,7 @@ export class StbCandleChart {
 
   readonly bars = input.required<readonly CandleBar[]>();
   readonly marks = input<readonly CandleMark[]>([]);
+  readonly legs = input<readonly CandleLeg[]>([]);
   readonly line = input<CandleLine | null>(null);
   readonly shades = input<readonly CandleShade[]>([]);
   /**
@@ -146,6 +159,7 @@ export class StbCandleChart {
   readonly option = computed<StbChartOptionFactory>(() => {
     const bars = this.bars();
     const marks = this.marks();
+    const legs = this.legs();
     const line = this.line();
     const shades = this.shades();
     const price = this.formatPrice();
@@ -294,6 +308,32 @@ export class StbCandleChart {
             data: marks
               .filter((m) => m.towards !== undefined)
               .map((m) => [{ coord: [m.at, m.price] }, { coord: [m.at, m.towards] }]),
+          },
+        },
+        // A series of its own : the leaders above are silent, and `silent` holds for a whole markLine.
+        // Hovered, a leg's item tooltip takes over from the axis one, as a mark's does.
+        {
+          type: 'scatter',
+          name: 'legs',
+          data: [],
+          z: 4,
+          markLine: {
+            symbol: 'none',
+            label: { show: false },
+            emphasis: { label: { show: false }, lineStyle: { width: 2.5 } },
+            tooltip: { trigger: 'item', formatter: (p: { name: string }) => p.name },
+            data: legs.map((leg) => [
+              {
+                name: leg.title,
+                coord: [leg.from.at, leg.from.price],
+                lineStyle: {
+                  color: leg.tone === 'warn' ? palette.cost : palette.accent,
+                  type: 'solid',
+                  width: 1.5,
+                },
+              },
+              { coord: [leg.to.at, leg.to.price] },
+            ]),
           },
         },
       ],
