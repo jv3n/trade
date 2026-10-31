@@ -864,7 +864,7 @@
                   <td class="sep"></td>
                 </tr>
                 <tr class="rejected" hidden>
-                  <td>17/09</td><td><span class="ticker">ATXG</span></td><td><span class="tag tag-accent">DT</span> <span class="tag" title="Rejetée lun. 21/09 — gardée pour qu'un nouveau scan ne la ramène pas, et pour régler le détecteur sur ses points"><span class="icon">radar</span>scanner · rejetée · cassure</span></td>
+                  <td>17/09</td><td><span class="ticker">ATXG</span></td><td><span class="tag tag-accent">DT</span> <span class="tag" title="Note : l'Echo passe 12 % au-dessus de l'Apex à 11h40, le volume repart — une vraie cassure, pas un double top."><span class="icon">radar</span>scanner · rejetée · cassure</span></td>
                   <td></td>
                   <td><button class="btn btn-sm" data-restore title="Elle repasse à relire"><span class="icon">undo</span> Rétablir</button></td>
                   <td class="num sep muted">—</td><td class="num">7,9 M</td>
@@ -1449,7 +1449,7 @@
               <label for="reject-reason">Motif (facultatif)</label>
               <select class="input" id="reject-reason">
                 <option value="">—</option>
-                <option value="cassure" data-pattern="DT">Cassure — l'Echo a repris l'Apex</option>
+                <option value="cassure" data-pattern="DT">Cassure — l'Echo a cassé au-dessus de l'Apex</option>
                 <option value="rejet faible" data-pattern="DT">Rejet trop faible</option>
                 <option value="echo loin" data-pattern="DT">Echo trop loin de l'Apex</option>
                 <option value="bruit" data-pattern="DT">Bruit — pas un double top</option>
@@ -1459,6 +1459,11 @@
                 <option value="bruit" data-pattern="GUS">Bruit — pas un GUS</option>
                 <option value="autre">Autre</option>
               </select>
+            </div>
+            <!-- #787 : le cas, en quelques mots — c'est ce qui sert à régler le détecteur. -->
+            <div class="field">
+              <label for="reject-note">Note (facultatif)</label>
+              <textarea class="input" id="reject-note" rows="3" maxlength="500" placeholder="Ce qu'on voit sur le chart, quel seuil paraît faux…"></textarea>
             </div>
           </div>
         </div>
@@ -1935,6 +1940,7 @@
         const $ = (id) => document.getElementById(id);
         const dialog = $('reject-dialog');
         const reason = $('reject-reason');
+        const note = $('reject-note');
         const toggle = $('toggle-rejected');
         const reviewTags = new Map([...document.querySelectorAll('tr.to-review')].map((r) => [r, r.cells[2].innerHTML]));
         const reviewCheck = document.querySelector('tr.to-review .check').closest('td').innerHTML;
@@ -1964,12 +1970,12 @@
           c.check.innerHTML = '<button class="check" data-complete title="Marquer complétée — ses prix y sont"><span class="icon">radio_button_unchecked</span></button>';
           c.action.innerHTML = '<button class="btn btn-sm" data-trade><span class="icon">arrow_forward</span> Trade</button>';
         }
-        function reject(row, why) {
+        function reject(row, why, note) {
           const c = cells(row);
           const dtTag = patternTag(row);
           row.className = 'rejected';
           row.hidden = toggle.getAttribute('aria-pressed') !== 'true';
-          c.tag.innerHTML = dtTag + ' <span class="tag"><span class="icon">radar</span>scanner · rejetée' + (why ? ' · ' + why : '') + '</span>';
+          c.tag.innerHTML = dtTag + ' <span class="tag"' + (note ? ' title="Note : ' + note.replaceAll('"', '&quot;') + '"' : '') + '><span class="icon">radar</span>scanner · rejetée' + (why ? ' · ' + why : '') + '</span>';
           c.check.innerHTML = '';
           c.action.innerHTML = '<button class="btn btn-sm" data-restore title="Elle repasse à relire"><span class="icon">undo</span> Rétablir</button>';
         }
@@ -2056,6 +2062,7 @@
             const pattern = target ? target.cells[2].querySelector('.tag').textContent : 'DT';
             reason.querySelectorAll('[data-pattern]').forEach((o) => (o.hidden = o.dataset.pattern !== pattern));
             reason.value = '';
+            note.value = '';
             dialog.showModal();
           } else if (back) {
             sameStat(back.closest('tr')).forEach(restore);
@@ -2071,7 +2078,8 @@
         dialog.addEventListener('close', () => {
           if (dialog.returnValue !== 'ok') return;
           const why = reason.value;
-          (target ? sameStat(target) : rowsOf('BNRG')).forEach((row) => reject(row, why));
+          const words = note.value.trim();
+          (target ? sameStat(target) : rowsOf('BNRG')).forEach((row) => reject(row, why, words));
           if (!target || target === panelRow) closeReviewPanel();
           count();
         });

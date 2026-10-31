@@ -3,6 +3,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { StbDanger } from '../button/button.directives';
 
@@ -16,10 +17,16 @@ export type StbConfirmVariant = 'default' | 'danger';
 export interface StbConfirmChoice {
   label: string;
   options: readonly { value: string; label: string }[];
+  /** An optional free text under the pick : the case it only names. */
+  note?: { label: string; placeholder: string; maxLength: number };
 }
 
-/** What a confirmation with a [StbConfirmChoice] closes with : the pick on confirm, null for none. */
-export type StbConfirmPick = { confirmed: false } | { confirmed: true; value: string | null };
+/**
+ * What a confirmation with a [StbConfirmChoice] closes with : the pick and the note on confirm,
+ * trimmed, null for none.
+ */
+export type StbConfirmPick =
+  { confirmed: false } | { confirmed: true; value: string | null; note: string | null };
 
 /**
  * Texts and variant of a [StbConfirmDialog]. The lib has no i18n : every string arrives
@@ -56,6 +63,7 @@ export interface StbConfirmDialogData {
     MatDialogModule,
     MatFormFieldModule,
     MatIconModule,
+    MatInputModule,
     MatSelectModule,
     StbDanger,
   ],
@@ -77,6 +85,19 @@ export interface StbConfirmDialogData {
               }
             </mat-select>
           </mat-form-field>
+          @if (choice.note; as note) {
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="confirm-choice">
+              <mat-label>{{ note.label }}</mat-label>
+              <textarea
+                matInput
+                rows="3"
+                [maxLength]="note.maxLength"
+                [placeholder]="note.placeholder"
+                [value]="noted()"
+                (input)="noted.set($any($event.target).value)"
+              ></textarea>
+            </mat-form-field>
+          }
         }
       </div>
     </div>
@@ -163,6 +184,9 @@ export class StbConfirmDialog {
   protected readonly danger = computed(() => this.data.variant === 'danger');
   protected readonly icon = computed(() => this.data.icon ?? (this.danger() ? 'delete' : 'help'));
   protected readonly picked = signal<string | null>(null);
+  protected readonly noted = signal('');
   /** `true`, or the pick when there is a choice — Cancel, Esc and the backdrop leave `undefined`. */
-  protected readonly result = computed(() => (this.data.choice ? { value: this.picked() } : true));
+  protected readonly result = computed(() =>
+    this.data.choice ? { value: this.picked(), note: this.noted().trim() || null } : true,
+  );
 }

@@ -18,6 +18,7 @@ import { DayChart } from '../../core/api/stats/day-chart.model';
 import {
   PageRequest,
   PagedResult,
+  REJECTION_NOTE_MAX_LENGTH,
   REJECTION_REASONS,
   RuleScore,
   StatEntry,
@@ -115,6 +116,7 @@ function makeStat(overrides: Partial<StatEntry> = {}): StatEntry {
     source: 'MANUAL',
     review: null,
     rejectionReason: null,
+    rejectionNote: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,
@@ -312,7 +314,7 @@ async function setup(
         provide: ConfirmService,
         useValue: {
           ask: () => of(options.confirmed ?? true),
-          choose: () => of(options.pick ?? { confirmed: true, value: null }),
+          choose: () => of(options.pick ?? { confirmed: true, value: null, note: null }),
         },
       },
       // Only when a test names a query : the rows' `routerLink` needs the real route otherwise.
@@ -2560,7 +2562,7 @@ describe('StatsPage — the scanner stats to review (#764)', () => {
     const bnrg = makeScanned({ id: 'stat-bnrg', ticker: 'BNRG', pattern: 'DT' });
     const { page, repo } = await setup({
       rows: [bnrg],
-      pick: { confirmed: true, value: 'BREAKOUT' },
+      pick: { confirmed: true, value: 'BREAKOUT', note: 'The Echo clears the Apex by 12 %' },
     });
     const choose = vi.spyOn(TestBed.inject(ConfirmService), 'choose');
 
@@ -2570,9 +2572,17 @@ describe('StatsPage — the scanner stats to review (#764)', () => {
       'stats.confirmReject',
       REJECTION_REASONS.DT,
       'stats.rejectionReason',
-      expect.objectContaining({ params: { ticker: 'BNRG' }, variant: 'danger' }),
+      expect.objectContaining({
+        params: { ticker: 'BNRG' },
+        variant: 'danger',
+        noteMaxLength: REJECTION_NOTE_MAX_LENGTH,
+      }),
     );
-    expect(repo.reject).toHaveBeenCalledWith('stat-bnrg', 'BREAKOUT');
+    expect(repo.reject).toHaveBeenCalledWith(
+      'stat-bnrg',
+      'BREAKOUT',
+      'The Echo clears the Apex by 12 %',
+    );
   });
 
   it('a rejection left without a reason is sent without one', async () => {
@@ -2580,7 +2590,7 @@ describe('StatsPage — the scanner stats to review (#764)', () => {
 
     page.reject(makeScanned());
 
-    expect(repo.reject).toHaveBeenCalledWith('stat-nxtp', null);
+    expect(repo.reject).toHaveBeenCalledWith('stat-nxtp', null, null);
   });
 
   it('cancelling the rejection never reaches the repository', async () => {
@@ -2700,6 +2710,45 @@ describe('StatsPage — the scanner stats to review (#764)', () => {
     const banner = fixture.nativeElement.querySelector('.review-banner')?.textContent;
     expect(banner).toContain('stats.review.bannerRejectedTitle');
     expect(page.rejectedBanner(rejected)).toBe('stats.review.bannerRejectedBecause');
+  });
+
+  it('a rejected stat shows its note in the panel, and on its tag', async () => {
+    const rejected = makeScanned({
+      review: 'REJECTED',
+      rejectionNote: 'The Echo clears the Apex by 12 %',
+    });
+    const { fixture, page } = await setup({ rows: [rejected] });
+
+    page.open(rejected);
+    await settle(fixture);
+
+    expect(fixture.nativeElement.querySelector('.review-note')).not.toBeNull();
+    expect(page.reviewTagHint(rejected)).toBe('stats.review.note');
+  });
+
+  it('a rejected stat opened by link shows the rejected ones, so its panel stays open', async () => {
+    const rejected = makeScanned({ review: 'REJECTED' });
+
+    const { page, repo } = await setup({
+      rows: [rejected],
+      query: { stat: rejected.id },
+      byId: rejected,
+    });
+
+    expect(page.withRejected()).toBe(true);
+    expect(repo.lastFilter?.withRejected).toBe(true);
+    expect(page.completing()?.id).toBe(rejected.id);
+  });
+
+  it('a rejected stat without a note shows none', async () => {
+    const rejected = makeScanned({ review: 'REJECTED' });
+    const { fixture, page } = await setup({ rows: [rejected] });
+
+    page.open(rejected);
+    await settle(fixture);
+
+    expect(fixture.nativeElement.querySelector('.review-note')).toBeNull();
+    expect(page.reviewTagHint(rejected)).toBe('stats.review.tagHint.REJECTED');
   });
 
   it('a manual stat opens with no scanner banner', async () => {

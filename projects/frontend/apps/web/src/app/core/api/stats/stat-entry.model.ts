@@ -34,6 +34,9 @@ export type StatRejectionReason =
   | 'OTHER';
 
 /** The reasons a stat of each pattern is rejected with — the backend refuses another pattern's. */
+/** What the backend keeps of a rejection's words (#787). */
+export const REJECTION_NOTE_MAX_LENGTH = 500;
+
 export const REJECTION_REASONS: Record<StatPattern, readonly StatRejectionReason[]> = {
   GUS: ['GAP_TOO_SMALL', 'NEWS', 'FLOAT_OUT_OF_RANGE', 'NOISE', 'OTHER'],
   DT: ['BREAKOUT', 'WEAK_REJECTION', 'ECHO_TOO_FAR', 'NOISE', 'OTHER'],
@@ -139,6 +142,8 @@ export interface StatEntry {
   source: StatSource;
   review: StatReview | null;
   rejectionReason: StatRejectionReason | null;
+  /** The rejection's own words (#787). */
+  rejectionNote: string | null;
 
   createdAt: Date;
   updatedAt: Date;
@@ -165,6 +170,7 @@ export type StatEntryInput = Omit<
   | 'source'
   | 'review'
   | 'rejectionReason'
+  | 'rejectionNote'
   | 'createdAt'
   | 'updatedAt'
 >;

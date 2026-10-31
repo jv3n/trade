@@ -482,8 +482,11 @@
             } @else if (stat.review === 'REJECTED') {
               <span
                 ><b>{{ 'stats.review.bannerRejectedTitle' | translate }}</b>
-                {{ rejectedBanner(stat) }}</span
-              >
+                {{ rejectedBanner(stat) }}
+                @if (stat.rejectionNote; as note) {
+                  <span class="review-note">{{ 'stats.review.note' | translate: { note } }}</span>
+                }
+              </span>
             } @else {
               <span
                 ><b>{{ 'stats.review.bannerValidatedTitle' | translate }}</b>

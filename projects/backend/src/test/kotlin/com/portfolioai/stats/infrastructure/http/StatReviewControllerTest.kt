@@ -95,6 +95,22 @@ class StatReviewControllerTest {
   }
 
   @Test
+  fun `reject passes the note on, alone or with a reason`() {
+    given(service.reject(id, null, "The Echo clears the Apex by 12 %"))
+      .willReturn(scanned(StatReview.REJECTED))
+
+    mvc
+      .perform(
+        post("/api/stats/{id}/reject", id)
+          .contentType(MediaType.APPLICATION_JSON)
+          .content("""{"note":"The Echo clears the Apex by 12 %"}""")
+      )
+      .andExpect(status().isOk)
+
+    verify(service).reject(id, null, "The Echo clears the Apex by 12 %")
+  }
+
+  @Test
   fun `an unknown reason is a 400, the service never called`() {
     mvc
       .perform(
@@ -104,7 +120,7 @@ class StatReviewControllerTest {
       )
       .andExpect(status().isBadRequest)
 
-    verify(service, never()).reject(any(), anyOrNull())
+    verify(service, never()).reject(any(), anyOrNull(), anyOrNull())
   }
 
   @Test
@@ -126,6 +142,7 @@ class StatReviewControllerTest {
         ticker = "NXTP",
         source = StatSource.SCANNER,
         review = review,
+        rejectionNote = null,
         rejectionReason = reason,
       )
       .toDto()

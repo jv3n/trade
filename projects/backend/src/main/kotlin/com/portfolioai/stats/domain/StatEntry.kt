@@ -130,6 +130,7 @@ class StatEntry(
   @JdbcTypeCode(SqlTypes.NAMED_ENUM)
   @Column(name = "rejection_reason")
   var rejectionReason: StatRejectionReason? = null,
+  @Column(name = "rejection_note") var rejectionNote: String? = null,
 
   // ---- Audit ----
   @Column(name = "created_at", nullable = false, updatable = false)

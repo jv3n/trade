@@ -210,6 +210,47 @@ class StatReviewIntegrationTest {
   }
 
   @Test
+  fun `a rejection keeps its note, trimmed, with or without a reason`() {
+    val scanned = repo.save(doubleTop(testUser, "ATXG"))
+
+    val rejected = service.reject(scanned.id, null, "  The Echo clears the Apex by 12 %  ")
+
+    assertNull(rejected.rejectionReason)
+    assertEquals("The Echo clears the Apex by 12 %", rejected.rejectionNote)
+  }
+
+  @Test
+  fun `a blank note is no note`() {
+    val scanned = repo.save(gus(testUser, "NXTP"))
+
+    assertNull(service.reject(scanned.id, null, "   ").rejectionNote)
+  }
+
+  @Test
+  fun `a second rejection replaces the note, down to none`() {
+    val scanned = repo.save(gus(testUser, "NXTP"))
+    service.reject(scanned.id, null, "Float looks wrong")
+
+    assertNull(service.reject(scanned.id, StatRejectionReason.NOISE).rejectionNote)
+  }
+
+  @Test
+  fun `a note of 500 characters is kept, one more is a 400`() {
+    val scanned = repo.save(gus(testUser, "NXTP"))
+
+    assertEquals(500, service.reject(scanned.id, null, "x".repeat(500)).rejectionNote?.length)
+    assertStatus(HttpStatus.BAD_REQUEST) { service.reject(scanned.id, null, "x".repeat(501)) }
+  }
+
+  @Test
+  fun `restoring a rejected stat drops its note with its reason`() {
+    val scanned = repo.save(gus(testUser, "NXTP"))
+    service.reject(scanned.id, StatRejectionReason.NOISE, "Nothing on the chart")
+
+    assertNull(service.restore(scanned.id).rejectionNote)
+  }
+
+  @Test
   fun `a reason of the other pattern is a 400 — a GUS is not rejected as a breakout`() {
     val gus = repo.save(gus(testUser, "NXTP"))
     val dt = repo.save(doubleTop(testUser, "BNRG"))

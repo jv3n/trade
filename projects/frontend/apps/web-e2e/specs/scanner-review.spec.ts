@@ -7,16 +7,23 @@ import { expect, isoToday, openedDialog, test } from '../fixtures';
  *
  * - « À relire » lands on « Tous » with the count of both patterns ;
  * - « Valider » takes NXTP into the stats, to complete, with no confirmation ;
- * - « Rejeter » asks, with a reason of the stat's pattern — BNRG, a double top the Echo broke ;
- * - the rejected stat is gone from « Toutes », and back under « Rejetées » with its reason.
+ * - « Rejeter » asks, with a reason of the stat's pattern — BNRG, a double top the Echo broke — and
+ *   a free note (#787) ;
+ * - the rejected stat is gone from « Toutes », and back under « Rejetées » with its reason, its
+ *   note on the tag and in the panel ;
+ * - « Rétablir » sends it back to review, reason and note dropped.
  *
  * The stats come in through the e2e twin of the scanner's endpoint, for the test's own user.
  */
 
+const NOTE = "L'Echo passe 12 % au-dessus de l'Apex, le volume repart.";
+
 interface Stat {
+  id: string;
   ticker: string;
   review: string | null;
   rejectionReason: string | null;
+  rejectionNote: string | null;
 }
 
 test('a scanner stat is validated, another rejected, and the rejected one leaves « Toutes »', async ({
@@ -70,12 +77,13 @@ test('a scanner stat is validated, another rejected, and the rejected one leaves
   await expect(page.getByText('NXTP validée — à compléter.')).toBeVisible();
   await expect(page.getByRole('radio', { name: 'À relire · 1' })).toBeVisible();
 
-  // ---- Rejeter : confirmed, with a reason of the double top ----
+  // ---- Rejeter : confirmed, with a reason of the double top and a note ----
   await bnrg.getByRole('button', { name: 'Rejeter' }).click();
   const dialog = await openedDialog(page);
   await dialog.getByRole('combobox', { name: 'Motif (facultatif)' }).click();
   await expect(page.getByRole('option', { name: 'Gap trop faible' })).toHaveCount(0);
-  await page.getByRole('option', { name: "Cassure — l'Echo a repris l'Apex" }).click();
+  await page.getByRole('option', { name: "Cassure — l'Echo a cassé au-dessus de l'Apex" }).click();
+  await dialog.getByRole('textbox', { name: 'Note (facultatif)' }).fill(NOTE);
   await dialog.getByRole('button', { name: 'Rejeter' }).click();
   await expect(page.getByText('BNRG rejetée.')).toBeVisible();
 
@@ -84,12 +92,36 @@ test('a scanner stat is validated, another rejected, and the rejected one leaves
   await expect(nxtp.getByText('scanner', { exact: true })).toBeVisible();
   await expect(bnrg).toHaveCount(0);
 
-  // ---- « Rejetées » : BNRG back, greyed, with its reason ----
+  // ---- « Rejetées » : BNRG back, greyed, with its reason and, on its tag, its note ----
   await page.getByRole('button', { name: 'Rejetées' }).click();
-  await expect(bnrg.getByText('scanner · rejetée · cassure')).toBeVisible();
+  const tag = bnrg.getByText('scanner · rejetée · cassure');
+  await expect(tag).toBeVisible();
+  await tag.hover();
+  // The surface : Material also keeps the text in a hidden `role="tooltip"` node, for the a11y link.
+  // Filtered : the « Rejetées » toggle, just clicked, may still show its own tooltip.
+  await expect(
+    page.locator('.mat-mdc-tooltip-surface').filter({ hasText: `Note : ${NOTE}` }),
+  ).toBeVisible();
 
   const stats = await api.get<{ content: Stat[] }>('/api/stats?withRejected=true');
   const byTicker = Object.fromEntries(stats.content.map((s) => [s.ticker, s]));
   expect(byTicker['NXTP'].review).toBe('VALIDATED');
-  expect(byTicker['BNRG']).toMatchObject({ review: 'REJECTED', rejectionReason: 'BREAKOUT' });
+  expect(byTicker['BNRG']).toMatchObject({
+    review: 'REJECTED',
+    rejectionReason: 'BREAKOUT',
+    rejectionNote: NOTE,
+  });
+
+  // ---- Its panel : the note in full, and « Rétablir » drops it with the reason ----
+  await page.goto(`/stats?stat=${byTicker['BNRG'].id}`);
+  await expect(page.locator('.review-note')).toHaveText(`Note : ${NOTE}`);
+  await bnrg.getByRole('button', { name: 'Rétablir' }).click();
+  await expect(page.getByRole('radio', { name: 'À relire · 1' })).toBeVisible();
+
+  const restored = await api.get<Stat>(`/api/stats/${byTicker['BNRG'].id}`);
+  expect(restored).toMatchObject({
+    review: 'TO_REVIEW',
+    rejectionReason: null,
+    rejectionNote: null,
+  });
 });

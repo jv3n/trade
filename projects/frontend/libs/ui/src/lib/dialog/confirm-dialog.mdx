@@ -38,6 +38,8 @@ this.confirm
 
 ## With a choice
 
-A `choice` adds an optional pick under the message — a rejection reason, a category — with an empty « — » first entry. Open it with `StbConfirm.choose(data)` : it emits `{ confirmed: true, value }` (`value` null when « — » is left) or `{ confirmed: false }`.
+A `choice` adds an optional pick under the message — a rejection reason, a category — with an empty « — » first entry. Open it with `StbConfirm.choose(data)` : it emits `{ confirmed: true, value, note }` (`value` null when « — » is left) or `{ confirmed: false }`.
+
+Its `note` adds an optional free text under the pick : it comes back trimmed in `note`, null when left blank.
 
 <Canvas of={Stories.WithChoice} />

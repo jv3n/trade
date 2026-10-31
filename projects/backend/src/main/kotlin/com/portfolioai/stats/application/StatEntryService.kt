@@ -37,6 +37,9 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ResponseStatusException
 
+/** The same bound as `ck_stat_entry_rejection_note_length`, for a clean 400 (#787). */
+private const val REJECTION_NOTE_MAX_LENGTH = 500
+
 /**
  * Stats service — the sheet filled as the day goes and ticked once complete (cf.
  * `mockup/PARCOURS.md`, step 5).
@@ -369,11 +372,11 @@ class StatEntryService(
   /**
    * « Rejeter » — not the pattern. The stat is **kept**, hidden but from « Rejetées » : it stops a
    * re-scan from bringing it back, and its points are what the detector is tuned on. The [reason]
-   * is optional and of the stat's pattern ; rejecting again changes it. A validated stat is put
-   * back to review first : a 400.
+   * is optional and of the stat's pattern, the [note] optional too ; rejecting again changes both.
+   * A validated stat is put back to review first : a 400.
    */
   @Transactional
-  fun reject(id: UUID, reason: StatRejectionReason?): StatEntryDto =
+  fun reject(id: UUID, reason: StatRejectionReason?, note: String? = null): StatEntryDto =
     changeReview(id) { entry ->
       if (entry.review == StatReview.VALIDATED) {
         throw badRequest("Stat ${entry.ticker} is validated — put it back to review first")
@@ -381,8 +384,13 @@ class StatEntryService(
       if (reason != null && entry.pattern !in reason.patterns) {
         throw badRequest("$reason is not a reason to reject a ${entry.pattern}")
       }
+      val words = note?.trim()?.ifEmpty { null }
+      if (words != null && words.length > REJECTION_NOTE_MAX_LENGTH) {
+        throw badRequest("A rejection note is at most $REJECTION_NOTE_MAX_LENGTH characters")
+      }
       entry.review = StatReview.REJECTED
       entry.rejectionReason = reason
+      entry.rejectionNote = words
     }
 
   /**
@@ -397,6 +405,7 @@ class StatEntryService(
       }
       entry.review = StatReview.TO_REVIEW
       entry.rejectionReason = null
+      entry.rejectionNote = null
     }
 
   private fun changeReview(id: UUID, change: (StatEntry) -> Unit): StatEntryDto {

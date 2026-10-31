@@ -1108,12 +1108,13 @@
       "banner": "le {{created}}, lue sur les barres 1 min du {{day}} — vérifie ses prix sur le chart et corrige-les ici. Corriger ne la valide pas : elle reste à relire, hors des chiffres, jusqu'à « Valider ».",
       "bannerValidatedTitle": "Déposée par le scanner, validée",
       "bannerValidated": "— une stat comme les autres, modifiable comme elles. « Repasser à relire » la sort des chiffres jusqu'à une nouvelle validation.",
+      "note": "Note : {{note}}",
       "bannerRejectedTitle": "Déposée par le scanner, rejetée",
       "bannerRejected": "— hors de tous les chiffres, gardée pour qu'un nouveau scan ne la ramène pas. « Rétablir » la repasse à relire.",
       "bannerRejectedBecause": "— motif : {{reason}}. Hors de tous les chiffres, gardée pour qu'un nouveau scan ne la ramène pas. « Rétablir » la repasse à relire."
     },
     "rejectionReason": {
-      "BREAKOUT": "Cassure — l'Echo a repris l'Apex",
+      "BREAKOUT": "Cassure — l'Echo a cassé au-dessus de l'Apex",
       "WEAK_REJECTION": "Rejet trop faible",
       "ECHO_TOO_FAR": "Echo trop loin de l'Apex",
       "GAP_TOO_SMALL": "Gap trop faible",
@@ -1136,7 +1137,9 @@
       "title": "Rejeter la stat {{ticker}} ?",
       "message": "Elle sort du tableau et de tous les chiffres, et un nouveau scan ne la ramènera pas. Elle reste sous « Rejetées », d'où elle se rétablit.",
       "confirm": "Rejeter",
-      "choice": "Motif (facultatif)"
+      "choice": "Motif (facultatif)",
+      "note": "Note (facultatif)",
+      "notePlaceholder": "Ce qu'on voit sur le chart, quel seuil paraît faux…"
     }
   },
   "calculator": {

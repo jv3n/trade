@@ -87,7 +87,11 @@ export abstract class StatsRepository {
    * « Rejeter » a scanner stat, with an optional [reason] of its pattern : kept, hidden but from
    * « Rejetées ». A manual or validated stat → 400.
    */
-  abstract reject(id: string, reason: StatRejectionReason | null): Observable<StatEntry>;
+  abstract reject(
+    id: string,
+    reason: StatRejectionReason | null,
+    note: string | null,
+  ): Observable<StatEntry>;
 
   /**
    * Back to review — « Rétablir » a rejected stat, or « Repasser à relire » a validated one. A
