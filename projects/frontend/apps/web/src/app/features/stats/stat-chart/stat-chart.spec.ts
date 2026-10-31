@@ -154,12 +154,40 @@ describe('StatChart', () => {
   });
 
   it('draws the leader of an off point on the session only — a 5-min candle would bury it', async () => {
-    const points: StatChartPoint[] = [{ name: 'Push', time: '09:31', price: 2.2, above: true }];
+    const points: StatChartPoint[] = [{ name: 'Push', time: '09:32', price: 2.2, above: true }];
     const { view } = await render((h) => h.points.set(points));
 
     expect(view.marks()[0].towards).toBeUndefined();
     view.range.set('session');
     expect(view.marks()[0].towards).toBe(1.2);
+  });
+
+  // Staging, POM 21/10 : every scanner point sat one candle to the right, all of them amber.
+  it('reads a typed time as the end of its candle — 09:32 is the top of the 09:31 candle', async () => {
+    const { view } = await render((h) => {
+      h.pattern.set('DT');
+      h.points.set([{ name: 'Apex', time: '09:32', price: 1.2, above: true }]);
+    });
+
+    expect(view.marks()[0]).toMatchObject({ at: '09:31', tone: 'accent' });
+    expect(view.marks()[0].title).toContain('09:32');
+  });
+
+  it('keeps the Open on the 9:30 candle, the opening of its own candle', async () => {
+    const { view } = await render((h) => {
+      h.pattern.set('DT');
+      h.points.set([{ name: 'Open', time: null, price: 1.1, above: false }]);
+    });
+
+    expect(view.marks()[0]).toMatchObject({ at: '09:30', tone: 'accent' });
+  });
+
+  it('puts 09:35 on the 5-min candle ending at it, not the one it starts', async () => {
+    const { view } = await render((h) =>
+      h.points.set([{ name: 'Push', time: '09:35', price: 1.2, above: true }]),
+    );
+
+    expect(view.marks()[0].at).toBe('09:30');
   });
 
   it('puts the card on the whole screen from its button', async () => {

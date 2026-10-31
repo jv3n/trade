@@ -1129,6 +1129,9 @@ points card (OPS or BARES) — read the bars, then type or correct the points ri
   S** for a DT. A point is marked once its price and time are typed (the Open has its fixed 9:30) ;
   the marks **follow the fields** — correcting a price moves its mark. Under the chart, the points
   not typed yet (« Echo et Sink pas encore saisis — lis-les sur les bougies »).
+- **A typed time is its candle's end**, as a chart reads it and ts-scanner records it (#806) : a
+  point at 10:24 sits on the candle opening at 10:23. The Open is the exception, the opening of the
+  9:30 candle.
 - For a GUS, the **previous close** as a dashed line : the gap reads off it.
 - **A point off its candle reads amber** — a price outside its 1-min candle's low–high, at the time
   typed, is a mistyped price or time : the mark turns amber, a dashed leader joins it to its candle

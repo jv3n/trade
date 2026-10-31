@@ -74,6 +74,14 @@ function minuteOf(time: string | null): number | null {
   return match ? Number(match[1]) * 60 + Number(match[2]) : null;
 }
 
+/**
+ * The opening minute of the candle a point sits on. A typed time is the candle's **end**, as a chart
+ * reads it and ts-scanner records it (#806) ; the Open is the 9:30 candle's own opening.
+ */
+function barMinuteOf(point: { name: string; minute: number }): number {
+  return point.name === 'Open' ? point.minute : point.minute - 1;
+}
+
 interface MinuteBar extends DayBar {
   minute: number;
 }
@@ -216,7 +224,7 @@ export class StatChart {
 
   private readonly offPoints = computed(() =>
     this.placed().flatMap((p) => {
-      const bar = this.byMinute().get(p.minute);
+      const bar = this.byMinute().get(barMinuteOf(p));
       if (!bar) return [];
       const above = p.price > bar.high * (1 + OFF_TOLERANCE);
       const below = p.price < bar.low * (1 - OFF_TOLERANCE);
@@ -230,7 +238,7 @@ export class StatChart {
     const off = new Map(this.offPoints().map((o) => [o.point.name, o.edge]));
     const format = this.formatPrice();
     return this.placed().flatMap((p) => {
-      const at = label(Math.floor(p.minute / size) * size);
+      const at = label(Math.floor(barMinuteOf(p) / size) * size);
       if (!labels.has(at)) return [];
       const edge = off.get(p.name);
       return [
