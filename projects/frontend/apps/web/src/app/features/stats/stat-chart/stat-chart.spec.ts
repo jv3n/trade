@@ -202,6 +202,19 @@ describe('StatChart', () => {
     expect(requestFullscreen).toHaveBeenCalled();
   });
 
+  // Staging : `TypeError: not granted`, uncaught, one GlitchTip report per click.
+  it('leaves the card in place when the browser refuses the full screen', async () => {
+    fullscreenEnabled(true);
+    const { el, fixture, view } = await render();
+    const card = el.querySelector('.stat-chart') as HTMLElement;
+    card.requestFullscreen = vi.fn(() => Promise.reject(new TypeError('not granted')));
+
+    (el.querySelector('[data-testid="chart-fullscreen"]') as HTMLButtonElement).click();
+    await fixture.whenStable();
+
+    expect(view.fullscreen()).toBe(false);
+  });
+
   it('offers no full screen while there is no chart', async () => {
     fullscreenEnabled(true);
     dayChart.mockReturnValue(of(chart({ state: 'PENDING', bars: [] })));

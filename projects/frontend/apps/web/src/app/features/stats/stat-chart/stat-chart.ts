@@ -296,8 +296,11 @@ export class StatChart {
   });
 
   toggleFullscreen(): void {
-    if (this.fullscreen()) void this.document.exitFullscreen();
-    else void this.card().nativeElement.requestFullscreen();
+    const request = this.fullscreen()
+      ? this.document.exitFullscreen()
+      : this.card().nativeElement.requestFullscreen();
+    // A refusal leaves the card where it is, and is nothing to report (#814).
+    request.catch(() => undefined);
   }
 
   private list(names: string[]): string {
