@@ -279,6 +279,9 @@ export class StbCandleChart {
                 position: m.above ? 'top' : 'bottom',
                 color,
                 fontWeight: 650,
+                // The letter often lands on its candle : without an outline it sinks into it (#815).
+                textBorderColor: palette.surface,
+                textBorderWidth: 3,
               },
             };
           }),
