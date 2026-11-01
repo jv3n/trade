@@ -6,6 +6,7 @@ import com.portfolioai.journal.application.dto.TradeEntryDto
 import com.portfolioai.journal.application.dto.TradeEntryRequest
 import com.portfolioai.shared.Pattern
 import com.portfolioai.shared.badRequest
+import com.portfolioai.shared.marketToday
 import com.portfolioai.stats.application.dto.RuleScoreDto
 import com.portfolioai.stats.application.dto.StatEntryDto
 import com.portfolioai.stats.application.dto.StatEntryRequest
@@ -22,8 +23,8 @@ import com.portfolioai.stats.domain.StatSource
 import com.portfolioai.stats.domain.StatStatus
 import com.portfolioai.stats.infrastructure.persistence.StatEntryRepository
 import com.portfolioai.stats.infrastructure.persistence.StatEntrySpecifications
+import java.time.Clock
 import java.time.Instant
-import java.time.LocalDate
 import java.util.UUID
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.Page
@@ -64,6 +65,7 @@ class StatEntryService(
   private val tradeEntryService: TradeEntryService,
   private val events: ApplicationEventPublisher,
   private val candidatePremarket: CandidatePremarket,
+  private val clock: Clock,
 ) {
 
   // ---- Listing -------------------------------------------------------------------------------
@@ -138,7 +140,7 @@ class StatEntryService(
       throw badRequest("The rules are scored over ${RULE_SCORE_MONTHS.joinToString()} months")
     }
     val userId = authService.getCurrentUser().id
-    val dateTo = LocalDate.now()
+    val dateTo = clock.marketToday()
     val dateFrom = dateTo.minusMonths(months.toLong())
     val window =
       StatEntryFilter(
@@ -230,7 +232,7 @@ class StatEntryService(
    */
   @Transactional
   fun createByHand(request: StatEntryRequest): StatEntryDto {
-    if (request.tradeDate.isAfter(LocalDate.now())) {
+    if (request.tradeDate.isAfter(clock.marketToday())) {
       throw badRequest("A stat can't be dated in the future (${request.tradeDate})")
     }
     return create(request)

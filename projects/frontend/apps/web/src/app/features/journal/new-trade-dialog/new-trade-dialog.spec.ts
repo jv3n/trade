@@ -2,8 +2,9 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideTranslateService } from '@ngx-translate/core';
 import { MatDialogRef, provideNativeDateAdapter } from '@portfolioai/ui';
-import { addDays, startOfDay } from 'date-fns';
+import { addDays } from 'date-fns';
 import { describe, expect, it, vi } from 'vitest';
+import { marketDay } from '../../../shared/market-time/market-time';
 import { NewTradeDialog } from './new-trade-dialog';
 
 /**
@@ -57,7 +58,7 @@ describe('NewTradeDialog', () => {
     dialog.submit();
 
     expect(close).toHaveBeenCalledWith({
-      tradeDate: startOfDay(new Date()),
+      tradeDate: marketDay(new Date()),
       ticker: 'SGBX',
       pattern: 'GUS',
       direction: 'SHORT',

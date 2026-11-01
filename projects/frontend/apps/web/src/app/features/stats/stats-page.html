@@ -505,7 +505,7 @@
               matInput
               readonly
               [matDatepicker]="newStatPicker"
-              [max]="maxDate"
+              [max]="maxDate()"
               [value]="identity().tradeDate"
               (dateChange)="setIdentity({ tradeDate: $event.value })"
             />

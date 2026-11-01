@@ -353,7 +353,7 @@ describe('TodayPage', () => {
     expect(dialogOpen).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
-        data: { tradingDate: page.today, ticker: 'SGBX', lastPrice: 0.15, stockPrice: 1.85 },
+        data: { tradingDate: page.today(), ticker: 'SGBX', lastPrice: 0.15, stockPrice: 1.85 },
       }),
     );
   });

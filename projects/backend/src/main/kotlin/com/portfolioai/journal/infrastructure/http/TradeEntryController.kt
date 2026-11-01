@@ -9,6 +9,7 @@ import com.portfolioai.journal.application.dto.TradeEntryRequest
 import com.portfolioai.journal.domain.EntryTiming
 import com.portfolioai.journal.domain.TradeEntryFilter
 import com.portfolioai.journal.domain.TradeStatus
+import com.portfolioai.shared.NEW_YORK
 import com.portfolioai.shared.PageResponse
 import com.portfolioai.shared.Pattern
 import com.portfolioai.shared.toPageResponse
@@ -165,7 +166,7 @@ class TradeEntryController(
   @GetMapping("/export", produces = ["text/csv"])
   fun exportCsv(): ResponseEntity<ByteArray> {
     val csv = service.exportAllAsCsv().toByteArray(Charsets.UTF_8)
-    val filename = "journal-export-${LocalDate.now()}.csv"
+    val filename = "journal-export-${LocalDate.now(NEW_YORK)}.csv"
     return ResponseEntity.ok()
       .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"$filename\"")
       .contentType(MediaType.parseMediaType("text/csv; charset=utf-8"))

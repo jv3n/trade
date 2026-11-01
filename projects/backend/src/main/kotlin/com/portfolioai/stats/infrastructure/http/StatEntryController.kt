@@ -1,6 +1,7 @@
 package com.portfolioai.stats.infrastructure.http
 
 import com.portfolioai.journal.application.dto.TradeEntryDto
+import com.portfolioai.shared.NEW_YORK
 import com.portfolioai.shared.PageResponse
 import com.portfolioai.shared.Pattern
 import com.portfolioai.shared.toPageResponse
@@ -165,7 +166,7 @@ class StatEntryController(private val service: StatEntryService) {
   @GetMapping("/export", produces = ["text/csv"])
   fun exportCsv(): ResponseEntity<ByteArray> {
     val csv = service.exportAllAsCsv().toByteArray(Charsets.UTF_8)
-    val filename = "stats-export-${LocalDate.now()}.csv"
+    val filename = "stats-export-${LocalDate.now(NEW_YORK)}.csv"
     return ResponseEntity.ok()
       .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"$filename\"")
       .contentType(MediaType.parseMediaType("text/csv; charset=utf-8"))

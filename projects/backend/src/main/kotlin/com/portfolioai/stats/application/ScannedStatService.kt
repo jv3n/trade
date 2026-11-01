@@ -4,6 +4,7 @@ import com.portfolioai.auth.domain.User
 import com.portfolioai.journal.application.TradeEntryService
 import com.portfolioai.shared.Pattern
 import com.portfolioai.shared.badRequest
+import com.portfolioai.shared.marketToday
 import com.portfolioai.stats.application.dto.ScanSkipReason
 import com.portfolioai.stats.application.dto.ScannedStat
 import com.portfolioai.stats.application.dto.ScannedStatCreated
@@ -44,7 +45,7 @@ class ScannedStatService(
 
   @Transactional
   fun record(owner: User, tradingDate: LocalDate, stats: List<ScannedStat>): ScannedStatsResult {
-    if (tradingDate.isAfter(LocalDate.now(clock))) {
+    if (tradingDate.isAfter(clock.marketToday())) {
       throw badRequest("A scan can't be dated in the future ($tradingDate)")
     }
     val created = mutableListOf<ScannedStatCreated>()

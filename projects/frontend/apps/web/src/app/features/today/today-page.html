@@ -4,12 +4,12 @@
   <header class="content-header">
     <div class="header-row">
       <div>
-        <h2>{{ today | date: 'fullDate' }}</h2>
+        <h2>{{ today() | date: 'fullDate' }}</h2>
         <p>{{ 'today.subtitle' | translate }}</p>
       </div>
-      <span class="market-pill" [attr.data-status]="marketStatus">
+      <span class="market-pill" [attr.data-status]="marketStatus()">
         <i></i>
-        {{ 'today.market.' + marketStatus | translate }}
+        {{ 'today.market.' + marketStatus() | translate }}
       </span>
     </div>
   </header>

@@ -4,8 +4,10 @@ import com.portfolioai.auth.domain.Role
 import com.portfolioai.auth.domain.User
 import com.portfolioai.auth.infrastructure.persistence.UserRepository
 import com.portfolioai.auth.infrastructure.security.AppOAuth2User
+import com.portfolioai.shared.marketToday
 import com.portfolioai.stats.infrastructure.persistence.StatEntryRepository
 import jakarta.servlet.http.Cookie
+import java.time.Clock
 import java.time.LocalDate
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -82,7 +84,7 @@ class E2eSessionIntegrationTest {
             .with(csrf())
             .contentType(MediaType.APPLICATION_JSON)
             .content(
-              """{"tradeDate":"${LocalDate.now()}","ticker":"KTTA","previousClose":2.65,"pmOpen":4.05,"pmHigh":4.65}"""
+              """{"tradeDate":"${Clock.systemUTC().marketToday()}","ticker":"KTTA","previousClose":2.65,"pmOpen":4.05,"pmHigh":4.65}"""
             )
         )
         .andExpect(status().isCreated)
