@@ -1162,6 +1162,19 @@ points card (OPS or BARES) — read the bars, then type or correct the points ri
 - **Full screen** : a button at the top left of the card puts it on the whole screen, the chart
   grown to its height ; the same button, or Échap, brings it back (#807).
 
+**Halts** (#786) : a small-cap that halts trades a different day, so a stat says so. The free plan
+flags no halt, but one reads off the 1-min bars : **5 minutes or more between two bars in the
+session, on a ticker trading around it** — 10,000 shares a minute on average over the 5 bars either
+side, so a thin ticker's quiet minutes are not halts. Each halt gives its time (the last bar before
+the gap), its reopen (the first bar after it), and the jump from that last close to the reopen.
+
+- **On the chart** : a grey band on each halt, no candle, on both views.
+- **Under the chart** : the list (« 2 halts : 09:51 → 09:56, 5 min, 1,98 → 2,24 (+13,1 %) ; … »).
+- **In the table** : a neutral « halté · 2 » tag on the row, and a **« Halté »** toggle beside « Hors
+  pattern » that combines with the tabs.
+- **A halt is information, not a reason to leave a ticker out** : the stat stays in every figure.
+  Neutral everywhere : neither a warning nor an outcome, the jump being a price move.
+
 **Where the bars come from** — `trade` calls no market-data provider and does not start
 (#760) :
 

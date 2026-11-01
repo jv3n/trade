@@ -783,6 +783,7 @@
             </div>
             <!-- #499 : deux conditions que l'app déduit — des bascules qui se combinent avec les onglets, pas un onglet de plus. -->
             <span class="filter-toggles">
+              <button class="btn btn-sm filter-toggle" aria-pressed="false" title="Les stats d'un ticker halté ce jour-là — une information, pas une raison de l'écarter. Se combine avec les onglets.">Halté</button>
               <button class="btn btn-sm filter-toggle" aria-pressed="false" title="Ce que les prix enregistrés disent ne pas être le setup — un DT dont l'Echo reprend l'Apex, un prix hors de la fourchette de la fiche. Se combine avec les onglets.">Hors pattern</button>
               <button class="btn btn-sm filter-toggle" aria-pressed="false" title="Open sous 1 $ — déduit du prix, plus une case à cocher. Se combine avec les onglets.">Sous 1 $</button>
               <button class="btn btn-sm filter-toggle" aria-pressed="false" id="toggle-rejected" title="Les stats du scanner rejetées, avec leur motif — gardées pour qu'un nouveau scan ne les ramène pas (#760). Cachées partout ailleurs.">Rejetées</button>
@@ -1156,7 +1157,7 @@
                   <td class="sep"></td>
                 </tr>
                 <tr class="pending">
-                  <td>18/09</td><td><span class="ticker">SGBX</span></td><td><span class="tag tag-accent">GUS</span></td>
+                  <td>18/09</td><td><span class="ticker">SGBX</span></td><td><span class="tag tag-accent">GUS</span> <span class="tag" title="Deux halts ce jour-là, lus sur ses barres 1 min — la liste est dans le panneau, sous le graphique"><span class="icon">pause</span>halté · 2</span></td>
                   <td><button class="check" disabled title="Il manque HOD, LOD, EOD"><span class="icon">radio_button_unchecked</span></button></td>
                   <td><button class="btn btn-sm"><span class="icon">edit</span> Séance</button></td>
                   <td class="num sep">+65,2 %<small class="muted">cumul +119,7 % au high PM</small></td><td class="num">+33,0 %</td><td class="num">3,9 M</td><td class="num">9,7 M</td>
@@ -2151,6 +2152,8 @@
         // Les ancres du jour, et les points marqués — OPS pour un GUS, BARES pour un DT.
         // SGBX : le Push saisi (2,20) n'est pas sur sa bougie (2,02) — le cas qu'un vrai graphique révèle.
         const truth = { SGBX: { push: 2.02 } };
+        // #786 — les halts du jour, lus sur les barres : pas de barre pendant 5 min ou plus en séance, sur un ticker qui traite autour.
+        const haltsOf = { SGBX: [[OPEN + 21, OPEN + 26], [OPEN + 65, OPEN + 75]] };
         function readGus(ticker) {
           const close = field('p-close').price, pmOpen = field('p-open').price, pmHigh = field('p-high').price;
           const open = field('c-open'), push = field('c-push'), sink = field('c-drop');
@@ -2258,6 +2261,8 @@
             const part = all.slice(m, m + agg);
             shown.push({ m, o: part[0].o, c: part.at(-1).c, h: Math.max(...part.map((b) => b.h)), l: Math.min(...part.map((b) => b.l)), v: part.reduce((t, b) => t + b.v, 0) });
           }
+          const halts = haltsOf[ticker] ?? [];
+          shown.forEach((b) => (b.halted = halts.some(([from, to]) => b.m > from && b.m + agg <= to)));
           const n = span, plotW = W - PAD_L - PAD_R, step = plotW / n;
           const x = (m) => PAD_L + (m - first + 0.5) * step;
           const mid = (b) => x(b.m + (agg - 1) / 2);
@@ -2276,6 +2281,12 @@
           [[0, OPEN], [CLOSE, BARS]].forEach(([a, b]) => {
             const from = Math.max(a, first), to = Math.min(b, first + n);
             if (to > from) svg.append(el('rect', { x: x(from) - step / 2, y: PRICE_TOP, width: (to - from) * step, height: VOL_TOP + VOL_H - PRICE_TOP, fill: 'var(--text-muted)', 'fill-opacity': 0.07 }));
+          });
+          // #786 — un halt : une bande grise, sans bougie. Une information : neutre, ni ambre ni rouge.
+          halts.forEach(([from, to]) => {
+            const band = el('rect', { x: x(from) + step / 2, y: PRICE_TOP, width: (to - from - 1) * step, height: VOL_TOP + VOL_H - PRICE_TOP, fill: 'var(--text-muted)', 'fill-opacity': 0.18 });
+            band.append(el('title', {}, `Halt · ${hhmm(from)} → ${hhmm(to)}`));
+            svg.append(band);
           });
           for (let k = 0; k <= 4; k++) {
             const p = lo + ((hi - lo) * k) / 4, yy = y(p);
@@ -2299,6 +2310,7 @@
           const g = el('g', {});
           const bw = Math.max(1, step * agg * 0.7);
           shown.forEach((b) => {
+            if (b.halted) return;
             const cx = mid(b), up = b.c >= b.o;
             const tone = up ? 'var(--gain)' : 'var(--loss)';
             g.append(el('line', { x1: cx, x2: cx, y1: y(b.h), y2: y(b.l), stroke: tone, 'stroke-width': 1 }));
@@ -2350,6 +2362,14 @@
           const notes = [];
           if (off.length) notes.push(`<span style="color: var(--warn)">Hors de sa bougie : ${off.join(' ; ')} — vérifie le prix ou l'heure.</span>`);
           if (missing.length) notes.push(`${list(missing)} pas encore saisi${missing.length > 1 ? 's' : ''} — lis-le${missing.length > 1 ? 's' : ''} sur les bougies, la marque apparaît avec l'heure et le prix.`);
+          // #786 — la liste : heure du halt, de la reprise, et le saut de la dernière clôture à la reprise. Le saut est un mouvement de prix : neutre.
+          if (halts.length) {
+            const lines = halts.map(([from, to]) => {
+              const close = all[from].c, reopen = all[to].o, move = ((reopen - close) / close) * 100;
+              return `${hhmm(from)} → ${hhmm(to)}, ${to - from} min, ${fmtP(close)} → ${fmtP(reopen)} (${move >= 0 ? '+' : '−'}${Math.abs(move).toFixed(1).replace('.', ',')} %)`;
+            });
+            notes.push(`${halts.length > 1 ? `${halts.length} halts` : 'Un halt'} : ${lines.join(' ; ')}`);
+          }
           $('chart-missing').innerHTML = notes.join('<br />');
 
           // Survol : la bougie sous le curseur, lue en clair au-dessus du graphique.
