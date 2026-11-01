@@ -579,7 +579,7 @@
         <section class="card day-chart" style="margin-bottom: 16px" id="chart-panel">
           <h2>
             <span><button class="btn btn-sm" type="button" data-group="chart-state" data-value="bars" title="Voir le graphique en plein écran" aria-label="Voir le graphique en plein écran" onclick="document.getElementById('chart-panel').requestFullscreen()"><span class="icon">open_in_full</span></button> Graphique <span class="muted" style="font-weight: 400" id="chart-day">ven. 18/09</span></span>
-            <span class="hint" data-group="chart-state" data-value="bars">barres 1 min — en 5 min sur la journée · 4h–20h, heure de New York · hors séance grisé · les points suivent les champs ; un point hors de sa bougie passe en ambre</span>
+            <span class="hint" data-group="chart-state" data-value="bars">bougies de 1, 3 ou 5 min · 4h–20h, heure de New York · hors séance grisé · les points suivent les champs ; un point hors de sa bougie passe en ambre</span>
             <span class="hint" data-group="chart-state" data-value="pending" hidden>pas encore de barres</span>
             <span class="hint" data-group="chart-state" data-value="none" hidden>pas de barres pour ce jour</span>
           </h2>
@@ -588,6 +588,11 @@
             <div class="segmented" data-group="chart-range" title="La journée entière (4h–20h) ou la séance seule (9h30–16h) — un GUS s'ouvre sur la journée, son premarket compte ; un DT sur la séance">
               <button class="active" data-value="day">Journée</button>
               <button data-value="session">Séance</button>
+            </div>
+            <div class="segmented" data-group="chart-size" title="La taille des bougies, lue sur les mêmes barres 1 min — 5 min par défaut sur la journée, 1 min sur la séance ; chaque vue garde son choix tant que la page reste ouverte">
+              <button data-value="1">1 min</button>
+              <button data-value="3">3 min</button>
+              <button data-value="5">5 min</button>
             </div>
             <span class="chart-read" id="chart-read">survole une bougie : heure · O H L C · volume</span>
             </div>
@@ -2134,7 +2139,8 @@
         const minute = (t) => { const m = /^(\d{1,2}):(\d{2})/.exec(t || ''); return m ? +m[1] * 60 + +m[2] - START : NaN; };
         const hhmm = (m) => { const t = m + START; return String(Math.floor(t / 60)).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0'); };
         const fmt = (v) => v.toFixed(v < 1 ? 4 : 2).replace('.', ',');
-        let range = null, rebuild = true, cache = null, wasNew = false;
+        let range = null, shownRange = 'day', rebuild = true, cache = null, wasNew = false;
+        const sizes = { day: 5, session: 1 };
 
         function field(id) {
           const el = $(id);
@@ -2243,6 +2249,9 @@
           wasNew = isNew;
           const r = range ?? (pattern === 'dt' ? 'session' : 'day');
           document.querySelectorAll('.segmented[data-group="chart-range"] button').forEach((b) => b.classList.toggle('active', b.dataset.value === r));
+          shownRange = r;
+          const agg = sizes[r];
+          document.querySelectorAll('.segmented[data-group="chart-size"] button').forEach((b) => b.classList.toggle('active', Number(b.dataset.value) === agg));
           const { anchors, points, close } = pattern === 'dt' ? readDt() : readGus(ticker);
           const key = ticker + pattern;
           if (rebuild || cache?.key !== key) {
@@ -2251,8 +2260,9 @@
             rebuild = false;
           }
           const all = cache.all;
-          // 3 — la journée en bougies de 5 min : à 1 min, 960 bougies sur ~940 px ne sont plus que des mèches.
-          const first = r === 'session' ? OPEN : 0, span = r === 'session' ? CLOSE - OPEN : BARS, agg = r === 'session' ? 1 : 5;
+          // #854 — 1, 3 ou 5 min sur les mêmes barres, 9h30 ouvre une bougie à chaque taille. Par défaut 5 min sur la journée :
+          // à 1 min, 960 bougies sur ~940 px ne sont plus que des mèches, le zoom les rouvre.
+          const first = r === 'session' ? OPEN : 0, span = r === 'session' ? CLOSE - OPEN : BARS;
           const shown = [];
           for (let m = first; m < first + span; m += agg) {
             const part = all.slice(m, m + agg);
@@ -2337,7 +2347,8 @@
             const cx = x(p.at), cy = y(p.price), ly = p.up ? cy - 12 : cy + 20;
             if (away) {
               off.push(`${p.name} ${fmtP(p.price)} à ${hhmm(p.at)}, la bougie ${fmtP(bar.l)}–${fmtP(bar.h)}`);
-              svg.append(el('line', { x1: cx, x2: cx, y1: cy, y2: y(p.price > bar.h ? bar.h : bar.l), stroke: 'var(--warn)', 'stroke-width': 1.5, 'stroke-dasharray': '3 3' }));
+              // Le trait pointe la bougie 1 min : une bougie plus large peut contenir le point.
+              if (agg === 1) svg.append(el('line', { x1: cx, x2: cx, y1: cy, y2: y(p.price > bar.h ? bar.h : bar.l), stroke: 'var(--warn)', 'stroke-width': 1.5, 'stroke-dasharray': '3 3' }));
             }
             svg.append(el('line', { x1: cx, x2: cx, y1: cy, y2: p.up ? cy - 6 : cy + 6, stroke: colour, 'stroke-width': 1.5 }));
             svg.append(el('circle', { cx, cy, r: 4, fill: colour, stroke: 'var(--surface)', 'stroke-width': 1.5 }));
@@ -2374,7 +2385,9 @@
         document.addEventListener('change', later);
         document.addEventListener('click', (e) => {
           const b = e.target.closest('.segmented[data-group="chart-range"] button');
+          const size = e.target.closest('.segmented[data-group="chart-size"] button');
           if (b) range = b.dataset.value;
+          else if (size) sizes[shownRange] = Number(size.dataset.value);
           else if (e.target.closest('.segmented[data-group="panel"] button, tbody button, #new-stat, #new-cancel')) (range = null), (rebuild = true);
           later();
         });

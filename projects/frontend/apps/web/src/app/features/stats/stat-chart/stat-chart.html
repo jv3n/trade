@@ -38,6 +38,19 @@
             'stats.chart.range.session' | translate
           }}</mat-button-toggle>
         </mat-button-toggle-group>
+        <mat-button-toggle-group
+          [value]="candleSize()"
+          (change)="setCandleSize($event.value)"
+          [hideSingleSelectionIndicator]="true"
+          [attr.aria-label]="'stats.chart.sizeLabel' | translate"
+          data-testid="chart-size"
+        >
+          @for (size of candleSizes; track size) {
+            <mat-button-toggle [value]="size">{{
+              'stats.chart.size' | translate: { size }
+            }}</mat-button-toggle>
+          }
+        </mat-button-toggle-group>
       </div>
       <ui-candle-chart
         [bars]="candles()"

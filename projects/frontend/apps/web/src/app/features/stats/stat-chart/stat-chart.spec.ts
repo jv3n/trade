@@ -13,6 +13,8 @@ import { StatChart, StatChartPoint } from './stat-chart';
  * - **a new stat, or a day not fetched yet, reads « tomorrow morning »** — a stat being created
  *   asks for no bars at all ; a day the provider served nothing for says so, with its ticker ;
  * - with bars, **a GUS opens on the day, a DT on the session** (#649) ;
+ * - **the candle size** (#854) is grouped from the same 1-min bars and held per view, and never
+ *   changes what is off its candle : that is judged on the 1-min bar at every size ;
  * - the chart goes **full screen** from the card's button, offered only when there is a chart ;
  * - **a typed point off its candle is named** — the mistyped price or time this chart is for — and
  *   the points not typed yet are listed, to be read off the candles.
@@ -154,13 +156,55 @@ describe('StatChart', () => {
     expect(el.querySelector('[data-testid="chart-off"]')?.textContent).toContain('Push');
   });
 
-  it('draws the leader of an off point on the session only — a 5-min candle would bury it', async () => {
+  it('draws the leader of an off point at 1 min only — a wider candle would bury it', async () => {
     const points: StatChartPoint[] = [{ name: 'Push', time: '09:32', price: 2.2, above: true }];
     const { view } = await render((h) => h.points.set(points));
 
     expect(view.marks()[0].towards).toBeUndefined();
-    view.range.set('session');
+    view.setCandleSize(1);
     expect(view.marks()[0].towards).toBe(1.2);
+    view.range.set('session');
+    view.setCandleSize(3);
+    expect(view.marks()[0].towards).toBeUndefined();
+  });
+
+  it('groups the session in 3-min candles from the 9:30 open', async () => {
+    const { view } = await render((h) => h.pattern.set('DT'));
+
+    view.setCandleSize(3);
+
+    expect(view.candles()).toEqual([
+      { label: '09:30', open: 1.1, close: 1.18, high: 1.2, low: 1.02, volume: 278_355 },
+    ]);
+  });
+
+  it('keeps one size per view : changing the day leaves the session on its own', async () => {
+    const { view } = await render();
+
+    view.setCandleSize(1);
+    expect(view.candleSize()).toBe(1);
+
+    view.range.set('session');
+    expect(view.candleSize()).toBe(1);
+    view.setCandleSize(3);
+
+    view.range.set('day');
+    expect(view.candleSize()).toBe(1);
+    expect(view.sizes()).toEqual({ day: 1, session: 3 });
+  });
+
+  // A wider candle can hold a price typed on the wrong minute : the amber must not go with it.
+  it('names the same off point at every size', async () => {
+    const points: StatChartPoint[] = [{ name: 'Push', time: '09:31', price: 1.19, above: true }];
+    const { view } = await render((h) => h.points.set(points));
+
+    const seen = view.candleSizes.map((size) => {
+      view.setCandleSize(size);
+      return [view.off(), view.marks()[0].tone];
+    });
+
+    expect(new Set(seen.map(([off]) => off)).size).toBe(1);
+    expect(seen.map(([, tone]) => tone)).toEqual(['warn', 'warn', 'warn']);
   });
 
   // Staging, POM 21/10 : every scanner point sat one candle to the right, all of them amber.
@@ -187,6 +231,16 @@ describe('StatChart', () => {
     const { view } = await render((h) =>
       h.points.set([{ name: 'Push', time: '09:35', price: 1.2, above: true }]),
     );
+
+    expect(view.marks()[0].at).toBe('09:30');
+  });
+
+  it('puts a point on the 3-min candle that holds it', async () => {
+    const { view } = await render((h) =>
+      h.points.set([{ name: 'Push', time: '09:32', price: 1.2, above: true }]),
+    );
+
+    view.setCandleSize(3);
 
     expect(view.marks()[0].at).toBe('09:30');
   });

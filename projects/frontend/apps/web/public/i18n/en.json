@@ -901,8 +901,10 @@
       "title": "Chart",
       "fullscreen": "Show the chart full screen",
       "exitFullscreen": "Leave full screen",
-      "hint": "1-min bars — 5-min over the day · New York time · extended hours shaded · a point off its candle turns amber",
+      "hint": "1, 3 or 5-min candles · New York time · extended hours shaded · a point off its candle turns amber",
       "range": { "day": "Day", "session": "Session" },
+      "size": "{{size}} min",
+      "sizeLabel": "Candle size",
       "previousClose": "previous close {{price}}",
       "pending": {
         "title": "The chart arrives tomorrow morning.",

@@ -1141,19 +1141,25 @@ points card (OPS or BARES) — read the bars, then type or correct the points ri
   leg joins the two around it. **Hovering a leg** gives its move, `Base → Apex · +52,3 % · 8 min`,
   taken from its first point as the scanner's bands read it — nothing written on the chart, which
   already carries its letters. Indigo, a price move being neutral ; **amber when one of its two
-  points is off its candle**, its percentage doubtful until the point is corrected. Both views ; on
-  « Journée » a leg can fall inside one 5-min candle, the tooltip stays right and « Séance » remains
-  the view to read legs on.
+  points is off its candle**, its percentage doubtful until the point is corrected. Both views, every
+  candle size ; a leg can fall inside one 3- or 5-min candle, the tooltip stays right and 1 min
+  remains the size to read legs on.
 - For a GUS, the **previous close** as a dashed line : the gap reads off it.
 - **A point off its candle reads amber** — a price outside its 1-min candle's low–high, at the time
   typed, is a mistyped price or time : the mark turns amber, a dashed leader joins it to its candle
-  on « Séance », and the line under the chart names it (« Push 2,20 à 09:41, sa bougie 1 min
-  1,99–2,02 — vérifie le prix ou l'heure »). It is judged on the **1-min** candle whatever the view :
-  on « Journée » the 5-min candle can hold the point — a right price on the wrong minute — so the
+  at the 1-min size, and the line under the chart names it (« Push 2,20 à 09:41, sa bougie 1 min
+  1,99–2,02 — vérifie le prix ou l'heure »). It is judged on the **1-min** candle whatever the view and the size :
+  a 3- or 5-min candle can hold the point — a right price on the wrong minute — so the
   line says which candle it means. The scale keeps it in view. This is what reviewing a stat against its bars means.
-- **Journée / Séance** : the whole day in **5-min candles** (960 one-minute candles would be wicks
-  only at this width) or 9:30–16:00 in 1-min. A GUS opens on the day (its premarket counts), a DT on
-  the session (#649). The price axis takes one precision for all its labels — 4 decimals once its
+- **Journée / Séance** : the whole day, 4:00–20:00, or 9:30–16:00. A GUS opens on the day (its
+  premarket counts), a DT on the session (#649).
+- **1 / 3 / 5 min** (#854) : the candle size, beside the view, on both views. All three are grouped
+  from the same stored 1-min bars, so every stat with bars has them and a candle always starts on
+  the 9:30 open. By default 5 min on the day (960 one-minute candles would be wicks only at this
+  width, until zoomed) and 1 min on the session. Each view keeps its own choice while the page is
+  open, from one stat to the next ; a reload brings the defaults back. A point keeps its mark on the
+  wider candle that holds it.
+- The price axis takes one precision for all its labels — 4 decimals once its
   low is under $1, else 2.
 - **Hover** : the candle under the cursor, read in clear above the chart — time, O H L C, volume.
 - **Zoom** : the wheel over the candles (or a pinch) zooms the time ; over the price scale on the
