@@ -16,10 +16,8 @@ import { AuthService } from '../app-state/auth.service';
  *   reachable anyway.
  *
  * What this interceptor **deliberately does NOT do** :
- * - **No `/error` redirect on 5xx**. A 503 on a widget endpoint (news, analyst, earnings,
- *   narrative) is a fail-soft transient — the component shows "data unavailable" inline, the
- *   rest of the page keeps working. Bouncing the whole user to `/error` would be hostile UX. A
- *   500 from a mutation needs an inline snackbar / banner near the action button, not a
+ * - **No `/error` redirect on 5xx**. A 503 on the FX rate is a fail-soft transient — the page
+ *   keeps working. Bouncing the whole user to `/error` would be hostile UX. A 500 from a mutation needs an inline snackbar / banner near the action button, not a
  *   full-page redirect. The `/error` route stays available for explicit navigation (e.g. from a
  *   future fatal error boundary) but the interceptor doesn't trigger it.
  * - **No retry logic**. Components own their retry strategy (snackbar with a Retry button,
@@ -29,8 +27,7 @@ import { AuthService } from '../app-state/auth.service';
  * - **Non-`/api/**` URLs** — OAuth dance + static assets must NOT trigger any redirect.
  * - **`/api/me`** — already handled by [AuthService.refresh] which records errors into the
  *   `lastError` signal. The login page surfaces them ; no global redirect.
- * - **`/api/config`** — admin-only endpoint that the `LlmTimeoutService` boot initializer hits.
- *   Its 401 races [AuthService.refresh] under valid USER sessions ; the service swallows it.
+ * - **`/api/config`** — admin-only : a 401 there says nothing about the session.
  */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);

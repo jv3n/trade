@@ -5,7 +5,7 @@ import { provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
 import { provideNativeDateAdapter, StbToast } from '@portfolioai/ui';
 import { addDays } from 'date-fns';
-import { Observable, of, Subject, throwError } from 'rxjs';
+import { defer, Observable, of, Subject, throwError } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
 import {
   BulkPromotion,
@@ -648,6 +648,57 @@ describe('CandidatesPage', () => {
       'c-ktta',
       expect.objectContaining({ openPrice: 4.2, targetPushPercent: 15 }),
     );
+  });
+
+  it('sends a second save only once the first answered : a late answer would undo it', async () => {
+    const ktta = makeCandidate();
+    const { page, repo } = await setup({ list: [ktta] });
+    const first = new Subject<Candidate>();
+    let secondSent = false;
+    repo.update.mockReturnValueOnce(first).mockReturnValueOnce(
+      defer(() => {
+        secondSent = true;
+        return of(ktta);
+      }),
+    );
+
+    page.saveAtOpen({ candidate: ktta, patch: { openPrice: 4.2 } });
+    page.saveAtOpen({ candidate: ktta, patch: { targetPushPercent: 15 } });
+    expect(secondSent).toBe(false);
+
+    first.next(ktta);
+    first.complete();
+
+    expect(secondSent).toBe(true);
+  });
+
+  it('keeps the row when a save fails with a newer one queued behind it', async () => {
+    const ktta = makeCandidate();
+    const { page, repo } = await setup({ list: [ktta] });
+    const first = new Subject<Candidate>();
+    repo.update.mockReturnValueOnce(first);
+
+    page.saveAtOpen({ candidate: ktta, patch: { openPrice: 4.2 } });
+    page.saveAtOpen({ candidate: ktta, patch: { targetPushPercent: 15 } });
+    first.error(new HttpErrorResponse({ status: 500 }));
+
+    expect(page.rows()[0].openPrice).toBe(4.2);
+    expect(page.rows()[0].targetPushPercent).toBe(15);
+  });
+
+  it('goes back to the last row the server took when every queued save fails', async () => {
+    const ktta = makeCandidate();
+    const { page, repo } = await setup({ list: [ktta] });
+    const failure = throwError(() => new HttpErrorResponse({ status: 500 }));
+    const first = new Subject<Candidate>();
+    repo.update.mockReturnValueOnce(first).mockReturnValueOnce(failure);
+
+    page.saveAtOpen({ candidate: ktta, patch: { openPrice: 4.2 } });
+    page.saveAtOpen({ candidate: ktta, patch: { targetPushPercent: 15 } });
+    first.error(new HttpErrorResponse({ status: 500 }));
+
+    expect(page.rows()[0].openPrice).toBeNull();
+    expect(page.rows()[0].targetPushPercent).toBeNull();
   });
 
   it('reverts the row and toasts an error when the save fails', async () => {
