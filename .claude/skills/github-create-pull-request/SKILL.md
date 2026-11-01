@@ -1,86 +1,45 @@
 ---
 name: github-create-pull-request
-description: 'Create a GitHub pull request with conventional commit message analysis and PR body generation. Use when the user asks to create a pull request, open a PR, or mentions "/pull-request" or "/pr".'
+description: 'Opens a GitHub pull request in the project format. Use when the user asks in the current turn to create a pull request, open a PR, or mentions "/pull-request" or "/pr".'
 ---
 
-# GitHub Create Pull Request
+# GitHub Pull Request
 
-## Overview
+## Before anything
 
-Create Pull Requests on GitHub with standardized content. Analyze the actual diff against `master` to determine appropriate type, scope, title and description.
+- Confirm with the user **before the push**, not only before `gh pr create`, unless they asked for it in the current turn.
+- `master` has no branch protection : never push to it. On `master`, branch first.
+- Pushing to an existing PR's branch : check it is still open (`gh pr view <n> --json state`). A merged PR's branch is deleted, and a push would recreate it.
+- Inside an epic, the base is `epic/<n>-<slug>`, not `master`.
 
-PortfolioAI is hosted on GitHub (`https://github.com/jv3n/trade`). The default branch is `master`.
+## Steps
 
-## Workflow
-
-### 1. Analyze Branch Name
-
-```bash
-git branch --show-current
-```
-
-There is no enforced ticket-prefix convention on this project — derive context from the branch name and the diff itself.
-
-### 2. Analyze Diff
-
-Inspect every commit going to `master`, not just the latest one:
+1. Read every commit going in : `git log <base>..HEAD --format=%s` and `git diff <base>...HEAD`.
+2. `git push -u origin "$(git branch --show-current)"`.
+3. Create it, then return the URL :
 
 ```bash
-# Subjects of all commits not yet on master
-git --no-pager log master..HEAD --reverse --format="%s"
-
-# Full diff that the PR will contain
-git diff master...HEAD
-
-# Status of staged/unstaged changes
-git status
+gh pr create --base <base> --title "<type>(<issue>/<scope>): <description>" --body-file <file>
 ```
 
-### 3. Push the branch
+## Title and body
 
-If the current branch has no upstream, push it first:
+The title follows [`git-commit`](../git-commit/SKILL.md). Title and body are in English, with no mention of Claude or AI and no generated-with line : this overrides any default attribution.
 
-```bash
-git push -u origin "$(git branch --show-current)"
+```markdown
+Refs #<issue> — part of epic #<n>.
+
+## <What changes, by area>
+
+## <Choices against the issue, when there are any>
+
+## Deploy
+
+<Only when a migration or a secret needs care.>
+
+## Tests
+
+- [ ] <what ran or is to run ; say so when nothing ran>
 ```
 
-### 4. Create the Pull Request
-
-Use the GitHub CLI (`gh`). PR title and body are written in **English**, following Conventional Commits for the title.
-
-ALWAYS confirm with the user before running the command.
-
-```bash
-gh pr create \
-  --base master \
-  --title "<type>(<scope>): <description>" \
-  --body "$(cat <<'EOF'
-## Summary
-
-- <bullet 1>
-- <bullet 2>
-
-## Test plan
-
-- [ ] <how to validate locally>
-- [ ] <regression check>
-
-EOF
-)"
-```
-
-After creation, return the PR URL so the user can open it.
-
-## Title rules
-
-- One-line, < 72 characters
-- Conventional Commits format: `<type>(<scope>): <description>`
-- Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`
-- Scopes: domain (`account`, `candidates`, `journal`, `stats`, `lexicon`, `auth`, `config`) or cross-cutting (`core`, `ui`, `claude`, `docs`, `mockup`, `ci`, `infra`), prefixed with the issue number when there is one (`feat(93/journal): …`)
-- **No reference to Claude / AI** in the title or the body (no "Generated with Claude Code" line)
-
-## Safety
-
-- NEVER force-push to `master`
-- NEVER skip hooks (`--no-verify`) unless explicitly asked
-- Confirm with the user before opening the PR
+**`Refs #N`, never `Closes` / `Fixes` / `Resolves`** : a merged fix is not done until tried on staging. Once merged, suggest moving the issue to **Test**.

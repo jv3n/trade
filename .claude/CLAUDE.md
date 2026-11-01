@@ -18,7 +18,7 @@ Personal trading tracker — short small-caps, **GUS** (gap-up short, $1–$10) 
 | ------------ | ----------------------------------------------- |
 | Frontend     | Angular 22 + Angular Material 22                |
 | Design system | `libs/ui` — `@portfolioai/ui` (ng-packagr)      |
-| Storybook    | Storybook 10.4 (`projects: ui`)                  |
+| Storybook    | Storybook 10.6 (`projects: ui`)                  |
 | Backend      | Kotlin + Spring Boot 4 + Hibernate 7            |
 | Build        | Gradle (Kotlin DSL) ; Angular CLI workspace     |
 | DB           | PostgreSQL + Flyway                             |
@@ -38,13 +38,13 @@ trade/
 │   │       │              # app-state/ (UI signal services), http/ (interceptors),
 │   │       │              # router/ (guards), providers.ts
 │   │       ├── shared/    # cross-cutting helpers (no state, no DI)
-│   │       └── features/  # today, account, journal, stats, candidates, lexicon,
-│   │                      # settings, login, error, locates
+│   │       └── features/  # today, account, journal, stats, candidates, lexicon, reports,
+│   │                      # patterns, calculator, notes, locates, settings, login, error
+│   │   (and public/i18n/<lang>.json — ngx-translate)
 │   ├── libs/ui/                                    # @portfolioai/ui design-system lib
 │   │   ├── src/lib/<component>/                    # Stb*Module wrappers + scss overrides
 │   │   ├── styles/                                 # global tokens, base, shell, scrollbars
 │   │   └── .storybook/                             # Storybook config (theme toggle, etc.)
-│   ├── public/i18n/<lang>.json                     # ngx-translate
 │   ├── eslint.config.js                            # flat config — `ui` + `stb` selector prefixes
 │   └── angular.json                                # 2 projects : web, ui
 ├── projects/backend/src/main/kotlin/com/portfolioai/
@@ -55,10 +55,14 @@ trade/
 │   ├── stats/       # Stats sheet (CSV export + per-user rows)
 │   ├── candidates/  # Candidate sheets
 │   ├── lexicon/     # Bilingual trading lexicon
+│   ├── daybars/     # A ticker-day's 1-min bars behind a stat's chart, pushed by ts-scanner
+│   ├── scanner/     # ts-scanner's door : stats to review, bars, runs (bearer token)
 │   ├── tradingday/  # « Nothing today » marks of the Today page (no candidate, no trade)
 │   ├── config/      # Runtime-editable settings (login whitelist only)
 │   ├── forex/       # Frankfurter FX rate (account page CAD display)
-│   └── shared/      # GlobalExceptionHandler, UpstreamUnavailableException
+│   ├── devdata/     # Local seed (`local` profile)
+│   ├── e2e/         # Test-only endpoints (`e2e` profile)
+│   └── shared/      # GlobalExceptionHandler, Pattern, PageResponse, request validation, clock
 ├── docs/
 │   ├── pattern/                                    # Pattern sheets (GUS, DT, SIR, SIV, penny break)
 │   ├── notes/                                      # Trading notes that are not patterns (execution signals, four sellers, stop rule)
@@ -80,10 +84,10 @@ Always reason in terms of ports (`*.repository.ts` on the frontend, `*Client` po
 - **Hexagonal + light DDD** — domain → application → infrastructure ; ports live in `domain/`, adapters in `infrastructure/`. See [`hexagonal-ddd`](./skills/hexagonal-ddd/SKILL.md).
 - **Styling** — tokens for every colour, radius and size (`$space-*`, `$font-*`, `$icon-*` from `libs/ui/styles/_sizes.scss`), Material restyled through its override mixins, shared page patterns in the lib, no `::ng-deep`. See [`css`](./skills/css/SKILL.md).
 - **Frontend Material wrappers** — every `Mat*Module` is wrapped under `libs/ui/src/lib/<name>/` as a `Stb<Name>Module` that re-exports the Material module + ships an exhaustive M3 token-override SCSS. Consumer code imports everything Material from `@portfolioai/ui` — the `Stb<Name>Module`s, and the services, tokens and types the lib re-exports (`MatDialog`, `MAT_DIALOG_DATA`, `PageEvent`, `Sort`…) ; the app-wide Material defaults come from `provideStbMaterial()`. `no-restricted-imports` fails the lint on any `@angular/material/*` import in `apps/web`. See [`material-overrides`](./skills/material-overrides/SKILL.md).
-- **Design-system directives** — when a wrapped Material primitive needs lib-specific variants (size, variant, position), it ships a standalone directive (`StbSize`, `StbDanger`, `StbCol`, `StbChip`, `StbTable`, `StbSpinnerEnd`) under `<name>/<name>.directives.ts`. The directive posts a class via `host: { '[class]': 'hostClass()' }` + `computed`. Selectors use `stb` prefix (in addition to `ui` for component selectors).
+- **Design-system directives** — when a wrapped Material primitive needs lib-specific variants (size, variant, position), it ships a standalone directive (`StbSize`, `StbDanger`, `StbCol`, `StbChip`, `StbTable`) under `<name>/<name>.directives.ts`. The directive posts a class via `host: { '[class]': 'hostClass()' }` + `computed`. Selectors use `stb` prefix (in addition to `ui` for component selectors).
 - **Server-side pagination + sort** — the journal listing exposes Spring `Pageable` (`?page&size&sort=field,direction`). Sort default lives in the **service** (not in `@PageableDefault`) so the URL sort is honoured without resolver quirks. Frontend uses the controlled-component pattern : `[matSortActive] + [matSortDirection]` bound to a signal `{ columnName, isAscending }`. See [`spring-boot > Pageable defaults`](./skills/spring-boot/SKILL.md#pageable-defaults--sort-resolution).
 - **Toasts** — CRUD success/error feedback goes through the lib's `StbToast` : `this.toasts.success(this.translate.instant(key, params))` / `.error(...)`. It owns the `stb-snack-bar--success` / `--error` variants and the 3 s / 5 s durations ; never inject `MatSnackBar` in the app. See [`material-overrides > Snackbar variants`](./skills/material-overrides/SKILL.md#snackbar-variants).
-- **Cross-module events** — a module reacts to another through a Spring event, not a direct call (e.g. `journal` publishes `TradeChangedEvent`, `account` listens with `@EventListener` in the same transaction).
+- **Cross-module dependencies** — a write's side effects in another module go through a Spring event (e.g. `journal` publishes `TradeChangedEvent`, `account` listens with `@EventListener` in the same transaction) ; a read is a direct service call, or a `fun interface` port when the reverse dependency already exists. See [`hexagonal-ddd`](./skills/hexagonal-ddd/SKILL.md).
 - **Frontend loading** — data loads through `rxResource()` keyed on what it reads, shown through `keptValue` ; a write bumps a counter folded into the resource's params, since `reload()` is a no-op while a load runs. `effect()` only syncs with what Angular does not own (DOM attributes, ngx-translate, timers, echarts). See [`angular-signals > Loading data`](./skills/angular-signals/SKILL.md#loading-data--rxresource).
 
 ## Local Development
@@ -135,7 +139,7 @@ read top to bottom is the point there.
 ### Backend (Kotlin + Spring)
 
 - Idiomatic Kotlin (data classes, sealed classes, extension functions).
-- **No wildcard imports** — `import org.junit.jupiter.api.Assertions.assertEquals`, never `Assertions.*`. IntelliJ's "Optimize Imports" consolidates to `*` past 5 imports of the same package — disable that. The `WildcardImport.excludeImports` allowlist in `detekt.yml` is being phased out: don't add new entries, and expand any `*` you touch.
+- **No wildcard imports** — `import org.junit.jupiter.api.Assertions.assertEquals`, never `Assertions.*`. IntelliJ's "Optimize Imports" consolidates to `*` past 5 imports of the same package — disable that. Spotless fails the build on a wildcard.
 - Config in **YAML** (`application.yml` base + `application-local.yml` dev profile + `application-prod.yml` Cloud Run profile — all committed, no secrets).
 - Spring proxies (`@Transactional`, `@Async`, `@Cacheable`) are bypassed on self-calls (`this.method()`) — put the annotated method on another bean.
 - Integration tests on a **real PostgreSQL**, no DB mocks. Testcontainers singleton via JUnit Platform listener (`testsupport/PostgresContainer.kt`).
@@ -148,8 +152,8 @@ read top to bottom is the point there.
 - **Angular Material 22** wrapped through `@portfolioai/ui` (`libs/ui/`). Consumer code imports `Stb<Name>Module`, never `Mat<Name>Module` directly.
 - **Ticker display always goes through the chip directive** — whenever a ticker symbol is rendered (stats, journal, candidates, future surfaces), it MUST be a `<mat-chip stbChip="ticker">` (from `StbChipsModule`), never a bare `<a>`/`<span>`/text. One directive, one source of truth for the (neutral, monospace) ticker styling.
 - **Colour rule** — green / red only for **outcomes** (P&L, amounts, gaps), amber for **warnings** and for **costs** on a chart (locates, fees — the reports), indigo for **status / categories** — two exceptions, the green check of a completed stat and a chart's **candles**, green up / red down with their volume as on any trading tool (#804) — everything else neutral (price moves, tickers). Details in `mockup/PARCOURS.md > Principes d'interface`.
-- **Confirmation modal** for every action that creates or deletes something (candidate → stat, stat → trade, deletions) ; none for edits. Call `ConfirmService.ask(key, { params, variant })` (`core/app-state/`) — `key` is an i18n group with `title` / `message` / `confirm` ; it emits `true` only on confirm, so pipe `filter(Boolean), switchMap(...)`. Deletions use `variant: 'danger'` (red button). Never the native `confirm()`.
-- **Workspace** — `apps/web` is the consumer app, `libs/ui` is the design system (ng-packagr build, Storybook 10.4 playground). TypeScript alias `@portfolioai/ui` → `libs/ui/src/public-api.ts`.
+- **Confirmation modal** for every action that creates or deletes something (candidate → stat, stat → trade, deletions) ; none for edits. Call `ConfirmService.ask(key, { params, variant })` (`core/app-state/`) — `key` is an i18n group with `title` / `message` / `confirm` ; it emits `true` only on confirm, so pipe `filter(Boolean), switchMap(...)`. Deletions use `variant: 'danger'` (red button). A choice between several answers goes through `ConfirmService.choose`. Never the native `confirm()`.
+- **Workspace** — `apps/web` is the consumer app, `libs/ui` is the design system (ng-packagr build, Storybook 10.6 playground). TypeScript alias `@portfolioai/ui` → `libs/ui/src/public-api.ts`.
 - **i18n via `ngx-translate`** — translation files in `apps/web/public/i18n/<lang>.json` (FR + EN), templates use `'key' | translate`, TS uses `TranslateService.instant('key', { params })`. Active locale lives in `LanguageService` (signal). **Never hard-code a user-facing string** — always route through a key.
 - **ESLint flat config** (`eslint.config.js`, Angular ESLint 22) — `npm run lint` blocks CI. Two selector-prefix rule sets : `apps/web/**` uses `app`, `libs/ui/**` uses `['ui', 'stb']`. Prettier remains the only formatter (`eslint-config-prettier` applied last).
 - Tests on **Vitest** (`@angular/build:unit-test` builder, jsdom environment). Specs whose templates use `translate` must add `provideTranslateService({ lang: 'en' })` ; specs whose templates use `<mat-datepicker>` must add `provideNativeDateAdapter()` (from `@portfolioai/ui`). See [`angular-testing`](./skills/angular-testing/SKILL.md).
@@ -212,7 +216,7 @@ Tests serve as a top-to-bottom-readable spec. Concretely:
 
 The open backlog lives in **[GitHub Issues](https://github.com/jv3n/trade/issues)**.
 
-- Three label dimensions, combinable: **priority** (`prio:P1` 🔴 / `prio:P2` 🟡 / `prio:P3` 🟢), **module** (`module:today` / `module:candidates` / `module:stats` / `module:journal` / `module:account` / `module:lexicon` / `module:settings` / `module:ui`), **type** (`enhancement` / `bug` / `tech-debt` / `documentation` / `question`). Use `gh` from **WSL** (`wsl.exe -e bash -lc 'gh …'`) — `gh` is not on the Windows/Git-Bash PATH.
+- Three label dimensions, combinable: **priority** (`prio:P1` 🔴 / `prio:P2` 🟡 / `prio:P3` 🟢), **module** (`module:today` / `module:candidates` / `module:stats` / `module:journal` / `module:account` / `module:lexicon` / `module:settings` / `module:ui`), **type** (`enhancement` / `bug` / `tech-debt` / `documentation` / `question`). Run `gh` from **WSL** ; from a Windows shell, through `wsl.exe -e bash -lc 'gh …'`, since it is not on that PATH.
 - Issues move through the **Trade Board** GitHub project (project 2, owner `jv3n`) : Backlog → Ready → In progress → In review → **Test** → Done.
 - A merged fix is not done until it has been tried on staging (a `vX.Y.Z-rcN` release, see `devops/docs/releasing.md`). So a PR references its issues with **`Refs #N`, never `Closes` / `Fixes` / `Resolves`** (they close the issue on merge) ; once merged, suggest moving the issue to **Test**. Only the user moves it to Done.
 - Never run `gh issue close/reopen`, label edits or board status changes autonomously — same rule as git: suggest, the user confirms in the current turn.
