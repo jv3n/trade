@@ -1387,7 +1387,7 @@
               {{ 'stats.review.validate' | translate }}
             </button>
           } @else if (stat.review === 'REJECTED') {
-            <!-- Opened through a link (?stat=) : a rejected stat is never ticked, only restored. -->
+            <!-- A rejected stat is never ticked, only restored. -->
             <button
               mat-stroked-button
               type="button"
@@ -2319,6 +2319,16 @@
                   <mat-icon>close</mat-icon>
                 </button>
               } @else if (s.review === 'REJECTED') {
+                <button
+                  mat-stroked-button
+                  stbSize="sm"
+                  type="button"
+                  (click)="open(s)"
+                  [matTooltip]="'stats.review.viewHint' | translate"
+                >
+                  <mat-icon>visibility</mat-icon>
+                  {{ 'stats.review.view' | translate }}
+                </button>
                 <button
                   mat-stroked-button
                   stbSize="sm"

@@ -1101,6 +1101,8 @@
       "rejectHint": "Reject — it leaves everything and will not come back on the next scan",
       "restore": "Restore",
       "restoreHint": "Back to review",
+      "view": "View",
+      "viewHint": "Open the stat : its chart, the reason and the note of the rejection",
       "unvalidate": "Back to review",
       "unvalidateHint": "Undoes the validation : back to review, out of the figures",
       "untickFirst": "Completed : untick it before sending it back to review",
