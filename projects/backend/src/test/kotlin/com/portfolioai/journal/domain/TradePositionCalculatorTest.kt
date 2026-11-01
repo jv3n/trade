@@ -213,6 +213,49 @@ class TradePositionCalculatorTest {
   }
 
   @Test
+  fun `the cover typed on the first row counts by its time, not by its row`() {
+    val agg =
+      TradePositionCalculator.compute(
+        TradeDirection.SHORT,
+        listOf(exit(100, "2.00").at(10, 0), entry(100, "2.50").at(9, 41)),
+      )
+
+    assertEquals(100, agg.size)
+  }
+
+  @Test
+  fun `a fill without a time leaves the row order in charge`() {
+    val agg =
+      TradePositionCalculator.compute(
+        TradeDirection.SHORT,
+        listOf(entry(100, "2.50"), exit(100, "2.00").at(9, 41)),
+      )
+
+    assertEquals(100, agg.size)
+  }
+
+  @Test
+  fun `a cover timed before its entry is refused`() {
+    assertThrows(IllegalArgumentException::class.java) {
+      TradePositionCalculator.compute(
+        TradeDirection.SHORT,
+        listOf(entry(100, "2.50").at(10, 30), exit(100, "2.00").at(9, 45)),
+      )
+    }
+  }
+
+  // The size stayed at 0, and `trade_entry_size_check` answered a 409 about a duplicate (#843).
+  @Test
+  fun `an exit typed before any entry is refused, the position never held a share`() {
+    assertThrows(IllegalArgumentException::class.java) {
+      TradePositionCalculator.compute(
+        TradeDirection.SHORT,
+        listOf(exit(100, "2.00"), entry(100, "2.50")),
+      )
+    }
+  }
+
+  @Test
   fun `fills entered out of order yield no duration rather than a negative one`() {
     val legs = listOf(entry(100, "5").at(10, 30), exit(100, "4").at(9, 45))
     assertNull(TradePositionCalculator.duration(legs))

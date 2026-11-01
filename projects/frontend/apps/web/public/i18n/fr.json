@@ -607,7 +607,7 @@
       "executionsBlock": {
         "add": "Ajouter une exécution",
         "remove": "Supprimer l'exécution",
-        "invalid": "Exécutions incohérentes : plus d'actions fermées qu'ouvertes.",
+        "invalid": "Exécutions incohérentes : plus d'actions fermées qu'ouvertes, ou une sortie avant la première entrée.",
         "remaining": "{{shares}} actions encore ouvertes — P&L calculé",
         "remainingOne": "{{shares}} action encore ouverte — P&L calculé",
         "closed": "Position fermée — P&L calculé"
@@ -875,6 +875,7 @@
     "snackbar": {
       "deleteSuccess": "Stat {{ticker}} supprimée.",
       "deleteError": "Impossible de supprimer la stat. Réessaie.",
+      "openError": "Impossible d'ouvrir cette stat. Réessaie.",
       "promoteTradeSuccess": "Trade {{ticker}} créé au journal.",
       "promoteTradeError": "Impossible de créer le trade. Réessaie.",
       "sessionSaveError": "Impossible d'enregistrer la séance de {{ticker}}. Réessaie.",

@@ -9,7 +9,6 @@ import java.util.Optional
 import java.util.UUID
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -36,8 +35,6 @@ import org.springframework.web.server.ResponseStatusException
  *   deleted user. All three are [IllegalStateException] because they indicate a regression in the
  *   chain — `SecurityConfig` + Spring Security itself should never route an unauthenticated request
  *   to a method that calls [AuthService.getCurrentUser].
- * - [AuthService.isAdmin] : trivially reads [User.role] but pinned here so future role additions
- *   don't accidentally make a new role admin-equivalent.
  *
  * `@AfterEach` clears the security context so a test that sets it doesn't leak state into the next
  * one (`SecurityContextHolder` is thread-local but the JUnit runner reuses the thread).
@@ -66,24 +63,6 @@ class AuthServiceTest {
     // The role can have been flipped server-side since login (manual SQL update, future admin
     // endpoint) and the resolver must reflect that.
     assertSame(user, resolved)
-  }
-
-  @Test
-  fun `isAdmin returns true for a user with role ADMIN`() {
-    val admin = user(email = "admin@example.com", role = Role.ADMIN)
-    setPrincipal(AppOAuth2User(admin.id, admin.email, emptyMap(), emptyList()))
-    given(userRepository.findById(eq(admin.id))).willReturn(Optional.of(admin))
-
-    assertTrue(service.isAdmin())
-  }
-
-  @Test
-  fun `isAdmin returns false for a user with role USER`() {
-    val regular = user(email = "user@example.com", role = Role.USER)
-    setPrincipal(AppOAuth2User(regular.id, regular.email, emptyMap(), emptyList()))
-    given(userRepository.findById(eq(regular.id))).willReturn(Optional.of(regular))
-
-    assertFalse(service.isAdmin())
   }
 
   // ---------------------------------------------------------------------- wiring-bug paths

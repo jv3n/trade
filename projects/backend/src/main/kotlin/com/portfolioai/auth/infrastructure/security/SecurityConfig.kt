@@ -21,10 +21,10 @@ import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler
 
 /**
  * The application's only filter chain. The exact route matrix lives in `authorizeHttpRequests`
- * below ; in short : health + OAuth callback routes are permitAll, the three back-office areas
- * (config, prompts, narrative observability) require ROLE_ADMIN, the rest of the API and of the
- * actuator require an authenticated session, and the SPA itself is public. The scanner's `POST`s
- * have their own token chain, ordered first (`ScannerSecurityConfig`).
+ * below ; in short : health + OAuth callback routes are permitAll, the config area and the
+ * lexicon's writes require ROLE_ADMIN, the rest of the API and of the actuator require an
+ * authenticated session, and the SPA itself is public. The scanner's `POST`s have their own token
+ * chain, ordered first (`ScannerSecurityConfig`).
  *
  * Unauthenticated requests get a HTTP 401, not the default 302 to the Google authorization URL —
  * the SPA's HTTP interceptor needs a clean status code to decide whether to redirect to /login. A
@@ -84,9 +84,7 @@ class SecurityConfig(
           .permitAll()
         it.requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
         if (e2e) it.requestMatchers(HttpMethod.POST, E2E_LOGIN).permitAll()
-        it
-          .requestMatchers("/api/config/**", "/api/prompts/**", "/api/narrative/observability/**")
-          .hasRole("ADMIN")
+        it.requestMatchers("/api/config/**").hasRole("ADMIN")
         // Stats need no rule of their own : every endpoint (listing, KPIs, completion, delete, CSV
         // export) is user-scoped in the service, so they fall through to the `/api/**` rule below.
         // The lexicon is likewise a global, shared dataset : the `GET` listing is readable by every

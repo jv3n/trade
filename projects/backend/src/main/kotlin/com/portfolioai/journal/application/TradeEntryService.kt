@@ -216,8 +216,8 @@ class TradeEntryService(
   /**
    * CSV dump of every trade for the current user, ordered by tradeDate desc then createdAt desc
    * (same order as [findAll]). Returned as a single UTF-8 string ; the controller wraps it in a
-   * `text/csv` attachment response with a dated filename. Roundtrip-safe with the future importer —
-   * column layout owned by [TradeEntryCsvEncoder].
+   * `text/csv` attachment response with a dated filename. Column layout owned by
+   * [TradeEntryCsvEncoder].
    */
   @Transactional(readOnly = true)
   fun exportAllAsCsv(): String {
@@ -369,8 +369,8 @@ class TradeEntryService(
    * Notifies the `account` context so it can sync the trade's P&L as a read-only `TRADE` movement.
    * The figure published is the **retained** one (the broker's real P&L when it has been typed in,
    * the computed one otherwise) — the balance must match the broker statement to the cent, which is
-   * the whole point of the real-P&L override (#192). Fired on create / update / import ; deletion
-   * publishes a null P&L first (see [delete]).
+   * the whole point of the real-P&L override (#192). Fired on create / update ; deletion publishes
+   * a null P&L first (see [delete]).
    */
   private fun publishChange(entry: TradeEntry) {
     events.publishEvent(

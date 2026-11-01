@@ -640,7 +640,14 @@ export class StatsPage implements HasUnsavedChanges {
         map((params) => params.get('stat')),
         distinctUntilChanged(),
         filter((id): id is string => id !== null),
-        switchMap((id) => this.repo.findById(id).pipe(catchError(() => EMPTY))),
+        switchMap((id) =>
+          this.repo.findById(id).pipe(
+            catchError(() => {
+              this.toasts.error(this.translate.instant('stats.snackbar.openError'));
+              return EMPTY;
+            }),
+          ),
+        ),
         takeUntilDestroyed(),
       )
       .subscribe((entry) => {

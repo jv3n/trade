@@ -4,7 +4,7 @@ import java.math.BigDecimal
 import org.springframework.http.HttpStatus
 import org.springframework.web.server.ResponseStatusException
 
-/** The 400 a service answers a write it refuses with ; the message reaches the user. */
+/** The 400 a service answers a write it refuses with ; the message is for the logs and the API. */
 fun badRequest(message: String) = ResponseStatusException(HttpStatus.BAD_REQUEST, message)
 
 fun BigDecimal.requirePositive(label: String): BigDecimal = also {

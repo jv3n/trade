@@ -2,7 +2,6 @@ import { NumberSymbol, getLocaleNumberSymbol } from '@angular/common';
 import {
   Directive,
   ElementRef,
-  HostListener,
   LOCALE_ID,
   effect,
   inject,
@@ -61,6 +60,13 @@ import {
  */
 @Directive({
   selector: 'input[appNumberMask]',
+  host: {
+    '(mousedown)': 'onMouseDown()',
+    '(focus)': 'onFocus()',
+    '(mouseup)': 'onMouseUp($event)',
+    '(input)': 'onInput($event)',
+    '(blur)': 'onBlur()',
+  },
 })
 export class NumberMaskDirective {
   private readonly host = inject<ElementRef<HTMLInputElement>>(ElementRef);
@@ -102,13 +108,11 @@ export class NumberMaskDirective {
     });
   }
 
-  @HostListener('mousedown')
   onMouseDown(): void {
     const el = this.host.nativeElement;
     this.selectOnMouseUp = el.ownerDocument.activeElement !== el;
   }
 
-  @HostListener('focus')
   onFocus(): void {
     const el = this.host.nativeElement;
     // Typing happens on the plain form : the caret is tracked by digit index, and separators
@@ -135,14 +139,12 @@ export class NumberMaskDirective {
 
   // The click that focuses the field would otherwise drop the selection on mouseup and leave a
   // caret. Only that first click : a click in an already focused field still places the caret.
-  @HostListener('mouseup', ['$event'])
   onMouseUp(event: MouseEvent): void {
     if (!this.selectOnMouseUp) return;
     this.selectOnMouseUp = false;
     event.preventDefault();
   }
 
-  @HostListener('input', ['$event'])
   onInput(event: Event): void {
     const el = this.host.nativeElement;
     const raw = el.value;
@@ -177,7 +179,6 @@ export class NumberMaskDirective {
     event.stopPropagation();
   }
 
-  @HostListener('blur')
   onBlur(): void {
     const el = this.host.nativeElement;
     let num = parseNumber(el.value);
