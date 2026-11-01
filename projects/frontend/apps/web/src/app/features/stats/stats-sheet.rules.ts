@@ -460,15 +460,25 @@ export function premarketProblem(m: PremarketModel, pattern: Pattern = m.pattern
 }
 
 /**
+ * What holds back a save of [card], its own problem first. Every save sends the whole row : a card
+ * the server would refuse holds the other one too.
+ */
+export function saveProblem(
+  card: SheetCard,
+  premarketIssue: string | null,
+  sessionIssue: string | null,
+): string | null {
+  if (card === 'premarket') return premarketIssue ?? (sessionIssue && 'stats.save.waitingSession');
+  return premarketIssue ? 'stats.save.waitingPremarket' : sessionIssue;
+}
+
+/**
  * A day's range holds every price inside it (#305) : `LOD <= open, push, EOD <= HOD`. Returns the
  * i18n key of what is wrong and the fields that make it wrong — the HOD / LOD pair was the only
  * check before, so a stat could carry a HOD of 1 under a push of 10 and still be ticked. Prices at
  * zero are refused too, by [missingPrices] on the panel and by the backend on write.
  */
-export function sessionProblem(
-  session: SessionModel,
-  pattern: Pattern,
-): { reason: string; fields: SessionField[] } | null {
+export function sessionProblem(session: SessionModel, pattern: Pattern): SessionProblem | null {
   if (pattern === 'DT') return doubleTopProblem(session);
   const { hodPrice: hod, lodPrice: lod } = session;
   if (hod !== null && lod !== null && hod < lod) {
@@ -482,13 +492,22 @@ export function sessionProblem(
   return gusDropProblem(session);
 }
 
+/** A session refused : the reason, and the fields at fault. */
+export interface SessionProblem {
+  reason: string;
+  fields: SessionField[];
+}
+
 /**
  * The drop of a GUS (#713) : its time not before the push's, both times inside the extended
  * session, price and time together, and a push time to time it from. The backend refuses the same.
  * No bound against the push : a session that kept rising ends above it, a loss for the short (#729).
  */
-function gusDropProblem(session: SessionModel): { reason: string; fields: SessionField[] } | null {
-  const drop = session.gusDropPrice;
+function gusDropProblem(session: SessionModel): SessionProblem | null {
+  return gusTimeProblem(session) ?? gusDropPairProblem(session);
+}
+
+function gusTimeProblem(session: SessionModel): SessionProblem | null {
   for (const field of ['pushOpenTime', 'gusDropTime'] as const) {
     const time = session[field];
     if (time && (time < DT_SESSION_OPENS || time > DT_SESSION_CLOSES)) {
@@ -499,13 +518,18 @@ function gusDropProblem(session: SessionModel): { reason: string; fields: Sessio
   if (pushTime && dropTime && dropTime < pushTime) {
     return { reason: 'stats.save.gusDropBeforePush', fields: ['pushOpenTime', 'gusDropTime'] };
   }
+  return null;
+}
+
+function gusDropPairProblem(session: SessionModel): SessionProblem | null {
+  const { gusDropPrice: drop, gusDropTime: dropTime } = session;
   if (drop !== null && !dropTime) {
     return { reason: 'stats.save.gusDropTimeRequired', fields: ['gusDropTime'] };
   }
   if (drop === null && dropTime) {
     return { reason: 'stats.save.gusDropPriceRequired', fields: ['gusDropPrice'] };
   }
-  if (drop !== null && !session.noPush && !pushTime) {
+  if (drop !== null && !session.noPush && !session.pushOpenTime) {
     return { reason: 'stats.save.gusPushTimeRequired', fields: ['pushOpenTime'] };
   }
   return null;
@@ -516,9 +540,7 @@ function gusDropProblem(session: SessionModel): { reason: string; fields: Sessio
  * low not above the top, the retest not under the low — the backend refuses the same. The drop is
  * free of the retest : a session that rallied off it ends above it, a loss for the short (#729).
  */
-function doubleTopProblem(
-  session: SessionModel,
-): { reason: string; fields: SessionField[] } | null {
+function doubleTopProblem(session: SessionModel): SessionProblem | null {
   const { dtStartPrice: start, dtTopPrice: top, dtLowPrice: low, dtRetestPrice: retest } = session;
   if (start !== null && top !== null && top < start) {
     return { reason: 'stats.save.topBelowStart', fields: ['dtStartPrice', 'dtTopPrice'] };
@@ -536,7 +558,7 @@ function doubleTopProblem(
  * The drop is optional but whole (#706) : its price and its time go together, or the KPIs would
  * count it in their `n` and leave it out of the median duration. The backend refuses the same.
  */
-function dropPairProblem(session: SessionModel): { reason: string; fields: SessionField[] } | null {
+function dropPairProblem(session: SessionModel): SessionProblem | null {
   const hasPrice = session.dtDropPrice !== null;
   const hasTime = !!session.dtDropTime;
   if (hasPrice && !hasTime)
@@ -551,9 +573,7 @@ function dropPairProblem(session: SessionModel): { reason: string; fields: Sessi
  * order — each against the latest one typed before it, so a gap in the middle still orders the
  * rest. The backend refuses the same ; a negative leg would poison the median.
  */
-function doubleTopTimesProblem(
-  session: SessionModel,
-): { reason: string; fields: SessionField[] } | null {
+function doubleTopTimesProblem(session: SessionModel): SessionProblem | null {
   let previous: SessionTime | null = null;
   for (const field of [...DOUBLE_TOP_TIMES.map((t) => t.field), 'dtDropTime' as const]) {
     const time = session[field];

@@ -119,6 +119,7 @@ import {
   premarketOf,
   premarketProblem,
   retestTookTop,
+  saveProblem,
   sessionOf,
   sessionProblem,
   tabFromQuery,
@@ -815,15 +816,11 @@ export class StatsPage implements HasUnsavedChanges {
     if (!entry || this.creating()) return;
     const premarket = this.premarket();
     const session = this.session();
-    // Every save sends the whole row : a card the server would refuse holds the other one too.
-    const premarketIssue = premarketProblem(premarket);
-    const sessionIssue = this.sessionIssue()?.reason ?? null;
-    const problem =
-      card === 'premarket'
-        ? (premarketIssue ?? (sessionIssue && 'stats.save.waitingSession'))
-        : premarketIssue
-          ? 'stats.save.waitingPremarket'
-          : sessionIssue;
+    const problem = saveProblem(
+      card,
+      premarketProblem(premarket),
+      this.sessionIssue()?.reason ?? null,
+    );
     if (problem) {
       this.setSaveState(card, { status: 'error', at: null, reason: problem });
       return;
@@ -841,39 +838,44 @@ export class StatsPage implements HasUnsavedChanges {
       this.session.set(sessionOf(entry));
       return;
     }
+    this.sendSave(entry, card, this.toInput(entry, premarket, session));
+  }
+
+  private sendSave(entry: StatEntry, card: SheetCard, input: StatEntryInput): void {
     // Patched right away : the next field left starts from this one, not from the server's reply.
-    const input = this.toInput(entry, premarket, session);
     this.patchRow({ ...entry, ...input }, false);
     this.setSaveState(card, { status: 'saving', at: null, reason: null });
     this.store.enqueue(
       this.repo.update(entry.id, input).pipe(
-        tap((saved) => {
-          this.patchRow(saved);
-          const at = new Date();
-          this.setSaveState(card, { status: 'saved', at, reason: null });
-          // The request carried the **whole row**, so whatever the other card was holding back for
-          // this one has just gone out with it (#348). Its own problems, if any, are left alone.
-          this.releaseHeldCard(card === 'premarket' ? 'session' : 'premarket', at);
-          // The KPIs only count ticked stats : editing one of them moves them.
-          if (saved.completed) this.store.refreshSummary();
-        }),
+        tap((saved) => this.onSaved(saved, card)),
         catchError(() => {
-          this.patchRow(entry, false);
-          if (this.completing()?.id === entry.id) {
-            this.premarket.set(premarketOf(entry));
-            this.session.set(sessionOf(entry));
-          }
-          this.setSaveState(card, {
-            status: 'error',
-            at: null,
-            reason: 'stats.save.serverRefused',
-          });
-          this.toasts.error(
-            this.translate.instant('stats.snackbar.sessionSaveError', { ticker: entry.ticker }),
-          );
+          this.onSaveRefused(entry, card);
           return EMPTY;
         }),
       ),
+    );
+  }
+
+  private onSaved(saved: StatEntry, card: SheetCard): void {
+    this.patchRow(saved);
+    const at = new Date();
+    this.setSaveState(card, { status: 'saved', at, reason: null });
+    // The request carried the **whole row**, so whatever the other card was holding back for this
+    // one has just gone out with it (#348). Its own problems, if any, are left alone.
+    this.releaseHeldCard(card === 'premarket' ? 'session' : 'premarket', at);
+    // The KPIs only count ticked stats : editing one of them moves them.
+    if (saved.completed) this.store.refreshSummary();
+  }
+
+  private onSaveRefused(entry: StatEntry, card: SheetCard): void {
+    this.patchRow(entry, false);
+    if (this.completing()?.id === entry.id) {
+      this.premarket.set(premarketOf(entry));
+      this.session.set(sessionOf(entry));
+    }
+    this.setSaveState(card, { status: 'error', at: null, reason: 'stats.save.serverRefused' });
+    this.toasts.error(
+      this.translate.instant('stats.snackbar.sessionSaveError', { ticker: entry.ticker }),
     );
   }
 
