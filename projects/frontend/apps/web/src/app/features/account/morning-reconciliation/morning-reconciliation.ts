@@ -25,6 +25,7 @@ import { EMPTY, catchError, filter, finalize, of, switchMap, tap } from 'rxjs';
 import { Reconciliation } from '../../../core/api/account/account.model';
 import { AccountRepository } from '../../../core/api/account/account.repository';
 import { ConfirmService } from '../../../core/app-state/confirm.service';
+import { MarketClock } from '../../../core/app-state/market-clock.service';
 import { NumberMaskDirective } from '../../../shared/number-mask/number-mask.directive';
 
 const HTTP_CONFLICT = 409;
@@ -61,6 +62,7 @@ const UNUSUAL_GAP_RATIO = 0.2;
   styleUrl: './morning-reconciliation.scss',
 })
 export class MorningReconciliation {
+  private readonly clock = inject(MarketClock);
   private readonly repo = inject(AccountRepository);
   private readonly confirm = inject(ConfirmService);
   private readonly translate = inject(TranslateService);
@@ -124,7 +126,7 @@ export class MorningReconciliation {
 
   /** Today's reconciliation, when this morning is already settled. */
   readonly today = computed(() => {
-    const day = format(new Date(), 'yyyy-MM-dd');
+    const day = format(this.clock.today(), 'yyyy-MM-dd');
     return this.history().find((r) => format(r.valueDate, 'yyyy-MM-dd') === day) ?? null;
   });
 
@@ -214,7 +216,11 @@ export class MorningReconciliation {
         tap(() => this.submitting.set(true)),
         switchMap(() =>
           this.repo
-            .reconcile({ brokerBalance: broker, valueDate: new Date(), expectedBalance: expected })
+            .reconcile({
+              brokerBalance: broker,
+              valueDate: this.clock.today(),
+              expectedBalance: expected,
+            })
             .pipe(
               tap((reconciliation) => {
                 this.toasts.success(

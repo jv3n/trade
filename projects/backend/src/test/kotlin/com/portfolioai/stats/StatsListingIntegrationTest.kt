@@ -6,6 +6,7 @@ import com.portfolioai.auth.domain.User
 import com.portfolioai.auth.infrastructure.persistence.UserRepository
 import com.portfolioai.journal.infrastructure.persistence.TradeEntryRepository
 import com.portfolioai.shared.Pattern
+import com.portfolioai.shared.marketToday
 import com.portfolioai.stats.application.StatEntryService
 import com.portfolioai.stats.application.dto.StatEntryRequest
 import com.portfolioai.stats.application.dto.StatSummaryDto
@@ -15,6 +16,7 @@ import com.portfolioai.stats.domain.StatEntryFilter
 import com.portfolioai.stats.domain.StatStatus
 import com.portfolioai.stats.infrastructure.persistence.StatEntryRepository
 import java.math.BigDecimal
+import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
@@ -326,7 +328,9 @@ class StatsListingIntegrationTest {
   fun `a stat typed by hand for a future day is a 400`() {
     val ex =
       assertThrows(ResponseStatusException::class.java) {
-        service.createByHand(premarketRequest(tradeDate = LocalDate.now().plusDays(1)))
+        service.createByHand(
+          premarketRequest(tradeDate = Clock.systemUTC().marketToday().plusDays(1))
+        )
       }
 
     assertEquals(400, ex.statusCode.value())
@@ -334,11 +338,13 @@ class StatsListingIntegrationTest {
 
   @Test
   fun `a stat typed by hand on a day and ticker already in the sheet is a 409`() {
-    service.create(premarketRequest(ticker = "KTTA", tradeDate = LocalDate.now()))
+    service.create(premarketRequest(ticker = "KTTA", tradeDate = Clock.systemUTC().marketToday()))
 
     val ex =
       assertThrows(ResponseStatusException::class.java) {
-        service.createByHand(premarketRequest(ticker = "KTTA", tradeDate = LocalDate.now()))
+        service.createByHand(
+          premarketRequest(ticker = "KTTA", tradeDate = Clock.systemUTC().marketToday())
+        )
       }
 
     assertEquals(409, ex.statusCode.value())

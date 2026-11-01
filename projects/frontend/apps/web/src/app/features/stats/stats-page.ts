@@ -26,7 +26,7 @@ import {
   StbTooltipModule,
   stbLoadGate,
 } from '@portfolioai/ui';
-import { isBefore, isToday, isYesterday, startOfDay } from 'date-fns';
+import { isBefore, isToday, isYesterday } from 'date-fns';
 import {
   EMPTY,
   Observable,
@@ -62,6 +62,7 @@ import {
 } from '../../core/api/stats/stat-entry.model';
 import { StatsRepository } from '../../core/api/stats/stats.repository';
 import { ConfirmService } from '../../core/app-state/confirm.service';
+import { MarketClock } from '../../core/app-state/market-clock.service';
 import { HasUnsavedChanges } from '../../core/router/unsaved-changes.guard';
 import { keptValue } from '../../shared/kept-value/kept-value';
 import { NumberMaskDirective } from '../../shared/number-mask/number-mask.directive';
@@ -997,7 +998,7 @@ export class StatsPage implements HasUnsavedChanges {
   readonly siblingPattern = computed(() => this.freePatterns()[0] ?? null);
 
   /** A stat is dated up to today — the picker stops there, the backend refuses a future day. */
-  readonly maxDate = startOfDay(new Date());
+  readonly maxDate = inject(MarketClock).today;
   /** Rows the user closed — they stop auto-opening the panel for this visit. */
   private readonly dismissed = signal<ReadonlySet<string>>(new Set());
   /**
@@ -1483,7 +1484,7 @@ export class StatsPage implements HasUnsavedChanges {
   private showNew(): void {
     this.completing.set(null);
     this.creating.set(true);
-    this.identity.set({ tradeDate: this.maxDate, pattern: DEFAULT_PATTERN, ticker: '' });
+    this.identity.set({ tradeDate: this.maxDate(), pattern: DEFAULT_PATTERN, ticker: '' });
     this.premarket.set(BLANK_PREMARKET);
     this.session.set(BLANK_SESSION);
     this.typedPush = NO_TYPED_PUSH;

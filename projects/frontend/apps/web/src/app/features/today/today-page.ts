@@ -44,8 +44,10 @@ import { StatsRepository } from '../../core/api/stats/stats.repository';
 import { TradingDayMarks } from '../../core/api/trading-day/trading-day.model';
 import { TradingDayRepository } from '../../core/api/trading-day/trading-day.repository';
 import { ConfirmService } from '../../core/app-state/confirm.service';
+import { MarketClock } from '../../core/app-state/market-clock.service';
 import { keptValue } from '../../shared/kept-value/kept-value';
 import { sumCents } from '../../shared/locate-cost/locate-cost';
+import { newYorkMinutes } from '../../shared/market-time/market-time';
 import { PluralPipe, pluralKey } from '../../shared/plural/plural';
 import { MorningReconciliation } from '../account/morning-reconciliation/morning-reconciliation';
 import { gapPercent, pushPercent } from '../candidates/candidates.math';
@@ -109,26 +111,6 @@ export interface TickerLocates {
 const byTickerThenPattern = (a: StatEntry, b: StatEntry): number =>
   a.ticker.localeCompare(b.ticker) || PATTERNS.indexOf(a.pattern) - PATTERNS.indexOf(b.pattern);
 
-/**
- * Reads the New York wall clock : the trading day is defined over there, so deriving the day's
- * state from the browser's own timezone would put the user's evening in the middle of the session.
- */
-export function newYorkMinutes(now: Date): { minutes: number; weekend: boolean } {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/New_York',
-    hourCycle: 'h23',
-    hour: '2-digit',
-    minute: '2-digit',
-    weekday: 'short',
-  }).formatToParts(now);
-  const value = (type: string) => parts.find((p) => p.type === type)?.value ?? '';
-  const weekday = value('weekday');
-  return {
-    minutes: Number(value('hour')) * 60 + Number(value('minute')),
-    weekend: weekday === 'Sat' || weekday === 'Sun',
-  };
-}
-
 export function marketStatusAt(now: Date): MarketStatus {
   const { minutes, weekend } = newYorkMinutes(now);
   if (weekend) return 'CLOSED';
@@ -190,27 +172,29 @@ export class TodayPage {
   private readonly toasts = inject(StbToast);
   private readonly locale = inject(LOCALE_ID);
 
-  /** Captured once : the page is mounted fresh on every visit, and the day doesn't turn under it. */
-  readonly today = new Date();
-  readonly marketStatus = marketStatusAt(this.today);
+  private readonly clock = inject(MarketClock);
+  readonly today = this.clock.today;
+  readonly marketStatus = computed(() => marketStatusAt(this.clock.now()));
   readonly steps = STEPS;
   readonly requiredStepCount = REQUIRED_STEPS.length;
   // Weekends only : the morning after a market holiday reads the day before it as overdue (amber),
   // which leaves the count, the done state and the action untouched — accepted (#531).
-  private readonly previousTradingDay = subBusinessDays(this.today, 1);
+  private readonly previousTradingDay = computed(() => subBusinessDays(this.today(), 1));
 
   // ---- What the day is made of ----
   private readonly dayWrites = signal(0);
   private readonly accountWrites = signal(0);
   private readonly locateWrites = signal(0);
-  private readonly dayRange = { dateFrom: this.today, dateTo: this.today };
-  private readonly weekRange = {
-    dateFrom: startOfWeek(this.today, { weekStartsOn: 1 }),
-    dateTo: endOfWeek(this.today, { weekStartsOn: 1 }),
-  };
+  /** What the day's resources are keyed on : a write, or the day turning under an open tab. */
+  private readonly dayKey = computed(() => `${this.today().getTime()}:${this.dayWrites()}`);
+  private readonly dayRange = computed(() => ({ dateFrom: this.today(), dateTo: this.today() }));
+  private readonly weekRange = computed(() => ({
+    dateFrom: startOfWeek(this.today(), { weekStartsOn: 1 }),
+    dateTo: endOfWeek(this.today(), { weekStartsOn: 1 }),
+  }));
 
   private readonly accountResource = rxResource({
-    params: () => ({ day: this.dayWrites(), account: this.accountWrites() }),
+    params: () => ({ day: this.dayKey(), account: this.accountWrites() }),
     stream: () => this.accountRepo.getSummary(),
   });
   /**
@@ -218,32 +202,32 @@ export class TodayPage {
    * step state, which it needs even before the block is rendered.
    */
   private readonly reconciliationsResource = rxResource({
-    params: () => ({ day: this.dayWrites(), account: this.accountWrites() }),
+    params: () => ({ day: this.dayKey(), account: this.accountWrites() }),
     stream: () => this.accountRepo.reconciliations(1),
   });
   private readonly candidatesResource = rxResource({
-    params: () => ({ day: this.dayWrites() }),
-    stream: () => this.candidatesRepo.listForDate(this.today),
+    params: () => ({ day: this.dayKey() }),
+    stream: () => this.candidatesRepo.listForDate(this.today()),
   });
   private readonly locatesResource = rxResource({
-    params: () => ({ day: this.dayWrites(), locates: this.locateWrites() }),
-    stream: () => this.locatesRepo.listForDate(this.today),
+    params: () => ({ day: this.dayKey(), locates: this.locateWrites() }),
+    stream: () => this.locatesRepo.listForDate(this.today()),
   });
   private readonly statsResource = rxResource({
-    params: () => ({ day: this.dayWrites() }),
+    params: () => ({ day: this.dayKey() }),
     stream: () =>
       this.statsRepo.findAll(
         {
           status: 'TO_COMPLETE',
-          dateFrom: subDays(this.today, OVERDUE_FLOOR_DAYS),
-          dateTo: subDays(this.today, 1),
+          dateFrom: subDays(this.today(), OVERDUE_FLOOR_DAYS),
+          dateTo: subDays(this.today(), 1),
         },
         { pageIndex: 0, pageSize: 50, sortField: 'tradeDate', sortDirection: 'desc' },
       ),
   });
   /** Wrapped, so « never ran » (`{ run: null }`) is told from « not known yet » (`null`). */
   private readonly scannerRunResource = rxResource({
-    params: () => ({ day: this.dayWrites() }),
+    params: () => ({ day: this.dayKey() }),
     stream: () => this.scannerRepo.latestRun().pipe(map((run) => ({ run }))),
   });
   private readonly latestRun = keptValue(this.scannerRunResource);
@@ -256,10 +240,10 @@ export class TodayPage {
   private readonly scanDay = computed<Date | undefined>(() => {
     const known = this.latestRun();
     if (known === null) {
-      return this.scannerRunResource.status() === 'error' ? this.previousTradingDay : undefined;
+      return this.scannerRunResource.status() === 'error' ? this.previousTradingDay() : undefined;
     }
     const run = known.run;
-    return run && !this.scannerLate(run) ? run.tradingDate : this.previousTradingDay;
+    return run && !this.scannerLate(run) ? run.tradingDate : this.previousTradingDay();
   });
   /**
    * The scanner's stats to review of the session it read — named on step 1 (#765). Anything to
@@ -268,7 +252,7 @@ export class TodayPage {
   private readonly scannedResource = rxResource({
     params: () => {
       const day = this.scanDay();
-      return day && { day, writes: this.dayWrites() };
+      return day && { day, writes: this.dayKey() };
     },
     stream: ({ params }) =>
       this.statsRepo.findAll(
@@ -279,39 +263,39 @@ export class TodayPage {
   private readonly backfillResource = rxResource({
     params: () => {
       const day = this.scanDay();
-      return day && { day, writes: this.dayWrites() };
+      return day && { day, writes: this.dayKey() };
     },
     stream: ({ params }) => this.statsRepo.countToReview({ dateTo: subDays(params.day, 1) }),
   });
   private readonly todayTradesResource = rxResource({
-    params: () => ({ day: this.dayWrites() }),
-    stream: () => this.journalRepo.findAll(this.dayRange, { pageIndex: 0, pageSize: 20 }),
+    params: () => ({ day: this.dayKey() }),
+    stream: () => this.journalRepo.findAll(this.dayRange(), { pageIndex: 0, pageSize: 20 }),
   });
   private readonly weekTradesResource = rxResource({
-    params: () => ({ day: this.dayWrites() }),
-    stream: () => this.journalRepo.findAll(this.weekRange, { pageIndex: 0, pageSize: 20 }),
+    params: () => ({ day: this.dayKey() }),
+    stream: () => this.journalRepo.findAll(this.weekRange(), { pageIndex: 0, pageSize: 20 }),
   });
   private readonly tradingDayResource = rxResource({
-    params: () => ({ day: this.dayWrites() }),
-    stream: () => this.tradingDayRepo.get(this.today),
+    params: () => ({ day: this.dayKey() }),
+    stream: () => this.tradingDayRepo.get(this.today()),
   });
   private readonly dayPnlResource = rxResource({
-    params: () => ({ day: this.dayWrites() }),
-    stream: () => this.journalRepo.summary(this.dayRange),
+    params: () => ({ day: this.dayKey() }),
+    stream: () => this.journalRepo.summary(this.dayRange()),
   });
   private readonly weekPnlResource = rxResource({
-    params: () => ({ day: this.dayWrites() }),
-    stream: () => this.journalRepo.summary(this.weekRange),
+    params: () => ({ day: this.dayKey() }),
+    stream: () => this.journalRepo.summary(this.weekRange()),
   });
   private readonly monthPnlResource = rxResource({
-    params: () => ({ day: this.dayWrites() }),
-    stream: () => this.journalRepo.summary(computeMonthRange(this.today)),
+    params: () => ({ day: this.dayKey() }),
+    stream: () => this.journalRepo.summary(computeMonthRange(this.today())),
   });
 
   readonly accountSummary = keptValue(this.accountResource);
   private readonly reconciliations = keptValue(this.reconciliationsResource);
   readonly reconciledToday = computed(
-    () => this.reconciliations()?.some((r) => isSameDay(r.valueDate, this.today)) ?? false,
+    () => this.reconciliations()?.some((r) => isSameDay(r.valueDate, this.today())) ?? false,
   );
   private readonly keptCandidates = keptValue(this.candidatesResource);
   readonly candidates = computed<Candidate[]>(() => this.keptCandidates() ?? []);
@@ -381,12 +365,12 @@ export class TodayPage {
    */
   readonly yesterdayStats = computed(() =>
     this.statsToComplete()
-      .filter((s) => differenceInCalendarDays(s.tradeDate, this.previousTradingDay) >= 0)
+      .filter((s) => differenceInCalendarDays(s.tradeDate, this.previousTradingDay()) >= 0)
       .sort(byTickerThenPattern),
   );
   readonly overdueStats = computed(() =>
     this.statsToComplete()
-      .filter((s) => differenceInCalendarDays(s.tradeDate, this.previousTradingDay) < 0)
+      .filter((s) => differenceInCalendarDays(s.tradeDate, this.previousTradingDay()) < 0)
       .sort((a, b) => b.tradeDate.getTime() - a.tradeDate.getTime() || byTickerThenPattern(a, b)),
   );
   /** Yesterday's stats come first (newest first), so every stat past them is overdue. */
@@ -452,7 +436,7 @@ export class TodayPage {
       return {
         key: 'scannerLate',
         warn: true,
-        params: { day: day.format(this.previousTradingDay) },
+        params: { day: day.format(this.previousTradingDay()) },
       };
     }
     const params = {
@@ -480,8 +464,8 @@ export class TodayPage {
    */
   private scannerLate(run: ScannerRun): boolean {
     return (
-      differenceInCalendarDays(run.tradingDate, this.previousTradingDay) < 0 &&
-      !isSameDay(run.startedAt, this.today)
+      differenceInCalendarDays(run.tradingDate, this.previousTradingDay()) < 0 &&
+      !isSameDay(run.startedAt, this.today())
     );
   }
 
@@ -506,8 +490,10 @@ export class TodayPage {
   );
 
   /** New York has closed : the session is behind us. */
-  private readonly sessionOver =
-    this.marketStatus === 'CLOSED' && newYorkMinutes(this.today).minutes >= SESSION_CLOSE;
+  private readonly sessionOver = computed(
+    () =>
+      this.marketStatus() === 'CLOSED' && newYorkMinutes(this.clock.now()).minutes >= SESSION_CLOSE,
+  );
 
   /** Whether each step is behind us, from the data and the clock. */
   private readonly done = computed<Record<StepKey, boolean>>(() => ({
@@ -517,7 +503,7 @@ export class TodayPage {
     locates: this.dayLocates().length > 0,
     // The session is behind us once New York has closed — there is nothing to do in the app while
     // it runs, so it can't be "done" any earlier.
-    session: this.sessionOver,
+    session: this.sessionOver(),
     // Nothing left before today, to complete or to review (#765) — a morning with nothing to finish
     // is simply done. Unknown is not « nothing left ».
     stats: this.statsToCompleteTotal() === 0 && this.statsToReviewTotal() === 0,
@@ -563,7 +549,7 @@ export class TodayPage {
 
   /** Nothing located, and nothing left to locate : no candidate, or the session is over. */
   readonly nothingLocated = computed(
-    () => this.dayLocates().length === 0 && (this.noCandidateToday() || this.sessionOver),
+    () => this.dayLocates().length === 0 && (this.noCandidateToday() || this.sessionOver()),
   );
 
   /**
@@ -587,7 +573,7 @@ export class TodayPage {
       })
       .pipe(
         filter(Boolean),
-        switchMap(() => this.candidatesRepo.promoteDay(this.today)),
+        switchMap(() => this.candidatesRepo.promoteDay(this.today())),
         tap((result) => {
           this.toasts.success(
             this.translate.instant(
@@ -619,7 +605,7 @@ export class TodayPage {
       [mark]: value,
     };
     this.savingMarks.set(true);
-    this.tradingDayRepo.put(this.today, marks).subscribe({
+    this.tradingDayRepo.put(this.today(), marks).subscribe({
       next: (day) => {
         this.tradingDayResource.value.set(day);
         this.savingMarks.set(false);
@@ -663,7 +649,7 @@ export class TodayPage {
   /** A ticker of the step : its locates of the day, to top up or fix. */
   openLocates(row: TickerLocates): void {
     const data: LocatesDialogData = {
-      tradingDate: this.today,
+      tradingDate: this.today(),
       ticker: row.ticker,
       lastPrice: row.lastPrice,
       stockPrice: this.candidates().find((c) => c.ticker === row.ticker)?.pmOpen ?? null,

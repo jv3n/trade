@@ -5,12 +5,14 @@ import com.portfolioai.auth.domain.Role
 import com.portfolioai.auth.domain.User
 import com.portfolioai.auth.infrastructure.persistence.UserRepository
 import com.portfolioai.journal.infrastructure.persistence.TradeEntryRepository
+import com.portfolioai.shared.marketToday
 import com.portfolioai.stats.application.StatEntryService
 import com.portfolioai.stats.application.dto.RuleScoreRowDto
 import com.portfolioai.stats.domain.MechanicalRule
 import com.portfolioai.stats.domain.StatEntry
 import com.portfolioai.stats.infrastructure.persistence.StatEntryRepository
 import java.math.BigDecimal
+import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
@@ -53,7 +55,7 @@ class RuleScoreIntegrationTest {
 
   private lateinit var testUser: User
   private lateinit var otherUser: User
-  private val today: LocalDate = LocalDate.now()
+  private val today: LocalDate = Clock.systemUTC().marketToday()
 
   @BeforeEach
   fun setUp() {

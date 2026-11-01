@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
 import { provideNativeDateAdapter, StbToast } from '@portfolioai/ui';
-import { addDays, startOfDay } from 'date-fns';
+import { addDays } from 'date-fns';
 import { Observable, of, Subject, throwError } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
 import {
@@ -27,6 +27,7 @@ import {
 } from '../../core/api/stats/stat-entry.model';
 import { StatsRepository } from '../../core/api/stats/stats.repository';
 import { ConfirmService } from '../../core/app-state/confirm.service';
+import { marketDay } from '../../shared/market-time/market-time';
 import { CandidatesPage } from './candidates-page';
 
 /**
@@ -62,7 +63,7 @@ import { CandidatesPage } from './candidates-page';
 function makeCandidate(overrides: Partial<Candidate> = {}): Candidate {
   return {
     id: 'c-ktta',
-    tradingDate: startOfDay(new Date()),
+    tradingDate: marketDay(new Date()),
     ticker: 'KTTA',
     previousClose: 2.65,
     pmOpen: 4.05,
@@ -277,7 +278,7 @@ describe('CandidatesPage', () => {
   it("loads today's candidates on init", async () => {
     const { repo } = await setup();
 
-    expect(repo.listForDate).toHaveBeenCalledWith(startOfDay(new Date()));
+    expect(repo.listForDate).toHaveBeenCalledWith(marketDay(new Date()));
   });
 
   it('sorts the day by gap, largest first, with the derived figures', async () => {
@@ -347,7 +348,7 @@ describe('CandidatesPage', () => {
 
     expect(repo.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        tradingDate: startOfDay(new Date()),
+        tradingDate: marketDay(new Date()),
         ticker: 'ktta',
         previousClose: 2.65,
         pmOpen: 4.05,
@@ -497,7 +498,7 @@ describe('CandidatesPage', () => {
 
     page.promoteAll();
 
-    expect(repo.promoteDay).toHaveBeenCalledWith(startOfDay(new Date()));
+    expect(repo.promoteDay).toHaveBeenCalledWith(marketDay(new Date()));
     expect(toastShown).toHaveBeenCalledWith('success', 'candidates.snackbar.promoteAllSuccessOne');
   });
 
@@ -684,7 +685,7 @@ describe('CandidatesPage', () => {
     page.previousDay();
     await settle(fixture);
 
-    expect(repo.listForDate).toHaveBeenLastCalledWith(addDays(startOfDay(new Date()), -1));
+    expect(repo.listForDate).toHaveBeenLastCalledWith(addDays(marketDay(new Date()), -1));
     expect(page.readOnly()).toBe(true);
   });
 

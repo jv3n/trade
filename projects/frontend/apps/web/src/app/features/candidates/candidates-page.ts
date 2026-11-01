@@ -7,6 +7,7 @@ import {
   LOCALE_ID,
   computed,
   inject,
+  linkedSignal,
   signal,
   viewChild,
 } from '@angular/core';
@@ -38,6 +39,7 @@ import { CandidatesRepository } from '../../core/api/candidates/candidates.repos
 import { Pattern } from '../../core/api/shared/pattern.model';
 import { StatsRepository } from '../../core/api/stats/stats.repository';
 import { ConfirmService } from '../../core/app-state/confirm.service';
+import { MarketClock } from '../../core/app-state/market-clock.service';
 import { keptValue } from '../../shared/kept-value/kept-value';
 import { NumberMaskDirective } from '../../shared/number-mask/number-mask.directive';
 import { PluralPipe, pluralKey } from '../../shared/plural/plural';
@@ -170,10 +172,12 @@ export class CandidatesPage {
   ] as const;
 
   // ---- Day ----
-  readonly day = signal(startOfDay(new Date()));
-  readonly isToday = computed(() => isSameDay(this.day(), new Date()));
+  private readonly clock = inject(MarketClock);
+  /** Follows the trading day until another one is picked ; the turn of a day brings it back. */
+  readonly day = linkedSignal(() => this.clock.today());
+  readonly isToday = computed(() => isSameDay(this.day(), this.clock.today()));
   /** Past days are history : read-only. */
-  readonly readOnly = computed(() => isBefore(this.day(), startOfDay(new Date())));
+  readonly readOnly = computed(() => isBefore(this.day(), this.clock.today()));
   /** No session on a weekend : an empty list is expected, not a day without candidates. */
   readonly weekend = computed(() => isWeekend(this.day()));
 
@@ -297,7 +301,7 @@ export class CandidatesPage {
   }
 
   today(): void {
-    this.goTo(new Date());
+    this.goTo(this.clock.today());
   }
 
   goTo(date: Date | null): void {

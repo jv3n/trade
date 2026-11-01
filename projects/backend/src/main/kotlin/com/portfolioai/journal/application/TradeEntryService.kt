@@ -18,7 +18,9 @@ import com.portfolioai.journal.domain.TradePositionCalculator.PositionStatus
 import com.portfolioai.journal.infrastructure.persistence.TradeEntryRepository
 import com.portfolioai.journal.infrastructure.persistence.TradeEntrySpecifications
 import com.portfolioai.shared.Pattern
+import com.portfolioai.shared.marketToday
 import java.math.BigDecimal
+import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
@@ -44,6 +46,7 @@ import org.springframework.web.server.ResponseStatusException
  */
 @Service
 class TradeEntryService(
+  private val clock: Clock,
   private val repo: TradeEntryRepository,
   private val authService: AuthService,
   private val events: ApplicationEventPublisher,
@@ -250,9 +253,7 @@ class TradeEntryService(
   @Transactional
   fun createStandalone(request: TradeEntryRequest): TradeEntryDto {
     require(request.ticker.isNotBlank()) { "A trade needs a ticker" }
-    require(!request.tradeDate.isAfter(LocalDate.now())) {
-      "A trade can't be dated in the future (${request.tradeDate})"
-    }
+    requireNotFuture(request.tradeDate)
     val stat =
       statOfTheDay.find(
         authService.getCurrentUser().id,
@@ -276,6 +277,7 @@ class TradeEntryService(
     require(entry.statEntryId == null || pattern == entry.pattern) {
       "The pattern of a trade with a stat is the stat's (${entry.pattern})"
     }
+    requireNotFuture(request.tradeDate)
     entry.tradeDate = request.tradeDate
     entry.ticker = request.ticker.trim().uppercase()
     entry.pattern = pattern
@@ -382,6 +384,12 @@ class TradeEntryService(
         size = entry.size,
       )
     )
+  }
+
+  private fun requireNotFuture(tradeDate: LocalDate) {
+    require(!tradeDate.isAfter(clock.marketToday())) {
+      "A trade can't be dated in the future ($tradeDate)"
+    }
   }
 
   private fun loadOwned(id: UUID): TradeEntry {

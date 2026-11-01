@@ -8,13 +8,14 @@ import com.portfolioai.daybars.domain.Bar
 import com.portfolioai.daybars.domain.DayBars
 import com.portfolioai.daybars.domain.DayBarsStatus
 import com.portfolioai.daybars.infrastructure.persistence.DayBarsRepository
+import com.portfolioai.shared.NEW_YORK
 import com.portfolioai.shared.badRequest
+import com.portfolioai.shared.marketToday
 import com.portfolioai.stats.application.StatEntryService
 import com.portfolioai.stats.domain.StatReview
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneId
 import java.util.UUID
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.PageRequest
@@ -85,7 +86,7 @@ class DayBarsService(
    */
   @Transactional(readOnly = true)
   fun missing(userId: UUID, limit: Int): List<DayTicker> {
-    val today = LocalDate.now(clock.withZone(NEW_YORK))
+    val today = clock.marketToday()
     return repo.findMissing(userId, today, PageRequest.of(0, limit), StatReview.REJECTED)
   }
 
@@ -133,6 +134,5 @@ class DayBarsService(
 
   private companion object {
     const val SECONDS_A_MINUTE = 60L
-    val NEW_YORK: ZoneId = ZoneId.of("America/New_York")
   }
 }

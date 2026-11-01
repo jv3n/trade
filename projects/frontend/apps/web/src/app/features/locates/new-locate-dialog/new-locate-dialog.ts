@@ -15,6 +15,7 @@ import {
 import { startOfDay } from 'date-fns';
 import { CandidatesRepository } from '../../../core/api/candidates/candidates.repository';
 import { LocateInput } from '../../../core/api/locates/locates.model';
+import { MarketClock } from '../../../core/app-state/market-clock.service';
 import { locateBreach, locateCost, locatePercent } from '../../../shared/locate-cost/locate-cost';
 import { NumberMaskDirective } from '../../../shared/number-mask/number-mask.directive';
 
@@ -47,7 +48,7 @@ export class NewLocateDialog {
     inject<MatDialogRef<NewLocateDialog, LocateInput | undefined>>(MatDialogRef);
   private readonly candidates = inject(CandidatesRepository);
 
-  readonly tradingDate = signal(startOfDay(new Date()));
+  readonly tradingDate = signal(inject(MarketClock).today());
   /** Typed through Signal Forms ; the numbers and the date are pushed by hand (CVA clash). */
   readonly text = signal({ ticker: '', note: '' });
   readonly textForm = form(this.text, (path) => {

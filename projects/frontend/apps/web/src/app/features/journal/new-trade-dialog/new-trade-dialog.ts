@@ -18,6 +18,7 @@ import {
   TradeDirection,
 } from '../../../core/api/journal/trade-entry.model';
 import { PATTERNS, Pattern } from '../../../core/api/shared/pattern.model';
+import { MarketClock } from '../../../core/app-state/market-clock.service';
 
 /**
  * A trade on its own (#634) — one the stats sheet never studied : an import, a session typed after
@@ -47,7 +48,7 @@ export class NewTradeDialog {
 
   readonly patterns = PATTERNS;
   readonly directions = TRADE_DIRECTIONS;
-  readonly today = startOfDay(new Date());
+  readonly today = inject(MarketClock).today();
 
   readonly tradeDate = signal(this.today);
   readonly text = signal({ ticker: '' });

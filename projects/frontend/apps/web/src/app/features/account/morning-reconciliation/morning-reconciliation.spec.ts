@@ -5,6 +5,7 @@ import { provideTranslateService } from '@ngx-translate/core';
 import { StbToast } from '@portfolioai/ui';
 import { of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { marketDay } from '../../../shared/market-time/market-time';
 
 import { Reconciliation, ReconciliationInput } from '../../../core/api/account/account.model';
 import { AccountRepository } from '../../../core/api/account/account.repository';
@@ -279,13 +280,13 @@ describe('MorningReconciliation', () => {
   });
 
   it('recognises this morning as already settled', async () => {
-    historyRows = [makeReconciliation({ valueDate: new Date() })];
+    historyRows = [makeReconciliation({ valueDate: marketDay(new Date()) })];
 
     expect((await setup()).componentInstance.today()).not.toBeNull();
   });
 
   it("yesterday's reconciliation doesn't count as this morning's", async () => {
-    const yesterday = new Date();
+    const yesterday = marketDay(new Date());
     yesterday.setDate(yesterday.getDate() - 1);
     historyRows = [makeReconciliation({ valueDate: yesterday })];
 

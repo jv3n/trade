@@ -9,12 +9,14 @@ import com.portfolioai.candidates.domain.Candidate
 import com.portfolioai.candidates.infrastructure.persistence.CandidateRepository
 import com.portfolioai.shared.Pattern
 import com.portfolioai.shared.badRequest
+import com.portfolioai.shared.marketToday
 import com.portfolioai.shared.requireNonNegative
 import com.portfolioai.shared.requirePositive
 import com.portfolioai.stats.application.CandidateStatLinks
 import com.portfolioai.stats.application.dto.StatEntryDto
 import com.portfolioai.stats.application.dto.StatEntryRequest
 import java.math.BigDecimal
+import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
@@ -45,6 +47,7 @@ private val MAX_TARGET_PUSH_PERCENT = BigDecimal(1000)
  */
 @Service
 class CandidateService(
+  private val clock: Clock,
   private val repo: CandidateRepository,
   private val authService: AuthService,
   private val statLinks: CandidateStatLinks,
@@ -55,7 +58,7 @@ class CandidateService(
   fun listForDate(date: LocalDate?): List<CandidateDto> {
     val userId = authService.getCurrentUser().id
     val candidates =
-      repo.findByUserIdAndTradingDateOrderByTickerAsc(userId, date ?: LocalDate.now())
+      repo.findByUserIdAndTradingDateOrderByTickerAsc(userId, date ?: clock.marketToday())
     // One query for the whole day rather than one per row.
     val stats = statLinks.statIdsByCandidate(candidates.map { it.id })
     return candidates.map { it.toDto(stats[it.id]) }
@@ -100,7 +103,7 @@ class CandidateService(
   @Transactional
   fun promoteDay(date: LocalDate?): BulkPromotionDto {
     val userId = authService.getCurrentUser().id
-    val day = date ?: LocalDate.now()
+    val day = date ?: clock.marketToday()
     val candidates = repo.findByUserIdAndTradingDateOrderByTickerAsc(userId, day)
     val alreadyPromoted = statLinks.statIdsByCandidate(candidates.map { it.id })
 
