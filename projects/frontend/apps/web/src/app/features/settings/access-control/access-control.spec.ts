@@ -7,12 +7,11 @@
  * - **Load path** : on mount, the page reads the current entry from [ConfigRepository.list] and
  *   splits the CSV into a sorted, lowercased, deduplicated chip list. A load error renders an
  *   inline banner instead of crashing the admin into a blank screen.
- * - **Open-mode banner** when the effective list is empty — silently being in open mode would be a
- *   foot-gun ; the page must shout that gating is OFF.
+ * - **Admins-alone banner** when the list is empty : the page says nobody else can sign in.
  * - **Add / remove path** : adding a valid email appends to the list (sorted), adding a malformed
  *   token (no `@`) surfaces an inline error without mutating the list, removing a chip drops it.
- * - **Save path** : non-empty list → PUT with CSV ; empty list → DELETE (falls back to YAML
- *   default = open mode). The asymmetry matters — the backend rejects a blank PUT, so the empty
+ * - **Save path** : non-empty list → PUT with CSV ; empty list → DELETE (falls back to the YAML
+ *   default). The asymmetry matters — the backend rejects a blank PUT, so the empty
  *   case must route to reset instead. Pinning this so a future refactor that uses `set` for both
  *   paths doesn't silently 400 on an admin trying to clear the list.
  * - **Reset button** : explicit "wipe back to default" path, separate from saving an emptied
@@ -94,12 +93,12 @@ async function settle(fixture: ComponentFixture<AccessControlPage>): Promise<voi
 }
 
 describe('AccessControlPage', () => {
-  it('renders the open-mode banner when no email is configured', async () => {
+  it('renders the admins-alone banner when no email is configured', async () => {
     setup();
     const fixture = TestBed.createComponent(AccessControlPage);
     await settle(fixture);
     const html = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(html).toContain('settings.accessControlPage.openModeNote');
+    expect(html).toContain('settings.accessControlPage.adminsOnlyNote');
     // The admin-auto-included note is always visible — that one belongs to both modes
     expect(html).toContain('settings.accessControlPage.adminNote');
   });
@@ -109,7 +108,7 @@ describe('AccessControlPage', () => {
     const fixture = TestBed.createComponent(AccessControlPage);
     await settle(fixture);
     const html = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(html).not.toContain('settings.accessControlPage.openModeNote');
+    expect(html).not.toContain('settings.accessControlPage.adminsOnlyNote');
     expect(html).toContain('alice@example.com');
     expect(html).toContain('bob@example.com');
   });

@@ -3,7 +3,6 @@ package com.portfolioai.auth.application
 import com.portfolioai.auth.infrastructure.persistence.UserRepository
 import com.portfolioai.auth.infrastructure.security.CustomOAuth2UserService
 import com.portfolioai.auth.infrastructure.security.CustomOidcUserService
-import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -23,7 +22,7 @@ import org.springframework.boot.test.context.SpringBootTest
  * - **A returning user's refresh reaches the database** — the existing row is updated through dirty
  *   checking, with no `save` : outside a transaction the change would be silently lost.
  */
-@SpringBootTest
+@SpringBootTest(properties = ["app.allowed.emails=trader@example.com"])
 class UserProvisioningIntegrationTest {
 
   @Autowired private lateinit var provisioning: UserProvisioningService
@@ -40,7 +39,7 @@ class UserProvisioningIntegrationTest {
 
   @Test
   fun `a first login creates the user and a second one reuses and refreshes it`() {
-    val email = "trader-${UUID.randomUUID()}@example.com"
+    val email = "trader@example.com"
 
     val created = provisioning.findOrCreateUser(email, "sub-1", "Alice", "google")
     val again = provisioning.findOrCreateUser(email, "sub-2", "Alice Martin", "google")
