@@ -59,33 +59,34 @@ const BUCKET_DAYS: Record<CashFlowBucketSize, number> = {
 
 /**
  * The size a period opens with (PARCOURS, « Flux du compte ») : a month by days, a quarter or a
- * half-year by weeks, a year or all time by months. A custom range follows its length the same way.
+ * half-year by weeks, a year or all time by months.
  */
+const PERIOD_BUCKET_SIZE: Record<Exclude<PeriodPresetKey, 'custom'>, CashFlowBucketSize> = {
+  today: 'DAY',
+  thisMonth: 'DAY',
+  lastMonth: 'DAY',
+  last3Months: 'WEEK',
+  last6Months: 'WEEK',
+  thisQuarter: 'WEEK',
+  lastQuarter: 'WEEK',
+  thisYear: 'MONTH',
+  lastYear: 'MONTH',
+  all: 'MONTH',
+};
+
+/** A custom range follows its length the same way. */
+function customBucketSize(from: Date | null, to: Date | null): CashFlowBucketSize {
+  const days = spanInDays(from, to);
+  if (days === null || days > 200) return 'MONTH';
+  return days > 62 ? 'WEEK' : 'DAY';
+}
+
 export function defaultBucketSize(
   period: PeriodPresetKey,
   from: Date | null,
   to: Date | null,
 ): CashFlowBucketSize {
-  switch (period) {
-    case 'today':
-    case 'thisMonth':
-    case 'lastMonth':
-      return 'DAY';
-    case 'last3Months':
-    case 'last6Months':
-    case 'thisQuarter':
-    case 'lastQuarter':
-      return 'WEEK';
-    case 'thisYear':
-    case 'lastYear':
-    case 'all':
-      return 'MONTH';
-    case 'custom': {
-      const days = spanInDays(from, to);
-      if (days === null || days > 200) return 'MONTH';
-      return days > 62 ? 'WEEK' : 'DAY';
-    }
-  }
+  return period === 'custom' ? customBucketSize(from, to) : PERIOD_BUCKET_SIZE[period];
 }
 
 /**
