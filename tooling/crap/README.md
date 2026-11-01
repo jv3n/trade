@@ -30,7 +30,7 @@ cd ../../tooling && npm run crap
 
 One side alone works : the other is reported as missing. `--lcov`, `--kover` and `--sarif` read the inputs from another path, such as the CI's coverage artifacts. `--top` sets the length of the tables, 30 by default.
 
-Each run writes `crap/last.json` (gitignored), and the next one says what moved since.
+Each run writes `crap/report/` (gitignored) : `index.html` to open in a browser, with filters, search and sort, `report.md`, and `data.json`, which the next run compares against.
 
 ## How it reads
 
