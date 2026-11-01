@@ -12,7 +12,7 @@ its readers are declared in Terraform ([`../terraform/`](../terraform/README.md)
 | `supabase-db-password-staging` | GCP Secret Manager | `portfolioai-staging-runtime@` | staging database password | **yes** |
 | `google-oauth-client-secret` | GCP Secret Manager | both runtimes | Google login | **yes** |
 | `google-oauth-client-id` | GCP Secret Manager | both runtimes | Google login | no — shown in the login URL |
-| `app-admin-emails` / `-staging` | GCP Secret Manager | its runtime | ADMIN role at first login | no — personal data |
+| `app-admin-emails` / `-staging` | GCP Secret Manager | its runtime | ADMIN role at first login ; empty, the environment does not boot | no — personal data |
 | `sentry-dsn-backend` | GCP Secret Manager | both runtimes | backend → GlitchTip | no — a DSN only ingests |
 | `GLITCHTIP_AUTH_TOKEN` | GitHub, repo secret | `deploy.yml` (image build) | frontend source-map upload | **yes** |
 | `CLOUDFLARE_PURGE_TOKEN` | GitHub, repo secret | `deploy.yml` (after the Cloud Run deploy) | purges the `tickerstory.org` edge cache — API token scoped to that zone, permission *Zone › Cache Purge › Purge* only | **yes** |

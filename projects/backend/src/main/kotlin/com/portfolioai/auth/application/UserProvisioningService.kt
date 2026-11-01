@@ -47,20 +47,18 @@ class UserProvisioningService(
    * email is not in the effective set. `SecurityConfig` reads that code and redirects the user to
    * `/login?error=not_authorized` for an inline message.
    *
-   * Empty whitelist = open mode (laxiste) — anyone with a Google account is let in. Backward-compat
-   * for a fresh deploy before the admin posts the first list via `/settings/access-control`.
+   * Empty whitelist = the admins alone (#840) : the gate fails closed, so blanking a setting never
+   * opens the app to every Google account.
    *
    * Check happens at the **very top** of [findOrCreateUser] — covers both new logins (no row to
-   * create) and existing users (a row created under open mode should no longer log in once the
-   * admin gates the app). Pin this so a future refactor that moves the check below the
-   * existing-user lookup doesn't silently let pre-gated users bypass the whitelist.
+   * create) and existing users (a row whose email left the list must no longer log in). Pin this so
+   * a future refactor that moves the check below the existing-user lookup doesn't silently let
+   * pre-gated users bypass the whitelist.
    */
   private fun assertAuthorized(email: String) {
-    val allowed = appConfigService.getAllowedEmails()
-    if (allowed.isEmpty()) return
     val emailLower = email.lowercase()
-    if (emailLower in allowed) return
     if (emailLower in adminEmails) return
+    if (emailLower in appConfigService.getAllowedEmails()) return
     throw OAuth2AuthenticationException(OAuth2Error("not_authorized"))
   }
 

@@ -15,12 +15,14 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
 /**
- * Tests on [AppConfigService] — the layered "DB override on top of YAML default" lookup and the
- * write-through cache, exercised on the only runtime key left : the login whitelist.
+ * Tests on [AppConfigService] — the layered "DB override on top of YAML default" lookup, exercised
+ * on the only runtime key left : the login whitelist.
  *
  * What we pin :
  * - **Layered read** : an unset key returns the YAML default ; a set key returns the override.
- * - **Stale rows** for keys no longer in the registry are ignored at boot.
+ * - **No cache** : each read asks the database, so a change made through another instance counts at
+ *   once (#840).
+ * - **Stale rows** for keys no longer in the registry are ignored.
  * - **Validation** rejects malformed email tokens.
  * - **Unknown keys** raise — defends against typos and against the controller forwarding a path
  *   variable that doesn't match the registry.
@@ -33,8 +35,8 @@ class AppConfigServiceTest {
 
   @Test
   fun `getAllowedEmails returns an empty set when no override and yaml default is empty`() {
-    // Open mode — backward compat for a fresh deploy before the admin posts the first list.
-    // `UserProvisioningService` short-circuits the gate when the set is empty.
+    // A fresh deploy, before the admin posts the first list : `UserProvisioningService` then lets
+    // the admins alone in.
     val service = newService()
     assertTrue(service.getAllowedEmails().isEmpty())
     assertFalse(service.isOverridden(ConfigKeys.ALLOWED_EMAILS))
@@ -51,8 +53,8 @@ class AppConfigServiceTest {
 
   @Test
   fun `getAllowedEmails reads from the DB override over the yaml default`() {
-    whenever(repo.findAll())
-      .thenReturn(listOf(AppConfigEntry(ConfigKeys.ALLOWED_EMAILS, "carol@example.com,dan@x.io")))
+    override("carol@example.com,dan@x.io")
+    whenever(repo.existsById(ConfigKeys.ALLOWED_EMAILS)).thenReturn(true)
     val service = newService(allowedEmailsDefault = "alice@example.com")
 
     assertEquals(setOf("carol@example.com", "dan@x.io"), service.getAllowedEmails())
@@ -60,21 +62,32 @@ class AppConfigServiceTest {
   }
 
   @Test
+  fun `a removal through another instance counts at the next read`() {
+    // Production runs up to three instances : a removed email must not stay accepted on the others.
+    val service = newService()
+    override("alice@example.com,bob@example.com")
+    assertTrue("bob@example.com" in service.getAllowedEmails())
+
+    override("alice@example.com")
+
+    assertEquals(setOf("alice@example.com"), service.getAllowedEmails())
+  }
+
+  @Test
   fun `defaultFor always returns the YAML default regardless of override state`() {
     // The UI renders "current vs default" ; if defaultFor returned the override, the user
     // couldn't tell what "Reset to default" would actually do.
-    whenever(repo.findAll())
-      .thenReturn(listOf(AppConfigEntry(ConfigKeys.ALLOWED_EMAILS, "carol@example.com")))
+    override("carol@example.com")
     val service = newService(allowedEmailsDefault = "alice@example.com")
 
     assertEquals("alice@example.com", service.defaultFor(ConfigKeys.ALLOWED_EMAILS))
   }
 
   @Test
-  fun `primeCache ignores DB rows for keys that are no longer registered`() {
+  fun `a DB row for a key no longer registered is ignored`() {
     // The `app_config` table may still hold rows from removed keys (provider switches, LLM
-    // settings) — they must not leak into the cache nor break the boot.
-    whenever(repo.findAll()).thenReturn(listOf(AppConfigEntry("llm.provider", "ollama")))
+    // settings).
+    whenever(repo.existsById("llm.provider")).thenReturn(true)
     val service = newService()
 
     assertFalse(service.isOverridden("llm.provider"))
@@ -102,15 +115,13 @@ class AppConfigServiceTest {
   }
 
   @Test
-  fun `set persists a well-formed EMAILS value and updates the in-memory cache`() {
+  fun `set persists a well-formed EMAILS value, which the next read returns`() {
     val service = newService()
-    whenever(repo.findById(ConfigKeys.ALLOWED_EMAILS)).thenReturn(Optional.empty())
-    whenever(repo.save(any<AppConfigEntry>())).thenAnswer { it.arguments[0] as AppConfigEntry }
+    storeWrites()
 
     service.set(ConfigKeys.ALLOWED_EMAILS, "alice@example.com, bob@example.com")
 
     assertEquals(setOf("alice@example.com", "bob@example.com"), service.getAllowedEmails())
-    assertTrue(service.isOverridden(ConfigKeys.ALLOWED_EMAILS))
     verify(repo).save(any<AppConfigEntry>())
   }
 
@@ -119,8 +130,7 @@ class AppConfigServiceTest {
     // An intermediate "comma, then nothing" save shouldn't blow up — the `isNotEmpty()` filter
     // makes the validator skip whitespace-only tokens cleanly.
     val service = newService()
-    whenever(repo.findById(ConfigKeys.ALLOWED_EMAILS)).thenReturn(Optional.empty())
-    whenever(repo.save(any<AppConfigEntry>())).thenAnswer { it.arguments[0] as AppConfigEntry }
+    storeWrites()
 
     service.set(ConfigKeys.ALLOWED_EMAILS, " , , alice@example.com")
 
@@ -134,16 +144,12 @@ class AppConfigServiceTest {
   }
 
   @Test
-  fun `reset removes the override and falls back to the default`() {
-    whenever(repo.findAll())
-      .thenReturn(listOf(AppConfigEntry(ConfigKeys.ALLOWED_EMAILS, "carol@example.com")))
+  fun `reset removes the override`() {
     val service = newService(allowedEmailsDefault = "alice@example.com")
     whenever(repo.existsById(ConfigKeys.ALLOWED_EMAILS)).thenReturn(true)
 
     service.reset(ConfigKeys.ALLOWED_EMAILS)
 
-    assertEquals(setOf("alice@example.com"), service.getAllowedEmails())
-    assertFalse(service.isOverridden(ConfigKeys.ALLOWED_EMAILS))
     verify(repo).deleteById(ConfigKeys.ALLOWED_EMAILS)
   }
 
@@ -159,12 +165,20 @@ class AppConfigServiceTest {
 
   // ---------------------------------------------------------------------- helpers
 
-  /**
-   * Builds the service with a fixed YAML default. Tests that need DB overrides stub
-   * `repo.findAll()` _before_ calling this — `primeCache()` reads it on construction.
-   */
-  private fun newService(allowedEmailsDefault: String = ""): AppConfigService =
-    AppConfigService(repository = repo, allowedEmailsDefault = allowedEmailsDefault).also {
-      it.primeCache()
+  private fun override(value: String) {
+    whenever(repo.findById(ConfigKeys.ALLOWED_EMAILS))
+      .thenReturn(Optional.of(AppConfigEntry(ConfigKeys.ALLOWED_EMAILS, value)))
+  }
+
+  /** What is saved is what the next read finds, as with a real table. */
+  private fun storeWrites() {
+    var stored: AppConfigEntry? = null
+    whenever(repo.findById(ConfigKeys.ALLOWED_EMAILS)).thenAnswer { Optional.ofNullable(stored) }
+    whenever(repo.save(any<AppConfigEntry>())).thenAnswer { invocation ->
+      (invocation.arguments[0] as AppConfigEntry).also { stored = it }
     }
+  }
+
+  private fun newService(allowedEmailsDefault: String = ""): AppConfigService =
+    AppConfigService(repository = repo, allowedEmailsDefault = allowedEmailsDefault)
 }

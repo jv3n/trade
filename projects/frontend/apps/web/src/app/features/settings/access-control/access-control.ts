@@ -25,7 +25,7 @@ const ALLOWED_EMAILS_KEY = 'app.allowed.emails';
  * list hard to spot when the page was first reached). The input below is a standalone
  * `mat-form-field` that fires `addCandidate` on Enter or on the suffix `+` button. Removing fires
  * the `(removed)` event on each chip. Save serialises back to CSV and PUTs ; saving an **empty**
- * list goes through `reset` (DELETE → fall back to the YAML default = open mode) instead of `set`
+ * list goes through `reset` (DELETE → fall back to the YAML default) instead of `set`
  * (which rejects blank values).
  *
  * **Why a signal mutated locally then explicit Save** instead of write-on-each-change : an admin
@@ -33,9 +33,8 @@ const ALLOWED_EMAILS_KEY = 'app.allowed.emails';
  * 1 PUT per add — noisy in logs, slow on a connection that's not on localhost. Explicit Save
  * follows the usual Save / Reset pattern.
  *
- * **Open mode communication** — when the effective list is empty, the page renders an `openModeNote`
- * banner telling the admin that gating is OFF and that posting the first email activates it. This
- * is the most important UX detail of the page : silent open mode would be a footgun.
+ * **Admins alone** — when the list is empty, the page renders an `adminsOnlyNote` banner : nobody but
+ * the admins can sign in until an email is added (#840).
  */
 @Component({
   selector: 'app-access-control',
@@ -78,8 +77,8 @@ export class AccessControlPage {
   /** Email value the user just tried to add but that didn't pass front validation (no '@'). */
   readonly invalidInput = signal<string | null>(null);
 
-  /** True when no email is configured — gating is OFF, anyone with a Google account is let in. */
-  readonly isOpenMode = computed(() => this.emails().length === 0);
+  /** True when no email is configured — only the admins can sign in. */
+  readonly isAdminsOnly = computed(() => this.emails().length === 0);
 
   /**
    * Validates and appends `value` to the chip list (no save side effect — explicit Save handles

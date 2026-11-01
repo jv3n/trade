@@ -53,7 +53,7 @@ class CustomOAuth2UserServiceTest {
 
   private fun service(
     adminEmails: String = "venet.julien@gmail.com,ops@portfolioai.com",
-    allowedEmails: Set<String> = emptySet(),
+    allowedEmails: Set<String> = setOf("alice@example.com"),
   ): CustomOAuth2UserService {
     // `AppConfigService` is a concrete Kotlin `@Service` class. Mockito can subclass it only
     // because `kotlin-allopen` (configured under the `spring` preset in `build.gradle.kts`) opens
@@ -238,15 +238,24 @@ class CustomOAuth2UserServiceTest {
   // ---------------------------------------------------------------------- allowed-emails gate
 
   @Test
-  fun `login is open when the allowed list is empty (laxiste mode)`() {
-    // Backward-compat for a fresh deploy : the admin hasn't yet posted the first list, so the gate
-    // lets everyone in (with role USER by default). The moment they post the first email via
-    // `/settings/access-control`, the next login of anyone else gets rejected.
-    given(userRepository.findByEmail(eq("stranger@example.com"))).willReturn(null)
+  fun `an empty allowed list refuses a stranger, so a blanked setting opens nothing`() {
+    val error =
+      assertThrows<OAuth2AuthenticationException> {
+        service(allowedEmails = emptySet())
+          .processOAuth2User(googleUser("stranger@example.com", "sub-x", "X"), "google")
+      }
+
+    assertEquals("not_authorized", error.error.errorCode)
+    verify(userRepository, never()).save(any())
+  }
+
+  @Test
+  fun `an empty allowed list still lets an admin in`() {
+    given(userRepository.findByEmail(eq("ops@portfolioai.com"))).willReturn(null)
     given(userRepository.save(any<User>())).willAnswer { it.arguments[0] as User }
 
     service(allowedEmails = emptySet())
-      .processOAuth2User(googleUser("stranger@example.com", "sub-x", "X"), "google")
+      .processOAuth2User(googleUser("ops@portfolioai.com", "sub-ops", "Ops"), "google")
 
     verify(userRepository).save(any())
   }
@@ -299,7 +308,7 @@ class CustomOAuth2UserServiceTest {
 
   @Test
   fun `existing user is rejected if their email is no longer in the effective whitelist`() {
-    // Pre-gated row (created during the open-mode bootstrap) must NOT be able to relogin once the
+    // A row whose email left the list must NOT be able to relogin once the
     // admin gates the app and forgets to add this user back. The check sits at the top of
     // `findOrCreateUser`, before the existing-user lookup — so even a row that already exists in
     // the DB gets rejected at the gate.
