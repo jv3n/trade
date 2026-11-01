@@ -62,6 +62,7 @@ import {
 } from '../../core/api/stats/stat-entry.model';
 import { StatsRepository } from '../../core/api/stats/stats.repository';
 import { ConfirmService } from '../../core/app-state/confirm.service';
+import { HasUnsavedChanges } from '../../core/router/unsaved-changes.guard';
 import { keptValue } from '../../shared/kept-value/kept-value';
 import { NumberMaskDirective } from '../../shared/number-mask/number-mask.directive';
 import { PeriodFilter } from '../../shared/period-filter/period-filter';
@@ -729,6 +730,9 @@ const SKELETON_COLUMNS: SkeletonColumnDefs = {
  */
 @Component({
   selector: 'app-stats-page',
+  host: {
+    '(window:beforeunload)': 'warnBeforeUnload($event)',
+  },
   imports: [
     DatePipe,
     DecimalPipe,
@@ -759,7 +763,7 @@ const SKELETON_COLUMNS: SkeletonColumnDefs = {
   templateUrl: './stats-page.html',
   styleUrl: './stats-page.scss',
 })
-export class StatsPage {
+export class StatsPage implements HasUnsavedChanges {
   private readonly repo = inject(StatsRepository);
   private readonly confirm = inject(ConfirmService);
   private readonly toasts = inject(StbToast);
@@ -1153,6 +1157,14 @@ export class StatsPage {
       )
     );
   });
+
+  hasUnsavedChanges(): boolean {
+    return this.hasPendingEdits();
+  }
+
+  warnBeforeUnload(event: BeforeUnloadEvent): void {
+    if (this.hasUnsavedChanges()) event.preventDefault();
+  }
 
   /** What makes the session block impossible, and which fields say so — null when it holds. */
   readonly sessionIssue = computed(() => sessionProblem(this.session(), this.panelPattern()));

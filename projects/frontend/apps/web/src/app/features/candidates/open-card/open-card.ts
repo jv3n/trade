@@ -131,6 +131,9 @@ export class OpenCard {
   /** No reference at all — no completed GUS stat yet. */
   readonly noReference = computed(() => this.dayReference(this.kind()) === null);
 
+  /** `rows()` rebuilds its objects : tracked by identity, a save would recreate the focused input. */
+  readonly trackRow = (_: number, row: OpenRow) => row.candidate.id;
+
   readonly rows = computed<OpenRow[]>(() => {
     const kind = this.kind();
     return this.candidates().map((candidate) => {

@@ -17,6 +17,8 @@ import { AtOpenChange, OpenCard, PushReferences } from './open-card';
  * - **Saving** — the open and the target push are handed to the page on blur, only when they
  *   changed ; typing the reference back, clearing the push or « back to the reference » hands over
  *   a `null` push (the row follows the reference again).
+ * - **Focus** — a save replacing a candidate keeps its row's inputs : one recreated at 9:30 would
+ *   drop the focus the user just tabbed to.
  * - **Plausibility** — a push above 100 % is kept but flagged (a small cap can push that far) ; one
  *   above 1000 % is a typo and is capped.
  *
@@ -247,6 +249,17 @@ describe('OpenCard', () => {
     card.commitPush(row);
 
     expect(emitted).toEqual([]);
+  });
+
+  it('keeps the row and its inputs when a save replaces the candidate', () => {
+    const candidate = makeCandidate();
+    const { fixture } = setup([candidate]);
+    const input = fixture.nativeElement.querySelector('input.cell-input');
+
+    fixture.componentRef.setInput('candidates', [{ ...candidate, openPrice: 3.3 }]);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('input.cell-input')).toBe(input);
   });
 
   it('hands a null push over with « back to the reference »', () => {

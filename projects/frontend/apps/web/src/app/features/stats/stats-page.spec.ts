@@ -1620,6 +1620,24 @@ describe('StatsPage', () => {
     expect(repo.update).not.toHaveBeenCalled();
   });
 
+  it('tells the router and the browser an edit was held back, so leaving or reloading asks', async () => {
+    const ktta = makeStat();
+    const { page } = await setup({ rows: [ktta] });
+    const unload = () => {
+      const event = new Event('beforeunload', { cancelable: true });
+      window.dispatchEvent(event);
+      return event.defaultPrevented;
+    };
+    page.open(ktta);
+    expect(page.hasUnsavedChanges()).toBe(false);
+    expect(unload()).toBe(false);
+
+    page.setPremarketPrice('previousClose', null);
+
+    expect(page.hasUnsavedChanges()).toBe(true);
+    expect(unload()).toBe(true);
+  });
+
   // ---- Views (#437) ----
 
   it('opens on the GUS view : the listing and the KPIs read the GUS stats, with their columns', async () => {
