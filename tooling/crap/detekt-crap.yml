@@ -1,0 +1,6 @@
+# Layered on detekt's config by `-Pcrap` : a threshold of 0 makes the rule report every function,
+# which is how its complexity gets into the SARIF.
+complexity:
+  CyclomaticComplexMethod:
+    active: true
+    allowedComplexity: 0

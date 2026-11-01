@@ -228,7 +228,14 @@ detekt {
   buildUponDefaultConfig = true
   allRules = false
   ignoreFailures = true
-  config.setFrom("$projectDir/config/detekt/detekt.yml")
+  config.setFrom(
+    listOfNotNull(
+      "$projectDir/config/detekt/detekt.yml",
+      // `-Pcrap` : every function's complexity in the SARIF, for tooling/crap.
+      "$projectDir/../../tooling/crap/detekt-crap.yml"
+        .takeIf { providers.gradleProperty("crap").isPresent },
+    )
+  )
   // SARIF paths from the repository root (`projects/backend/src/…`) : Detekt 2 defaults to the
   // Gradle root, and Code Scanning can't link a `src/…` path to a file.
   basePath.set(file("../.."))

@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "transcript": "node --env-file-if-exists=.env transcript/transcript.mjs"
+    "transcript": "node --env-file-if-exists=.env transcript/transcript.mjs",
+    "crap": "node crap/crap.mjs"
   },
   "dependencies": {
     "playwright": "1.63.0"
