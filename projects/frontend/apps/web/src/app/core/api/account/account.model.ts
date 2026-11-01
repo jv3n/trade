@@ -163,4 +163,6 @@ export interface Reconciliation {
 export interface ReconciliationInput {
   brokerBalance: number;
   valueDate: Date;
+  /** The balance on screen : the backend refuses the morning if it has moved since (#839). */
+  expectedBalance: number;
 }

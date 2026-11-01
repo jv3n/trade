@@ -8,6 +8,7 @@ import com.portfolioai.account.infrastructure.persistence.AccountMovementReposit
 import com.portfolioai.account.infrastructure.persistence.AccountReconciliationRepository
 import com.portfolioai.auth.application.AuthService
 import java.math.BigDecimal
+import java.math.RoundingMode
 import java.time.Instant
 import java.util.UUID
 import org.springframework.data.domain.PageRequest
@@ -66,13 +67,19 @@ class AccountReconciliationService(
         "A later morning is already reconciled — mornings are settled in order",
       )
     }
+    val balance = movements.balanceFor(user.id)
+    // A stale page sees no gap, so no confirmation, and its figure would book a correction undoing
+    // whatever moved the balance since : a trade saved in another tab (#839).
+    if (request.expectedBalance != null && !sameCents(request.expectedBalance, balance)) {
+      throw ResponseStatusException(HttpStatus.CONFLICT, "The balance moved — reload the page")
+    }
     val existing = repo.findByUserIdAndValueDate(user.id, request.valueDate)
 
     // The app's balance without this morning's own correction : on a second pass, the first one's
     // plug is taken back out, and a row typed for that day in between is counted — measuring from
     // the first pass's figure would book that row as broker fees (#480).
     val ownCorrection = existing?.let { reconciler.correctionAmount(it) } ?: BigDecimal.ZERO
-    val startingBalance = movements.balanceFor(user.id).subtract(ownCorrection)
+    val startingBalance = balance.subtract(ownCorrection)
     val gap = request.brokerBalance.subtract(startingBalance)
 
     val reconciliation =
@@ -93,6 +100,9 @@ class AccountReconciliationService(
     reconciler.settle(saved, gap)
     return saved.toDto()
   }
+
+  private fun sameCents(a: BigDecimal, b: BigDecimal) =
+    a.setScale(CENTS, RoundingMode.HALF_UP).compareTo(b.setScale(CENTS, RoundingMode.HALF_UP)) == 0
 
   /**
    * Cancels a morning : the reconciliation row **and** the `ADJUSTMENT` it produced go together,
@@ -134,6 +144,7 @@ class AccountReconciliationService(
   }
 
   private companion object {
+    const val CENTS = 2
     /** The history is a one-line recap, not a listing — no need to page it. */
     const val MAX_HISTORY = 30
   }

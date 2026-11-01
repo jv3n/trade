@@ -194,6 +194,7 @@
       [appBalance]="appBalance()"
       [balanceUnavailable]="summaryFailed()"
       (settled)="onReconciled()"
+      (balanceMoved)="onReconciled()"
     />
   </mat-card>
 

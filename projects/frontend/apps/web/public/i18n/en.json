@@ -417,6 +417,7 @@
       "correctSuccess": "Balance corrected.",
       "reconcileSuccess": "Morning reconciled.",
       "reconcileError": "Couldn't reconcile this morning. Please retry.",
+      "reconcileStale": "The balance moved since this page loaded : nothing was recorded. Check the updated figure.",
       "cancelReconciliationSuccess": "Reconciliation cancelled.",
       "cancelReconciliationError": "Could not cancel the reconciliation."
     },

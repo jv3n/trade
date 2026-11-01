@@ -161,6 +161,7 @@
                 compact
                 [appBalance]="accountSummary()?.balance ?? null"
                 (settled)="onSettled()"
+                (balanceMoved)="onSettled()"
               />
             </div>
             <div></div>

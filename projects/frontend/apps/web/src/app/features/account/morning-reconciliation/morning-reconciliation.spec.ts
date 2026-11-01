@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideTranslateService } from '@ngx-translate/core';
@@ -23,6 +24,8 @@ import { MorningReconciliation } from './morning-reconciliation';
  * - the host is **told** once the morning is settled, and the input is cleared so the next
  *   keystroke starts from the new balance ;
  * - a settled morning is **recognised as today's** — and yesterday's is not ;
+ * - a morning always sends the balance on screen, and **a refusal because it moved** clears the
+ *   figure and asks the host to reload (#839) : a stale page must not book a correction ;
  * - **cancelling a morning** (#249) always confirms, erases it, and tells the host — a figure typed
  *   by mistake must leave no trace, where re-posting the day only corrects it.
  */
@@ -129,6 +132,42 @@ describe('MorningReconciliation', () => {
     expect(confirmAsk).not.toHaveBeenCalled();
     expect(reconcile).toHaveBeenCalledTimes(1);
     expect((reconcile.mock.calls[0][0] as ReconciliationInput).brokerBalance).toBe(1000);
+  });
+
+  it('sends the balance on screen, for the backend to refuse it if it moved', async () => {
+    const page = (await setup()).componentInstance;
+
+    page.reconcileNoGap();
+
+    expect((reconcile.mock.calls[0][0] as ReconciliationInput).expectedBalance).toBe(1000);
+  });
+
+  it('a balance that moved clears the figure and asks the host to reload', async () => {
+    reconcile.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 409 })));
+    const page = (await setup()).componentInstance;
+    const moved = vi.fn();
+    const settled = vi.fn();
+    page.balanceMoved.subscribe(moved);
+    page.settled.subscribe(settled);
+
+    page.reconcileNoGap();
+
+    expect(moved).toHaveBeenCalledTimes(1);
+    expect(settled).not.toHaveBeenCalled();
+    expect(page.brokerBalance()).toBeNull();
+  });
+
+  it('another failure keeps the figure and leaves the host alone', async () => {
+    reconcile.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
+    const page = (await setup()).componentInstance;
+    const moved = vi.fn();
+    page.balanceMoved.subscribe(moved);
+
+    page.setBrokerBalance(1000);
+    page.submit();
+
+    expect(moved).not.toHaveBeenCalled();
+    expect(page.brokerBalance()).toBe(1000);
   });
 
   it('« Aucun écart » reconciles at the computed balance without asking', async () => {
