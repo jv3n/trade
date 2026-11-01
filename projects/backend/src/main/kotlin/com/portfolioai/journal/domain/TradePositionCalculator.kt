@@ -92,6 +92,7 @@ object TradePositionCalculator {
 
     val avgEntry = weightedAverage(entries)
     val size = maxPosition(legs)
+    require(size > 0) { "A position cannot exit before its first entry" }
     if (exitShares == 0) {
       return Aggregates(
         size = size,
@@ -154,14 +155,18 @@ object TradePositionCalculator {
 
   /**
    * The most shares held at once, walking the fills in order (#500) — not the sum of the entries :
-   * a scale-in, a partial cover and a re-add count the peak, not every share ever traded.
+   * a scale-in, a partial cover and a re-add count the peak, not every share ever traded. The rows
+   * can be typed in any order : once every fill has its time, the times decide.
    */
   private fun maxPosition(legs: List<Leg>): Int =
-    legs
+    inFillOrder(legs)
       .runningFold(0) { held, leg ->
         if (leg.kind == ExecutionKind.ENTRY) held + leg.shares else held - leg.shares
       }
       .max()
+
+  private fun inFillOrder(legs: List<Leg>): List<Leg> =
+    if (legs.all { it.executedAt != null }) legs.sortedBy { it.executedAt } else legs
 
   /**
    * Σ(shares × price) / Σ(shares), rounded to the price scale. Caller guarantees a non-empty list.

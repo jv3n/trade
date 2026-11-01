@@ -607,7 +607,7 @@
       "executionsBlock": {
         "add": "Add a fill",
         "remove": "Remove the fill",
-        "invalid": "Inconsistent fills: more shares closed than opened.",
+        "invalid": "Inconsistent fills: more shares closed than opened, or an exit before the first entry.",
         "remaining": "{{shares}} shares still open — computed P&L",
         "remainingOne": "{{shares}} share still open — computed P&L",
         "closed": "Position closed — computed P&L"
@@ -875,6 +875,7 @@
     "snackbar": {
       "deleteSuccess": "Stat {{ticker}} deleted.",
       "deleteError": "Couldn't delete the stat. Please retry.",
+      "openError": "Couldn't open this stat. Please retry.",
       "promoteTradeSuccess": "Trade {{ticker}} created in the journal.",
       "promoteTradeError": "Couldn't create the trade. Please retry.",
       "sessionSaveError": "Couldn't save the {{ticker}} session. Please retry.",

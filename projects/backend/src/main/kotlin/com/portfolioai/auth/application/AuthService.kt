@@ -1,7 +1,6 @@
 package com.portfolioai.auth.application
 
 import com.portfolioai.auth.domain.AppUserPrincipal
-import com.portfolioai.auth.domain.Role
 import com.portfolioai.auth.domain.User
 import com.portfolioai.auth.infrastructure.persistence.UserRepository
 import org.springframework.http.HttpStatus
@@ -37,8 +36,6 @@ class AuthService(private val userRepository: UserRepository) {
       IllegalStateException("Authenticated user ${principal.userId} no longer exists in DB")
     }
   }
-
-  fun isAdmin(): Boolean = getCurrentUser().role == Role.ADMIN
 
   /**
    * Updates the current user's UI preferences. Partial : a `null` field is left untouched (the SPA

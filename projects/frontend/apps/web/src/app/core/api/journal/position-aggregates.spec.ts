@@ -72,6 +72,25 @@ describe('computePositionAggregates', () => {
     expect(position.gainPercent).toBeCloseTo(-5.3001, 3);
   });
 
+  it('counts a cover typed on the first row by its time, as the backend does', () => {
+    const agg = computePositionAggregates('SHORT', [
+      { ...exit(100, 2), executedAt: '10:00' },
+      { ...entry(100, 2.5), executedAt: '09:41' },
+    ]);
+
+    expect(agg.size).toBe(100);
+    expect(agg.valid).toBe(true);
+  });
+
+  it('flags a position that never held a share, so the save is blocked before the backend', () => {
+    const agg = computePositionAggregates('SHORT', [
+      { ...entry(100, 2.5), executedAt: '10:30' },
+      { ...exit(100, 2), executedAt: '09:45' },
+    ]);
+
+    expect(agg.valid).toBe(false);
+  });
+
   it('marks a partially-closed position PARTIAL with realized P&L on the exited shares', () => {
     const agg = computePositionAggregates('SHORT', [entry(200, 5), exit(100, 4)]);
     expect(agg.size).toBe(200);

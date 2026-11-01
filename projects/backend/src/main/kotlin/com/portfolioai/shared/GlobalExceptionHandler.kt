@@ -1,5 +1,6 @@
 package com.portfolioai.shared
 
+import java.sql.SQLException
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -14,14 +15,18 @@ class GlobalExceptionHandler {
     ResponseEntity.status(HttpStatus.NOT_FOUND).body(mapOf("error" to (ex.message ?: "Not found")))
 
   /**
-   * A DB unique / FK constraint was violated — surfaced as HTTP 409 so the front can show a precise
-   * message rather than a generic 500. The motivating case : editing a stat row onto a (day,
-   * ticker) the caller already owns collides with `ux_stat_entry_day_ticker_owner` (one analysis
-   * per day / ticker / owner). The `detail` carries the constraint hint for debugging, not for the
-   * end user.
+   * A DB constraint refused the write. A unique or FK collision is a 409 : editing a stat row onto
+   * a (day, ticker) the caller already owns hits `ux_stat_entry_day_ticker_owner`. A value that
+   * doesn't fit — a number past its column, a check constraint — is the input's fault, so a 400.
+   * The `detail` carries the constraint hint for debugging, not for the end user.
    */
   @ExceptionHandler(DataIntegrityViolationException::class)
   fun handleConflict(ex: DataIntegrityViolationException): ResponseEntity<Map<String, String>> =
+    if ((ex.mostSpecificCause as? SQLException)?.sqlState in REFUSED_INPUT) {
+      ResponseEntity.status(HttpStatus.BAD_REQUEST).body(mapOf("error" to "Value out of range"))
+    } else conflict(ex)
+
+  private fun conflict(ex: DataIntegrityViolationException): ResponseEntity<Map<String, String>> =
     ResponseEntity.status(HttpStatus.CONFLICT)
       .body(
         mapOf(
@@ -31,9 +36,8 @@ class GlobalExceptionHandler {
       )
 
   /**
-   * User-supplied parameter is invalid (e.g. unknown `timeframe` code on the chart endpoint).
-   * Surfaced as HTTP 400 so the front knows the request is malformed and shouldn't be retried as-is
-   * — distinct from 503 (provider hiccup, retry will likely work).
+   * User-supplied parameter is invalid. Surfaced as HTTP 400 : the request is malformed and
+   * shouldn't be retried as-is — distinct from 503 (upstream hiccup, retry will likely work).
    */
   @ExceptionHandler(IllegalArgumentException::class)
   fun handleBadRequest(ex: IllegalArgumentException): ResponseEntity<Map<String, String>> =
@@ -54,4 +58,9 @@ class GlobalExceptionHandler {
       .body(
         mapOf("error" to "Data temporarily unavailable", "detail" to (ex.message ?: "unavailable"))
       )
+
+  private companion object {
+    /** PostgreSQL's numeric overflow and check violation. */
+    val REFUSED_INPUT = setOf("22003", "23514")
+  }
 }

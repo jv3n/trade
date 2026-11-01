@@ -159,16 +159,13 @@ class AccountService(
    * one point per day while this one needs every row.
    */
   private fun runningBalances(userId: UUID): Map<UUID, BigDecimal> {
-    val chronological =
-      repo.findByUserId(userId).sortedWith(compareBy({ it.valueDate }, { it.createdAt }))
-    var running = BigDecimal.ZERO
-    val balances = LinkedHashMap<UUID, BigDecimal>()
-    for (m in chronological) {
-      running += m.amount
-      balances[m.id] = running
-    }
-    return balances
+    val chronological = chronological(userId)
+    val balances = chronological.runningFold(BigDecimal.ZERO) { sum, m -> sum + m.amount }.drop(1)
+    return chronological.map { it.id }.zip(balances).toMap()
   }
+
+  private fun chronological(userId: UUID): List<AccountMovement> =
+    repo.findByUserId(userId).sortedWith(compareBy({ it.valueDate }, { it.createdAt }))
 
   /**
    * Cumulative balance series — one end-of-day point per distinct movement date, ascending. The
@@ -179,11 +176,9 @@ class AccountService(
   @Transactional(readOnly = true)
   fun balanceSeries(): List<BalancePointDto> {
     val userId = authService.getCurrentUser().id
-    val movements =
-      repo.findByUserId(userId).sortedWith(compareBy({ it.valueDate }, { it.createdAt }))
     var running = BigDecimal.ZERO
     val byDate = LinkedHashMap<LocalDate, BigDecimal>()
-    for (m in movements) {
+    for (m in chronological(userId)) {
       running += m.amount
       byDate[m.valueDate] = running // last write per date = end-of-day cumulative
     }

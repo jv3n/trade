@@ -30,7 +30,7 @@ import { reloadOnStaleChunk } from './core/router/stale-chunk';
  * Forwards Angular's caught unhandled errors to GlitchTip via the Sentry SDK + keeps the default
  * console.error behaviour so errors stay visible to a dev who opens DevTools on a prod URL. This
  * replaces `@sentry/angular`'s `Sentry.createErrorHandler()` factory — we use `@sentry/browser`
- * instead because the Angular-specific package peer-deps cap at Angular 19 and we run on 21.
+ * instead because the Angular-specific package peer-deps lag behind Angular.
  *
  * Wired only when `!isDevMode()` in `appConfig.providers` ; dev keeps the default Angular handler
  * so errors stay in the console and don't ship to GlitchTip.

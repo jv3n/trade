@@ -459,7 +459,7 @@
                   type="button"
                   (click)="delete(d.trades[0], d)"
                   [matTooltip]="'journal.actions.delete' | translate"
-                  aria-label="Delete"
+                  [attr.aria-label]="'journal.actions.delete' | translate"
                 >
                   <mat-icon>delete</mat-icon>
                 </button>
@@ -533,7 +533,7 @@
                       type="button"
                       (click)="$event.stopPropagation(); delete(t, d)"
                       [matTooltip]="'journal.actions.delete' | translate"
-                      aria-label="Delete"
+                      [attr.aria-label]="'journal.actions.delete' | translate"
                     >
                       <mat-icon>delete</mat-icon>
                     </button>

@@ -19,8 +19,6 @@ export type PositionStatus = 'OPEN' | 'PARTIAL' | 'CLOSED';
 /** Derived state for filtering — see backend `TradeStatus` enum. */
 export type TradeStatus = 'OPEN' | 'CLOSED' | 'PROFITABLE' | 'LOSING';
 
-export const TRADE_STATUSES: readonly TradeStatus[] = ['OPEN', 'CLOSED', 'PROFITABLE', 'LOSING'];
-
 /**
  * When the trade was entered (#651) — the earliest timed entry fill against 11:00, see backend
  * `EntryTiming`. A trade with no timed entry fill is in neither.

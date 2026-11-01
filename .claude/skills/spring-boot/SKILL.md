@@ -18,11 +18,11 @@ Project-specific choices and the gotchas worth pinning. Pair with [`kotlin-idiom
 ## Errors
 
 - **`ResponseStatusException` is the dominant path** : `badRequest()` (`shared/RequestValidation.kt`) for a 400, `ResponseStatusException(NOT_FOUND)` for a 404 — a foreign or missing id is a 404, never a 403.
-- `GlobalExceptionHandler` is the one `@RestControllerAdvice` : `IllegalArgumentException` → 400, `NoSuchElementException` → 404, `DataIntegrityViolationException` → 409, `UpstreamUnavailableException` → 503. Map a new exception type there.
+- `GlobalExceptionHandler` is the one `@RestControllerAdvice` : `IllegalArgumentException` → 400, `NoSuchElementException` → 404, `DataIntegrityViolationException` → 409, or 400 when the value itself is refused (numeric overflow, check constraint), `UpstreamUnavailableException` → 503. Map a new exception type there.
 
 ## The AOP proxy rule
 
-CLAUDE.md states it : no self-call on a proxied method. **The fix is always a split into two beans**, never `@Lazy self` : `TradeMovementSyncListener` delegates to the `@Transactional` `AccountTradeSyncService` ; `AccountReconciler` is its own bean so two services reach `reconcile` through the proxy. `@EnableAsync` is on but no `@Async` method exists.
+CLAUDE.md states it : no self-call on a proxied method. **The fix is always a split into two beans**, never `@Lazy self` : `TradeMovementSyncListener` delegates to the `@Transactional` `AccountTradeSyncService` ; `AccountReconciler` is its own bean so two services reach `reconcile` through the proxy.
 
 ## Transactions and time
 

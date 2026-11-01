@@ -42,11 +42,16 @@ const EMPTY: PositionAggregates = {
 function maxPosition(legs: TradeExecutionInput[]): number {
   let held = 0;
   let peak = 0;
-  for (const leg of legs) {
+  for (const leg of inFillOrder(legs)) {
     held += leg.kind === 'ENTRY' ? leg.shares : -leg.shares;
     peak = Math.max(peak, held);
   }
   return peak;
+}
+
+function inFillOrder(legs: TradeExecutionInput[]): TradeExecutionInput[] {
+  if (!legs.every((l) => l.executedAt)) return legs;
+  return [...legs].sort((a, b) => a.executedAt!.localeCompare(b.executedAt!));
 }
 
 function weightedAverage(legs: TradeExecutionInput[]): number {
@@ -70,7 +75,7 @@ export function computePositionAggregates(
 
   const entryShares = entries.reduce((acc, l) => acc + l.shares, 0);
   const exitShares = exits.reduce((acc, l) => acc + l.shares, 0);
-  if (exitShares > entryShares) {
+  if (exitShares > entryShares || maxPosition(legs) === 0) {
     return { ...EMPTY, size: maxPosition(legs), avgEntry: weightedAverage(entries), valid: false };
   }
 

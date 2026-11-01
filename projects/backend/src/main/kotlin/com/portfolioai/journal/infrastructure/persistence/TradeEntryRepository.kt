@@ -40,6 +40,4 @@ interface TradeEntryRepository :
     from: LocalDate,
     to: LocalDate,
   ): List<TradeEntry>
-
-  fun deleteByIdAndUserId(id: UUID, userId: UUID): Long
 }
