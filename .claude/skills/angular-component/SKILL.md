@@ -1,196 +1,58 @@
 ---
 name: angular-component
-description: Create modern Angular standalone components following Angular 22 best practices for the PortfolioAI frontend. Use for building UI components with signal-based inputs/outputs, host bindings, content projection, and lifecycle hooks. Triggers on component creation, refactoring class-based inputs to signals, adding host bindings, or implementing accessible interactive components.
+description: The shape of a component in the PortfolioAI frontend (Angular 22, standalone, zoneless) — file layout, imports, field order, host bindings. Use when creating a component or directive in `apps/web` or `libs/ui`. Signal I/O and state are in `angular-signals`, styling in `css`.
 ---
 
 # Angular Component
 
-Standalone components for Angular 22 (the version used in `projects/frontend/`). Components are standalone by default — do NOT set `standalone: true`. **Change detection**: PortfolioAI runs `provideZonelessChangeDetection()`, so `ChangeDetectionStrategy.OnPush` is **not required** — signals drive change detection. Adding `OnPush` is a no-op functionally and adds noise. Leave the default strategy on new components.
+Components are standalone by default : don't set `standalone: true`. The app is zoneless, so leave the default change-detection strategy : `OnPush` adds nothing.
 
-## Component structure
+## Shape
 
 ```typescript
-import { Component, input, output, computed, booleanAttribute } from '@angular/core';
-
+// features/stats/stat-chart/stat-chart.ts
 @Component({
-  selector: 'app-user-card',
-  host: {
-    'class': 'user-card',
-    '[class.active]': 'isActive()',
-    '(click)': 'handleClick()',
-  },
-  template: `
-    <img [src]="avatarUrl()" [alt]="name() + ' avatar'" />
-    <h2>{{ name() }}</h2>
-    @if (showEmail()) {
-      <p>{{ email() }}</p>
-    }
-  `,
-  styles: `
-    :host { display: block; }
-    :host.active { border: 2px solid blue; }
-  `,
+  selector: 'app-stat-chart',
+  imports: [StbCandleChart, StbButtonModule, TranslatePipe /* … only what the template uses */],
+  templateUrl: './stat-chart.html',
+  styleUrl: './stat-chart.scss',
 })
-export class UserCard {
-  name = input.required<string>();
-  email = input<string>('');
-  showEmail = input(false);
-  isActive = input(false, { transform: booleanAttribute });
+export class StatChart {
+  private readonly repo = inject(StatsRepository);
+  private readonly card = viewChild.required<ElementRef<HTMLElement>>('card');
 
-  avatarUrl = computed(() => `https://api.example.com/avatar/${this.name()}`);
-  selected = output<string>();
-
-  handleClick() { this.selected.emit(this.name()); }
+  /* then public `readonly` inputs and state, for the template */
 }
 ```
 
-## Signal inputs
+- A page or dialog has `templateUrl` + `styleUrl`. An inline template is for a small part or a lib component.
+- Private `readonly` injected fields first, then public `readonly` state : the template reads public members. `protected` is rare in the app.
+- `imports` lists the `Stb*Module`s and `TranslatePipe`, never `CommonModule` nor a `Mat*Module`.
+- Selectors : `app-*` in `apps/web`, `ui-*` for a lib component, `stb*` for a lib directive.
+- `input()` / `output()` and the rest of signal I/O : [`angular-signals`](../angular-signals/SKILL.md#input--output--signal-based-io). No input or output aliases : the lint bans them.
 
-```typescript
-name = input.required<string>();                                       // required
-count = input(0);                                                       // optional with default
-label = input<string>();                                                // optional, undefined allowed
-size = input('medium', { alias: 'buttonSize' });                        // aliased
-disabled = input(false, { transform: booleanAttribute });               // boolean transform
-value = input(0, { transform: numberAttribute });                       // number transform
-```
+## Host bindings — the `host` object only
 
-Pair with [`angular-signals > input() / output()`](../angular-signals/SKILL.md#input--output--signal-based-component-io).
-
-## Signal outputs
-
-```typescript
-clicked = output<void>();
-selected = output<Item>();
-valueChange = output<number>({ alias: 'change' });
-
-this.clicked.emit();
-this.selected.emit(item);
-```
-
-For RxJS-source outputs: `outputFromObservable(subject$)`.
-
-## Host bindings — `host` object only
-
-Use the `host` object in `@Component`. Do NOT use `@HostBinding` or `@HostListener` decorators.
+Use the `host` object in the decorator, not `@HostBinding` / `@HostListener`.
 
 ```typescript
 host: {
-  'role': 'button',
-  '[class.primary]': 'variant() === "primary"',
-  '[class.disabled]': 'disabled()',
-  '[style.--btn-color]': 'color()',
-  '[attr.aria-disabled]': 'disabled()',
-  '[attr.tabindex]': 'disabled() ? -1 : 0',
+  '[class]': 'hostClass()',
+  '[attr.aria-busy]': 'busy() || null',
   '(click)': 'onClick($event)',
-  '(keydown.enter)': 'onClick($event)',
-  '(keydown.space)': 'onClick($event)',
 }
 ```
 
-## Content projection
+Known exception : `shared/number-mask/number-mask.directive.ts` still uses `@HostListener`. Don't copy it.
 
-```typescript
-template: `
-  <header><ng-content select="[card-header]" /></header>
-  <main><ng-content /></main>
-  <footer><ng-content select="[card-footer]" /></footer>
-`,
-```
+## Rendering hooks
 
-## Lifecycle hooks
+`afterNextRender` and `afterEveryRender` (`afterRender` no longer exists).
 
-```typescript
-import { afterNextRender, afterRender } from '@angular/core';
+## Templates
 
-constructor() {
-  afterNextRender(() => { /* once after first render — SSR-safe */ });
-  afterRender(() => { /* after every render */ });
-}
+`@if` / `@for` / `@switch`, `[class.x]` / `[style.x]`, no `ngClass` / `ngStyle`. Accessibility rules are in [`css > Accessibility`](../css/SKILL.md#accessibility).
 
-ngOnInit() { /* … */ }
-ngOnDestroy() { /* … */ }
-```
+## Comments
 
-## Template syntax — native control flow
-
-Use native control flow. Do NOT use `*ngIf`, `*ngFor`, `*ngSwitch`.
-
-```html
-@if (isLoading()) {
-  <app-spinner />
-} @else if (error()) {
-  <app-error [message]="error()" />
-} @else {
-  <app-content [data]="data()" />
-}
-
-@for (item of items(); track item.id) {
-  <app-item [item]="item" />
-} @empty {
-  <p>No items found</p>
-}
-
-@switch (status()) {
-  @case ('pending') { <span>Pending</span> }
-  @case ('active') { <span>Active</span> }
-  @default { <span>Unknown</span> }
-}
-```
-
-## Class and style bindings
-
-Do NOT use `ngClass` / `ngStyle`. Use direct bindings:
-
-```html
-<div [class.active]="isActive()">Single class</div>
-<div [class]="classString()">Class string</div>
-<div [style.color]="textColor()">Styled text</div>
-<div [style.width.px]="width()">With unit</div>
-```
-
-## Images — `NgOptimizedImage`
-
-```typescript
-import { NgOptimizedImage } from '@angular/common';
-
-@Component({
-  imports: [NgOptimizedImage],
-  template: `
-    <img ngSrc="/assets/hero.jpg" width="800" height="600" priority />
-    <img [ngSrc]="imageUrl()" width="200" height="200" />
-  `,
-})
-```
-
-## Accessibility
-
-Components must pass AXE checks, meet WCAG AA, include ARIA for interactive elements, support keyboard navigation, maintain visible focus indicators.
-
-```typescript
-@Component({
-  selector: 'app-toggle',
-  host: {
-    'role': 'switch',
-    '[attr.aria-checked]': 'checked()',
-    '[attr.aria-label]': 'label()',
-    'tabindex': '0',
-    '(click)': 'toggle()',
-    '(keydown.enter)': 'toggle()',
-    '(keydown.space)': 'toggle(); $event.preventDefault()',
-  },
-})
-export class Toggle {
-  label = input.required<string>();
-  checked = input(false, { transform: booleanAttribute });
-  checkedChange = output<boolean>();
-  toggle() { this.checkedChange.emit(!this.checked()); }
-}
-```
-
-## Comments — the strict minimum
-
-See [`CLAUDE.md > Comments`](../../CLAUDE.md#comments--the-strict-minimum). In a component, the
-class docstring earns its place when it says what the screen is for and where the data comes from;
-inline comments only for a *why* the template can't show — a Material quirk worked around, an
-ordering that must hold, a binding that looks wrong and isn't.
+See [`CLAUDE.md > Comments`](../../CLAUDE.md#comments--the-strict-minimum). In a component, the class docstring earns its place when it says what the screen is for and where the data comes from ; inline comments only for a *why* the template can't show — a Material quirk worked around, an ordering that must hold, a binding that looks wrong and isn't.

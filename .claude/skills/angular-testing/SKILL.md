@@ -1,320 +1,116 @@
 ---
 name: angular-testing
-description: Write unit and integration tests for Angular v22+ in the PortfolioAI frontend using Vitest with TestBed and modern testing patterns. Use for testing components with signals, services with inject(), HTTP interactions, and DOM-related side-effects (datepickers, file inputs, blob downloads). Triggers on test creation, testing signal-based components, mocking dependencies, or setting up test infrastructure.
+description: How specs are written in the PortfolioAI frontend (Vitest, jsdom, zoneless TestBed) — page and service specs, port doubles, the `ConfirmService` / `StbToast` doubles, `settle()` for resources, jsdom workarounds. Use when writing or fixing a `*.spec.ts` under `apps/web` or `libs/ui`.
 ---
 
 # Angular Testing
 
-Test with **Vitest** (`@angular/build:unit-test` builder, jsdom environment), focused on signal-based components. Tests live next to source (`*.spec.ts`).
+Vitest through the `@angular/build:unit-test` builder, jsdom environment, `*.spec.ts` next to the source. What a spec must read like (class docstring, sentence names, factories, one scenario per test) is in [`CLAUDE.md > Tests as documentation`](../../CLAUDE.md#tests-as-documentation).
 
 ## Commands
 
-From `projects/frontend/`:
+From `projects/frontend/`, and only when the user asks (see `CLAUDE.md > Builds and tests`) :
 
 ```bash
-npm run test                                                    # full suite (ng test web)
-npx vitest run apps/web/src/app/.../some.spec.ts                # single file
-npx vitest                                                      # watch mode
+npm run test                                                                  # ng test web
+npm run ui:test                                                               # ng test ui (the lib's specs, also in CI)
+npx ng test web --watch=false --include='apps/web/src/path/to/file.spec.ts'   # one spec
 ```
 
-Use `vi.fn()` from Vitest (not `jest.fn()`). HTTP testing uses `HttpTestingController` + `provideHttpClient()` + `provideHttpClientTesting()`.
+Bare `vitest` can't resolve `@portfolioai/ui`.
 
-## Required patterns
+## The shape of a page spec
 
-### `setTestData` factory per `describe` block
-
-Each nested `describe` block defines a local `setTestData` factory; tests call it with overrides. Reduces duplication, keeps the diff between scenarios visible:
+A file-level docstring listing what is pinned, `make*` factories, a `setup()` taking options, then flat `describe` blocks — one per page, with a second one for a scoped concern (`describe('StatsPage — the scanner stats to review (#764)', …)`). Reference : `features/stats/stats-page.spec.ts`.
 
 ```typescript
-describe('Container', () => {
-  let fixture: ComponentFixture<Container>;
-
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({ imports: [Container] }).compileComponents();
-    fixture = TestBed.createComponent(Container);
-  });
-
-  describe('View', () => {
-    describe('Table', () => {
-      const tableEl = () => fixture.debugElement.query(By.css('[data-testid="table"]'));
-
-      const setTestData = ({
-        loading = false,
-        trades = [{ ticker: 'KTTA' }],
-      }: { loading?: boolean; trades?: { ticker: string }[] } = {}) => {
-        fixture.componentRef.setInput('loading', loading);
-        fixture.componentRef.setInput('trades', trades);
-      };
-
-      it('shows the table when not loading AND there is at least one trade', () => {
-        setTestData({ loading: false, trades: [{ ticker: 'KTTA' }] });
-        fixture.detectChanges();
-        expect(tableEl()).not.toBeNull();
-      });
-
-      it("doesn't show the table when loading", () => {
-        setTestData({ loading: true });
-        fixture.detectChanges();
-        expect(tableEl()).toBeNull();
-      });
-    });
-  });
-});
-```
-
-### `data-testid` selector (camelCase)
-
-```html
-<button data-testid="submitButton">Submit</button>
-```
-
-```typescript
-const submitButtonEl = () => fixture.debugElement.query(By.css('[data-testid="submitButton"]'));
-```
-
-### Organising component tests
-
-Nested `describe` blocks: one `View` block for template assertions, plus one block per public method.
-
-```typescript
-describe('ComponentName', () => {
-  describe('View', () => {
-    describe('Some Element', () => { /* … */ });
-  });
-
-  describe('someMethod', () => { /* … */ });
-});
-```
-
-## Testing signals
-
-Components testing a signal-based component set the signal directly or via `componentRef.setInput()` for inputs, then call `fixture.detectChanges()`:
-
-```typescript
-component.todos.set([
-  { id: '1', text: 'Task 1', done: false },
-  { id: '2', text: 'Task 2', done: true },
-]);
-component.filter.set('active');
-expect(component.filteredTodos().length).toBe(1);
-```
-
-For pure signal-logic tests (no template), instantiate the component class directly with `new ComponentClass()` — no TestBed needed.
-
-## Testing services
-
-### Plain service
-
-```typescript
-beforeEach(() => {
-  TestBed.configureTestingModule({});
-  service = TestBed.inject(CounterSvc);
-});
-```
-
-### Service with HTTP
-
-```typescript
-beforeEach(() => {
+function setup(options: { rows?: StatEntry[]; confirmed?: boolean } = {}) {
+  const toastShown = vi.fn();
   TestBed.configureTestingModule({
-    providers: [provideHttpClient(), provideHttpClientTesting()],
+    imports: [StatsPage],
+    providers: [
+      provideZonelessChangeDetection(),
+      provideTranslateService({ lang: 'en' }),
+      provideNativeDateAdapter(),
+      provideRouter([]),
+      { provide: StatsRepository, useClass: MockStatsRepository },
+      {
+        provide: StbToast,
+        useValue: {
+          success: (message: string) => toastShown('success', message),
+          error: (message: string) => toastShown('error', message),
+        },
+      },
+      { provide: ConfirmService, useValue: { ask: () => of(options.confirmed ?? true) } },
+    ],
   });
-  service = TestBed.inject(UserService);
-  httpMock = TestBed.inject(HttpTestingController);
-});
-
-afterEach(() => httpMock.verify());
-
-it('fetches user by id', () => {
-  service.getUser('1').subscribe((user) => expect(user).toEqual(mockUser));
-  const req = httpMock.expectOne('/api/users/1');
-  expect(req.request.method).toBe('GET');
-  req.flush(mockUser);
-});
-```
-
-## Mocking dependencies
-
-### `useValue` mock for plain services
-
-```typescript
-const userServiceMock = {
-  getUser: vi.fn().mockReturnValue(of({ id: '1', name: 'Test' })),
-  updateUser: vi.fn(),
-};
-
-await TestBed.configureTestingModule({
-  imports: [UserProfile],
-  providers: [{ provide: UserService, useValue: userServiceMock }],
-}).compileComponents();
-```
-
-### `useClass` mock for repository ports
-
-Repositories are abstract-class ports (`core/api/<bucket>/<name>.repository.ts`). Mock them with a class that **extends** the port — the stub stays type-checked against the real contract and keeps any concrete base method — and expose `vi.fn()` members so tests can assert calls. Reference: `features/candidates/candidates-page.spec.ts`.
-
-```typescript
-class MockCandidatesRepository extends CandidatesRepository {
-  listForDate = vi.fn((): Observable<Candidate[]> => of([]));
-  get = vi.fn((): Observable<Candidate> => of(makeCandidate()));
-  create = vi.fn((_input: CandidateInput): Observable<Candidate> => of(makeCandidate({ id: 'new' })));
-  update = vi.fn((): Observable<Candidate> => of(makeCandidate()));
-  delete = vi.fn((): Observable<void> => of(undefined));
+  /* … */
 }
-
-providers: [{ provide: CandidatesRepository, useClass: MockCandidatesRepository }];
 ```
 
-A plain `useValue` object is fine for a collaborator the test barely touches (e.g. `{ provide: MatSnackBar, useValue: { open: vi.fn() } }`).
+- **Imports** — `vi`, `describe`, `it`, `expect` from `vitest` ; everything Material from `@portfolioai/ui`, specs included (`no-restricted-imports` covers them). `provideNativeDateAdapter`, `MATERIAL_ANIMATIONS`, `StbToast` all come from there.
+- **`provideZonelessChangeDetection()`** in every TestBed that renders.
+- **`provideTranslateService({ lang: 'en' })`** when the template uses `translate`.
+- **`provideNativeDateAdapter()`** when the template holds a `<mat-datepicker>`, even if no test touches it : without it every test fails on the same NG0201 instead of its own assertion.
+- **`{ provide: MATERIAL_ANIMATIONS, useValue: { animationsDisabled: true } }`** when a spec opens a real dialog (`core/app-state/confirm.service.spec.ts`).
+- **Finding elements** — `fixture.nativeElement.querySelector(...)`, with kebab-case `data-testid` attributes where a class would not do (`data-testid="tab-cash-flow"`).
 
-### Mocking signal-based services
+## Resources : `settle()`
 
-```typescript
-const authMock = {
-  user: signal<User | null>(null),
-  isAuthenticated: computed(() => authMock.user() !== null),
-  login: vi.fn(),
-  logout: vi.fn(),
-};
-authMock.user.set({ id: '1', name: 'Test User' });
-```
-
-### Translated templates
-
-Components whose templates use `'key' | translate` need `provideTranslateService({ lang: 'en' })` in the TestBed providers. Without it, `instant('foo.bar')` returns the key as fallback (acceptable for assertions).
-
-### Datepicker templates — required `provideNativeDateAdapter()`
-
-Any component whose template contains `<mat-datepicker>` (typically a filter drawer) needs `provideNativeDateAdapter()` in the TestBed providers, even when no test exercises the picker directly. `MatDatepickerInput` reaches for a `DateAdapter` at construction time ; without one, every test in the file fails with the same "No provider found for DateAdapter" trace rather than the actual regression you're trying to pin.
+A resource answers a microtask after its call, so a page renders through a `settle()`, and settles again after an action that reloads :
 
 ```typescript
-import { provideNativeDateAdapter } from '@angular/material/core';
-
-providers: [
-  provideZonelessChangeDetection(),
-  provideRouter([]),
-  provideTranslateService({ lang: 'en' }),
-  provideNativeDateAdapter(),               // ← required for any datepicker in the template
-  /* ... */
-],
-```
-
-Bit us on the journal-page spec — the filter drawer hosts two `<mat-datepicker>` for the date range. Without `provideNativeDateAdapter()`, the 5 delete-pipeline tests we wanted to pin all reported NG0201 instead of the logic they cover.
-
-## jsdom limitations — file/drag/blob workarounds
-
-jsdom (the DOM Vitest uses) does **not** implement a few browser APIs the UI relies on. The workarounds, all already used in the codebase :
-
-### `DataTransfer` is undefined
-
-`new DataTransfer()` throws `ReferenceError: DataTransfer is not defined`. Drag-and-drop tests can't construct a `DragEvent` with a populated `dataTransfer.files`.
-
-**Workaround** — route the test through the **file-input** handler instead of `onDrop`. Both `onFileChange` and `onDrop` in our journal-io page funnel into the same private `uploadFile` ; testing one exercises the same pipeline as the other.
-
-```typescript
-const file = new File(['header\nrow'], 'demo.csv', { type: 'text/csv' });
-page.onFileChange({
-  target: { files: [file], value: '' } as unknown as HTMLInputElement,
-} as unknown as Event);
-```
-
-The `files: [file]` array is enough — Angular's template binding reads it via `input.files`, which accepts an array-like object in jsdom.
-
-### `URL.createObjectURL` is undefined
-
-The blob-download trick (`URL.createObjectURL(blob)` + anchor `.click()` + `URL.revokeObjectURL(url)`) is the cross-browser way to trigger a "Save as" without the File System Access API. jsdom doesn't ship it.
-
-**Workaround** — stub both URL methods in `beforeEach`, restore in `afterEach`:
-
-```typescript
-beforeEach(() => {
-  vi.stubGlobal('URL', {
-    ...URL,
-    createObjectURL: vi.fn(() => 'blob:mock-url'),
-    revokeObjectURL: vi.fn(),
-  });
-});
-
-afterEach(() => {
-  vi.restoreAllMocks();
-  vi.unstubAllGlobals();
-});
-```
-
-The `triggerBlobDownload` helper then runs through its `appendChild → click → removeChild → revokeObjectURL` sequence without throwing, and you can assert on the snackbar fired in the `tap` body.
-
-### `window.confirm` — stub it explicitly
-
-`vi.spyOn(window, 'confirm').mockReturnValue(true)` (or `false`) for tests that exercise `delete()` or any other native-confirm-gated flow.
-
-## RxJS pipelines — test via `Subject` emissions
-
-For components that use `repo.method().pipe(tap, catchError).subscribe()`, control the emission side via a `Subject<T>` returned by the mock repo. The test pushes `next(value)` or `error(...)` to drive each branch :
-
-```typescript
-let deleteSubject: Subject<void>;
-
-beforeEach(() => {
-  deleteSubject = new Subject<void>();
-  /* provide: JournalRepository → { delete: () => deleteSubject.asObservable(), … } */
-});
-
-it('delete error fires an error snackbar', () => {
-  vi.spyOn(window, 'confirm').mockReturnValue(true);
-  const fixture = TestBed.createComponent(JournalPage);
+async function settle(fixture: ComponentFixture<StatsPage>): Promise<void> {
   fixture.detectChanges();
-
-  fixture.componentInstance.delete(makeTrade());
-  deleteSubject.error(new Error('500 from server'));
-  fixture.detectChanges();
-
-  expect(snackBarOpen).toHaveBeenCalledWith(
-    expect.any(String),
-    undefined,
-    expect.objectContaining({ panelClass: 'stb-snack-bar--error' }),
-  );
-});
-```
-
-The `tap` runs on `next`, `catchError` runs on `error` — both are exercised cleanly with two separate test cases.
-
-## Testing inputs and outputs
-
-```typescript
-fixture.componentRef.setInput('item', item);
-fixture.detectChanges();
-
-let emitted: Item | undefined;
-fixture.componentInstance.selected.subscribe((i) => (emitted = i));
-fixture.nativeElement.querySelector('div').click();
-expect(emitted).toEqual(item);
-```
-
-## Async timing
-
-### `fakeAsync` + `tick` for Angular-aware timing
-
-```typescript
-it('debounces search', fakeAsync(() => {
-  fixture.componentInstance.query.set('test');
-  tick(300);
-  fixture.detectChanges();
-  expect(fixture.componentInstance.results().length).toBeGreaterThan(0);
-  flush();
-}));
-```
-
-### `vi.useFakeTimers()` for non-Angular timing
-
-```typescript
-beforeEach(() => vi.useFakeTimers());
-afterEach(() => vi.useRealTimers());
-
-it('debounces search input', async () => {
-  fixture.componentInstance.query.set('test');
-  vi.advanceTimersByTime(300);
   await fixture.whenStable();
   fixture.detectChanges();
-  expect(fixture.componentInstance.results().length).toBeGreaterThan(0);
-});
+}
 ```
+
+A test holding an answer back with a `Subject` keeps a plain `detectChanges()` : `whenStable()` would wait for it forever.
+
+## Doubles
+
+- **A port** — a class that **extends** the abstract repository, so the compiler flags a missing method when the port grows, with `vi.fn()` members to assert on. Bind it with `useClass`, and read it back with `TestBed.inject(StatsRepository) as MockStatsRepository`. Reference : `MockCandidatesRepository` in `features/candidates/candidates-page.spec.ts`, `StubRepository` in `core/app-state/auth.service.spec.ts`.
+
+  ```typescript
+  class MockCandidatesRepository extends CandidatesRepository {
+    listForDate = vi.fn((_date: Date): Observable<Candidate[]> => of([]));
+    delete = vi.fn((_id: string): Observable<void> => of(undefined));
+    /* … every abstract member */
+  }
+  ```
+
+- **A port the test barely touches** — a partial `useValue` : `{ provide: StatsRepository, useValue: { create: vi.fn(() => of(undefined)) } }`.
+- **An adapter's own spec** binds the real adapter with `provideHttpClient()` + `provideHttpClientTesting()`, and asserts through `HttpTestingController`.
+- **`ConfirmService`** — `{ ask: () => of(true) }`, plus `choose: () => of({ confirmed: true, value: null, note: null })` for a dialog with a pick.
+- **`StbToast`** — the double above, then `expect(toastShown.mock.calls.at(-1)?.[0]).toBe('error')`. Never `MatSnackBar`.
+
+To drive a pipeline's error branch, have the mock return a `Subject` or `throwError(...)`, and assert the toast.
+
+## Timing
+
+- `vi.useFakeTimers()` + `vi.advanceTimersByTime(...)` for debounces and delays. `fakeAsync` is not available : there is no `zone.js`.
+- An `effect()` runs on `TestBed.tick()` (`core/app-state/theme.service.spec.ts`).
+
+## jsdom
+
+- **Charts need no setup** — `test-setup.ts` provides `ResizeObserver` and an inert 2D canvas.
+- **`URL.createObjectURL` / `revokeObjectURL` are missing.** Stub them on a **constructable** `URL` : the router calls `new URL(...)`, and a plain-object stub breaks it. Reference : `features/settings/data/data.spec.ts`.
+
+  ```typescript
+  const RealURL = globalThis.URL;
+  const urlStub = function (...args: ConstructorParameters<typeof URL>) {
+    return new RealURL(...args);
+  } as unknown as typeof URL;
+  urlStub.prototype = RealURL.prototype;
+  urlStub.createObjectURL = vi.fn(() => 'blob:stats') as unknown as typeof URL.createObjectURL;
+  urlStub.revokeObjectURL = vi.fn() as unknown as typeof URL.revokeObjectURL;
+  vi.stubGlobal('URL', urlStub);
+  ```
+
+  `vi.unstubAllGlobals()` in `afterEach`.
+
+## End-to-end
+
+Playwright lives in `apps/web-e2e` (`npm run e2e`, against a running stack with the backend on the `e2e` profile).

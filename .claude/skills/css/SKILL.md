@@ -6,8 +6,7 @@ description: Styling conventions for the PortfolioAI frontend — where a style 
 # CSS — PortfolioAI frontend
 
 Two places hold styles : **`libs/ui`** (the design system — tokens, Material overrides, the shared
-page patterns) and the **page SCSS** of `apps/web` (only what is genuinely that page's). Epic #257
-moves the patterns the pages had copied into the lib ; follow its end state, not the leftovers.
+page patterns) and the **page SCSS** of `apps/web` (only what is genuinely that page's).
 
 ## Where a style goes
 
@@ -17,6 +16,7 @@ moves the patterns the pages had copied into the lib ; follow its end state, not
 | A variant of a Material component (size, tone…) | a `Stb*` directive posting a class, the rules next to the overrides (`stbSize`, `stbTone`, `stbCol`, `stbChip`) |
 | A pattern two pages share (card, banner, KPI row, filter toolbar…) | a global partial in `libs/ui/styles/components/`, forwarded by `styles/index.scss` |
 | A token (colour, radius, size) | `libs/ui/styles/_tokens.scss` (theme-varying) or `_sizes.scss` (sizes) |
+| Styles shared by the dialogs of one feature | a partial in the feature (`features/locates/_locates.scss`) |
 | The arrangement of one page | its own SCSS — grids, columns, what only that page has |
 
 A page never redeclares a lib class. If the lib's version doesn't fit, change the lib (every page
@@ -31,10 +31,7 @@ component only when markup must be shared too (texts arrive translated).
 theme : `--color-*` (+ `-soft` variants), `--radius-sm | --radius | --radius-lg | --radius-pill`,
 `--shadow-sm | --shadow`. Never a hex / `oklch()` outside `_tokens.scss`.
 
-The **colour rule** : green / red (`--color-success` / `--color-danger`) for outcomes (P&L, amounts,
-gaps), amber (`--color-warning`) for warnings, indigo (`--color-accent`) for statuses and
-categories, neutral for everything else — one status exception, the green check of a completed
-stat.
+What each colour may mean is the **colour rule** in [`CLAUDE.md`](../../CLAUDE.md#frontend-angular-22).
 
 **Sizes — SCSS variables** (`_sizes.scss`), resolved at compile time. Import them in any page or
 lib SCSS :
@@ -54,12 +51,13 @@ lib SCSS :
 | Spacing `$space-*` | `hairline` 2 · `xs` 4 · `sm` 8 · `md` 12 · `lg` 16 · `xl` 24 · `2xl` 32 · `3xl` 48 · `4xl` 64 |
 | Type `$font-*` | `2xs` 11 · `xs` 12 · `sm` 13 · `md` 14 · `lg` 16 · `xl` 18 · `2xl` 24 · `3xl` 32 |
 | Icons `$icon-*` | `xs` 14 · `sm` 16 · `md` 18 · `lg` 24 · `xl` 40 — font-size, width and height together |
-| Component sizes | `$button-height`, `$icon-button-size`, `$page-padding-y` / `-x`, `$card-padding-y` / `-x`, `$toolbar-height`, `$sidenav-width` |
+| Component sizes | `$button-height`, `$icon-button-size`, `$page-padding-y` / `-x`, `$card-padding-y` / `-x`, `$toolbar-height`, `$sidenav-width`, `$border-width` |
+| Breakpoints `$bp-*` | `wide` 1100 · `narrow` 900 · `phone` 640 — `@media (max-width: s.$bp-phone)` |
 
 **No raw size.** A padding, margin, gap, font-size or icon size is a token. A value off the scale
 is snapped to the nearest step (a tie rounds up) ; if it is genuinely a component's own dimension, it becomes a named
-component size in `_sizes.scss`. Left raw on purpose : `1px` borders / hairlines, media-query
-breakpoints, and values that are Material's own dimensions.
+component size in `_sizes.scss`. Left raw on purpose : `1px` borders / hairlines, and values that
+are Material's own dimensions.
 
 Pixels, not `rem` : the app is dense and the type steps are one pixel apart.
 
@@ -68,7 +66,8 @@ Pixels, not `rem` : the app is dense and the type steps are one pixel apart.
 - **Through the override mixins, never by hand-writing Material's CSS variables.** Material renamed
   its `--mdc-*` variables to `--mat-*` ; the hand-written ones kept compiling and silently stopped
   working (#269). The mixin emits whatever name Material reads — scope it to a selector when the
-  change is conditional :
+  change is conditional. Hand-written `--mat-*` remain in the chip and snack-bar variants and in
+  `_base.scss` / `_shell.scss` ; don't add to them :
 
   ```scss
   .mat-mdc-icon-button:not(:disabled):hover {
@@ -102,12 +101,15 @@ Pixels, not `rem` : the app is dense and the type steps are one pixel apart.
 | Class | Partial | For |
 | --- | --- | --- |
 | `.page` (+ `--full`) | `components/_page.scss` | the page container — every page is `page page--full` today |
+| `.content-header`, `.header-row`, `.header-actions` | `components/_banners.scss` | a page's title block and the actions beside it |
 | `.card`, `.card h3` / `.card-title`, `.hint` | `components/_card.scss` | a page section, its title row, the faint hint next to a title |
 | `.kpi-row` > `.kpi` (`__label`, `__value`, `__sub`, `--hero`) | `components/_kpi.scss` | the figures on top of a page — tiles are `.card`s or `mat-card`s |
 | `.toolbar` | `components/_toolbar.scss` | the filter row above a list ; its form fields are density `-5` (36 px) |
 | `.form-stack` | `components/_form.scss` | a column of form fields (a dialog's `mat-dialog-content`) — fields reserve no subscript space, so they need it |
 | `.error-banner`, `.info-banner`, `.warn-banner` | `components/_banners.scss` | page-level messages |
-| `.loading-state`, `.empty-state` | `components/_banners.scss` | a list that loads or has nothing |
+| `.empty-state` | `components/_banners.scss` | a list with nothing — a loading list shows a skeleton (`ui-skeleton`) |
+| `.config-card` | `components/_banners.scss` | a settings block |
+| `.pattern-tag` | `components/_badges.scss` | a pattern's tag |
 | `.prose` | `components/_prose.scss` | rendered Markdown shown as written (the pattern sheets and notes) — injected HTML takes no component style, so it is global |
 
 A `mat-card appearance="outlined"` is already restyled by the lib (surface, border, radius) : use

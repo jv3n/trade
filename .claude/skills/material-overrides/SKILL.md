@@ -1,19 +1,13 @@
 ---
 name: material-overrides
-description: Convention for wrapping Angular Material modules in the PortfolioAI design-system lib (`libs/ui`) — `Stb<Name>Module` wrapper, exhaustive M3 token-override SCSS, optional design-system directives (`StbSize`, `StbCol`, `StbChip`…), Storybook playground. Use when adding a new wrapped Material primitive, adjusting an M3 token override, or designing a domain-specific variant on top of a Material component.
+description: Conventions of the PortfolioAI design-system lib (`libs/ui`, `@portfolioai/ui`) — wrapping a Material module as `Stb<Name>Module`, exhaustive M3 token-override SCSS, `Stb*` directives, the lib's own components (charts, skeleton, `StbConfirm`, `StbToast`), Storybook. Use when adding or changing anything under `libs/ui/src/lib`, adjusting an M3 token, designing a variant on a Material component, or reaching for a chart, a skeleton or a confirmation modal.
 ---
 
-# Material Overrides — `libs/ui` Convention
+# The `libs/ui` lib
 
-Every Angular Material primitive used by `apps/web` is wrapped under `libs/ui/src/lib/<name>/` as a **`Stb<Name>Module`** that re-exports the Material module + ships an exhaustive Material 3 token-override SCSS. Consumer code imports the wrapper from `@portfolioai/ui`, never the raw `Mat<Name>Module`. This skill codifies what lives in each wrapper folder, how the M3 overrides are written, and how design-system directives extend the surface without forking Material.
+Every Angular Material primitive the app uses is wrapped under `libs/ui/src/lib/<name>/` as a **`Stb<Name>Module`** that re-exports the Material module and ships an exhaustive Material 3 token-override SCSS. Beside the wrappers, the lib owns the presentational components Material doesn't ship. It stays presentational : no i18n, texts arrive translated.
 
-## Why this convention exists
-
-- **Single point of configuration** — `mat.<name>-overrides(...)` mixin called once, `:root`-scoped. Dark / light theme swap via `[data-theme='light']` cascades automatically through the `var(--color-…)` references.
-- **Exhaustive documentation by code** — every M3 token (per `_m3-<name>.scss > get-tokens()`) is listed in the override file, with applied tokens carrying a value and deferred tokens commented in. Future contributors see at a glance what's still on the table without re-reading the Material source.
-- **Theme + density consistency** — the lib owns the design tokens (`styles/_tokens.scss` : OKLCH palette, `-soft` variants derived with `color-mix()`, radii 6 / 8 / 12 px, Geist fonts), the Material theme (`styles/_theme.scss` : `mat.theme()` with the system colours `--mat-sys-*` mapped onto the `--color-*` tokens, so even non-overridden components follow the palette), and density (form fields at `form-field-density(-4)`). No per-feature Material customisation drift.
-- **Colour rule** — green / red (`--color-success` / `--color-danger`) only for outcomes, amber (`--color-warning`) for warnings, indigo (`--color-accent`) for status / categories, neutral for the rest (the `ticker` chip variant is neutral on purpose).
-- **Variant extension without forking** — domain-specific variants ride on standalone directives (`StbSize`, `StbChip`…) that post a class on the host. The Material primitive stays untouched ; the variant CSS scopes via the `.stb-<name>--<variant>` selector.
+Why : one place per Material customisation (`mat.<name>-overrides(...)`, `:root`-scoped, theme swap through the `var(--color-…)` references), every token visible in the override file, and variants that ride on directives instead of forking Material. The tokens and theme are in `styles/_tokens.scss` and `styles/_theme.scss` : see [`css`](../css/SKILL.md).
 
 ## Folder layout
 
@@ -21,29 +15,21 @@ Every Angular Material primitive used by `apps/web` is wrapped under `libs/ui/sr
 libs/ui/src/lib/<name>/
 ├── <name>.module.ts          # StbXxxModule — re-exports MatXxxModule + directives
 ├── <name>.scss               # exhaustive `mat.<name>-overrides(...)` + selector-level tweaks
-├── <name>.directives.ts      # OPTIONAL — design-system directives (size, variant, position)
-├── <name>.stories.ts         # Storybook story — single `Default` with controls
+├── <name>.directives.ts      # OPTIONAL — design-system directives
+├── <name>.stories.ts         # Storybook stories
 ├── <name>.mdx                # Storybook docs page
-├── public-api.ts             # `export * from './<name>.module'` (+ directives + types)
-└── index.ts                  # `export * from './public-api'; export * from './<name>.module'`
+├── public-api.ts             # exports the module, directives, types, re-exported Material symbols
+└── index.ts                  # `export * from './public-api'`
 ```
 
-Folder name matches the Material module name minus the `Mat` / `Module` parts (`button`, `card`, `table`, `chips`, `snack-bar`, …). The `sort-header` folder is named after the visible directive `mat-sort-header`, not the umbrella `MatSortModule`.
+The folder is named after the Material module without `Mat` / `Module` (`button`, `chips`, `snack-bar`) ; `sort-header` after the visible directive `mat-sort-header`.
 
 ## The Stb wrapper module
 
-Minimal viable form :
-
 ```typescript
-import { NgModule } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-
-import { StbDanger, StbSize, StbTone } from './button.directives';
-
 /**
  * StbButtonModule — design-system wrapper around Material's [MatButtonModule], plus the
- * `[stbSize]` (xs / sm / md / lg), `[stbTone]` (semantic colour) and `[stbDanger]` (destructive
- * CTA).
+ * `[stbSize]`, `[stbTone]` and `[stbDanger]` directives.
  */
 @NgModule({
   imports: [MatButtonModule, StbDanger, StbSize, StbTone],
@@ -52,93 +38,62 @@ import { StbDanger, StbSize, StbTone } from './button.directives';
 export class StbButtonModule {}
 ```
 
-Constructor injection only. The KDoc explains the intent + any design-system specifics ; consumers see this in IDE tooltips.
-
 ## Everything Material goes through the lib
 
-The app never imports `@angular/material/*` — ESLint's `no-restricted-imports` fails `npm run lint` on it in `apps/web`. What the app needs besides the modules is re-exported by the wrapper that owns it : `MatDialog` / `MatDialogRef` / `MAT_DIALOG_DATA` / `MATERIAL_ANIMATIONS` (`dialog`), `PageEvent` (`paginator`), `Sort` (`sort-header`, type only), `MatButtonToggleChange` (`button-toggle`), `MatIconRegistry` (`icon`), `provideNativeDateAdapter` (`datepicker`, for specs). A missing one is added to its wrapper's `public-api.ts`, never imported from Material in the app.
+`apps/web` never imports `@angular/material/*`, specs included : `no-restricted-imports` fails the lint. What the app needs besides the modules is re-exported by the wrapper that owns it (`dialog/public-api.ts` : `MatDialog`, `MAT_DIALOG_DATA`, `MATERIAL_ANIMATIONS`…). A missing one is added to its wrapper's `public-api.ts`.
 
-The app-wide Material defaults — native date adapter, no ripples, dense outlined fields with a dynamic subscript, the Material Symbols icon font — are `provideStbMaterial()` (`src/lib/config/`), called once in `app.config.ts`.
+The app-wide Material defaults are `provideStbMaterial()` (`src/lib/config/provide-stb-material.ts`) : a new default goes there.
 
 ## The exhaustive M3 token override
 
-The `<name>.scss` file is the largest artefact in a typical wrapper. Pattern :
+The `<name>.scss` file is the largest artefact in a wrapper :
 
 ```scss
 // Material <name> design — exhaustive token override (Material 22 / M3 API).
 //
-// Reference : https://material.angular.dev/components/<name>/styling
 // Source-of-truth for the available tokens :
 //   node_modules/@angular/material/<name>/_m3-<name>.scss > get-tokens()
 //
-// <Short paragraph describing the design intent — what idle / hover / selected look like,
-// which design tokens drive what, any caveat unique to this primitive.>
+// <The design intent : idle / hover / selected, any caveat unique to this primitive.>
 
 @use '@angular/material' as mat;
-@use '../../../styles/sizes' as s;        // when SCSS sizes vars are needed
+@use '../../../styles/sizes' as s;
 
 :root {
   @include mat.<name>-overrides(
     (
       // ============================================================================
-      // <Section name — e.g. Base, Color — idle, Color — selected, Typography, Density>
+      // <Section — Base, Color — idle, Color — selected, Typography, Density>
       // ============================================================================
       <token-1>: <value-1>,
-      <token-2>: <value-2>,
-      // <token-deferred-1>: <m3-default>,    // <one-line rationale>
-      // <token-deferred-2>: <m3-default>,
-
-      // ============================================================================
-      // <Next section>
-      // ============================================================================
-      <token-N>: <value-N>,
-      // <token-deferred-N>: <m3-default>,    // <rationale>
+      // <token-deferred>: <m3-default>,    // <one-line rationale>
     )
   );
 }
 
-// ============================================================================
-// Selector-level tweaks — things the token API doesn't expose.
-// ============================================================================
-.<some-class> {
-  // <hairline border, hover background tweak, etc.>
-}
+// Selector-level tweaks — what the token API doesn't expose.
 ```
 
 ### Process to write a new override
 
 1. **Read the M3 source** : `node_modules/@angular/material/<name>/_m3-<name>.scss > get-tokens()`. Note every token name (drop the `<name>-` prefix when the mixin is `mat.<name>-overrides`).
-2. **Group by section** — `Base`, `Color — idle`, `Color — selected`, `Color — disabled`, `Typography`, `Density`. Each section in its own banner.
-3. **Apply or comment** — every token shows up exactly once. If we override → key + value. If we keep the M3 default → commented line with a 1-line rationale (e.g. `// M3 default — already 1 px hairline.`).
-4. **Forward the file** — append `@forward '../src/lib/<name>/<name>';` to `libs/ui/styles/index.scss`. The app consumes the aggregator via `@use 'libs/ui/styles' as ui;` in `apps/web/src/styles.scss`.
+2. **Group by section**, each in its own banner.
+3. **Apply or comment** — every token shows up exactly once : key + value, or a commented line with a one-line rationale.
+4. **Forward the file** — append `@forward '../src/lib/<name>/<name>';` to `libs/ui/styles/index.scss`, which `apps/web/src/styles.scss` consumes through `@use '../../../libs/ui/styles';`.
 
 ### When two token APIs apply
 
-A component can compose two override mixins when its panel and its rows live in separate token namespaces. `select.scss` calls both `mat.select-overrides(...)` (panel, trigger, arrow) and `mat.option-overrides(...)` (the `<mat-option>` rows), and the preamble names both sources. The option overrides apply to **every** `<mat-option>` in the app — whichever file owns them, say so in its preamble, and move them (never drop them) if that wrapper is ever removed.
+A component can compose two mixins when its panel and its rows live in separate namespaces : `select.scss` calls `mat.select-overrides(...)` and `mat.option-overrides(...)`. The option overrides apply to **every** `<mat-option>` in the app : say so in the preamble, and move them, never drop them, if that wrapper goes.
 
 ## Design-system directives — `Stb<Variant>`
 
-When a wrapped Material primitive needs lib-specific variants (size, semantic flavour, position…), they ship as standalone directives in `<name>.directives.ts`. Pattern :
+Variants ship as standalone directives in `<name>.directives.ts`. Reference : `StbSize` in `button/button.directives.ts`.
 
 ```typescript
-import { Directive, computed, input } from '@angular/core';
-
 export type StbButtonSize = 'xs' | 'sm' | 'md' | 'lg';
 
-/**
- * Adds a `stb-size--{xs|sm|md|lg}` class on a Material button host so the lib's
- * `button.scss` can swap the MDC container height + label font-size tokens for that size.
- */
 @Directive({
-  selector: `
-    button[mat-button][stbSize], a[mat-button][stbSize],
-    button[mat-flat-button][stbSize], a[mat-flat-button][stbSize],
-    button[mat-stroked-button][stbSize], a[mat-stroked-button][stbSize],
-    button[mat-raised-button][stbSize], a[mat-raised-button][stbSize],
-    button[mat-icon-button][stbSize], a[mat-icon-button][stbSize],
-    button[mat-fab][stbSize], button[mat-mini-fab][stbSize]
-  `,
-  
+  selector: `button[mat-button][stbSize], a[mat-button][stbSize] /* … each button kind */`,
   host: { '[class]': 'hostClass()' },
 })
 export class StbSize {
@@ -147,61 +102,39 @@ export class StbSize {
 }
 ```
 
-### Rules
+- Selector prefix **`stb`** (`ui` for a component). The input is named like the selector : aliases are banned by `no-input-rename`.
+- The directive posts a class ; the styling lives in the SCSS, scoped by `.stb-<name>--<variant>`, so it stays greppable. A directive may also carry the matching ARIA state (`StbTable` and `aria-busy`).
+- The variants are an exported union type (`StbTableColVariant`, `StbChipVariant`). Adding one = extending the union + a block in the SCSS.
 
-- Selector prefix : **`stb`** (per the ESLint config rule `@angular-eslint/directive-selector { type: 'attribute', prefix: ['ui', 'stb'] }`).
-- Input name matches the selector property — `stbSize` not `size` — to satisfy `@angular-eslint/no-input-rename` without an `{ alias }` (which the rule bans).
-- The directive **only** posts a class. The styling lives in the SCSS, scoped by `.stb-<name>--<variant>`. This keeps the directive small + trivially testable + the variant CSS greppable from the SCSS file.
-- Variants list the supported tokens in a `StbXxxVariant` exported type (`'numeric' | 'mono' | 'actions'` for `StbCol`, `'ticker'` for `StbChip`). Adding a variant = extending the union + adding a `.stb-<name>--<new>` block in the SCSS.
+## The lib's own components
 
-### Existing examples
+Same folder shape, with a `<name>.component.ts` or a service. Read their KDoc and stories :
 
-| Directive       | Selector(s)                                | Posts class                          | Lives in        |
-| --------------- | ------------------------------------------ | ------------------------------------ | --------------- |
-| `StbSize`       | `[stbSize]` on every Material button       | `.stb-size--{xs\|sm\|md\|lg}`         | `button/`       |
-| `StbTone`       | `[stbTone]` on every Material button       | `.stb-tone--{accent\|success\|warning\|danger}` | `button/` |
-| `StbDanger`     | `mat-flat-button[stbDanger]`               | `.stb-button--danger`                 | `button/`       |
-| `StbTable`      | `div[stbTable]`                            | `.stb-table`                          | `table/`        |
-| `StbCol`        | `th[stbCol], td[stbCol]`                   | `.stb-col--{numeric\|mono\|actions}`  | `table/`        |
-| `StbChip`       | `mat-chip[stbChip], mat-chip-option[stbChip]` | `.stb-chip--{ticker}`              | `chips/`        |
+- **Charts** (`chart/`) — `StbChart` (echarts host), `StbAreaChart`, `StbBarChart`, `StbCandleChart` (`ui-candle-chart` : bars, marks, legs, line, shades). `chart-theme.ts` resolves the palette tokens for the canvas, and redraws on a theme change.
+- **Skeleton** (`skeleton/`) — `StbSkeleton` (`ui-skeleton`), the shared patterns, and `stbLoadGate` (see [`angular-signals`](../angular-signals/SKILL.md#loading-data--rxresource)).
+- **`StbConfirm`** (`dialog/stb-confirm.ts`) — the confirmation modal : `open(data)` emits a boolean, `choose(data)` a `StbConfirmPick` when the modal carries a choice. The app goes through `ConfirmService.ask` / `.choose` (`core/app-state/`), which resolves the i18n texts.
+- **Field reset** (`form-field/`) — the lib can't translate its ✕ button, so the app feeds `StbFormFieldResetIntl` at boot. That is the pattern for any lib text with no caller to pass it.
+
+Domain widgets stay in the app, in `features/` or `shared/`.
 
 ## Snackbar variants
 
-The snack bar is opened imperatively — there's no template selector. The lib ships two semantic variants, `stb-snack-bar--success` (green, 3 s) and `stb-snack-bar--error` (red, 5 s), at the end of `libs/ui/src/lib/snack-bar/snack-bar.scss` : they override `--mat-snack-bar-container-color`, `--mat-snack-bar-supporting-text-color` and `--mat-snack-bar-button-color` on the panel host, with `--color-success` / `--color-on-success` / `--color-danger` / `--color-on-danger`.
+The snack bar is opened imperatively. The lib ships `stb-snack-bar--success` (3 s) and `stb-snack-bar--error` (5 s) at the end of `snack-bar/snack-bar.scss`.
 
 ### `StbToast` — the only entry point
 
-`libs/ui/src/lib/snack-bar/toast.service.ts` (root-provided) owns the panel classes and the durations. The app never injects `MatSnackBar` :
+`snack-bar/toast.service.ts` owns the panel classes and durations ; the app never injects `MatSnackBar`. The lib has no i18n, so the caller translates :
 
 ```typescript
-private readonly toasts = inject(StbToast);
-private readonly translate = inject(TranslateService);
-
 this.toasts.success(this.translate.instant('journal.snackbar.deleteSuccess', { ticker }));
-this.toasts.error(this.translate.instant('journal.snackbar.deleteError'));
 ```
-
-The lib has no i18n, so the caller translates. In a spec, provide a double that records the variant : `{ provide: StbToast, useValue: { success: (m: string) => toastShown('success', m), error: (m: string) => toastShown('error', m) } }`, then assert `toastShown.mock.calls.at(-1)?.[0]`.
 
 ## Storybook
 
-One project per lib (`ui` in `angular.json`). Story titles : `Components/<Name>`.
-
-**One playground story per component**, not many small stories. The user explicitly asked for a single `Default` story with the Storybook **Controls** panel driving every relevant input. `<Source>` snippets and comparison tables live in the `.mdx` doc, not in additional stories.
-
-The toolbar global type `theme` (`dark` / `light`) toggles `document.documentElement.dataset.theme` via the `withDataTheme` decorator (see `.storybook/preview.ts`). The canvas background follows the theme via `libs/ui/.storybook/sb.css` so the dark / light comparison is one toolbar click away.
-
-## When NOT to add a wrapper
-
-- **Pure Material directive with no design-system surface** — if the wrapper would just re-export `MatXxxModule` with nothing else (no token override, no directive), skip it ; the app can import `MatXxxModule` directly until a real customisation appears. Today every Material module the app uses has either token overrides or a directive justifying the wrapper.
-- **Components Material doesn't ship** — domain widgets (e.g. a CSV drop-zone) live in `apps/web/src/app/features/<name>/` or `apps/web/src/app/shared/`, not in `libs/ui`. `libs/ui` is specifically the Material-wrapping layer.
+One project (`ui` in `angular.json`), `npm run storybook`. Titles : `Components/<Name>`, and `Components/Chart/<Kind>` for the charts. Prefer one `Default` playground whose Controls drive the inputs, with `<Source>` snippets in the `.mdx` ; add a story only for a state the Controls can't reach (the candle chart's two, the skeleton's patterns). The toolbar's `theme` global toggles `data-theme` through `withDataTheme` (`.storybook/preview.ts`).
 
 ## Comments — the strict minimum, with one exception
 
-See [`CLAUDE.md > Comments`](../../CLAUDE.md#comments--the-strict-minimum) : everywhere else, a
-comment earns its line only by saying *why*.
+See [`CLAUDE.md > Comments`](../../CLAUDE.md#comments--the-strict-minimum) : everywhere else, a comment earns its line only by saying *why*.
 
-**The token override files are the exception.** Listing every M3 token — applied with a value,
-deferred as a commented line with a one-line rationale — is the point of the file : it is how the
-next contributor sees what is still on the table without re-reading the Material source. Keep those
-rationales to a single line each, and don't let the exception spread to the rest of the lib.
+**The token override files are the exception.** Listing every M3 token, applied or deferred with a one-line rationale, is the point of the file. Don't let the exception spread to the rest of the lib.
