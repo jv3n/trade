@@ -873,7 +873,7 @@
                 <tr class="rejected" hidden>
                   <td>17/09</td><td><span class="ticker">ATXG</span></td><td><span class="tag tag-accent">DT</span> <span class="tag" title="Note : l'Echo passe 12 % au-dessus de l'Apex à 11h40, le volume repart — une vraie cassure, pas un double top."><span class="icon">radar</span>scanner · rejetée · cassure</span></td>
                   <td></td>
-                  <td><button class="btn btn-sm" data-restore title="Elle repasse à relire"><span class="icon">undo</span> Rétablir</button></td>
+                  <td><button class="btn btn-sm" data-review-open title="Ouvrir la stat : son graphique, le motif et la note du rejet"><span class="icon">visibility</span> Voir</button> <button class="btn btn-sm" data-restore title="Elle repasse à relire"><span class="icon">undo</span> Rétablir</button></td>
                   <td class="num sep muted">—</td><td class="num">7,9 M</td>
                   <td class="num sep">1,60</td>
                   <td class="num">2,45<small class="muted">+53,1 %</small></td>
@@ -1984,7 +1984,7 @@
           row.hidden = toggle.getAttribute('aria-pressed') !== 'true';
           c.tag.innerHTML = dtTag + ' <span class="tag"' + (note ? ' title="Note : ' + note.replaceAll('"', '&quot;') + '"' : '') + '><span class="icon">radar</span>scanner · rejetée' + (why ? ' · ' + why : '') + '</span>';
           c.check.innerHTML = '';
-          c.action.innerHTML = '<button class="btn btn-sm" data-restore title="Elle repasse à relire"><span class="icon">undo</span> Rétablir</button>';
+          c.action.innerHTML = '<button class="btn btn-sm" data-review-open title="Ouvrir la stat : son graphique, le motif et la note du rejet"><span class="icon">visibility</span> Voir</button> <button class="btn btn-sm" data-restore title="Elle repasse à relire"><span class="icon">undo</span> Rétablir</button>';
         }
         function restore(row) {
           const c = cells(row);

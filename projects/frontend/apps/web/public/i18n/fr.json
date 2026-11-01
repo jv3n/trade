@@ -1101,6 +1101,8 @@
       "rejectHint": "Rejeter — elle sort de tout et ne reviendra pas au prochain scan",
       "restore": "Rétablir",
       "restoreHint": "Elle repasse à relire",
+      "view": "Voir",
+      "viewHint": "Ouvrir la stat : son graphique, le motif et la note du rejet",
       "unvalidate": "Repasser à relire",
       "unvalidateHint": "Annule la validation : elle repasse à relire, hors des chiffres",
       "untickFirst": "Complétée : décoche-la avant de la repasser à relire",

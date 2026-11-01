@@ -850,7 +850,7 @@ review is where the judgement happens.
 |-------|-------|----------------|---------|
 | **To review** | the row tinted indigo, a « scanner · à relire » indigo tag, the « À relire » tab with its count, the Today step 1 count | **No** — KPIs, medians, the footer row, the rule score all ignore it | Relire (opens its panel) · Valider · Rejeter ; its prices can be corrected as on any stat, without validating it |
 | **Validated** | a neutral « scanner » tag — the provenance, not a state | Yes, like any stat | the usual ones — edit, then « Marquer complétée » ; « Repasser à relire » |
-| **Rejected** | only under the « Rejetées » toggle, greyed, « scanner · rejetée · <reason> », its note on hover | No | Rétablir (back to review) |
+| **Rejected** | only under the « Rejetées » toggle, greyed, « scanner · rejetée · <reason> », its note on hover | No | Voir (opens its panel : chart, reason, note) · Rétablir (back to review) |
 
 **One mark for the scanner** : the **radar icon** with the word « scanner », in every state — the
 tag in the table, the panel's banner, the Today step 1 line — so a scanner stat is told from a typed

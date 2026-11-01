@@ -2726,6 +2726,19 @@ describe('StatsPage — the scanner stats to review (#764)', () => {
     expect(page.reviewTagHint(rejected)).toBe('stats.review.note');
   });
 
+  it('a rejected row opens its panel, the only place its note can be read without hovering', async () => {
+    const rejected = makeScanned({ review: 'REJECTED', rejectionNote: 'A real breakout' });
+    const { fixture } = await setup({ rows: [rejected] });
+    const view = Array.from<HTMLButtonElement>(
+      fixture.nativeElement.querySelectorAll('tr.rejected button'),
+    ).find((button) => button.textContent?.includes('stats.review.view'));
+
+    view?.click();
+    await settle(fixture);
+
+    expect(fixture.nativeElement.querySelector('.review-note')).not.toBeNull();
+  });
+
   it('a rejected stat opened by link shows the rejected ones, so its panel stays open', async () => {
     const rejected = makeScanned({ review: 'REJECTED' });
 
