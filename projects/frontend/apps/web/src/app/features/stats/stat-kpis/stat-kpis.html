@@ -1,0 +1,399 @@
+@if (view() === 'DT') {
+  <section class="stb-fade-in kpi-row kpi-row--five">
+    <div class="card kpi">
+      <div class="kpi__label">{{ 'stats.kpi.completedDt' | translate }}</div>
+      <div class="kpi__value">{{ kpi().completedDoubleTops }}</div>
+      <div class="kpi__sub">
+        @if (kpi().toComplete > 0) {
+          <span class="warn">{{
+            'stats.kpi.toComplete'
+              | translate: { count: kpi().toComplete, total: kpi().completed + kpi().toComplete }
+          }}</span>
+        } @else {
+          {{ 'stats.kpi.allDone' | translate: { total: kpi().completed } }}
+        }
+        <!-- Dropped by the scanner and not validated yet : counted apart, in no figure (#764). -->
+        @if (kpi().toReview > 0) {
+          ·
+          <span [matTooltip]="'stats.kpi.toReviewHint' | translate">{{
+            'stats.kpi.toReview' | translate: { count: kpi().toReview }
+          }}</span>
+        }
+      </div>
+    </div>
+    <div class="card kpi">
+      <div class="kpi__label">{{ 'stats.kpi.extension' | translate }}</div>
+      <div class="kpi__value">
+        {{
+          kpi().averageExtensionPercent !== null
+            ? (kpi().averageExtensionPercent | number: '1.1-1') + ' %'
+            : '—'
+        }}
+      </div>
+      <div class="kpi__sub">
+        {{ 'stats.kpi.extensionSub' | translate }}
+      </div>
+    </div>
+    <div class="card kpi">
+      <div class="kpi__label">{{ 'stats.kpi.rejection' | translate }}</div>
+      <div class="kpi__value">
+        {{
+          kpi().averageRejectionPercent !== null
+            ? (kpi().averageRejectionPercent | number: '1.1-1') + ' %'
+            : '—'
+        }}
+      </div>
+      <div class="kpi__sub">
+        {{
+          'stats.kpi.rejectionSub'
+            | translate
+              : {
+                  count: kpi().rejectionAtCriterionCount,
+                  total: kpi().completedDoubleTops,
+                  criterion: rejectionCriterion,
+                }
+        }}
+      </div>
+    </div>
+    <div class="card kpi">
+      <div class="kpi__label">{{ 'stats.kpi.retest' | translate }}</div>
+      <div class="kpi__value">
+        {{
+          kpi().averageRetestToTopPercent !== null
+            ? (kpi().averageRetestToTopPercent | number: '1.1-1') + ' %'
+            : '—'
+        }}
+      </div>
+      <div class="kpi__sub">
+        {{
+          'stats.kpi.retestSub'
+            | translate: { count: kpi().retestTookTopCount, total: kpi().completedDoubleTops }
+        }}
+      </div>
+    </div>
+    <div
+      class="card kpi"
+      data-testid="dt-median-duration"
+      [matTooltip]="'stats.kpi.durationHint' | translate"
+    >
+      <div class="kpi__label">{{ 'stats.kpi.duration' | translate }}</div>
+      <div class="kpi__value">
+        {{
+          kpi().medianDoubleTopMinutes !== null
+            ? ('stats.kpi.minutes'
+              | translate: { minutes: (kpi().medianDoubleTopMinutes | number: '1.0-0') })
+            : '—'
+        }}
+      </div>
+      <div class="kpi__sub">
+        {{
+          'stats.kpi.durationSub'
+            | translate
+              : {
+                  count: kpi().completedDoubleTops,
+                  rejection:
+                    kpi().medianRejectionMinutes !== null
+                      ? (kpi().medianRejectionMinutes | number: '1.0-0')
+                      : '—',
+                }
+        }}
+      </div>
+    </div>
+  </section>
+  <!-- What a double top pays (#706) : the drop after the retest, read as the short's gain. Its
+       own n — the drop is optional, and empty when the retest took the top. -->
+  <section
+    class="stb-fade-in kpi-row"
+    data-testid="dt-drop-kpis"
+    [matTooltip]="'stats.kpi.dropHint' | translate"
+  >
+    <div class="card kpi">
+      <div class="kpi__label">{{ 'stats.kpi.drop' | translate }}</div>
+      <div
+        class="kpi__value"
+        [class.gain]="(kpi().medianDropPercent ?? 0) < 0"
+        [class.loss]="(kpi().medianDropPercent ?? 0) > 0"
+      >
+        {{ kpi().medianDropPercent !== null ? (kpi().medianDropPercent | shortGain) + ' %' : '—' }}
+      </div>
+      <div class="kpi__sub">
+        {{ dropSubLabel(kpi(), 'DT') }}
+      </div>
+    </div>
+    <div class="card kpi">
+      <div class="kpi__label">{{ 'stats.kpi.dropFromEntry' | translate }}</div>
+      <div
+        class="kpi__value"
+        [class.gain]="(kpi().medianDropFromEntryPercent ?? 0) < 0"
+        [class.loss]="(kpi().medianDropFromEntryPercent ?? 0) > 0"
+      >
+        {{
+          kpi().medianDropFromEntryPercent !== null
+            ? (kpi().medianDropFromEntryPercent | shortGain) + ' %'
+            : '—'
+        }}
+      </div>
+      <div class="kpi__sub">{{ 'stats.kpi.dropFromEntrySub' | translate }}</div>
+    </div>
+    <div class="card kpi">
+      <div class="kpi__label">{{ 'stats.kpi.dropDuration' | translate }}</div>
+      <div class="kpi__value">
+        {{
+          kpi().medianDropMinutes !== null
+            ? ('stats.kpi.minutes'
+              | translate: { minutes: (kpi().medianDropMinutes | number: '1.0-0') })
+            : '—'
+        }}
+      </div>
+      <div class="kpi__sub">{{ 'stats.kpi.dropDurationSub' | translate }}</div>
+    </div>
+    <div class="card kpi">
+      <div class="kpi__label">
+        {{ 'stats.kpi.dropTarget' | translate: { target: dropTarget } }}
+      </div>
+      <div class="kpi__value">
+        {{
+          kpi().doubleTopsWithDrop > 0
+            ? kpi().dropReachedTargetCount + ' / ' + kpi().doubleTopsWithDrop
+            : '—'
+        }}
+      </div>
+      <div class="kpi__sub">
+        {{ 'stats.kpi.dropTargetSub' | translate: { target: dropTarget } }}
+      </div>
+    </div>
+  </section>
+} @else if (view() === 'ALL') {
+  <section class="stb-fade-in kpi-row">
+    <div class="card kpi">
+      <div class="kpi__label">{{ 'stats.kpi.completed' | translate }}</div>
+      <div class="kpi__value">{{ kpi().completed }}</div>
+      <div class="kpi__sub">
+        @if (kpi().toComplete > 0) {
+          <span class="warn">{{
+            'stats.kpi.toComplete'
+              | translate: { count: kpi().toComplete, total: kpi().completed + kpi().toComplete }
+          }}</span>
+        } @else {
+          {{ 'stats.kpi.allDone' | translate: { total: kpi().completed } }}
+        }
+        <!-- Dropped by the scanner and not validated yet : counted apart, in no figure (#764). -->
+        @if (kpi().toReview > 0) {
+          ·
+          <span [matTooltip]="'stats.kpi.toReviewHint' | translate">{{
+            'stats.kpi.toReview' | translate: { count: kpi().toReview }
+          }}</span>
+        }
+      </div>
+    </div>
+    <div class="card kpi">
+      <div class="kpi__label">{{ 'stats.kpi.traded' | translate }}</div>
+      <div class="kpi__value">{{ kpi().traded }} / {{ kpi().traded + kpi().untraded }}</div>
+      <div class="kpi__sub">{{ 'stats.kpi.tradedSub' | translate }}</div>
+    </div>
+    <div class="card kpi">
+      <div class="kpi__label">{{ 'stats.kpi.averages' | translate }}</div>
+      <div class="kpi__value kpi__value--text">{{ 'stats.kpi.byPattern' | translate }}</div>
+      <div class="kpi__sub">{{ 'stats.kpi.byPatternSub' | translate }}</div>
+    </div>
+  </section>
+} @else {
+  <section class="stb-fade-in kpi-row kpi-row--five">
+    <div class="card kpi">
+      <div class="kpi__label">
+        {{
+          'stats.kpi.completedOf' | translate: { pattern: 'patterns.short.' + view() | translate }
+        }}
+      </div>
+      <div class="kpi__value">{{ kpi().completed }}</div>
+      <div class="kpi__sub">
+        @if (kpi().toComplete > 0) {
+          <span class="warn">{{
+            'stats.kpi.toComplete'
+              | translate: { count: kpi().toComplete, total: kpi().completed + kpi().toComplete }
+          }}</span>
+        } @else {
+          {{ 'stats.kpi.allDone' | translate: { total: kpi().completed } }}
+        }
+        <!-- Dropped by the scanner and not validated yet : counted apart, in no figure (#764). -->
+        @if (kpi().toReview > 0) {
+          ·
+          <span [matTooltip]="'stats.kpi.toReviewHint' | translate">{{
+            'stats.kpi.toReview' | translate: { count: kpi().toReview }
+          }}</span>
+        }
+      </div>
+    </div>
+    @if (status() === 'NO_PUSH') {
+      <div class="card kpi">
+        <div class="kpi__label">{{ 'stats.kpi.noPushDays' | translate }}</div>
+        @let rate = noPushRate();
+        <!-- Blank, not « — », until the rate arrives : a dash would read as the answer (#334). -->
+        <div class="kpi__value" [attr.aria-busy]="rate === null || null">
+          @if (rate === null) {
+            &nbsp;
+          } @else if (rate.share === null) {
+            —
+          } @else {
+            {{ rate.count }} / {{ rate.total }}
+          }
+        </div>
+        <div class="kpi__sub">
+          @if (rate !== null && rate.share !== null) {
+            {{ 'stats.kpi.noPushShare' | translate: { share: (rate.share | number: '1.0-0') } }}
+          } @else {
+            &nbsp;
+          }
+        </div>
+      </div>
+    } @else {
+      <div class="card kpi">
+        <div class="kpi__label">{{ 'stats.kpi.medianPushOpen' | translate }}</div>
+        <div class="kpi__value">
+          {{
+            kpi().medianPushOpenPercent !== null
+              ? (kpi().medianPushOpenPercent | number: '1.1-1') + ' %'
+              : '—'
+          }}
+        </div>
+        <div class="kpi__sub">
+          @if (kpi().noPushCount > 0) {
+            @let pushed = kpi().completed - kpi().noPushCount;
+            {{
+              'stats.kpi.noPushSub'
+                | plural: pushed
+                | translate
+                  : {
+                      pushed,
+                      count: kpi().noPushCount,
+                      total: kpi().completed,
+                    }
+            }}
+          } @else {
+            {{ 'stats.kpi.vsOpen' | translate }}
+          }
+        </div>
+      </div>
+    }
+    <div class="card kpi">
+      <div class="kpi__label">{{ 'stats.kpi.medianLod' | translate }}</div>
+      <div class="kpi__value">
+        {{
+          kpi().medianLodPercent !== null ? (kpi().medianLodPercent | number: '1.1-1') + ' %' : '—'
+        }}
+      </div>
+      <div class="kpi__sub">{{ 'stats.kpi.vsOpen' | translate }}</div>
+    </div>
+    <div class="card kpi">
+      <div class="kpi__label">{{ 'stats.kpi.fade' | translate }}</div>
+      <div class="kpi__value">{{ kpi().fadeCount }} / {{ kpi().completed }}</div>
+      <div class="kpi__sub">
+        {{
+          'stats.kpi.fadeSub'
+            | plural: kpi().completed
+            | translate
+              : {
+                  total: kpi().completed,
+                  median:
+                    kpi().medianEodPercent !== null
+                      ? (kpi().medianEodPercent | number: '1.1-1') + ' %'
+                      : '—',
+                }
+        }}
+      </div>
+    </div>
+    <!-- No threshold yet (#499) : the median is what will tell where the line sits. -->
+    <div class="card kpi" [matTooltip]="'stats.kpi.holdHint' | translate">
+      <div class="kpi__label">{{ 'stats.kpi.medianHold' | translate }}</div>
+      <div class="kpi__value">
+        {{
+          kpi().medianHoldPercent !== null
+            ? (kpi().medianHoldPercent | number: '1.1-1') + ' %'
+            : '—'
+        }}
+      </div>
+      <div class="kpi__sub">
+        {{
+          'stats.kpi.holdSub'
+            | translate
+              : {
+                  open:
+                    kpi().medianCumulativeOpenPercent !== null
+                      ? (kpi().medianCumulativeOpenPercent | number: '1.1-1') + ' %'
+                      : '—',
+                  pmHigh:
+                    kpi().medianCumulativePmHighPercent !== null
+                      ? (kpi().medianCumulativePmHighPercent | number: '1.1-1') + ' %'
+                      : '—',
+                }
+        }}
+      </div>
+    </div>
+  </section>
+  <!-- What a GUS pays (#713) : the drop after the push, read as the short's gain, like the DT's
+       (#706). Its own n — the drop is optional, the history has none. -->
+  <section
+    class="stb-fade-in kpi-row"
+    data-testid="gus-drop-kpis"
+    [matTooltip]="'stats.kpi.dropHint' | translate"
+  >
+    <div class="card kpi">
+      <div class="kpi__label">{{ 'stats.kpi.gusDrop' | translate }}</div>
+      <div
+        class="kpi__value"
+        [class.gain]="(kpi().medianGusDropPercent ?? 0) < 0"
+        [class.loss]="(kpi().medianGusDropPercent ?? 0) > 0"
+      >
+        {{
+          kpi().medianGusDropPercent !== null
+            ? (kpi().medianGusDropPercent | shortGain) + ' %'
+            : '—'
+        }}
+      </div>
+      <div class="kpi__sub">
+        {{ dropSubLabel(kpi(), 'GUS') }}
+      </div>
+    </div>
+    <div class="card kpi">
+      <div class="kpi__label">
+        {{ 'stats.kpi.dropTarget' | translate: { target: gusDropTarget } }}
+      </div>
+      <div class="kpi__value">
+        {{
+          kpi().sessionsWithDrop > 0
+            ? kpi().gusDropReachedTargetCount + ' / ' + kpi().sessionsWithDrop
+            : '—'
+        }}
+      </div>
+      <div class="kpi__sub">
+        {{ 'stats.kpi.gusDropTargetSub' | translate: { target: gusDropTarget } }}
+      </div>
+    </div>
+    <div class="card kpi">
+      <div class="kpi__label">{{ 'stats.kpi.pushTime' | translate }}</div>
+      <div class="kpi__value">
+        {{
+          kpi().medianPushMinutes !== null
+            ? ('stats.kpi.minutes'
+              | translate: { minutes: (kpi().medianPushMinutes | number: '1.0-1') })
+            : '—'
+        }}
+      </div>
+      <div class="kpi__sub">
+        {{ 'stats.kpi.pushTimeSub' | translate: { count: kpi().sessionsWithPushTime } }}
+      </div>
+    </div>
+    <div class="card kpi">
+      <div class="kpi__label">{{ 'stats.kpi.gusDropDuration' | translate }}</div>
+      <div class="kpi__value">
+        {{
+          kpi().medianGusDropMinutes !== null
+            ? ('stats.kpi.minutes'
+              | translate: { minutes: (kpi().medianGusDropMinutes | number: '1.0-0') })
+            : '—'
+        }}
+      </div>
+      <div class="kpi__sub">{{ 'stats.kpi.gusDropDurationSub' | translate }}</div>
+    </div>
+  </section>
+}

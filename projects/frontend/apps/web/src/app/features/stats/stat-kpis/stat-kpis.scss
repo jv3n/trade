@@ -1,0 +1,21 @@
+@use 'sizes' as s;
+
+// « by pattern » — a word where the other cards hold a figure.
+.kpi__value--text {
+  font-size: s.$font-lg;
+}
+
+// Amber = warning (stats still to complete, a double top leg under its criterion), per the colour
+// rule.
+.warn {
+  color: var(--color-warning);
+}
+
+// Green / red = outcome : what a double top's drop paid the short (#706), never the price move.
+.gain {
+  color: var(--color-success);
+}
+
+.loss {
+  color: var(--color-danger);
+}

@@ -31,6 +31,7 @@ import {
 import { StatsRepository } from '../../core/api/stats/stats.repository';
 import { ConfirmService } from '../../core/app-state/confirm.service';
 import { StatChart } from './stat-chart/stat-chart';
+import { StatKpis } from './stat-kpis/stat-kpis';
 import { StatsPage } from './stats-page';
 
 /**
@@ -2492,10 +2493,11 @@ describe('StatsPage — Sink not read (#729)', () => {
   });
 
   it('splits the double tops without a Sink by reason, the terms adding up', async () => {
-    const { page } = await setup();
+    const { fixture } = await setup();
+    const kpis = fixture.debugElement.query(By.directive(StatKpis)).componentInstance as StatKpis;
     TestBed.inject(TranslateService).setTranslation('en', EN_SUB);
 
-    const label = page.dropSubLabel(
+    const label = kpis.dropSubLabel(
       makeSummary({
         completedDoubleTops: 4,
         doubleTopsWithDrop: 2,
@@ -2513,10 +2515,11 @@ describe('StatsPage — Sink not read (#729)', () => {
   // The old « n = 2 · Apex repris : 1 » read as two slices ; an Echo that took the Apex and fell
   // all the same is one of the Sinks.
   it('counts a Sink after a retest that took the top among the Sinks, not beside them', async () => {
-    const { page } = await setup();
+    const { fixture } = await setup();
+    const kpis = fixture.debugElement.query(By.directive(StatKpis)).componentInstance as StatKpis;
     TestBed.inject(TranslateService).setTranslation('en', EN_SUB);
 
-    const label = page.dropSubLabel(
+    const label = kpis.dropSubLabel(
       makeSummary({ completedDoubleTops: 3, doubleTopsWithDrop: 3, dropsAfterTookTop: 1 }),
       'DT',
     );
@@ -2527,10 +2530,11 @@ describe('StatsPage — Sink not read (#729)', () => {
   });
 
   it('tells the GUS still to fill from the ones not read', async () => {
-    const { page } = await setup();
+    const { fixture } = await setup();
+    const kpis = fixture.debugElement.query(By.directive(StatKpis)).componentInstance as StatKpis;
     TestBed.inject(TranslateService).setTranslation('en', EN_SUB);
 
-    const label = page.dropSubLabel(
+    const label = kpis.dropSubLabel(
       makeSummary({ completed: 12, sessionsWithDrop: 9, sessionsDropNotRead: 1 }),
       'GUS',
     );
