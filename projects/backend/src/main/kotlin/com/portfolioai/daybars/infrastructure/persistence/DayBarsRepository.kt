@@ -2,6 +2,7 @@ package com.portfolioai.daybars.infrastructure.persistence
 
 import com.portfolioai.daybars.application.dto.DayTicker
 import com.portfolioai.daybars.domain.DayBars
+import com.portfolioai.daybars.domain.DayBarsStatus
 import com.portfolioai.stats.domain.StatReview
 import java.time.LocalDate
 import java.util.UUID
@@ -12,6 +13,15 @@ import org.springframework.data.jpa.repository.Query
 interface DayBarsRepository : JpaRepository<DayBars, UUID> {
 
   fun findByTradingDateAndTicker(tradingDate: LocalDate, ticker: String): DayBars?
+
+  @Query(
+    """
+    select new com.portfolioai.daybars.application.dto.DayTicker(b.tradingDate, b.ticker)
+    from DayBars b
+    where b.status = :status and b.haltsRead = false
+    """
+  )
+  fun findHaltsUnread(status: DayBarsStatus): List<DayTicker>
 
   /**
    * The ticker-days of [userId]'s stats before [before] with no bars stored, found or not — newest

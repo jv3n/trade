@@ -7,7 +7,11 @@ import com.portfolioai.daybars.application.dto.toDto
 import com.portfolioai.daybars.domain.Bar
 import com.portfolioai.daybars.domain.DayBars
 import com.portfolioai.daybars.domain.DayBarsStatus
+import com.portfolioai.daybars.domain.DayHalt
+import com.portfolioai.daybars.domain.Halt
+import com.portfolioai.daybars.domain.HaltReader
 import com.portfolioai.daybars.infrastructure.persistence.DayBarsRepository
+import com.portfolioai.daybars.infrastructure.persistence.DayHaltRepository
 import com.portfolioai.shared.badRequest
 import com.portfolioai.stats.application.StatEntryService
 import com.portfolioai.stats.domain.StatReview
@@ -31,6 +35,7 @@ import org.springframework.web.server.ResponseStatusException
 @Service
 class DayBarsService(
   private val repo: DayBarsRepository,
+  private val halts: DayHaltRepository,
   private val stats: StatEntryService,
   private val clock: Clock,
 ) {
@@ -56,6 +61,7 @@ class DayBarsService(
           symbol,
           DayChartState.FOUND,
           BarsCodec.decode(checkNotNull(row.bars)).map { it.toDto() },
+          halts.findByTradingDateAndTickerOrderByHaltedAt(tradingDate, symbol).map { it.toDto() },
         )
     }
   }
@@ -63,19 +69,35 @@ class DayBarsService(
   /**
    * Keeps [bars] for the ticker-day, in time order, one per minute : of two readings of a minute,
    * the **last pushed** wins — a later one is a correction. None, a bar off the minute grid or of
-   * another New York day, or one whose low and high do not hold its open and close, is a 400.
+   * another New York day, or one whose low and high do not hold its open and close, is a 400. The
+   * day's halts are read off them, in place of any before.
    */
   @Transactional
   fun store(tradingDate: LocalDate, ticker: String, bars: List<Bar>) {
     check(tradingDate, ticker, bars)
     val ordered = bars.associateBy { it.time }.values.sortedBy { it.time }
     save(tradingDate, ticker, DayBarsStatus.FOUND, BarsCodec.encode(ordered), ordered.size)
+    replaceHalts(tradingDate, normalised(ticker), HaltReader.of(ordered))
   }
 
   /** The provider served nothing for the ticker-day : the chart says so, and nobody asks again. */
   @Transactional
   fun markNotFound(tradingDate: LocalDate, ticker: String) {
     save(tradingDate, ticker, DayBarsStatus.NOT_FOUND, null, 0)
+    replaceHalts(tradingDate, normalised(ticker), emptyList())
+  }
+
+  /** The found days whose halts were never read. */
+  @Transactional(readOnly = true)
+  fun daysWithHaltsUnread(): List<DayTicker> = repo.findHaltsUnread(DayBarsStatus.FOUND)
+
+  /** Reads the halts of a stored day off its bars. */
+  @Transactional
+  fun readHalts(tradingDate: LocalDate, ticker: String) {
+    val row = checkNotNull(repo.findByTradingDateAndTicker(tradingDate, ticker))
+    val bars = BarsCodec.decode(checkNotNull(row.bars))
+    replaceHalts(tradingDate, ticker, HaltReader.of(bars))
+    row.haltsRead = true
   }
 
   /**
@@ -125,8 +147,25 @@ class DayBarsService(
     row.bars = bars
     row.barCount = count
     row.fetchedAt = Instant.now(clock)
-    repo.save(row)
+    row.haltsRead = true
+    repo.saveAndFlush(row)
     log.info("Day bars of {} on {} stored, status={}, bars={}", symbol, tradingDate, status, count)
+  }
+
+  private fun replaceHalts(tradingDate: LocalDate, symbol: String, read: List<Halt>) {
+    halts.deleteDay(tradingDate, symbol)
+    halts.saveAll(
+      read.map {
+        DayHalt(
+          tradingDate = tradingDate,
+          ticker = symbol,
+          haltedAt = it.haltedAt,
+          reopenedAt = it.reopenedAt,
+          lastClose = it.lastClose,
+          reopenPrice = it.reopenPrice,
+        )
+      }
+    )
   }
 
   private fun normalised(ticker: String) = ticker.trim().uppercase()

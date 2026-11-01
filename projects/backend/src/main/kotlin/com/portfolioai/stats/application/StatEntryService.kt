@@ -12,6 +12,7 @@ import com.portfolioai.stats.application.dto.StatEntryRequest
 import com.portfolioai.stats.application.dto.StatSummaryDto
 import com.portfolioai.stats.application.dto.toDto
 import com.portfolioai.stats.domain.CandidatePremarket
+import com.portfolioai.stats.domain.DayHaltCounts
 import com.portfolioai.stats.domain.Premarket
 import com.portfolioai.stats.domain.StatEntry
 import com.portfolioai.stats.domain.StatEntryFilter
@@ -20,6 +21,7 @@ import com.portfolioai.stats.domain.StatRejectionReason
 import com.portfolioai.stats.domain.StatReview
 import com.portfolioai.stats.domain.StatSource
 import com.portfolioai.stats.domain.StatStatus
+import com.portfolioai.stats.domain.TickerDay
 import com.portfolioai.stats.infrastructure.persistence.StatEntryRepository
 import com.portfolioai.stats.infrastructure.persistence.StatEntrySpecifications
 import java.time.Instant
@@ -64,6 +66,7 @@ class StatEntryService(
   private val tradeEntryService: TradeEntryService,
   private val events: ApplicationEventPublisher,
   private val candidatePremarket: CandidatePremarket,
+  private val dayHaltCounts: DayHaltCounts,
 ) {
 
   // ---- Listing -------------------------------------------------------------------------------
@@ -85,8 +88,18 @@ class StatEntryService(
       if (filter.hasDerived) derivedPage(spec, effective, filter) else repo.findAll(spec, effective)
     // One query for the whole page rather than one per row — same shape as the candidates listing.
     val links = tradeEntryService.tradeLinksByStat(page.content.map { it.id })
-    return page.map { it.toDto(links[it.id].orEmpty()) }
+    val halts = dayHaltCounts.of(page.content.map { it.tickerDay })
+    return page.map { it.toDto(links[it.id].orEmpty(), halts[it.tickerDay] ?: 0) }
   }
+
+  private fun dtoOf(entry: StatEntry): StatEntryDto =
+    entry.toDto(
+      tradeEntryService.tradeLinksByStat(listOf(entry.id))[entry.id].orEmpty(),
+      dayHaltCounts.of(listOf(entry.tickerDay))[entry.tickerDay] ?: 0,
+    )
+
+  private val StatEntry.tickerDay
+    get() = TickerDay(tradeDate, ticker)
 
   /**
    * The derived toggles (#499) page in memory : their rules live on [StatEntry], and a copy in SQL
@@ -159,7 +172,7 @@ class StatEntryService(
   @Transactional(readOnly = true)
   fun findById(id: UUID): StatEntryDto {
     val entry = loadOwned(id)
-    return entry.toDto(tradeEntryService.tradeLinksByStat(listOf(entry.id))[entry.id].orEmpty())
+    return dtoOf(entry)
   }
 
   // ---- Promotion to the journal (#193) --------------------------------------------------------
@@ -259,7 +272,7 @@ class StatEntryService(
     // `GlobalExceptionHandler`, not as a failed commit.
     val saved = repo.saveAndFlush(entry)
     tradeEntryService.attachToStat(saved.id, user.id, saved.tradeDate, saved.ticker, saved.pattern)
-    return saved.toDto(tradeEntryService.tradeLinksByStat(listOf(saved.id))[saved.id].orEmpty())
+    return dtoOf(saved)
   }
 
   /**
@@ -292,7 +305,7 @@ class StatEntryService(
     val saved = repo.save(entry)
     // The completion panel replaces its row with this response — dropping the link would make the
     // « → Trade » button reappear on a stat that already has its trade.
-    return saved.toDto(tradeEntryService.tradeLinksByStat(listOf(saved.id))[saved.id].orEmpty())
+    return dtoOf(saved)
   }
 
   /**
@@ -350,7 +363,7 @@ class StatEntryService(
     entry.completedAt = if (completed) entry.completedAt ?: Instant.now() else null
     entry.updatedAt = Instant.now()
     val saved = repo.save(entry)
-    return saved.toDto(tradeEntryService.tradeLinksByStat(listOf(saved.id))[saved.id].orEmpty())
+    return dtoOf(saved)
   }
 
   // ---- Review of a scanner stat (#762) -------------------------------------------------------
@@ -416,7 +429,7 @@ class StatEntryService(
     change(entry)
     entry.updatedAt = Instant.now()
     val saved = repo.save(entry)
-    return saved.toDto(tradeEntryService.tradeLinksByStat(listOf(saved.id))[saved.id].orEmpty())
+    return dtoOf(saved)
   }
 
   /**

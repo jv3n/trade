@@ -79,11 +79,13 @@ data class StatEntryDto(
   val review: StatReview?,
   val rejectionReason: StatRejectionReason?,
   val rejectionNote: String?,
+  /** How many halts the ticker-day had (#829) ; the list comes with the chart. */
+  val haltCount: Int,
   val createdAt: Instant,
   val updatedAt: Instant,
 )
 
-fun StatEntry.toDto(trades: List<TradeLinkDto> = emptyList()) =
+fun StatEntry.toDto(trades: List<TradeLinkDto> = emptyList(), haltCount: Int = 0) =
   StatEntryDto(
     id = id,
     candidateId = candidateId,
@@ -126,6 +128,7 @@ fun StatEntry.toDto(trades: List<TradeLinkDto> = emptyList()) =
     review = review,
     rejectionReason = rejectionReason,
     rejectionNote = rejectionNote,
+    haltCount = haltCount,
     createdAt = createdAt,
     updatedAt = updatedAt,
   )

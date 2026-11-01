@@ -1,6 +1,7 @@
 package com.portfolioai.daybars.application.dto
 
 import com.portfolioai.daybars.domain.Bar
+import com.portfolioai.daybars.domain.DayHalt
 import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDate
@@ -19,6 +20,14 @@ data class DayChartDto(
   val ticker: String,
   val state: DayChartState,
   val bars: List<BarDto> = emptyList(),
+  val halts: List<HaltDto> = emptyList(),
+)
+
+data class HaltDto(
+  val haltedAt: Instant,
+  val reopenedAt: Instant,
+  val lastClose: BigDecimal,
+  val reopenPrice: BigDecimal,
 )
 
 data class BarDto(
@@ -29,6 +38,8 @@ data class BarDto(
   val close: BigDecimal,
   val volume: Long,
 )
+
+fun DayHalt.toDto() = HaltDto(haltedAt, reopenedAt, lastClose, reopenPrice)
 
 fun Bar.toDto() = BarDto(time, open, high, low, close, volume)
 

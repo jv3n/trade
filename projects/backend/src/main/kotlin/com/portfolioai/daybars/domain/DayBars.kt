@@ -31,4 +31,6 @@ class DayBars(
   @Column(name = "bars") var bars: ByteArray? = null,
   @Column(name = "bar_count", nullable = false) var barCount: Int = 0,
   @Column(name = "fetched_at", nullable = false) var fetchedAt: Instant = Instant.now(),
+  /** False on a day stored before the halts existed, until `DayHaltsBackfill` reads it. */
+  @Column(name = "halts_read", nullable = false) var haltsRead: Boolean = false,
 )
