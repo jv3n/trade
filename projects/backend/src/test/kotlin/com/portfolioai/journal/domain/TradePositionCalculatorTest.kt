@@ -81,6 +81,33 @@ class TradePositionCalculatorTest {
   }
 
   @Test
+  fun `the profit comes from the exact notionals, not from the rounded averages`() {
+    // The average entry is 1.234566… : rounded to 1.2346 first, this short would read −196.20.
+    val agg =
+      TradePositionCalculator.compute(
+        TradeDirection.SHORT,
+        listOf(entry(1_000, "1.2345"), entry(2_000, "1.2346"), exit(3_000, "1.30")),
+      )
+
+    assertEquals(BigDecimal("1.2346"), agg.avgEntry)
+    assertEquals(BigDecimal("-196.30"), agg.profitDollars)
+    assertEquals(BigDecimal("-5.3001"), agg.gainPercent)
+  }
+
+  @Test
+  fun `a partial close measures the exited shares against the exact average entry`() {
+    // 1 000 @1.10 + 2 000 @1.11 : 1.106666… ; rounded, 1 500 sold at 1.20 would read 139.95.
+    val agg =
+      TradePositionCalculator.compute(
+        TradeDirection.BUY,
+        listOf(entry(1_000, "1.10"), entry(2_000, "1.11"), exit(1_500, "1.20")),
+      )
+
+    assertEquals(BigDecimal("140.00"), agg.profitDollars)
+    assertEquals(PositionStatus.PARTIAL, agg.status)
+  }
+
+  @Test
   fun `partial close realizes P&L on the exited shares and stays PARTIAL`() {
     val agg =
       TradePositionCalculator.compute(TradeDirection.SHORT, listOf(entry(200, "5"), exit(100, "4")))
