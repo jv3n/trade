@@ -32,7 +32,6 @@ import {
   Observable,
   Subject,
   catchError,
-  concatMap,
   debounceTime,
   distinctUntilChanged,
   filter,
@@ -75,6 +74,7 @@ import {
 import { ShortGainPipe } from './short-gain.pipe';
 import { DEFAULT_CHART_SIZES, StatChart, StatChartPoint } from './stat-chart/stat-chart';
 import { StatKpis } from './stat-kpis/stat-kpis';
+import { StatSheetStore } from './stat-sheet.store';
 import {
   BLANK_PREMARKET,
   BLANK_SESSION,
@@ -273,13 +273,6 @@ export class StatsPage implements HasUnsavedChanges {
   readonly columns = computed(() => COLUMNS[this.view()]);
 
   // ---- Data, loaded from the signals above ----
-  /**
-   * Bumped by a write, and part of the resources' params : a new key supersedes a load in flight,
-   * where `reload()` is a no-op while one runs — its pre-write answer would win. A field saved on a
-   * ticked stat only moves the KPIs, hence their own counter.
-   */
-  private readonly listingWrites = signal(0);
-  private readonly kpiWrites = signal(0);
   private readonly criteria = computed<StatEntryFilter>(() => {
     const range = this.period();
     const tab = this.status();
@@ -298,30 +291,28 @@ export class StatsPage implements HasUnsavedChanges {
     };
   });
 
-  private readonly listing = rxResource({
-    params: () => {
-      const sort = this.sort();
-      const page: PageRequest = {
-        pageIndex: this.pageIndex(),
-        pageSize: this.pageSize(),
-        sortField: sort.columnName || undefined,
-        sortDirection: sort.columnName ? (sort.isAscending ? 'asc' : 'desc') : undefined,
-      };
-      return { filter: this.criteria(), page, writes: this.listingWrites() };
-    },
-    stream: ({ params }) =>
-      this.repo
-        .findAll(params.filter, params.page)
-        .pipe(tap(({ content }) => this.listed(content))),
+  private readonly pageRequest = computed<PageRequest>(() => {
+    const sort = this.sort();
+    return {
+      pageIndex: this.pageIndex(),
+      pageSize: this.pageSize(),
+      sortField: sort.columnName || undefined,
+      sortDirection: sort.columnName ? (sort.isAscending ? 'asc' : 'desc') : undefined,
+    };
   });
-  private readonly page = keptValue(this.listing);
-  readonly loading = this.listing.isLoading;
-  readonly error = computed(() => this.listing.status() === 'error');
-  readonly entries = computed<StatEntry[]>(() => this.page()?.content ?? []);
-  readonly totalElements = computed(() => this.page()?.totalElements ?? 0);
+
+  private readonly store = new StatSheetStore({
+    filter: this.criteria,
+    page: this.pageRequest,
+    listed: (rows, keepPanel) => this.listed(rows, keepPanel),
+  });
+  readonly loading = this.store.loading;
+  readonly error = this.store.error;
+  readonly entries = this.store.entries;
+  readonly totalElements = this.store.totalElements;
 
   private readonly summaryResource = rxResource({
-    params: () => ({ filter: this.criteria(), writes: this.kpiWrites() }),
+    params: () => ({ filter: this.criteria(), writes: this.store.kpiWrites() }),
     stream: ({ params }) => this.repo.summary(params.filter),
   });
   readonly summary = keptValue(this.summaryResource);
@@ -335,7 +326,7 @@ export class StatsPage implements HasUnsavedChanges {
     params: () => {
       const criteria = this.criteria();
       if (!criteria.noPush) return undefined;
-      return { filter: { ...criteria, noPush: null, query: null }, writes: this.kpiWrites() };
+      return { filter: { ...criteria, noPush: null, query: null }, writes: this.store.kpiWrites() };
     },
     stream: ({ params }) => this.repo.summary(params.filter),
   });
@@ -347,7 +338,7 @@ export class StatsPage implements HasUnsavedChanges {
   private readonly reviewCountResource = rxResource({
     params: () => {
       const { query, dateFrom, dateTo } = this.criteria();
-      return { filter: { query, dateFrom, dateTo }, writes: this.kpiWrites() };
+      return { filter: { query, dateFrom, dateTo }, writes: this.store.kpiWrites() };
     },
     stream: ({ params }) => this.repo.countToReview(params.filter),
   });
@@ -441,17 +432,6 @@ export class StatsPage implements HasUnsavedChanges {
   readonly maxDate = inject(MarketClock).today;
   /** Rows the user closed — they stop auto-opening the panel for this visit. */
   private readonly dismissed = signal<ReadonlySet<string>>(new Set());
-  /**
-   * Every write goes through this queue, one at a time : a field left right before a click on ✓
-   * must reach the server first, or the tick would be judged on the row without that price.
-   */
-  private readonly writes = new Subject<Observable<unknown>>();
-  /**
-   * Whether the next listing keeps the panel wherever its stat went : a reload a write asked for
-   * (tick, create, delete), and the first one, which a `?stat=` link may have opened off the page.
-   */
-  private keepPanelOnNextLoad = true;
-
   /** Live gap, premarket push and cumulative at the PM high under their fields, as the user types. */
   readonly premarketPercents = computed(() => {
     const m = this.premarket();
@@ -630,8 +610,6 @@ export class StatsPage implements HasUnsavedChanges {
   private typedPush = NO_TYPED_PUSH;
 
   constructor() {
-    this.writes.pipe(concatMap((write) => write)).subscribe();
-
     // « In stats » on a candidate lands here with `?stat=` (#383) : that stat, its panel open, even
     // when it is not on the first page.
     this.route.queryParamMap
@@ -716,7 +694,7 @@ export class StatsPage implements HasUnsavedChanges {
   // ---- Session panel ----
 
   open(entry: StatEntry): void {
-    this.leavePanel(() => this.show(entry));
+    this.store.leavePanel(this.hasPendingEdits(), () => this.show(entry));
   }
 
   private show(entry: StatEntry): void {
@@ -765,7 +743,7 @@ export class StatsPage implements HasUnsavedChanges {
           this.toasts.success(this.createdMessage(saved, 'sibling', params));
           this.followView(saved);
           this.open(saved);
-          this.refetch();
+          this.store.refetch();
         }),
         catchError((err: unknown) => {
           const key =
@@ -867,7 +845,7 @@ export class StatsPage implements HasUnsavedChanges {
     const input = this.toInput(entry, premarket, session);
     this.patchRow({ ...entry, ...input }, false);
     this.setSaveState(card, { status: 'saving', at: null, reason: null });
-    this.enqueue(
+    this.store.enqueue(
       this.repo.update(entry.id, input).pipe(
         tap((saved) => {
           this.patchRow(saved);
@@ -877,7 +855,7 @@ export class StatsPage implements HasUnsavedChanges {
           // this one has just gone out with it (#348). Its own problems, if any, are left alone.
           this.releaseHeldCard(card === 'premarket' ? 'session' : 'premarket', at);
           // The KPIs only count ticked stats : editing one of them moves them.
-          if (saved.completed) this.refreshSummary();
+          if (saved.completed) this.store.refreshSummary();
         }),
         catchError(() => {
           this.patchRow(entry, false);
@@ -928,7 +906,7 @@ export class StatsPage implements HasUnsavedChanges {
 
   /** « New stat » — the two cards empty, today's date and the default pattern pre-filled. */
   startNew(): void {
-    this.leavePanel(() => this.showNew());
+    this.store.leavePanel(this.hasPendingEdits(), () => this.showNew());
   }
 
   private showNew(): void {
@@ -986,7 +964,7 @@ export class StatsPage implements HasUnsavedChanges {
           this.toasts.success(this.createdMessage(saved, 'create', { ticker }));
           this.followView(saved);
           this.open(saved);
-          this.refetch();
+          this.store.refetch();
         }),
         catchError((err: unknown) => {
           const key =
@@ -1012,25 +990,10 @@ export class StatsPage implements HasUnsavedChanges {
     if (!current) return;
     const premarketEdited = !samePremarket(this.premarket(), premarketOf(current));
     this.saveSession(premarketEdited ? 'premarket' : 'session');
-    this.leavePanel(() => {
+    this.store.leavePanel(this.hasPendingEdits(), () => {
       this.dismissed.update((set) => new Set(set).add(current.id));
       this.completing.set(null);
     });
-  }
-
-  /**
-   * Runs [leave] — straight away, or after « Leave without saving? » when the panel holds edits a
-   * validation kept from saving. Leaving drops them : the row still holds the last saved values.
-   */
-  private leavePanel(leave: () => void): void {
-    if (!this.hasPendingEdits()) {
-      leave();
-      return;
-    }
-    this.confirm
-      .ask('stats.confirmLeave', { variant: 'danger' })
-      .pipe(filter(Boolean))
-      .subscribe(() => leave());
   }
 
   /**
@@ -1043,11 +1006,11 @@ export class StatsPage implements HasUnsavedChanges {
     const completed = !entry.completed;
     if (completed && !countsInFigures(entry)) return;
     if (completed && missingPrices(entry, entry.pattern, entry.tradeDate).length > 0) return;
-    this.enqueue(
+    this.store.enqueue(
       this.repo.setCompleted(entry.id, completed).pipe(
         tap((saved) => {
           this.patchRow(saved);
-          this.refetch();
+          this.store.refetch();
         }),
         catchError(() => {
           this.toasts.error(
@@ -1137,7 +1100,7 @@ export class StatsPage implements HasUnsavedChanges {
           if (this.completing()?.id === entry.id) this.completing.set(null);
           // Even when the page steps back : only the listing is keyed on it, and the KPIs counted
           // the deleted stat too.
-          this.refetch();
+          this.store.refetch();
           // Deleting the last row of a non-zero page would strand the user on an empty page.
           if (this.entries().length === 1 && this.pageIndex() > 0) {
             this.pageIndex.update((n) => n - 1);
@@ -1230,12 +1193,12 @@ export class StatsPage implements HasUnsavedChanges {
     action: 'validate' | 'reject' | 'restore',
   ): void {
     const params = { ticker: entry.ticker };
-    this.enqueue(
+    this.store.enqueue(
       write.pipe(
         tap((saved) => {
           this.patchRow(saved);
           this.toasts.success(this.translate.instant(`stats.snackbar.${action}Success`, params));
-          this.refetch();
+          this.store.refetch();
         }),
         catchError(() => {
           this.toasts.error(this.translate.instant(`stats.snackbar.${action}Error`, params));
@@ -1255,14 +1218,12 @@ export class StatsPage implements HasUnsavedChanges {
   private followView(entry: StatEntry): void {
     const view = viewOf(entry.pattern);
     if (this.view() === 'ALL' || this.view() === view) return;
-    this.keepPanelOnNextLoad = true;
+    this.store.keepPanelOnNextLoad();
     this.setView(view);
   }
 
   /** A page just landed : the panel follows it — closed if its stat left, opened on a pending one. */
-  private listed(rows: StatEntry[]): void {
-    const keepPanel = this.keepPanelOnNextLoad;
-    this.keepPanelOnNextLoad = false;
+  private listed(rows: StatEntry[], keepPanel: boolean): void {
     if (!keepPanel) this.closeOffScreen(rows);
     this.autoOpenPending(rows);
   }
@@ -1296,43 +1257,10 @@ export class StatsPage implements HasUnsavedChanges {
     if (pending) this.open(pending);
   }
 
-  private enqueue(write: Observable<unknown>): void {
-    this.writes.next(write);
-  }
-
-  /**
-   * Replaces a row of the page — and the panel's stat when it is that one — with [entry]. While a
-   * page loads, writing the resource would cancel that load, and its GET may predate the save :
-   * the page is asked again instead, so the row and the panel end up agreeing — once the server
-   * has [answered] only. Before the save goes out, or put back after it failed, a reload would
-   * read nothing newer than the load already running.
-   */
+  /** Replaces a row of the page, and the panel's stat when it is that one. */
   private patchRow(entry: StatEntry, answered = true): void {
-    if (this.listing.isLoading()) {
-      if (answered) {
-        this.keepPanelOnNextLoad = true;
-        this.listingWrites.update((n) => n + 1);
-      }
-    } else {
-      this.listing.value.update(
-        (page) =>
-          page && {
-            ...page,
-            content: page.content.map((s) => (s.id === entry.id ? entry : s)),
-          },
-      );
-    }
+    this.store.patchRow(entry, answered);
     if (this.completing()?.id === entry.id) this.completing.set(entry);
-  }
-
-  private refreshSummary(): void {
-    this.kpiWrites.update((n) => n + 1);
-  }
-
-  private refetch(): void {
-    this.keepPanelOnNextLoad = true;
-    this.listingWrites.update((n) => n + 1);
-    this.refreshSummary();
   }
 
   /**
