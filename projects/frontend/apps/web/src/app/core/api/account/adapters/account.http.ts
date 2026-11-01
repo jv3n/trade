@@ -215,6 +215,7 @@ export class HttpAccountRepository extends AccountRepository {
       .post<ReconciliationWireDto>(`${this.base}/reconciliations`, {
         brokerBalance: input.brokerBalance,
         valueDate: format(input.valueDate, 'yyyy-MM-dd'),
+        expectedBalance: input.expectedBalance,
       })
       .pipe(map(reconciliationFromWire));
   }

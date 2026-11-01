@@ -233,8 +233,13 @@ describe('HttpAccountRepository', () => {
     req.flush(movementWire());
   });
 
-  it('reconcile posts the broker balance for that morning (#198)', () => {
-    repo.reconcile({ brokerBalance: 4850, valueDate: new Date(2026, 5, 15) }).subscribe((r) => {
+  it('reconcile posts the broker balance for that morning, and the one on screen (#198, #839)', () => {
+    const input = {
+      brokerBalance: 4850,
+      valueDate: new Date(2026, 5, 15),
+      expectedBalance: 5000,
+    };
+    repo.reconcile(input).subscribe((r) => {
       expect(r.gap).toBe(-150);
       expect(r.valueDate.getDate()).toBe(15);
       expect(r.reconciledAt).toBeInstanceOf(Date);
@@ -242,7 +247,11 @@ describe('HttpAccountRepository', () => {
 
     const req = httpMock.expectOne('/api/account/reconciliations');
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({ brokerBalance: 4850, valueDate: '2026-06-15' });
+    expect(req.request.body).toEqual({
+      brokerBalance: 4850,
+      valueDate: '2026-06-15',
+      expectedBalance: 5000,
+    });
     req.flush({
       id: 'reco-1',
       valueDate: '2026-06-15',

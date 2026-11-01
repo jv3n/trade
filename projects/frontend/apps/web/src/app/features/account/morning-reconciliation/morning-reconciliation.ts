@@ -1,4 +1,5 @@
 import { DatePipe, DecimalPipe, formatNumber } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
   LOCALE_ID,
@@ -25,6 +26,8 @@ import { Reconciliation } from '../../../core/api/account/account.model';
 import { AccountRepository } from '../../../core/api/account/account.repository';
 import { ConfirmService } from '../../../core/app-state/confirm.service';
 import { NumberMaskDirective } from '../../../shared/number-mask/number-mask.directive';
+
+const HTTP_CONFLICT = 409;
 
 /** Past this share of the computed balance, a gap is flagged as unusual before it is written. */
 const UNUSUAL_GAP_RATIO = 0.2;
@@ -73,6 +76,8 @@ export class MorningReconciliation {
    * attribute so the host writes `compact`, not `[compact]="true"`.
    */
   readonly compact = input(false, { transform: booleanAttribute });
+  /** The backend refused the morning : the balance on screen is stale, the host reloads it. */
+  readonly balanceMoved = output<void>();
 
   /** Fired once the morning is settled — the host refetches what the correction may have moved. */
   readonly settled = output<Reconciliation>();
@@ -181,7 +186,8 @@ export class MorningReconciliation {
     // No app balance = no gap to show, so a submit here would slip past the confirmation below and
     // let the backend write whatever its own balance implies. The window is the host's summary
     // still loading — seconds on a cold start (#307).
-    if (broker === null || this.appBalance() === null) return;
+    const expected = this.appBalance();
+    if (broker === null || expected === null) return;
     if (this.submitting() || this.negativeBalance()) return;
     const gap = this.gap();
 
@@ -207,25 +213,36 @@ export class MorningReconciliation {
         filter(Boolean),
         tap(() => this.submitting.set(true)),
         switchMap(() =>
-          this.repo.reconcile({ brokerBalance: broker, valueDate: new Date() }).pipe(
-            tap((reconciliation) => {
-              this.toasts.success(
-                this.translate.instant(
-                  reconciliation.correctionId
-                    ? 'account.snackbar.correctSuccess'
-                    : 'account.snackbar.reconcileSuccess',
-                ),
-              );
-              this.brokerBalance.set(null);
-              this.loadHistory();
-              this.settled.emit(reconciliation);
-            }),
-            catchError(() => {
-              this.toasts.error(this.translate.instant('account.snackbar.reconcileError'));
-              return EMPTY;
-            }),
-            finalize(() => this.submitting.set(false)),
-          ),
+          this.repo
+            .reconcile({ brokerBalance: broker, valueDate: new Date(), expectedBalance: expected })
+            .pipe(
+              tap((reconciliation) => {
+                this.toasts.success(
+                  this.translate.instant(
+                    reconciliation.correctionId
+                      ? 'account.snackbar.correctSuccess'
+                      : 'account.snackbar.reconcileSuccess',
+                  ),
+                );
+                this.brokerBalance.set(null);
+                this.loadHistory();
+                this.settled.emit(reconciliation);
+              }),
+              catchError((error: unknown) => {
+                const stale = error instanceof HttpErrorResponse && error.status === HTTP_CONFLICT;
+                this.toasts.error(
+                  this.translate.instant(
+                    stale ? 'account.snackbar.reconcileStale' : 'account.snackbar.reconcileError',
+                  ),
+                );
+                if (stale) {
+                  this.brokerBalance.set(null);
+                  this.balanceMoved.emit();
+                }
+                return EMPTY;
+              }),
+              finalize(() => this.submitting.set(false)),
+            ),
         ),
       )
       .subscribe();

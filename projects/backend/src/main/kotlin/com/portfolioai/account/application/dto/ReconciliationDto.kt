@@ -39,6 +39,11 @@ fun AccountReconciliation.toDto() =
 /**
  * Body for `POST /api/account/reconciliations` — the balance TradeZero displays this morning, and
  * the day it belongs to. The service works out the gap itself : letting the client send it would
- * make the stored history depend on the client's own arithmetic.
+ * make the stored history depend on the client's own arithmetic. [expectedBalance] is the balance
+ * the page showed : it only guards against settling a morning on a figure that has since moved.
  */
-data class ReconciliationRequest(val brokerBalance: BigDecimal, val valueDate: LocalDate)
+data class ReconciliationRequest(
+  val brokerBalance: BigDecimal,
+  val valueDate: LocalDate,
+  val expectedBalance: BigDecimal? = null,
+)

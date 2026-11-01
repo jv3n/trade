@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.http.HttpStatus
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.web.server.ResponseStatusException
 
@@ -76,6 +77,39 @@ class MorningReconciliationIntegrationTest {
     assertNull(settled.correctionId, "nothing to correct")
     assertNotNull(settled.reconciledAt, "the morning is timestamped all the same")
     assertEquals(1, movements.findByUserId(testUser.id).size, "only the deposit — no plug")
+  }
+
+  @Test
+  fun `a stale page cannot book a correction undoing what moved the balance`() {
+    accountService.addMovement(deposit("1000.00"))
+    accountService.addMovement(deposit("250.00"))
+
+    val refused =
+      assertThrows(ResponseStatusException::class.java) {
+        service.reconcile(
+          ReconciliationRequest(
+            BigDecimal("1000.00"),
+            MONDAY,
+            expectedBalance = BigDecimal("1000.00"),
+          )
+        )
+      }
+
+    assertEquals(HttpStatus.CONFLICT, refused.statusCode)
+    assertEquals(2, movements.findByUserId(testUser.id).size, "no correction was written")
+    assertNull(repo.findByUserIdAndValueDate(testUser.id, MONDAY), "the morning is not settled")
+  }
+
+  @Test
+  fun `the balance the page showed settles the morning, whatever its scale`() {
+    accountService.addMovement(deposit("1000.00"))
+
+    val settled =
+      service.reconcile(
+        ReconciliationRequest(BigDecimal("1000.00"), MONDAY, expectedBalance = BigDecimal("1000"))
+      )
+
+    assertNull(settled.correctionId)
   }
 
   // Typed on staging (#307) : -999999999 would have written a billion-dollar correction line.

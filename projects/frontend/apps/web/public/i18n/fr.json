@@ -417,6 +417,7 @@
       "correctSuccess": "Balance corrigée.",
       "reconcileSuccess": "Matin rapproché.",
       "reconcileError": "Impossible de rapprocher ce matin. Réessaie.",
+      "reconcileStale": "Le solde a bougé depuis le chargement de la page : rien n'a été enregistré. Vérifie le nouveau montant.",
       "cancelReconciliationSuccess": "Rapprochement annulé.",
       "cancelReconciliationError": "Impossible d'annuler le rapprochement."
     },
