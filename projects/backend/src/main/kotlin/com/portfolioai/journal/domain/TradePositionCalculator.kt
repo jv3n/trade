@@ -19,7 +19,9 @@ import java.time.LocalTime
  *
  * Encoded as `sign × (avgExit − avgEntry) × exitedShares` with `sign = +1` for BUY, `−1` for SHORT.
  *
- * **Scales** mirror the `trade_entry` columns : average prices `4`, profit `2`, gain% `4`.
+ * **Scales** mirror the `trade_entry` columns : average prices `4`, profit `2`, gain% `4`. Each is
+ * rounded at the very end, from exact notionals : a P&L worked out from the rounded averages drifts
+ * by up to $0.0001 a share, and lands in the account as a false gap (#841).
  *
  * Throws [IllegalArgumentException] (→ HTTP 400 via `GlobalExceptionHandler`) on an inconsistent
  * set of executions (exit without entry, more shares exited than entered, missing direction).
@@ -101,25 +103,31 @@ object TradePositionCalculator {
       )
     }
 
-    val avgExit = weightedAverage(exits)
     val sign = if (direction == TradeDirection.BUY) BigDecimal.ONE else BigDecimal.ONE.negate()
-    val exitSharesBd = exitShares.toBigDecimal()
+    val entryNotional = notional(entries)
+    val exitedShares = exitShares.toBigDecimal()
+    // The profit over `entryShares` : a fraction, so that nothing is rounded before the last step.
+    val gainTimesEntryShares =
+      sign.multiply(
+        notional(exits)
+          .multiply(entryShares.toBigDecimal())
+          .subtract(entryNotional.multiply(exitedShares))
+      )
     val profit =
-      sign
-        .multiply(avgExit.subtract(avgEntry))
-        .multiply(exitSharesBd)
-        .setScale(PROFIT_SCALE, RoundingMode.HALF_UP)
-    val costBasis = avgEntry.multiply(exitSharesBd)
+      gainTimesEntryShares.divide(
+        entryShares.toBigDecimal(),
+        PROFIT_SCALE,
+        RoundingMode.HALF_UP,
+      )
     val gainPercent =
-      profit
-        .divide(costBasis, GAIN_SCALE + 4, RoundingMode.HALF_UP)
+      gainTimesEntryShares
         .multiply(HUNDRED)
-        .setScale(GAIN_SCALE, RoundingMode.HALF_UP)
+        .divide(entryNotional.multiply(exitedShares), GAIN_SCALE, RoundingMode.HALF_UP)
 
     return Aggregates(
       size = size,
       avgEntry = avgEntry,
-      avgExit = avgExit,
+      avgExit = weightedAverage(exits),
       profitDollars = profit,
       gainPercent = gainPercent,
       status = if (exitShares == entryShares) PositionStatus.CLOSED else PositionStatus.PARTIAL,
@@ -158,10 +166,10 @@ object TradePositionCalculator {
   /**
    * Σ(shares × price) / Σ(shares), rounded to the price scale. Caller guarantees a non-empty list.
    */
-  private fun weightedAverage(legs: List<Leg>): BigDecimal {
-    val totalShares = legs.sumOf { it.shares }.toBigDecimal()
-    val notional =
-      legs.fold(BigDecimal.ZERO) { acc, l -> acc.add(l.price.multiply(l.shares.toBigDecimal())) }
-    return notional.divide(totalShares, PRICE_SCALE, RoundingMode.HALF_UP)
-  }
+  private fun weightedAverage(legs: List<Leg>): BigDecimal =
+    notional(legs)
+      .divide(legs.sumOf { it.shares }.toBigDecimal(), PRICE_SCALE, RoundingMode.HALF_UP)
+
+  private fun notional(legs: List<Leg>): BigDecimal =
+    legs.fold(BigDecimal.ZERO) { acc, l -> acc.add(l.price.multiply(l.shares.toBigDecimal())) }
 }

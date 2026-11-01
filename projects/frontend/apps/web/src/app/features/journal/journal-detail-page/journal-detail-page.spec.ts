@@ -575,6 +575,50 @@ describe('JournalDetailPage', () => {
     expect(fixture.componentInstance.lateEntry()).toBe('11:00');
   });
 
+  // The duration runs from the first entry to the last exit, as the backend's (#841).
+  describe('duration', () => {
+    async function pageWith(
+      executions: { kind: 'ENTRY' | 'EXIT'; executedAt: string }[],
+    ): Promise<JournalDetailPage> {
+      const fills = executions.map((e, seq) => ({ ...e, seq, shares: 100, price: 4 }));
+      findById = vi.fn(() => of(makeTrade({ executions: fills })));
+      const fixture = setup();
+      await settle(fixture);
+      return fixture.componentInstance;
+    }
+
+    it('stops at the last exit when shares are added back after it, its range too', async () => {
+      const page = await pageWith([
+        { kind: 'ENTRY', executedAt: '09:41' },
+        { kind: 'EXIT', executedAt: '10:00' },
+        { kind: 'ENTRY', executedAt: '10:30' },
+      ]);
+
+      expect(page.duration()).toEqual({ hours: 0, minutes: 19 });
+      expect(page.timeRange()).toEqual({ first: '09:41', last: '10:00' });
+    });
+
+    it('has none on two timed entries and no exit', async () => {
+      const page = await pageWith([
+        { kind: 'ENTRY', executedAt: '09:41' },
+        { kind: 'ENTRY', executedAt: '09:52' },
+      ]);
+
+      expect(page.duration()).toBeNull();
+      expect(page.timeRange()).toBeNull();
+    });
+
+    it('has none on exits typed before the entries, rather than a negative one', async () => {
+      const page = await pageWith([
+        { kind: 'EXIT', executedAt: '09:41' },
+        { kind: 'ENTRY', executedAt: '10:00' },
+      ]);
+
+      expect(page.duration()).toBeNull();
+      expect(page.timeRange()).toBeNull();
+    });
+  });
+
   // Hit twice in the pilot test : leaving the page dropped the post-mortem without a word (#303).
   it('reports unsaved changes to the leave guard, and asks the browser on tab close', async () => {
     findById = vi.fn(() => of(closedTrade()));

@@ -179,17 +179,29 @@ function objectUrlOf(blob$: Observable<Blob>): Observable<string> {
   });
 }
 
-/** Minutes between the first and the last timed fill — null as soon as one end has no time. */
-function spanMinutes(executions: ExecRow[]): number | null {
-  const minutes = executions
+function fillTimes(executions: ExecRow[], kind: ExecRow['kind']): string[] {
+  return executions
+    .filter((e) => e.kind === kind)
     .map((e) => e.executedAt)
     .filter((t): t is string => !!t)
-    .map((t) => {
-      const [h, m] = t.split(':');
-      return Number(h) * 60 + Number(m);
-    });
-  if (minutes.length < 2) return null;
-  return Math.max(...minutes) - Math.min(...minutes);
+    .sort();
+}
+
+function toMinutes(time: string): number {
+  const [h, m] = time.split(':');
+  return Number(h) * 60 + Number(m);
+}
+
+/**
+ * First entry to last exit, as the backend's `duration` : null as soon as one end has no time, or
+ * when the fills are out of order.
+ */
+function fillSpan(executions: ExecRow[]): { first: string; last: string; minutes: number } | null {
+  const first = fillTimes(executions, 'ENTRY')[0];
+  const last = fillTimes(executions, 'EXIT').at(-1);
+  if (!first || !last) return null;
+  const minutes = toMinutes(last) - toMinutes(first);
+  return minutes >= 0 ? { first, last, minutes } : null;
 }
 
 /**
@@ -381,19 +393,18 @@ export class JournalDetailPage implements HasUnsavedChanges {
     };
   });
 
+  private readonly fillSpan = computed(() => fillSpan(this.draft()?.executions ?? []));
+
   /** Trade duration, split for the « 3 h 34 » label — null while a fill has no time. */
   readonly duration = computed(() => {
-    const minutes = spanMinutes(this.draft()?.executions ?? []);
-    return minutes === null ? null : { hours: Math.floor(minutes / 60), minutes: minutes % 60 };
+    const span = this.fillSpan();
+    return span && { hours: Math.floor(span.minutes / 60), minutes: span.minutes % 60 };
   });
 
-  /** First and last timed fill — the sub-line under the duration KPI. */
+  /** The two ends of the duration — the sub-line under its KPI. */
   readonly timeRange = computed(() => {
-    const times = (this.draft()?.executions ?? [])
-      .map((e) => e.executedAt)
-      .filter((t): t is string => !!t)
-      .sort();
-    return times.length === 0 ? null : { first: times[0], last: times[times.length - 1] };
+    const span = this.fillSpan();
+    return span && { first: span.first, last: span.last };
   });
 
   /** The first timed entry fill when it is at 11:00 or later (#647) — fill times are New York time. */

@@ -61,6 +61,17 @@ describe('computePositionAggregates', () => {
     expect(agg.status).toBe('CLOSED');
   });
 
+  it('agrees with the backend on a P&L its rounded averages would miss (#841)', () => {
+    const position = computePositionAggregates('SHORT', [
+      entry(1000, 1.2345),
+      entry(2000, 1.2346),
+      exit(3000, 1.3),
+    ]);
+
+    expect(position.profitDollars).toBeCloseTo(-196.3, 6);
+    expect(position.gainPercent).toBeCloseTo(-5.3001, 3);
+  });
+
   it('marks a partially-closed position PARTIAL with realized P&L on the exited shares', () => {
     const agg = computePositionAggregates('SHORT', [entry(200, 5), exit(100, 4)]);
     expect(agg.size).toBe(200);

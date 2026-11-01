@@ -6,9 +6,10 @@ import { PositionStatus, TradeDirection, TradeExecutionInput } from './trade-ent
  * detail page. The backend stays the source of truth (it recomputes on persist) ; this is purely
  * for instant UX feedback before the round-trip.
  *
- * Number-based (the backend uses `BigDecimal`), so values may differ by a sub-cent rounding — fine
- * for a preview. Lenient by design : an inconsistent set (exit without entry, more exited than
- * entered, missing direction) yields `valid: false` rather than throwing, so the form can flag it.
+ * Both compute from exact notionals (#841) and round only at the end ; here in floats, so a value
+ * may differ below the displayed precision. Lenient by design : an inconsistent set (exit without
+ * entry, more exited than entered, missing direction) yields `valid: false` rather than throwing,
+ * so the form can flag it.
  *
  * Sign convention matches the backend : profit = sign × (avgExit − avgEntry) × exitedShares, with
  * sign = +1 for BUY, −1 for SHORT (sold high, covered low → gain).
