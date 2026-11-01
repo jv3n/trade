@@ -116,5 +116,5 @@ docs/pso/
 # Tilt
 .tilt.env
 
-# CRAP report snapshot
-tooling/crap/last.json
+# CRAP report output
+tooling/crap/report/

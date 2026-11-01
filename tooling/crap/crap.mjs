@@ -1,8 +1,9 @@
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { TARGET, compare, coverageNeeded, quickWins, refactorFirst, scored } from './core.mjs';
+import { renderHtml } from './html.mjs';
 import { kotlinEntries } from './kotlin.mjs';
 import { typescriptEntries } from './typescript.mjs';
 
@@ -10,7 +11,10 @@ const here = dirname(fileURLToPath(import.meta.url));
 const repo = join(here, '../..');
 const frontend = join(repo, 'projects/frontend');
 const backend = join(repo, 'projects/backend');
-const snapshotPath = join(here, 'last.json');
+const reportDir = join(here, 'report');
+const snapshotPath = join(reportDir, 'data.json');
+const markdown = [];
+const out = (line = '') => markdown.push(line);
 
 const { values: args } = parseArgs({
   options: {
@@ -27,15 +31,15 @@ const where = (row) => `\`${row.file.replace(/^projects\//, '')}:${row.line}\``;
 
 function table(rows, columns) {
   const header = Object.keys(columns);
-  console.log(`| ${header.join(' | ')} |\n|${header.map(() => ' --- |').join('')}`);
-  for (const row of rows) console.log(`| ${Object.values(columns).map((cell) => cell(row)).join(' | ')} |`);
-  console.log();
+  out(`| ${header.join(' | ')} |\n|${header.map(() => ' --- |').join('')}`);
+  for (const row of rows) out(`| ${Object.values(columns).map((cell) => cell(row)).join(' | ')} |`);
+  out();
 }
 
 function summary(rows, title) {
   const count = (band) => rows.filter((row) => row.band === band).length;
   const bands = ['critical', 'high', 'moderate', 'low', 'unknown'];
-  console.log(`**${title}** : ${rows.length} functions — ${bands.map((b) => `${count(b)} ${b}`).join(', ')}`);
+  out(`**${title}** : ${rows.length} functions — ${bands.map((b) => `${count(b)} ${b}`).join(', ')}`);
 }
 
 const rows = [];
@@ -54,15 +58,13 @@ if (rows.length === 0) process.exit(1);
 const all = scored(rows);
 const known = all.filter((row) => row.crap !== null);
 
-console.log('# CRAP report\n');
+out('# CRAP report\n');
 summary(all.filter((row) => row.language === 'ts'), 'TypeScript');
 summary(all.filter((row) => row.language === 'kt'), 'Kotlin');
-if (existsSync(snapshotPath)) {
-  const moved = compare(JSON.parse(readFileSync(snapshotPath, 'utf8')), all);
-  console.log(`\nSince the last run : ${moved.new} new, ${moved.worse} worse, ${moved.better} better`);
-}
+const moved = existsSync(snapshotPath) ? compare(JSON.parse(readFileSync(snapshotPath, 'utf8')), all) : null;
+if (moved) out(`\nSince the last run : ${moved.new} new, ${moved.worse} worse, ${moved.better} better`);
 
-console.log(`\n## Worst ${args.top}\n`);
+out(`\n## Worst ${args.top}\n`);
 table(known.slice(0, Number(args.top)), {
   CRAP: (row) => score(row.crap),
   CC: (row) => row.complexity,
@@ -73,7 +75,7 @@ table(known.slice(0, Number(args.top)), {
 });
 
 const wins = quickWins(known);
-console.log(`## Quick wins — under ${TARGET} with little more coverage\n`);
+out(`## Quick wins — under ${TARGET} with little more coverage\n`);
 table(wins.slice(0, Number(args.top)), {
   CRAP: (row) => score(row.crap),
   CC: (row) => row.complexity,
@@ -84,7 +86,7 @@ table(wins.slice(0, Number(args.top)), {
 });
 
 const refactor = refactorFirst(known);
-console.log(`## Refactor first — CC ≥ ${TARGET}, no test can bring these under the target\n`);
+out(`## Refactor first — CC ≥ ${TARGET}, no test can bring these under the target\n`);
 table(refactor, {
   CC: (row) => row.complexity,
   CRAP: (row) => score(row.crap),
@@ -94,11 +96,22 @@ table(refactor, {
 });
 
 const unknown = all.filter((row) => row.crap === null && row.complexity > 1);
-console.log(`## No coverage data, complexity above 1 — ${unknown.length}\n`);
+out(`## No coverage data, complexity above 1 — ${unknown.length}\n`);
 table(unknown.sort((a, b) => b.complexity - a.complexity).slice(0, 10), {
   CC: (row) => row.complexity,
   Function: (row) => `\`${row.name}\``,
   Where: where,
 });
 
+const quickWinSet = new Set(wins);
+const page = all.map((row) => ({ ...row, needed: coverageNeeded(row.complexity), quickWin: quickWinSet.has(row) }));
+
+mkdirSync(reportDir, { recursive: true });
 writeFileSync(snapshotPath, JSON.stringify(all, null, 2));
+writeFileSync(join(reportDir, 'report.md'), `${markdown.join('\n')}\n`);
+writeFileSync(
+  join(reportDir, 'index.html'),
+  renderHtml({ rows: page, moved, generatedAt: new Date().toISOString(), target: TARGET }),
+);
+console.log(markdown.join('\n'));
+console.log(`Report : ${join(reportDir, 'index.html')}`);
