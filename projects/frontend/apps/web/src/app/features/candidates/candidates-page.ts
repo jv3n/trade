@@ -29,7 +29,19 @@ import {
   stbLoadGate,
 } from '@portfolioai/ui';
 import { addDays, isBefore, isSameDay, isWeekend, startOfDay } from 'date-fns';
-import { EMPTY, Observable, catchError, filter, finalize, map, of, switchMap, tap } from 'rxjs';
+import {
+  EMPTY,
+  Observable,
+  Subject,
+  catchError,
+  concatMap,
+  filter,
+  finalize,
+  map,
+  of,
+  switchMap,
+  tap,
+} from 'rxjs';
 import {
   Candidate,
   CandidateInput,
@@ -372,6 +384,15 @@ export class CandidatesPage {
 
   // ---- At the open (#261) ----
 
+  /** One at a time : each save sends the whole row, so a late answer must not undo a newer one. */
+  private readonly atOpenSaves = new Subject<Observable<unknown>>();
+  /** Per row, the saves not answered yet and the last row the server took. */
+  private readonly atOpenFlights = new Map<string, { queued: number; confirmed: Candidate }>();
+
+  constructor() {
+    this.atOpenSaves.pipe(concatMap((save) => save)).subscribe();
+  }
+
   /**
    * Saves what a row of the « À l'open » card changed — an edit, so no modal and no toast unless it
    * fails. The row is patched **before** the call : the open and the push of a row are often typed
@@ -383,16 +404,20 @@ export class CandidatesPage {
     if (!current) return;
     const patched = { ...current, ...patch };
     this.replaceCandidate(patched);
+    const flight = this.atOpenFlights.get(current.id) ?? { queued: 0, confirmed: current };
+    this.atOpenFlights.set(current.id, flight);
+    flight.queued += 1;
 
-    this.repo
-      .update(candidate.id, toCandidateInput(patched))
-      .pipe(
+    this.atOpenSaves.next(
+      this.repo.update(candidate.id, toCandidateInput(patched)).pipe(
         // A load still running now was asked before the save committed : one more, after it.
         tap(() => {
+          flight.confirmed = patched;
           if (this.listing.isLoading()) this.refetch();
         }),
         catchError(() => {
-          this.replaceCandidate(current);
+          // A save queued behind carries the whole row : the row is its to decide.
+          if (flight.queued === 1) this.replaceCandidate(flight.confirmed);
           this.toasts.error(
             this.translate.instant('candidates.snackbar.atOpenSaveError', {
               ticker: candidate.ticker,
@@ -400,8 +425,12 @@ export class CandidatesPage {
           );
           return EMPTY;
         }),
-      )
-      .subscribe();
+        finalize(() => {
+          flight.queued -= 1;
+          if (flight.queued === 0) this.atOpenFlights.delete(current.id);
+        }),
+      ),
+    );
   }
 
   private refetch(): void {

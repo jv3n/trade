@@ -6,7 +6,11 @@ import com.portfolioai.journal.domain.TradeEntry
 import com.portfolioai.journal.domain.TradeEntryFilter
 import com.portfolioai.journal.domain.TradeExecution
 import com.portfolioai.journal.domain.TradeStatus
+import jakarta.persistence.criteria.CriteriaBuilder
+import jakarta.persistence.criteria.CriteriaQuery
 import jakarta.persistence.criteria.Predicate
+import jakarta.persistence.criteria.Root
+import jakarta.persistence.criteria.Subquery
 import java.math.BigDecimal
 import java.time.LocalTime
 import java.util.UUID
@@ -53,7 +57,12 @@ object TradeEntrySpecifications {
         predicates +=
           when (status) {
             TradeStatus.OPEN -> cb.isNull(root.get<Any>("exitPrice"))
-            TradeStatus.CLOSED -> cb.isNotNull(root.get<Any>("exitPrice"))
+            // `exit_price` is set from the first cover : a partial position has one too.
+            TradeStatus.CLOSED ->
+              cb.and(
+                cb.isNotNull(root.get<Any>("exitPrice")),
+                cb.equal(cb.coalesce(sharesHeld(root, query, cb), 0L), 0L),
+              )
             TradeStatus.PROFITABLE -> cb.greaterThan(retainedProfit, BigDecimal.ZERO)
             TradeStatus.LOSING -> cb.lessThan(retainedProfit, BigDecimal.ZERO)
           }
@@ -81,4 +90,22 @@ object TradeEntrySpecifications {
 
       cb.and(*predicates.toTypedArray())
     }
+
+  private fun sharesHeld(
+    root: Root<TradeEntry>,
+    query: CriteriaQuery<*>,
+    cb: CriteriaBuilder,
+  ): Subquery<Long> {
+    val held = query.subquery(Long::class.javaObjectType)
+    val fill = held.from(TradeExecution::class.java)
+    val shares = fill.get<Int>("shares")
+    val signed =
+      cb
+        .selectCase<Int>()
+        .`when`(cb.equal(fill.get<ExecutionKind>("kind"), ExecutionKind.ENTRY), shares)
+        .otherwise(cb.neg(shares))
+    return held
+      .select(cb.sumAsLong(signed))
+      .where(cb.equal(fill.get<TradeEntry>("tradeEntry"), root))
+  }
 }

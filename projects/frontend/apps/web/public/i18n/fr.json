@@ -6,6 +6,7 @@
     "retry": "Réessayer",
     "noData": "—",
     "resetField": "Vider le champ",
+    "preferenceSaveError": "La préférence n'a pas pu être enregistrée. Réessaie.",
     "instrumentLabel": {
       "STOCK": "Action",
       "ETF": "ETF",

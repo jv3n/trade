@@ -1,12 +1,13 @@
 import { Component, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   MatButtonToggleChange,
   StbButtonModule,
   StbButtonToggleModule,
   StbIconModule,
+  StbToast,
 } from '@portfolioai/ui';
 import { AuthService } from '../../../core/app-state/auth.service';
 import {
@@ -48,6 +49,8 @@ export class PreferencesPage {
   readonly balanceCurrency = inject(BalanceCurrencyService);
   readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly toasts = inject(StbToast);
+  private readonly translate = inject(TranslateService);
 
   readonly themes = THEMES;
   readonly themeIcons = THEME_ICONS;
@@ -65,7 +68,7 @@ export class PreferencesPage {
   });
 
   setTheme(event: MatButtonToggleChange): void {
-    this.theme.set(event.value as Theme);
+    this.theme.set(event.value as Theme).subscribe({ error: () => this.saveFailed() });
   }
 
   setLanguage(event: MatButtonToggleChange): void {
@@ -73,7 +76,13 @@ export class PreferencesPage {
   }
 
   setCurrency(event: MatButtonToggleChange): void {
-    this.balanceCurrency.set(event.value as BalanceCurrency);
+    this.balanceCurrency
+      .set(event.value as BalanceCurrency)
+      .subscribe({ error: () => this.saveFailed() });
+  }
+
+  private saveFailed(): void {
+    this.toasts.error(this.translate.instant('common.preferenceSaveError'));
   }
 
   /** Same contract as the shell's : land on `/login` whatever the backend answers. */

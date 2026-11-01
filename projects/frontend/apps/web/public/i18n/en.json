@@ -6,6 +6,7 @@
     "retry": "Retry",
     "noData": "—",
     "resetField": "Clear the field",
+    "preferenceSaveError": "The preference could not be saved. Try again.",
     "instrumentLabel": {
       "STOCK": "Stock",
       "ETF": "ETF",

@@ -816,6 +816,30 @@ class JournalIntegrationTest {
   }
 
   @Test
+  fun `filter by status CLOSED leaves out a position still partly open`() {
+    fun trade(ticker: String, covered: Int) =
+      service.createStandalone(
+        TradeEntryRequest(
+          tradeDate = LocalDate.of(2026, 6, 4),
+          ticker = ticker,
+          pattern = Pattern.GUS,
+          direction = TradeDirection.SHORT,
+          executions =
+            listOf(
+              ExecutionRequest(ExecutionKind.ENTRY, 100, BigDecimal("3.00")),
+              ExecutionRequest(ExecutionKind.EXIT, covered, BigDecimal("2.50")),
+            ),
+        )
+      )
+    trade("FLAT", covered = 100)
+    trade("HALF", covered = 50)
+
+    val closed = service.findAll(TradeEntryFilter(status = TradeStatus.CLOSED))
+
+    assertEquals(listOf("FLAT"), closed.map { it.ticker })
+  }
+
+  @Test
   fun `filter by status PROFITABLE — strictly positive retained P&L`() {
     repo.save(sampleEntity(user = testUser, ticker = "WIN", profitDollars = BigDecimal("50.00")))
     repo.save(sampleEntity(user = testUser, ticker = "LOSS", profitDollars = BigDecimal("-25.00")))

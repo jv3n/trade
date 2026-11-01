@@ -686,7 +686,8 @@ export class JournalDetailPage implements HasUnsavedChanges {
           this.adopt(saved);
           // The answer is the new baseline even when it equals the last one : what was typed went
           // out, the draft goes back to what the server kept (half-typed fills dropped).
-          if (saved.id === this.id()) this.draft.set(draftOf(saved));
+          // Unless something was typed while the save ran : it stays, and reads as unsaved.
+          if (saved.id === this.id() && this.draft() === draft) this.draft.set(draftOf(saved));
           this.contextWrites.update((n) => n + 1);
           const key = !entry.statEntryId && saved.statEntryId ? 'updateAttached' : 'updateSuccess';
           this.toasts.success(

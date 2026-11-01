@@ -1,4 +1,5 @@
 import { Injectable, computed, inject } from '@angular/core';
+import { Observable } from 'rxjs';
 import { BalanceCurrency } from '../api/auth/auth.repository';
 import { AuthService } from './auth.service';
 
@@ -30,7 +31,7 @@ export class BalanceCurrencyService {
   );
 
   /** Persists the choice ; [currency] re-drives once `currentUser` updates. */
-  set(currency: BalanceCurrency): void {
-    this.auth.updatePreferences({ balanceCurrency: currency }).subscribe();
+  set(currency: BalanceCurrency): Observable<void> {
+    return this.auth.updatePreferences({ balanceCurrency: currency });
   }
 }

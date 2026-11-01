@@ -1,5 +1,6 @@
 import { isPlatformBrowser } from '@angular/common';
 import { Injectable, PLATFORM_ID, computed, effect, inject, signal } from '@angular/core';
+import { Observable } from 'rxjs';
 import { Theme } from '../api/auth/auth.repository';
 import { AuthService } from './auth.service';
 
@@ -75,8 +76,8 @@ export class ThemeService {
   }
 
   /** Persists the choice on the user ; [theme] + the effect re-apply once `currentUser` updates. */
-  set(theme: Theme): void {
-    this.auth.updatePreferences({ theme }).subscribe();
+  set(theme: Theme): Observable<void> {
+    return this.auth.updatePreferences({ theme });
   }
 
   private readSystemPreference(): boolean {

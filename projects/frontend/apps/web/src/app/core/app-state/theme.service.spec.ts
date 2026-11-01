@@ -133,7 +133,7 @@ describe('ThemeService', () => {
   it('set() persists via AuthService.updatePreferences and the resolved theme follows', () => {
     const { service, calls } = setup(makeUser('dark'));
 
-    service.set('light');
+    service.set('light').subscribe();
 
     expect(calls).toEqual([{ theme: 'light' }]);
     expect(service.theme()).toBe('light');
@@ -147,12 +147,12 @@ describe('ThemeService', () => {
     const release = service.mirrorTo(pip);
     expect(pip.documentElement.getAttribute('data-theme')).toBe('dark');
 
-    service.set('light');
+    service.set('light').subscribe();
     TestBed.tick();
     expect(pip.documentElement.getAttribute('data-theme')).toBe('light');
 
     release();
-    service.set('dark');
+    service.set('dark').subscribe();
     TestBed.tick();
     expect(pip.documentElement.getAttribute('data-theme')).toBe('light');
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
