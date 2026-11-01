@@ -4,7 +4,9 @@
 
 .stat-chart__bar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  gap: s.$space-sm;
   margin-bottom: s.$space-sm;
 }
 

@@ -8,6 +8,7 @@ import {
   inject,
   input,
   linkedSignal,
+  model,
   viewChild,
 } from '@angular/core';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
@@ -43,10 +44,15 @@ export interface StatChartPoint {
 
 export type StatChartRange = 'day' | 'session';
 
+export const CANDLE_SIZES = [1, 3, 5] as const;
+export type CandleSize = (typeof CANDLE_SIZES)[number];
+
+/** Each view's candle — 960 one-minute candles across a panel would be wicks only until zoomed. */
+export type StatChartSizes = Record<StatChartRange, CandleSize>;
+export const DEFAULT_CHART_SIZES: StatChartSizes = { day: 5, session: 1 };
+
 const OPEN = 9 * 60 + 30;
 const CLOSE = 16 * 60;
-/** The day view's candle : 960 one-minute candles across a panel would be wicks only. */
-const DAY_CANDLE = 5;
 const CHART_HEIGHT = 320;
 /** What the full-screen card keeps above and below its chart : the title, the switch, the notes. */
 const FULLSCREEN_CHROME = 200;
@@ -160,6 +166,11 @@ export class StatChart {
     this.pattern() === 'DT' ? 'session' : 'day',
   );
 
+  /** Two-way : the panel closes between two stats, the choice is held by the page. */
+  readonly sizes = model<StatChartSizes>(DEFAULT_CHART_SIZES);
+  readonly candleSizes = CANDLE_SIZES;
+  readonly candleSize = computed(() => this.sizes()[this.range()]);
+
   private readonly chartResource = rxResource({
     params: () => this.statId(),
     stream: ({ params: id }) => (id ? this.repo.dayChart(id) : of(null)),
@@ -183,12 +194,9 @@ export class StatChart {
 
   readonly candles = computed<CandleBar[]>(() => {
     const bars = this.minuteBars();
-    return this.range() === 'session'
-      ? aggregate(
-          bars.filter((b) => b.minute >= OPEN && b.minute < CLOSE),
-          1,
-        )
-      : aggregate(bars, DAY_CANDLE);
+    const shown =
+      this.range() === 'session' ? bars.filter((b) => b.minute >= OPEN && b.minute < CLOSE) : bars;
+    return aggregate(shown, this.candleSize());
   });
 
   /** The extended hours, shaded on the day view. */
@@ -233,8 +241,6 @@ export class StatChart {
     }),
   );
 
-  private readonly candleSize = computed(() => (this.range() === 'session' ? 1 : DAY_CANDLE));
-
   /** The candle of the view a point sits on — null when the view doesn't show it. */
   private candleOf(point: { name: string; minute: number }): string | null {
     const size = this.candleSize();
@@ -258,7 +264,7 @@ export class StatChart {
           price: p.price,
           tone: edge === undefined ? ('accent' as const) : ('warn' as const),
           above: p.above,
-          // Off is judged on the 1-min candle : a 5-min one can hold the point and bury the leader.
+          // Off is judged on the 1-min candle : a wider one can hold the point and bury the leader.
           towards: size === 1 ? edge : undefined,
         },
       ];
@@ -333,6 +339,10 @@ export class StatChart {
       ? null
       : this.translate.instant('stats.chart.off', { points: lines.join(' ; ') });
   });
+
+  setCandleSize(size: CandleSize): void {
+    this.sizes.update((sizes) => ({ ...sizes, [this.range()]: size }));
+  }
 
   toggleFullscreen(): void {
     const request = this.fullscreen()

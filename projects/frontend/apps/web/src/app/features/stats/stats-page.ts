@@ -76,7 +76,7 @@ import {
   type SkeletonColumnDefs,
 } from '../../shared/skeleton-columns/skeleton-columns';
 import { ShortGainPipe } from './short-gain.pipe';
-import { StatChart, StatChartPoint } from './stat-chart/stat-chart';
+import { DEFAULT_CHART_SIZES, StatChart, StatChartPoint } from './stat-chart/stat-chart';
 import {
   DT_DROP_TARGET,
   DT_EXTENSION_CRITERION,
@@ -1140,6 +1140,9 @@ export class StatsPage implements HasUnsavedChanges {
       pmHigh: edit && !isPositive(m.pmHigh),
     };
   });
+
+  /** The chart's candle size per view, kept from one stat to the next (#854). */
+  readonly chartSizes = signal(DEFAULT_CHART_SIZES);
 
   /**
    * The panel shows values the stat doesn't hold — a save held back by a validation, whichever. A

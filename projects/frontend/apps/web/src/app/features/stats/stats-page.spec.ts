@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import {
   ActivatedRoute,
   ParamMap,
@@ -29,6 +30,7 @@ import {
 } from '../../core/api/stats/stat-entry.model';
 import { StatsRepository } from '../../core/api/stats/stats.repository';
 import { ConfirmService } from '../../core/app-state/confirm.service';
+import { StatChart } from './stat-chart/stat-chart';
 import { StatsPage } from './stats-page';
 
 /**
@@ -1636,6 +1638,25 @@ describe('StatsPage', () => {
 
     expect(page.hasUnsavedChanges()).toBe(true);
     expect(unload()).toBe(true);
+  });
+
+  // The chart lives inside the panel : held by the chart alone, the choice would die with « Fermer ».
+  it('keeps the candle size chosen on one stat for the next one, past a closed panel', async () => {
+    const ktta = makeStat();
+    const olox = makeStat({ id: 'stat-olox', ticker: 'OLOX' });
+    const { fixture, page } = await setup({ rows: [ktta, olox] });
+    const chart = () =>
+      fixture.debugElement.query(By.directive(StatChart)).componentInstance as StatChart;
+
+    page.open(ktta);
+    await fixture.whenStable();
+    chart().setCandleSize(3);
+    page.close();
+    await fixture.whenStable();
+    page.open(olox);
+    await fixture.whenStable();
+
+    expect(chart().sizes().day).toBe(3);
   });
 
   // ---- Views (#437) ----
