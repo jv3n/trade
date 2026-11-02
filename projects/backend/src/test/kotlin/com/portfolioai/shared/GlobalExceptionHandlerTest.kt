@@ -1,5 +1,6 @@
 package com.portfolioai.shared
 
+import com.portfolioai.journal.domain.TradeRefusal
 import java.sql.SQLException
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -30,5 +31,17 @@ class GlobalExceptionHandlerTest {
   @Test
   fun `a unique collision stays a 409`() {
     assertEquals(HttpStatus.CONFLICT, handler.handleConflict(refused("23505")).statusCode)
+  }
+
+  @Test
+  fun `a coded refusal is a 400 carrying the code the frontend translates`() {
+    val response =
+      handler.handleRefusedWrite(
+        RefusedWriteException(TradeRefusal.FUTURE_DATE, "A trade can't be dated in the future")
+      )
+
+    assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
+    assertEquals("FUTURE_DATE", response.body?.get("code"))
+    assertEquals("A trade can't be dated in the future", response.body?.get("error"))
   }
 }

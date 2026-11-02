@@ -640,6 +640,15 @@
       "deleteSuccess": "Trade {{ticker}} deleted.",
       "deleteError": "Failed to delete the trade. Please retry."
     },
+    "refused": {
+      "futureDate": "A trade can't be dated in the future.",
+      "noEntry": "A position needs at least one entry.",
+      "exitsExceedEntries": "The exits exceed the entries.",
+      "exitBeforeEntry": "A position can't exit before its first entry.",
+      "realPnlNeedsClosedPosition": "The broker P&L can only be set once the position is closed.",
+      "statOwnsPattern": "This trade's pattern comes from its stat.",
+      "statOwnsDayAndTicker": "This trade's day and ticker come from its stat."
+    },
     "confirmEraseReal": {
       "title": "Erase the broker P&L?",
       "message": "The position is no longer closed: the broker P&L of {{amount}} USD is erased and no longer counts in the account.",

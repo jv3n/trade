@@ -1,6 +1,7 @@
 package com.portfolioai.journal.domain
 
 import com.portfolioai.shared.TradeDirection
+import com.portfolioai.shared.refuseUnless
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Duration
@@ -82,17 +83,21 @@ object TradePositionCalculator {
 
     val entries = legs.filter { it.kind == ExecutionKind.ENTRY }
     val exits = legs.filter { it.kind == ExecutionKind.EXIT }
-    require(entries.isNotEmpty()) { "A position must have at least one ENTRY execution" }
+    refuseUnless(entries.isNotEmpty(), TradeRefusal.NO_ENTRY) {
+      "A position must have at least one ENTRY execution"
+    }
 
     val entryShares = entries.sumOf { it.shares }
     val exitShares = exits.sumOf { it.shares }
-    require(exitShares <= entryShares) {
+    refuseUnless(exitShares <= entryShares, TradeRefusal.EXITS_EXCEED_ENTRIES) {
       "Exited shares ($exitShares) cannot exceed entered shares ($entryShares)"
     }
 
     val avgEntry = weightedAverage(entries)
     val size = maxPosition(legs)
-    require(size > 0) { "A position cannot exit before its first entry" }
+    refuseUnless(size > 0, TradeRefusal.EXIT_BEFORE_ENTRY) {
+      "A position cannot exit before its first entry"
+    }
     if (exitShares == 0) {
       return Aggregates(
         size = size,

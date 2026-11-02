@@ -15,10 +15,12 @@ import com.portfolioai.journal.domain.TradeEntry
 import com.portfolioai.journal.domain.TradeEntryFilter
 import com.portfolioai.journal.domain.TradePositionCalculator
 import com.portfolioai.journal.domain.TradePositionCalculator.PositionStatus
+import com.portfolioai.journal.domain.TradeRefusal
 import com.portfolioai.journal.infrastructure.persistence.TradeEntryRepository
 import com.portfolioai.journal.infrastructure.persistence.TradeEntrySpecifications
 import com.portfolioai.shared.Pattern
 import com.portfolioai.shared.marketToday
+import com.portfolioai.shared.refuseUnless
 import java.math.BigDecimal
 import java.time.Clock
 import java.time.Instant
@@ -274,13 +276,17 @@ class TradeEntryService(
   fun update(id: UUID, request: TradeEntryRequest): TradeEntryDto {
     val entry = loadOwned(id)
     val pattern = request.pattern ?: entry.pattern
-    require(entry.statEntryId == null || pattern == entry.pattern) {
+    refuseUnless(
+      entry.statEntryId == null || pattern == entry.pattern,
+      TradeRefusal.STAT_OWNS_PATTERN,
+    ) {
       "The pattern of a trade with a stat is the stat's (${entry.pattern})"
     }
     requireNotFuture(request.tradeDate)
     val ticker = request.ticker.trim().uppercase()
-    require(
-      entry.statEntryId == null || (request.tradeDate == entry.tradeDate && ticker == entry.ticker)
+    refuseUnless(
+      entry.statEntryId == null || (request.tradeDate == entry.tradeDate && ticker == entry.ticker),
+      TradeRefusal.STAT_OWNS_DAY_AND_TICKER,
     ) {
       "The day and ticker of a trade with a stat are the stat's"
     }
@@ -346,7 +352,10 @@ class TradeEntryService(
     val aggregates = TradePositionCalculator.compute(request.direction, legs)
     // The broker's P&L is read off a closed trade : on an open or partial position it would post
     // an amount to the account that no exit backs (#304).
-    require(request.realProfitDollars == null || aggregates.status == PositionStatus.CLOSED) {
+    refuseUnless(
+      request.realProfitDollars == null || aggregates.status == PositionStatus.CLOSED,
+      TradeRefusal.REAL_PNL_NEEDS_CLOSED_POSITION,
+    ) {
       "The broker P&L can only be set once the position is closed"
     }
     entry.direction = request.direction
@@ -393,7 +402,7 @@ class TradeEntryService(
   }
 
   private fun requireNotFuture(tradeDate: LocalDate) {
-    require(!tradeDate.isAfter(clock.marketToday())) {
+    refuseUnless(!tradeDate.isAfter(clock.marketToday()), TradeRefusal.FUTURE_DATE) {
       "A trade can't be dated in the future ($tradeDate)"
     }
   }
