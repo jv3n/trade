@@ -35,6 +35,12 @@ export class Api {
     return (await response.json()) as T;
   }
 
+  /** A PUT expected to be refused : hands back the status instead of failing on it. */
+  async putStatus(path: string, data: unknown): Promise<number> {
+    const response = await this.request.put(path, { data, headers: await this.csrf() });
+    return response.status();
+  }
+
   async delete(path: string): Promise<void> {
     const response = await this.request.delete(path, { headers: await this.csrf() });
     expect(response.ok(), `DELETE ${path} → ${response.status()}`).toBe(true);

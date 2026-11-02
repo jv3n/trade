@@ -33,6 +33,7 @@ import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.data.domain.PageRequest
+import org.springframework.http.HttpStatus
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.web.server.ResponseStatusException
 
@@ -240,6 +241,39 @@ class StatToTradeIntegrationTest {
 
     assertEquals(listOf(trade.id), updated.trades.map { it.tradeId })
     assertNotNull(updated.openPrice, "the session block did land")
+  }
+
+  @Test
+  fun `a traded stat can't change ticker — its trades would be left on the old one`() {
+    statService.promoteToTrade(stat.id)
+
+    val refused =
+      assertThrows(ResponseStatusException::class.java) {
+        statService.update(stat.id, completionRequest().copy(ticker = "SGBX"))
+      }
+
+    assertEquals(HttpStatus.BAD_REQUEST, refused.statusCode)
+    assertEquals("KTTA", statService.findById(stat.id).ticker)
+  }
+
+  @Test
+  fun `a traded stat can't change day — its trades would be left on the old one`() {
+    statService.promoteToTrade(stat.id)
+
+    val refused =
+      assertThrows(ResponseStatusException::class.java) {
+        statService.update(stat.id, completionRequest().copy(tradeDate = TRADE_DATE.minusDays(1)))
+      }
+
+    assertEquals(HttpStatus.BAD_REQUEST, refused.statusCode)
+    assertEquals(TRADE_DATE, statService.findById(stat.id).tradeDate)
+  }
+
+  @Test
+  fun `a stat without a trade can still change ticker`() {
+    val updated = statService.update(stat.id, completionRequest().copy(ticker = "SGBX"))
+
+    assertEquals("SGBX", updated.ticker)
   }
 
   @Test

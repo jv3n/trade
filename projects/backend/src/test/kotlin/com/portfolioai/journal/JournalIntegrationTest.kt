@@ -371,13 +371,37 @@ class JournalIntegrationTest {
   }
 
   @Test
-  fun `a trade with a stat edited onto another stat's triple stays with its own`() {
+  fun `a trade with a stat keeps the stat's ticker — a change is refused`() {
+    // #865 : the API used to take it, leaving the trade on another ticker than its stat.
     statRepo.save(sampleStat(user = testUser, ticker = "TSLA"))
     val fromStat = service.create(sampleRequest())
 
-    val updated = service.update(fromStat.id, sampleRequest(ticker = "TSLA"))
+    assertThrows(IllegalArgumentException::class.java) {
+      service.update(fromStat.id, sampleRequest(ticker = "TSLA"))
+    }
+    val kept = service.findById(fromStat.id)
+    assertEquals("AAPL", kept.ticker)
+    assertEquals(stat.id, kept.statEntryId)
+  }
 
-    assertEquals(stat.id, updated.statEntryId)
+  @Test
+  fun `a trade with a stat keeps the stat's day — a change is refused`() {
+    val fromStat = service.create(sampleRequest())
+    val dayBefore = fromStat.tradeDate.minusDays(1)
+
+    assertThrows(IllegalArgumentException::class.java) {
+      service.update(fromStat.id, sampleRequest(tradeDate = dayBefore))
+    }
+    assertEquals(fromStat.tradeDate, service.findById(fromStat.id).tradeDate)
+  }
+
+  @Test
+  fun `a trade with a stat still saves when its ticker comes back in another case`() {
+    val fromStat = service.create(sampleRequest())
+
+    val updated = service.update(fromStat.id, sampleRequest(ticker = " aapl "))
+
+    assertEquals("AAPL", updated.ticker)
   }
 
   @Test
@@ -395,10 +419,10 @@ class JournalIntegrationTest {
   fun `a trade with a stat still saves when its pattern is sent back unchanged`() {
     val fromStat = service.create(sampleRequest())
 
-    val updated = service.update(fromStat.id, sampleRequest(ticker = "TSLA"))
+    val updated = service.update(fromStat.id, sampleRequest(exitPrice = BigDecimal("2.0000")))
 
     assertEquals(Pattern.GUS, updated.pattern)
-    assertEquals("TSLA", updated.ticker)
+    assertEquals(0, updated.exitPrice!!.compareTo(BigDecimal("2.0000")))
   }
 
   @Test
@@ -414,7 +438,7 @@ class JournalIntegrationTest {
 
   @Test
   fun `update mutates only the targeted row and bumps updatedAt`() {
-    val created = service.create(sampleRequest())
+    val created = service.createStandalone(sampleRequest(ticker = "SGBX"))
     val originalUpdatedAt = created.updatedAt
 
     Thread.sleep(10) // ensure the Postgres trigger's now() falls on a later instant
