@@ -42,7 +42,7 @@
   }
 
   &[data-status='OPEN'] i {
-    background: var(--color-success);
+    background: var(--color-accent);
   }
 }
 
@@ -121,11 +121,11 @@
   }
 }
 
-// Done : green, it is behind us. Current : accent halo, it is what the user has to do now.
+// Done : a status, so indigo, filled. Current : indigo halo, it is what the user has to do now.
 .step--done .step-dot {
   border-color: transparent;
-  background: color-mix(in srgb, var(--color-success) 16%, transparent);
-  color: var(--color-success);
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
 }
 
 // Nothing today (#407) : a status, not an outcome — neutral, never green.
@@ -359,6 +359,10 @@
 
 .pos {
   color: var(--color-success);
+}
+
+.reconciled {
+  color: var(--color-accent);
 }
 
 .neg {

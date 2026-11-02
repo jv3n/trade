@@ -154,7 +154,7 @@ many days end without a trade : « nothing today » is an answer, not a step lef
 - **« Pas de trade aujourd'hui »** on step 5, while the day has no trade : step 5 reads « nothing
   today ». Independent of the first — a day with stats and no trade is the common case.
 - **« Aucun écart »** on step 2, for the morning TradeZero shows the app's balance : a real, clean
-  reconciliation at the computed balance — step 2 is done (green check), not « nothing today ».
+  reconciliation at the computed balance — step 2 is done (indigo check), not « nothing today ».
   Same block on the account page. Undone with the reconciliation's own « Annuler ».
 - One click, no confirmation (nothing is created or deleted), and **« Annuler »** next to the state.
   Capturing a candidate or entering a trade afterwards overrides the mark : the data wins. The
@@ -1207,7 +1207,9 @@ states from the card's mockup switch.
 - **The morning entry** : validated as is (inline form + live gap / push preview).
 - **The stats table** : every column stays, horizontal scrolling is not a problem.
 - **Colours** : green / red for outcomes (P&L, amounts, gaps) — plus one status, the green check of
-  a completed stat ; amber for warnings (SSR, < $1, to complete, locates paid for nothing) and for
+  a completed stat. Every other status stays off green (#866) : a done step of the Today page, the
+  open market and a reconciled morning are indigo, the ✓ of a clean morning in the history and a
+  zero gap neutral ; amber for warnings (SSR, < $1, to complete, locates paid for nothing) and for
   **costs** on a chart (locates, fees and corrections in the reports, #685) ;
   indigo for statuses and categories (pattern, "in stats") ; the rest neutral, price moves and
   tickers included — but for **a chart's candles**, green up and red down with their volume, as on
