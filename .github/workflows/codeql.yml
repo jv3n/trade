@@ -78,7 +78,7 @@ jobs:
       # and the analysis dies with "no source code seen during build".
       - name: Set up Gradle
         if: matrix.language == 'java-kotlin'
-        uses: gradle/actions/setup-gradle@v6.4.0
+        uses: gradle/actions/setup-gradle@v6.4.1
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/master' }}
 
