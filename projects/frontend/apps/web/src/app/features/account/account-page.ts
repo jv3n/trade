@@ -541,7 +541,9 @@ export class AccountPage {
   }
 
   setCurrency(currency: BalanceCurrency): void {
-    this.balanceCurrency.set(currency);
+    this.balanceCurrency.set(currency).subscribe({
+      error: () => this.toasts.error(this.translate.instant('common.preferenceSaveError')),
+    });
   }
 
   /**
