@@ -1129,6 +1129,7 @@ function makeStat(overrides: Partial<StatEntry> = {}): StatEntry {
     rejectionNote: null,
     createdAt: new Date(),
     updatedAt: new Date(),
+    version: 0,
     ...overrides,
   };
 }

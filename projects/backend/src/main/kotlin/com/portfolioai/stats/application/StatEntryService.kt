@@ -7,6 +7,7 @@ import com.portfolioai.journal.application.dto.TradeEntryRequest
 import com.portfolioai.shared.Pattern
 import com.portfolioai.shared.badRequest
 import com.portfolioai.shared.marketToday
+import com.portfolioai.shared.requireFresh
 import com.portfolioai.stats.application.dto.RuleScoreDto
 import com.portfolioai.stats.application.dto.StatEntryDto
 import com.portfolioai.stats.application.dto.StatEntryRequest
@@ -276,6 +277,7 @@ class StatEntryService(
   @Transactional
   fun update(id: UUID, request: StatEntryRequest): StatEntryDto {
     val entry = loadOwned(id)
+    requireFresh(request.version, entry.version)
     val ticker = request.cleanTicker()
     if (request.pattern != entry.pattern) {
       throw badRequest(
@@ -296,7 +298,7 @@ class StatEntryService(
       )
     }
     entry.updatedAt = Instant.now()
-    val saved = repo.save(entry)
+    val saved = repo.saveAndFlush(entry)
     // The completion panel replaces its row with this response — dropping the link would make the
     // « → Trade » button reappear on a stat that already has its trade.
     return saved.toDto(tradeEntryService.tradeLinksByStat(listOf(saved.id))[saved.id].orEmpty())
@@ -356,7 +358,7 @@ class StatEntryService(
     }
     entry.completedAt = if (completed) entry.completedAt ?: Instant.now() else null
     entry.updatedAt = Instant.now()
-    val saved = repo.save(entry)
+    val saved = repo.saveAndFlush(entry)
     return saved.toDto(tradeEntryService.tradeLinksByStat(listOf(saved.id))[saved.id].orEmpty())
   }
 
@@ -422,7 +424,7 @@ class StatEntryService(
     }
     change(entry)
     entry.updatedAt = Instant.now()
-    val saved = repo.save(entry)
+    val saved = repo.saveAndFlush(entry)
     return saved.toDto(tradeEntryService.tradeLinksByStat(listOf(saved.id))[saved.id].orEmpty())
   }
 

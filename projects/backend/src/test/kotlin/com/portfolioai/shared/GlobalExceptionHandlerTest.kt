@@ -44,4 +44,13 @@ class GlobalExceptionHandlerTest {
     assertEquals("FUTURE_DATE", response.body?.get("code"))
     assertEquals("A trade can't be dated in the future", response.body?.get("error"))
   }
+
+  // The stat page tells this 409 from a (day, ticker) collision by its code (#864).
+  @Test
+  fun `a stale write is a 409 carrying its own code`() {
+    val response = handler.handleStaleWrite()
+
+    assertEquals(HttpStatus.CONFLICT, response.statusCode)
+    assertEquals("STALE_WRITE", response.body?.get("code"))
+  }
 }

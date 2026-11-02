@@ -11,6 +11,7 @@ import com.portfolioai.journal.application.dto.TradeEntryRequest
 import com.portfolioai.journal.domain.ExecutionKind
 import com.portfolioai.journal.infrastructure.persistence.TradeEntryRepository
 import com.portfolioai.shared.Pattern
+import com.portfolioai.shared.StaleWriteException
 import com.portfolioai.shared.TradeDirection
 import com.portfolioai.stats.application.StatEntryService
 import com.portfolioai.stats.application.dto.StatEntryRequest
@@ -231,6 +232,19 @@ class StatToTradeIntegrationTest {
 
     assertEquals(1, summary.traded)
     assertEquals(1, summary.untraded)
+  }
+
+  // The panel saves on each field left : the next save starts from this response's version (#864).
+  @Test
+  fun `a save at the answered version goes through, one at an older version is refused`() {
+    val first = statService.update(stat.id, completionRequest())
+
+    val second = statService.update(stat.id, completionRequest().copy(version = first.version))
+
+    assertEquals(first.version + 1, second.version)
+    assertThrows(StaleWriteException::class.java) {
+      statService.update(stat.id, completionRequest().copy(version = first.version))
+    }
   }
 
   @Test

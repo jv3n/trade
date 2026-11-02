@@ -12,6 +12,7 @@ import com.portfolioai.auth.domain.User
 import com.portfolioai.auth.infrastructure.persistence.UserRepository
 import com.portfolioai.journal.domain.TradeEntry
 import com.portfolioai.journal.infrastructure.persistence.TradeEntryRepository
+import com.portfolioai.shared.StaleWriteException
 import com.portfolioai.stats.domain.StatEntry
 import com.portfolioai.stats.infrastructure.persistence.StatEntryRepository
 import java.math.BigDecimal
@@ -158,6 +159,22 @@ class AccountIntegrationTest {
 
     assertEquals(0, BigDecimal("5200.00").compareTo(updated.amount))
     assertEquals(true, updated.updatedAt.isAfter(created.updatedAt))
+  }
+
+  // Two tabs on one row : the second kept the last write without a word (#864).
+  @Test
+  fun `an edit sent from a version already overwritten is refused`() {
+    val created = service.addMovement(movement(AccountMovementType.DEPOSIT, "5000.00"))
+    val request = movement(AccountMovementType.DEPOSIT, "5200.00").copy(version = created.version)
+    val updated = service.update(created.id, request)
+
+    assertEquals(created.version + 1, updated.version, "the response carries the bumped version")
+    assertThrows(StaleWriteException::class.java) {
+      service.update(
+        created.id,
+        movement(AccountMovementType.DEPOSIT, "9999.00").copy(version = created.version),
+      )
+    }
   }
 
   @Test

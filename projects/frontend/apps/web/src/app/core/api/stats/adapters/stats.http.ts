@@ -16,6 +16,7 @@ import {
   StatEntry,
   StatEntryFilter,
   StatEntryInput,
+  StatEntryUpdate,
   StatRejectionReason,
   StatReview,
   StatSource,
@@ -90,6 +91,7 @@ interface StatEntryWireDto {
   rejectionNote: string | null;
   createdAt: string;
   updatedAt: string;
+  version: number;
 }
 
 /** Body of `PUT /api/stats/{id}` — the backend `StatEntryRequest`. */
@@ -107,6 +109,7 @@ type StatEntryWireRequest = Omit<
   | 'rejectionNote'
   | 'createdAt'
   | 'updatedAt'
+  | 'version'
 >;
 
 // `parseISO('2026-06-04')` → midnight LOCAL (no UTC shift) ; `parseISO('…Z')` → instant. Same
@@ -239,7 +242,7 @@ export class HttpStatsRepository extends StatsRepository {
     return this.http.post<StatEntryWireDto>(this.base, toWire(input)).pipe(map(fromWire));
   }
 
-  update(id: string, input: StatEntryInput): Observable<StatEntry> {
+  update(id: string, input: StatEntryUpdate): Observable<StatEntry> {
     return this.http.put<StatEntryWireDto>(`${this.base}/${id}`, toWire(input)).pipe(map(fromWire));
   }
 

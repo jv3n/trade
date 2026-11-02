@@ -14,6 +14,7 @@ import com.portfolioai.account.infrastructure.persistence.AccountReconciliationR
 import com.portfolioai.auth.application.AuthService
 import com.portfolioai.journal.application.TradeEntryService
 import com.portfolioai.shared.badRequest
+import com.portfolioai.shared.requireFresh
 import com.portfolioai.shared.requirePositive
 import java.math.BigDecimal
 import java.time.Clock
@@ -215,6 +216,7 @@ class AccountService(
   @Transactional
   fun update(id: UUID, request: MovementRequest): AccountMovementDto {
     val movement = loadOwned(id)
+    requireFresh(request.version, movement.version)
     if (movement.type == AccountMovementType.TRADE) {
       throw badRequest("TRADE movements are managed from the journal and can't be edited here")
     }
@@ -235,7 +237,7 @@ class AccountService(
     movement.valueDate = request.valueDate
     movement.note = request.note.cleanNote()
     movement.updatedAt = Instant.now()
-    val saved = repo.save(movement)
+    val saved = repo.saveAndFlush(movement)
     reconciler.changed(saved, oldValueDate, oldAmount)
     return saved.toDto(runningBalances(saved.user.id).getValue(saved.id))
   }

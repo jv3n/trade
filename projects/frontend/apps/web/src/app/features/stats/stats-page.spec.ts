@@ -25,6 +25,7 @@ import {
   StatEntry,
   StatEntryFilter,
   StatEntryInput,
+  StatEntryUpdate,
   StatRejectionReason,
   StatSummary,
 } from '../../core/api/stats/stat-entry.model';
@@ -122,6 +123,7 @@ function makeStat(overrides: Partial<StatEntry> = {}): StatEntry {
     rejectionNote: null,
     createdAt: new Date(),
     updatedAt: new Date(),
+    version: 0,
     ...overrides,
   };
 }
@@ -244,7 +246,7 @@ class MockStatsRepository extends StatsRepository {
   create = vi.fn((input: StatEntryInput): Observable<StatEntry> =>
     of(makeStat({ ...input, id: 'stat-new', candidateId: null, completed: false })),
   );
-  update = vi.fn((id: string, input: StatEntryInput): Observable<StatEntry> =>
+  update = vi.fn((id: string, input: StatEntryUpdate): Observable<StatEntry> =>
     of(
       makeStat({ ...input, id, completed: this.rows.find((r) => r.id === id)?.completed ?? false }),
     ),
@@ -629,6 +631,40 @@ describe('StatsPage', () => {
     expect(page.completing()).not.toBeNull();
   });
 
+  // Two fields left in a row : the second save is built before the first comes back, and sending the
+  // version it captured would refuse the user's own work as stale (#864).
+  it('sends a queued save at the version the save ahead of it came back with', async () => {
+    const { page, repo } = await setup({ rows: [makePending({ version: 3 })] });
+    const first = new Subject<StatEntry>();
+    repo.update.mockReturnValueOnce(first);
+
+    page.setSessionPrice('openPrice', 1.9);
+    page.saveSession();
+    page.setSessionPrice('pushOpenPrice', 2.2);
+    page.saveSession();
+    expect(repo.update).toHaveBeenCalledOnce();
+
+    first.next(makePending({ openPrice: 1.9, version: 4 }));
+    first.complete();
+
+    expect(repo.update.mock.calls[1][1].version).toBe(4);
+  });
+
+  it('reloads the row and says so when another tab saved first', async () => {
+    const { page, repo, toastShown } = await setup({ rows: [makePending({ version: 3 })] });
+    repo.update.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 409, error: { code: 'STALE_WRITE' } })),
+    );
+    repo.findById.mockReturnValue(of(makePending({ openPrice: 2.4, version: 5 })));
+
+    page.setSessionPrice('openPrice', 1.9);
+    page.saveSession();
+
+    expect(page.session().openPrice).toBe(2.4);
+    expect(page.completing()?.version).toBe(5);
+    expect(toastShown.mock.calls.at(-1)?.[0]).toBe('error');
+  });
+
   // ---- The ✓ (#263) ----
 
   it('lists what a row misses before it can be ticked', async () => {
@@ -742,7 +778,7 @@ describe('StatsPage', () => {
     });
     const { page, repo } = await setup({ rows: [pending] });
     const order: string[] = [];
-    repo.update.mockImplementation((id: string, input: StatEntryInput) => {
+    repo.update.mockImplementation((id: string, input: StatEntryUpdate) => {
       order.push('update');
       return of(makeStat({ ...input, id, completed: false }));
     });

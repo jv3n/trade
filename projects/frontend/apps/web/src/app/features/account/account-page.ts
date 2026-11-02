@@ -48,6 +48,7 @@ import { AccountRepository } from '../../core/api/account/account.repository';
 import { ForexRepository } from '../../core/api/forex/forex.repository';
 import { LocateInput } from '../../core/api/locates/locates.model';
 import { LocatesRepository } from '../../core/api/locates/locates.repository';
+import { isStaleWrite } from '../../core/api/shared/stale-write';
 import {
   BalanceCurrency,
   BalanceCurrencyService,
@@ -589,7 +590,7 @@ export class AccountPage {
         filter((input): input is AccountMovementInput => !!input),
         switchMap((input) =>
           (isUpdate
-            ? this.repo.updateMovement(movement.id, input)
+            ? this.repo.updateMovement(movement.id, { ...input, version: movement.version })
             : this.repo.addMovement(input)
           ).pipe(
             tap(() => {
@@ -600,7 +601,12 @@ export class AccountPage {
               );
               this.fetch();
             }),
-            catchError(() => {
+            catchError((err: unknown) => {
+              if (isStaleWrite(err)) {
+                this.toasts.error(this.translate.instant('account.snackbar.updateStale'));
+                this.fetch();
+                return EMPTY;
+              }
               this.toasts.error(
                 this.translate.instant(
                   isUpdate ? 'account.snackbar.updateError' : 'account.snackbar.createError',
