@@ -45,6 +45,7 @@ describe('HttpAccountRepository', () => {
       measuredGap: null,
       createdAt: '2026-06-15T10:00:00Z',
       updatedAt: '2026-06-15T10:00:00Z',
+      version: 0,
       ...overrides,
     };
   }

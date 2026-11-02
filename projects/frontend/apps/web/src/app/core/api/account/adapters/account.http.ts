@@ -40,9 +40,11 @@ interface AccountMovementWireDto {
   measuredGap: number | null;
   createdAt: string;
   updatedAt: string;
+  version: number;
 }
 
 interface MovementWireRequest {
+  version?: number;
   type: AccountMovementType;
   amount: number;
   valueDate: string;
@@ -111,6 +113,7 @@ function fromWire(w: AccountMovementWireDto): AccountMovement {
     measuredGap: w.measuredGap,
     createdAt: parseISO(w.createdAt),
     updatedAt: parseISO(w.updatedAt),
+    version: w.version,
   };
 }
 
@@ -153,6 +156,7 @@ function withFilter(params: HttpParams, filter?: AccountMovementFilter): HttpPar
 
 function toMovementWire(input: AccountMovementInput): MovementWireRequest {
   return {
+    version: input.version,
     type: input.type,
     amount: input.amount,
     valueDate: format(input.valueDate, 'yyyy-MM-dd'),

@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
@@ -784,6 +785,34 @@ describe('AccountPage', () => {
       expect(locates.delete).toHaveBeenCalledWith('loc-1');
     });
 
+    it('edits a movement at the version it was read at', async () => {
+      const input = { type: 'DEPOSIT', amount: 5200, valueDate: new Date(2026, 8, 15), note: null };
+      dialogOpen.mockReturnValue({ afterClosed: () => of(input) });
+      const fixture = await render();
+      const update = vi.spyOn(TestBed.inject(AccountRepository), 'updateMovement');
+
+      fixture.componentInstance.edit(makeMovement({ id: 'm-1', version: 4 }));
+      await settle(fixture);
+
+      expect(update).toHaveBeenCalledWith('m-1', { ...input, version: 4 });
+    });
+
+    it('reloads the page and says so when another tab edited the movement first', async () => {
+      const input = { type: 'DEPOSIT', amount: 5200, valueDate: new Date(2026, 8, 15), note: null };
+      dialogOpen.mockReturnValue({ afterClosed: () => of(input) });
+      const fixture = await render();
+      vi.spyOn(TestBed.inject(AccountRepository), 'updateMovement').mockReturnValue(
+        throwError(() => new HttpErrorResponse({ status: 409, error: { code: 'STALE_WRITE' } })),
+      );
+      getSummary.mockClear();
+
+      fixture.componentInstance.edit(makeMovement());
+      await settle(fixture);
+
+      expect(TestBed.inject(StbToast).error).toHaveBeenCalledWith('account.snackbar.updateStale');
+      expect(getSummary).toHaveBeenCalled();
+    });
+
     it('saves the locate typed in the « Locate » dialog, then reloads the page', async () => {
       const input = newLocate();
       dialogOpen.mockReturnValue({ afterClosed: () => of(input) });
@@ -870,6 +899,7 @@ describe('AccountPage', () => {
       measuredGap: null,
       createdAt: new Date(2026, 8, 15),
       updatedAt: new Date(2026, 8, 15),
+      version: 0,
       ...overrides,
     };
   }

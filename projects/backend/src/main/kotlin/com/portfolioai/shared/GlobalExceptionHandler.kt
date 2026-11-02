@@ -4,6 +4,7 @@ import java.sql.SQLException
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.orm.ObjectOptimisticLockingFailureException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 
@@ -25,6 +26,15 @@ class GlobalExceptionHandler {
     if ((ex.mostSpecificCause as? SQLException)?.sqlState in REFUSED_INPUT) {
       ResponseEntity.status(HttpStatus.BAD_REQUEST).body(mapOf("error" to "Value out of range"))
     } else conflict(ex)
+
+  /**
+   * The row moved under this write. [StaleWriteException] catches it from the version the caller
+   * sent, the locking failure when two writes pass that check together.
+   */
+  @ExceptionHandler(StaleWriteException::class, ObjectOptimisticLockingFailureException::class)
+  fun handleStaleWrite(): ResponseEntity<Map<String, String>> =
+    ResponseEntity.status(HttpStatus.CONFLICT)
+      .body(mapOf("error" to "This row changed since it was read", "code" to "STALE_WRITE"))
 
   private fun conflict(ex: DataIntegrityViolationException): ResponseEntity<Map<String, String>> =
     ResponseEntity.status(HttpStatus.CONFLICT)

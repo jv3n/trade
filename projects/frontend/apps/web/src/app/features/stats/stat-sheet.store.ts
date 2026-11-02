@@ -43,6 +43,9 @@ export class StatSheetStore {
    */
   private keepPanel = true;
 
+  /** What the server answered : a save captures its row before the write ahead of it comes back. */
+  private readonly answeredVersions = new Map<string, number>();
+
   private readonly listing = rxResource({
     params: () => ({
       filter: this.source.filter(),
@@ -72,6 +75,10 @@ export class StatSheetStore {
     this.writes.next(write);
   }
 
+  latestVersion(entry: StatEntry): number {
+    return Math.max(entry.version, this.answeredVersions.get(entry.id) ?? 0);
+  }
+
   keepPanelOnNextLoad(): void {
     this.keepPanel = true;
   }
@@ -83,6 +90,7 @@ export class StatSheetStore {
    * nothing newer than the load already running.
    */
   patchRow(entry: StatEntry, answered: boolean): void {
+    if (answered) this.answeredVersions.set(entry.id, entry.version);
     if (this.listing.isLoading()) {
       if (answered) {
         this.keepPanel = true;

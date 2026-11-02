@@ -81,6 +81,7 @@ data class StatEntryDto(
   val rejectionNote: String?,
   val createdAt: Instant,
   val updatedAt: Instant,
+  val version: Long,
 )
 
 fun StatEntry.toDto(trades: List<TradeLinkDto> = emptyList()) =
@@ -128,4 +129,5 @@ fun StatEntry.toDto(trades: List<TradeLinkDto> = emptyList()) =
     rejectionNote = rejectionNote,
     createdAt = createdAt,
     updatedAt = updatedAt,
+    version = version ?: 0,
   )

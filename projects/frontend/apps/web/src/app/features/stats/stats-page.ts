@@ -33,6 +33,7 @@ import {
   Subject,
   catchError,
   debounceTime,
+  defer,
   distinctUntilChanged,
   filter,
   map,
@@ -46,6 +47,7 @@ import {
   STAT_PATTERNS,
   StatPattern,
 } from '../../core/api/shared/pattern.model';
+import { isStaleWrite } from '../../core/api/shared/stale-write';
 import {
   OutOfPatternReason,
   PageRequest,
@@ -846,13 +848,38 @@ export class StatsPage implements HasUnsavedChanges {
     this.patchRow({ ...entry, ...input }, false);
     this.setSaveState(card, { status: 'saving', at: null, reason: null });
     this.store.enqueue(
-      this.repo.update(entry.id, input).pipe(
+      // Read when its turn comes : the save ahead in the queue moves the version.
+      defer(() =>
+        this.repo.update(entry.id, { ...input, version: this.store.latestVersion(entry) }),
+      ).pipe(
         tap((saved) => this.onSaved(saved, card)),
-        catchError(() => {
+        catchError((err: unknown) => {
+          if (isStaleWrite(err)) return this.reloadStale(entry, card);
           this.onSaveRefused(entry, card);
           return EMPTY;
         }),
       ),
+    );
+  }
+
+  /** Another tab wrote first (#864) : its row replaces this one, what was typed here is dropped. */
+  private reloadStale(entry: StatEntry, card: SheetCard): Observable<unknown> {
+    this.toasts.error(this.translate.instant('stats.snackbar.staleSave', { ticker: entry.ticker }));
+    return this.repo.findById(entry.id).pipe(
+      tap((fresh) => {
+        // Not `answered` : a save queued behind this one holds the old row, it must be refused too
+        // rather than overwrite the other tab with the fresh version.
+        this.patchRow(fresh, false);
+        if (this.completing()?.id === entry.id) {
+          this.premarket.set(premarketOf(fresh));
+          this.session.set(sessionOf(fresh));
+        }
+        this.setSaveState(card, { status: 'saved', at: fresh.updatedAt, reason: null });
+      }),
+      catchError(() => {
+        this.onSaveRefused(entry, card);
+        return EMPTY;
+      }),
     );
   }
 

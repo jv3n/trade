@@ -147,6 +147,7 @@ export interface StatEntry {
 
   createdAt: Date;
   updatedAt: Date;
+  version: number;
 }
 
 /** A trade of a stat, as the stats row and the trade sheet's header show it. */
@@ -173,7 +174,11 @@ export type StatEntryInput = Omit<
   | 'rejectionNote'
   | 'createdAt'
   | 'updatedAt'
+  | 'version'
 >;
+
+/** What a save sends : the row, and the version it was read at. */
+export type StatEntryUpdate = StatEntryInput & { version: number };
 
 /** Completion status a listing can be narrowed to. Mirrors the backend `StatStatus`. */
 export type StatStatus = 'TO_COMPLETE' | 'COMPLETED';

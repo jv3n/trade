@@ -10,6 +10,7 @@ import {
   StatEntry,
   StatEntryFilter,
   StatEntryInput,
+  StatEntryUpdate,
   StatRejectionReason,
   StatSummary,
 } from './stat-entry.model';
@@ -69,7 +70,7 @@ export abstract class StatsRepository {
    * session prices + flags). Foreign id → 404 ; (day, ticker) already taken → 409 ; clearing a
    * price of a completed stat → 400.
    */
-  abstract update(id: string, input: StatEntryInput): Observable<StatEntry>;
+  abstract update(id: string, input: StatEntryUpdate): Observable<StatEntry>;
 
   /**
    * Ticks the stat as completed, or back to "to complete" (#263). Ticking without the five session

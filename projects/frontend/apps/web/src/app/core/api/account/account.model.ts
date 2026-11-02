@@ -50,6 +50,7 @@ export interface AccountMovement {
   measuredGap: number | null;
   createdAt: Date;
   updatedAt: Date;
+  version: number;
 }
 
 /**
@@ -57,6 +58,8 @@ export interface AccountMovement {
  * DEPOSIT / WITHDRAWAL — the backend applies the sign from [type].
  */
 export interface AccountMovementInput {
+  /** The version an edited movement was read at. */
+  version?: number;
   type: AccountMovementType;
   amount: number;
   valueDate: Date;

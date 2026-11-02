@@ -187,11 +187,12 @@ describe('HttpStatsRepository', () => {
   });
 
   it('update sends the domain payload as the wire request', () => {
-    repo.update('stat-1', makeInput()).subscribe();
+    repo.update('stat-1', { ...makeInput(), version: 2 }).subscribe();
 
     const req = http.expectOne('/api/stats/stat-1');
     expect(req.request.method).toBe('PUT');
     expect(req.request.body).toEqual({
+      version: 2,
       tradeDate: '2026-09-17',
       pattern: 'GUS',
       ticker: 'KTTA',
@@ -409,6 +410,7 @@ describe('HttpStatsRepository', () => {
       rejectionNote: null,
       createdAt: '2026-09-17T12:00:00Z',
       updatedAt: '2026-09-17T21:00:00Z',
+      version: 0,
     };
   }
 

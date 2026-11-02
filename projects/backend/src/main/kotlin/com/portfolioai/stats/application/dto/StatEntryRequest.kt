@@ -68,4 +68,6 @@ data class StatEntryRequest(
   val dropNotRead: Boolean = false,
   /** Less than 20 % of the float held by institutions (#349). */
   val highInstitutions: Boolean = false,
+  /** The version this row was read at, on `PUT` : a stale one is a 409. */
+  val version: Long? = null,
 )

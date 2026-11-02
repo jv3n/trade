@@ -20,4 +20,6 @@ data class MovementRequest(
   val amount: BigDecimal,
   val valueDate: LocalDate,
   val note: String? = null,
+  /** The version this row was read at, on `PUT` : a stale one is a 409. */
+  val version: Long? = null,
 )

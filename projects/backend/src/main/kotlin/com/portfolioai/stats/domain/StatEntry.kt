@@ -9,6 +9,7 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
+import jakarta.persistence.Version
 import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDate
@@ -136,6 +137,9 @@ class StatEntry(
   @Column(name = "created_at", nullable = false, updatable = false)
   val createdAt: Instant = Instant.now(),
   @Column(name = "updated_at", nullable = false) var updatedAt: Instant = Instant.now(),
+
+  /** Null until persisted : it is how Spring Data tells a new row from one with an assigned id. */
+  @Version @Column(nullable = false) var version: Long? = null,
 ) {
 
   /** Ticked by its owner — "to complete" is its negation. */

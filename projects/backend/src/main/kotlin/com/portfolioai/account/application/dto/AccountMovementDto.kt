@@ -44,6 +44,7 @@ data class AccountMovementDto(
   val measuredGap: BigDecimal?,
   val createdAt: Instant,
   val updatedAt: Instant,
+  val version: Long,
 )
 
 fun AccountMovement.toDto(
@@ -66,4 +67,5 @@ fun AccountMovement.toDto(
     measuredGap = measuredGap,
     createdAt = createdAt,
     updatedAt = updatedAt,
+    version = version ?: 0,
   )
