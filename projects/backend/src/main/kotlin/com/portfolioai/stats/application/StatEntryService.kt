@@ -270,7 +270,8 @@ class StatEntryService(
    * onto a (day, ticker, pattern) the caller already has is a 409. A ticked stat keeps its tick but
    * can't lose a price : that is a 400, untick it first. Changing the pattern is a 400 : a GUS that
    * becomes a double top is a second stat (#434), and no other pattern is left to re-file to
-   * (#648).
+   * (#648). Changing the day or the ticker of a stat with trades is a 400 too : they would be left
+   * on another day or ticker than their stat (#865).
    */
   @Transactional
   fun update(id: UUID, request: StatEntryRequest): StatEntryDto {
@@ -281,6 +282,10 @@ class StatEntryService(
         "Stat ${entry.ticker} can't be re-filed from ${entry.pattern} to ${request.pattern} — " +
           "a GUS and a double top are two stats"
       )
+    }
+    val identityChanged = request.tradeDate != entry.tradeDate || ticker != entry.ticker
+    if (identityChanged && !tradeEntryService.tradeLinksByStat(listOf(id))[id].isNullOrEmpty()) {
+      throw badRequest("Stat ${entry.ticker} has trades — its day and ticker can't change")
     }
     requireFree(entry.user.id, request, ticker, ownId = entry.id)
     entry.fillFrom(request, ticker)

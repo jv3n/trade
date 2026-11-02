@@ -266,9 +266,9 @@ class TradeEntryService(
 
   /**
    * The stat link is not the client's to change : [TradeEntryRequest.statEntryId] is ignored. The
-   * pattern of a trade a stat holds is the stat's (#654) — changing it is a 400. A trade without a
-   * stat edited onto the day, ticker and pattern of one joins it (#734), as at creation ; a trade
-   * with a stat is never moved.
+   * pattern of a trade a stat holds is the stat's (#654) — changing it is a 400, and so is changing
+   * its day or ticker (#865). A trade without a stat edited onto the day, ticker and pattern of one
+   * joins it (#734), as at creation.
    */
   @Transactional
   fun update(id: UUID, request: TradeEntryRequest): TradeEntryDto {
@@ -278,8 +278,14 @@ class TradeEntryService(
       "The pattern of a trade with a stat is the stat's (${entry.pattern})"
     }
     requireNotFuture(request.tradeDate)
+    val ticker = request.ticker.trim().uppercase()
+    require(
+      entry.statEntryId == null || (request.tradeDate == entry.tradeDate && ticker == entry.ticker)
+    ) {
+      "The day and ticker of a trade with a stat are the stat's"
+    }
     entry.tradeDate = request.tradeDate
-    entry.ticker = request.ticker.trim().uppercase()
+    entry.ticker = ticker
     entry.pattern = pattern
     entry.realProfitDollars = request.realProfitDollars
     entry.note = request.note
