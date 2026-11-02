@@ -423,6 +423,8 @@ and the **cumulated duration** (the sum of the trades' durations — not time in
 trade may now contain a flat stretch). Average entry, average exit and P&L % stay : filled on a
 single-trade row and on each trade of an opened row, blank on a row carrying several. A single-trade
 row opens its sheet, as before ; a row with several opens onto its trades, each a link to its sheet.
+From the keyboard (#869), the first cell holds a button : the chevron of a row with several, and on
+a single-trade row an arrow that only shows on keyboard focus, so nothing changes under the mouse.
 Sorting, filtering and paging count rows, not trades ; the **CSV export stays one line per trade** —
 it is a dump the import reads back.
 

@@ -1,7 +1,7 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
-import { provideTranslateService } from '@ngx-translate/core';
+import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { Observable, of, Subject, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 
@@ -247,6 +247,48 @@ describe('JournalPage', () => {
     fixture.componentInstance.openRow(day);
     fixture.detectChanges();
     expect(el.querySelectorAll('[data-testid="trade-late-entry"]')).toHaveLength(1);
+  });
+
+  // #869 : a row only answered the mouse. The button also stops the click : on the row too, it would
+  // open a row of several and close it straight back.
+  describe('the row button', () => {
+    function rowButton(fixture: ComponentFixture<JournalPage>): HTMLButtonElement {
+      return (fixture.nativeElement as HTMLElement).querySelector(
+        'tr.journal-row button.row-open',
+      ) as HTMLButtonElement;
+    }
+
+    it('opens the sheet of a single-trade row, once', async () => {
+      nextPage = makePage([makeDay([makeTrade({ id: 'id-1' })])], 1);
+      const fixture = await render();
+      const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+      rowButton(fixture).click();
+
+      expect(navigate).toHaveBeenCalledOnce();
+      expect(navigate).toHaveBeenCalledWith(['/journal', 'id-1']);
+    });
+
+    it('opens a row of several trades and says so', async () => {
+      nextPage = makePage([makeDay([makeTrade({ id: 'id-1' }), makeTrade({ id: 'id-2' })])], 1);
+      const fixture = await render();
+      expect(rowButton(fixture).getAttribute('aria-expanded')).toBe('false');
+
+      rowButton(fixture).click();
+      fixture.detectChanges();
+
+      expect(rowButton(fixture).getAttribute('aria-expanded')).toBe('true');
+    });
+
+    it('is named after its ticker', async () => {
+      nextPage = makePage([makeDay([makeTrade({ ticker: 'SGBX' })])], 1);
+      TestBed.inject(TranslateService).setTranslation('en', {
+        journal: { actions: { openTrade: 'Open the {{ticker}} trade' } },
+      });
+      const fixture = await render();
+
+      expect(rowButton(fixture).getAttribute('aria-label')).toBe('Open the SGBX trade');
+    });
   });
 
   it('a row with no late trade carries no tag', async () => {

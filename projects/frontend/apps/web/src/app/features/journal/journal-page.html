@@ -273,7 +273,26 @@
             <th mat-header-cell *matHeaderCellDef></th>
             <td mat-cell *matCellDef="let d">
               @if (d.tradeCount > 1) {
-                <mat-icon>{{ isExpanded(d) ? 'expand_more' : 'chevron_right' }}</mat-icon>
+                <button
+                  type="button"
+                  class="row-open"
+                  [attr.aria-expanded]="isExpanded(d)"
+                  [attr.aria-label]="
+                    'journal.actions.showDayTrades' | translate: { ticker: d.ticker }
+                  "
+                  (click)="$event.stopPropagation(); openRow(d)"
+                >
+                  <mat-icon>{{ isExpanded(d) ? 'expand_more' : 'chevron_right' }}</mat-icon>
+                </button>
+              } @else {
+                <button
+                  type="button"
+                  class="row-open row-open--hidden"
+                  [attr.aria-label]="'journal.actions.openTrade' | translate: { ticker: d.ticker }"
+                  (click)="$event.stopPropagation(); openRow(d)"
+                >
+                  <mat-icon>arrow_forward</mat-icon>
+                </button>
               }
             </td>
           </ng-container>
