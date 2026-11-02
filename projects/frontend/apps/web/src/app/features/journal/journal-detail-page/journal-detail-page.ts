@@ -69,9 +69,12 @@ import { gapPercent, percentVsOpen, pmPushPercent } from '../../stats/stats.math
 
 /**
  * Editing buffer for one execution leg — `shares` / `price` are nullable while the user types
- * (empty input), `executedAt` is the `HH:mm` fill time of the broker statement.
+ * (empty input), `executedAt` is the `HH:mm` fill time of the broker statement. `key` identifies
+ * the row while it is edited ; it is its rank on load, not random, because the dirty check compares
+ * the draft to its baseline as JSON.
  */
 interface ExecRow {
+  key: number;
   kind: ExecutionKind;
   shares: number | null;
   price: number | null;
@@ -122,7 +125,8 @@ function draftOf(entry: TradeEntry): TradeDraft {
     executions: entry.executions
       .slice()
       .sort((a, b) => a.seq - b.seq)
-      .map((e) => ({
+      .map((e, key) => ({
+        key,
         kind: e.kind,
         shares: e.shares,
         price: e.price,
@@ -607,6 +611,7 @@ export class JournalDetailPage implements HasUnsavedChanges {
             executions: [
               ...d.executions,
               {
+                key: Math.max(-1, ...d.executions.map((e) => e.key)) + 1,
                 kind: this.remainingShares() > 0 ? 'EXIT' : 'ENTRY',
                 shares: null,
                 price: null,

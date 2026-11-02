@@ -245,7 +245,7 @@
             <p class="muted">{{ 'journal.detail.noExecutions' | translate }}</p>
           }
 
-          @for (exec of d.executions; track $index) {
+          @for (exec of d.executions; track exec.key) {
             <div class="execution-row">
               <mat-form-field appearance="outline" subscriptSizing="dynamic" class="exec-time">
                 <mat-label>{{ 'journal.fields.executedAt' | translate }}</mat-label>
