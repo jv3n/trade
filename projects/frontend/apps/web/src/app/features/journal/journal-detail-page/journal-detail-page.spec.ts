@@ -496,6 +496,35 @@ describe('JournalDetailPage', () => {
     expect(page.draft()?.errorNote).toBe('');
   });
 
+  // Tracked on `$index`, removing a row reused the inputs of the next one, and the focus landed on
+  // the wrong row (#867).
+  it('keeps the inputs of the next execution when a row above is removed', async () => {
+    findById = vi.fn(() => of(closedTrade()));
+    const fixture = setup();
+    await settle(fixture);
+    const rows = (): HTMLElement[] =>
+      Array.from(fixture.nativeElement.querySelectorAll('.execution-row'));
+    const next = rows()[1];
+
+    fixture.componentInstance.removeExecution(0);
+    await settle(fixture);
+
+    expect(rows()[0]).toBe(next);
+  });
+
+  it('reads as clean again once an added execution is removed, the row key included', async () => {
+    findById = vi.fn(() => of(closedTrade()));
+    const fixture = setup();
+    await settle(fixture);
+    const page = fixture.componentInstance;
+
+    page.addExecution();
+    expect(page.dirty()).toBe(true);
+
+    page.removeExecution(closedTrade().executions.length);
+    expect(page.dirty()).toBe(false);
+  });
+
   // Seen on staging (#331) : the API sends `09:38:00`, the time input hands back `09:38` once
   // touched — re-picking the same fill time raised the save bar and the leave confirmation.
   it('shows fill times without seconds, and re-picking the same one leaves the trade clean', async () => {
