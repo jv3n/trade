@@ -1,21 +1,9 @@
 {
   "common": {
     "loading": "Chargement…",
-    "loadingDots": "Chargement...",
     "cancel": "Annuler",
-    "retry": "Réessayer",
-    "noData": "—",
     "resetField": "Vider le champ",
     "preferenceSaveError": "La préférence n'a pas pu être enregistrée. Réessaie.",
-    "instrumentLabel": {
-      "STOCK": "Action",
-      "ETF": "ETF",
-      "INDEX": "Indice",
-      "OTHER": "Autre",
-      "CRYPTO": "Crypto",
-      "BOND": "Obligation",
-      "COMMODITY": "Matière première"
-    },
     "confirmLeave": {
       "title": "Quitter sans enregistrer ?",
       "message": "Tes modifications ne sont pas enregistrées : elles seront perdues.",
@@ -170,7 +158,6 @@
       "duplicateTicker": "Déjà saisi ce jour-là"
     },
     "fields": {
-      "pattern": "Pattern",
       "ticker": "Ticker",
       "previousClose": "Clôture veille ($)",
       "previousCloseShort": "Clôture veille",
@@ -487,7 +474,6 @@
     },
     "searchPlaceholder": "Rechercher un ticker…",
     "filterPanel": {
-      "period": "Période",
       "statusAll": "Tout statut",
       "allPatterns": "Tous les patterns",
       "entryAll": "Toutes entrées",
@@ -506,23 +492,17 @@
       "confirm": "Supprimer le trade"
     },
     "errors": {
-      "load": "Impossible de charger le journal. Réessaye.",
-      "save": "Impossible d'enregistrer le trade. Réessaye.",
-      "delete": "Impossible de supprimer le trade. Réessaye."
+      "load": "Impossible de charger le journal. Réessaye."
     },
     "fields": {
       "tradeDate": "Date",
       "ticker": "Ticker",
       "direction": "Sens",
       "pattern": "Pattern",
-      "size": "Taille (actions)",
       "openPrice": "Prix d'entrée moyen",
       "exitPrice": "Prix de sortie moyen",
-      "profitDollars": "Profit calculé ($ US)",
-      "realProfitDollars": "Profit réel ($ US)",
       "retainedProfitDollars": "P&L retenu ($ US)",
       "gainPercent": "Gain (%)",
-      "durationMinutes": "Durée",
       "executionKind": "Type",
       "executedAt": "Heure",
       "shares": "Actions",
@@ -539,8 +519,6 @@
     },
     "enums": {
       "status": {
-        "OPEN": "Ouvert",
-        "CLOSED": "Fermé",
         "PROFITABLE": "Gagnant",
         "LOSING": "Perdant"
       },
@@ -563,7 +541,6 @@
       }
     },
     "actions": {
-      "edit": "Modifier",
       "delete": "Supprimer",
       "newTrade": "Trade"
     },
@@ -752,7 +729,6 @@
       "title": "Séance",
       "hint": "à remplir au fil de la journée · chaque champ s'enregistre à la sortie · les % se calculent vs l'open",
       "percentBase": "base des %",
-      "hodBelowLod": "Le HOD est sous le LOD",
       "progress": "{{filled}} / {{total}} prix saisis",
       "close": "Fermer",
       "percentBaseWithHold": "base des % · tenue {{hold}} % · cumul {{cumulative}} %",

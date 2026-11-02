@@ -108,12 +108,6 @@ class AccountReconciliationService(
    * Cancels a morning : the reconciliation row **and** the `ADJUSTMENT` it produced go together,
    * and the balance goes back where it stood before it (#249).
    *
-   * `V18` made the FK `ON DELETE SET NULL` so a correction removed on its own leaves the morning in
-   * the history — *"it happened, and the history says so"*. That reasoning holds for a morning that
-   * really was reconciled ; it does not for a mistyped figure, where the point is that the morning
-   * never happened as recorded. Hence a cancellation that removes both, rather than one that breaks
-   * the link between them.
-   *
    * The correction goes through [AccountService.delete] rather than the repository, so its removal
    * is absorbed like any other : by the next reconciled morning if there is one, by the balance
    * otherwise.

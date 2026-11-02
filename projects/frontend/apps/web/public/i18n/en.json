@@ -1,21 +1,9 @@
 {
   "common": {
     "loading": "Loading…",
-    "loadingDots": "Loading...",
     "cancel": "Cancel",
-    "retry": "Retry",
-    "noData": "—",
     "resetField": "Clear the field",
     "preferenceSaveError": "The preference could not be saved. Try again.",
-    "instrumentLabel": {
-      "STOCK": "Stock",
-      "ETF": "ETF",
-      "INDEX": "Index",
-      "OTHER": "Other",
-      "CRYPTO": "Crypto",
-      "BOND": "Bond",
-      "COMMODITY": "Commodity"
-    },
     "confirmLeave": {
       "title": "Leave without saving?",
       "message": "Your changes are not saved: they will be lost.",
@@ -170,7 +158,6 @@
       "duplicateTicker": "Already captured that day"
     },
     "fields": {
-      "pattern": "Pattern",
       "ticker": "Ticker",
       "previousClose": "Previous close ($)",
       "previousCloseShort": "Prev. close",
@@ -487,7 +474,6 @@
     },
     "searchPlaceholder": "Search ticker…",
     "filterPanel": {
-      "period": "Period",
       "statusAll": "Any status",
       "allPatterns": "All patterns",
       "entryAll": "Any entry",
@@ -506,23 +492,17 @@
       "confirm": "Delete the trade"
     },
     "errors": {
-      "load": "Couldn't load the journal. Please retry.",
-      "save": "Couldn't save the trade. Please retry.",
-      "delete": "Couldn't delete the trade. Please retry."
+      "load": "Couldn't load the journal. Please retry."
     },
     "fields": {
       "tradeDate": "Date",
       "ticker": "Ticker",
       "direction": "Direction",
       "pattern": "Pattern",
-      "size": "Size (shares)",
       "openPrice": "Avg entry price",
       "exitPrice": "Avg exit price",
-      "profitDollars": "Computed profit (USD)",
-      "realProfitDollars": "Real profit (USD)",
       "retainedProfitDollars": "Retained P&L (USD)",
       "gainPercent": "Gain (%)",
-      "durationMinutes": "Duration",
       "executionKind": "Type",
       "executedAt": "Time",
       "shares": "Shares",
@@ -539,8 +519,6 @@
     },
     "enums": {
       "status": {
-        "OPEN": "Open",
-        "CLOSED": "Closed",
         "PROFITABLE": "Profitable",
         "LOSING": "Losing"
       },
@@ -563,7 +541,6 @@
       }
     },
     "actions": {
-      "edit": "Edit",
       "delete": "Delete",
       "newTrade": "Trade"
     },
@@ -752,7 +729,6 @@
       "title": "Session",
       "hint": "fill it as the day goes · each field saves when you leave it · the percentages compute vs the open",
       "percentBase": "base of the percentages",
-      "hodBelowLod": "HOD is below the LOD",
       "progress": "{{filled}} / {{total}} prices in",
       "close": "Close",
       "percentBaseWithHold": "base of the percentages · hold {{hold}} % · cumulative {{cumulative}} %",
