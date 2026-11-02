@@ -24,8 +24,7 @@ import java.util.UUID
  *
  * [correctionId] points at the `ADJUSTMENT` this morning produced, and is null on a clean morning —
  * which is exactly what this table exists for : before it, a gap-free reconciliation left no trace
- * at all. It also goes back to null if that movement is later deleted (`ON DELETE SET NULL`) : the
- * reconciliation still happened.
+ * at all.
  */
 @Entity
 @Table(name = "account_reconciliation")
