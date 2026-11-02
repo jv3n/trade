@@ -136,7 +136,7 @@
             </div>
             <div class="field">
               <label>Écart</label>
-              <div class="input gain" id="reco-gap" style="background: transparent" data-group="load" data-value="ok">0,00 ✓</div>
+              <div class="input muted" id="reco-gap" style="background: transparent" data-group="load" data-value="ok">0,00 ✓</div>
               <div class="input muted" style="background: transparent" data-group="load" data-value="failed" hidden>—</div>
             </div>
             <div class="field actions" data-group="load" data-value="failed" hidden>
@@ -426,7 +426,7 @@
           btn.disabled = false;
           if (gap === 0) {
             out.textContent = '0,00 ✓';
-            out.className = 'input gain';
+            out.className = 'input muted';
             btn.textContent = 'Valider le rapprochement';
             hint.textContent = 'Aucun écart : le rapprochement est simplement horodaté.';
           } else if (Math.abs(gap) > 0.2 * appBalance) {

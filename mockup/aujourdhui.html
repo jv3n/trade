@@ -45,6 +45,11 @@
         background: var(--warn);
       }
 
+      /* #866 : le marché ouvert est un statut, pas un résultat : indigo, pas vert. */
+      .market-pill.open i {
+        background: var(--accent);
+      }
+
       /* Déroulé de la journée : une étape par ligne, reliées par un trait vertical. */
       .steps {
         list-style: none;
@@ -95,10 +100,11 @@
         z-index: 1;
       }
 
+      /* #866 : une étape faite est un statut : indigo, plein, sans le halo de l'étape en cours. */
       .step.done .step-dot {
         border-color: transparent;
-        background: var(--gain-soft);
-        color: var(--gain);
+        background: var(--accent-soft);
+        color: var(--accent);
       }
 
       /* #407 : « rien aujourd'hui » — un statut, pas un résultat : neutre, jamais vert. */
@@ -491,7 +497,7 @@
                 <div class="label">Solde</div>
                 <div class="value">27 359,95 $ US</div>
                 <div class="sub" data-group="moment" data-value="matin"><span style="color: var(--warn)">à rapprocher ce matin</span></div>
-                <div class="sub" data-group="moment" data-value="soir" hidden>rapproché ce matin <span class="icon icon-sm gain">check</span></div>
+                <div class="sub" data-group="moment" data-value="soir" hidden>rapproché ce matin <span class="icon icon-sm" style="color: var(--accent)">check</span></div>
               </div>
               <dl class="kv" style="margin-top: 14px">
                 <dt>P&amp;L du jour</dt>
@@ -592,7 +598,7 @@
           btn.disabled = false;
           if (gap === 0) {
             out.textContent = '0,00 ✓';
-            out.className = 'input gain';
+            out.className = 'input muted';
             btn.textContent = 'Valider';
             hint.textContent = 'Aucun écart : le rapprochement sera simplement horodaté.';
           } else {

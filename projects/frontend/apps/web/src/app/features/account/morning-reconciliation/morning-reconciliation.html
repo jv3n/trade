@@ -108,7 +108,7 @@
       <span class="history__item">
         {{ r.valueDate | date: 'shortDate' }}
         @if (r.gap === 0) {
-          <span class="pos">✓</span>
+          <span>✓</span>
         } @else {
           <span [class.pos]="r.gap > 0" [class.neg]="r.gap < 0">
             {{ r.gap | number: '1.2-2' }}
