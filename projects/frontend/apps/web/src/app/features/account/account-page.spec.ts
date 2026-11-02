@@ -2,7 +2,7 @@ import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { provideTranslateService, TranslateService } from '@ngx-translate/core';
-import { of, Subject, throwError } from 'rxjs';
+import { of, Subject, tap, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { MatDialog, provideNativeDateAdapter, StbToast } from '@portfolioai/ui';
@@ -55,6 +55,7 @@ describe('AccountPage', () => {
   let page: PagedResult<AccountMovement>;
   let locates: { create: ReturnType<typeof vi.fn>; delete: ReturnType<typeof vi.fn> };
   let dialogOpen: ReturnType<typeof vi.fn>;
+  let saveCurrency: ReturnType<typeof vi.fn>;
 
   /** Renders once the summary, the series and the movements have answered — a tick after the call. */
   async function render(): Promise<ComponentFixture<AccountPage>> {
@@ -79,6 +80,7 @@ describe('AccountPage', () => {
       delete: vi.fn(() => of(undefined)),
     };
     dialogOpen = vi.fn();
+    saveCurrency = vi.fn(() => of(undefined));
 
     await TestBed.configureTestingModule({
       imports: [AccountPage],
@@ -113,7 +115,7 @@ describe('AccountPage', () => {
           useValue: {
             supported: ['USD', 'CAD'] as const,
             currency: signal('USD' as const),
-            set: vi.fn(),
+            set: saveCurrency,
           },
         },
         { provide: ConfirmService, useValue: { ask: () => of(true) } },
@@ -260,6 +262,32 @@ describe('AccountPage', () => {
 
     const balances = fixture.componentInstance.movements().map((m) => m.balanceAfter);
     expect(balances).toEqual([1041.85, 1291.85]);
+  });
+
+  /**
+   * #843 : the service hands back a cold Observable, so the page has to subscribe. It once did not,
+   * and the toggle looked alive while no request ever left.
+   */
+  describe('display currency', () => {
+    it('saves the picked currency', async () => {
+      const fixture = await render();
+      const saved = vi.fn();
+      saveCurrency.mockReturnValue(of(undefined).pipe(tap(saved)));
+
+      fixture.componentInstance.setCurrency('CAD');
+
+      expect(saveCurrency).toHaveBeenCalledWith('CAD');
+      expect(saved).toHaveBeenCalledOnce();
+    });
+
+    it('says so when the currency could not be saved', async () => {
+      const fixture = await render();
+      saveCurrency.mockReturnValue(throwError(() => new Error('down')));
+
+      fixture.componentInstance.setCurrency('CAD');
+
+      expect(TestBed.inject(StbToast).error).toHaveBeenCalledOnce();
+    });
   });
 
   /**
