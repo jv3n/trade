@@ -1322,3 +1322,18 @@ table.breakdown tr.total td {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* #869 : a table row opens from the keyboard. On a single-trade row the button only shows on
+   keyboard focus, so nothing changes under the mouse. */
+.row-open {
+  display: inline-flex;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.row-open--hidden:not(:focus-visible) {
+  opacity: 0;
+}

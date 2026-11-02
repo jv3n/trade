@@ -38,6 +38,21 @@
   cursor: pointer;
 }
 
+// The row's way in from the keyboard (#869). On a single-trade row it only shows on keyboard focus :
+// nothing changes under the mouse.
+.row-open {
+  display: inline-flex;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+
+  &--hidden:not(:focus-visible) {
+    opacity: 0;
+  }
+}
+
 // ---- One row per ticker and day (#500) ----
 
 .partial {

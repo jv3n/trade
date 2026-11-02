@@ -542,7 +542,9 @@
     },
     "actions": {
       "delete": "Supprimer",
-      "newTrade": "Trade"
+      "newTrade": "Trade",
+      "openTrade": "Ouvrir le trade {{ticker}}",
+      "showDayTrades": "Afficher les trades {{ticker}} du jour"
     },
     "newTrade": {
       "title": "Nouveau trade",
