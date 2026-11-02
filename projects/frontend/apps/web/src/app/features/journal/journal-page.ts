@@ -47,6 +47,7 @@ import {
   TradeEntryFilter,
   TradeStatus,
 } from '../../core/api/journal/trade-entry.model';
+import { tradeRefusalKey } from '../../core/api/journal/trade-refusal';
 import { PATTERNS, Pattern } from '../../core/api/shared/pattern.model';
 import { StatsRepository } from '../../core/api/stats/stats.repository';
 import { ConfirmService } from '../../core/app-state/confirm.service';
@@ -386,8 +387,10 @@ export class JournalPage {
               );
               this.openDetail(created);
             }),
-            catchError(() => {
-              this.toasts.error(this.translate.instant('journal.snackbar.createError'));
+            catchError((error: unknown) => {
+              this.toasts.error(
+                this.translate.instant(tradeRefusalKey(error) ?? 'journal.snackbar.createError'),
+              );
               return EMPTY;
             }),
           ),

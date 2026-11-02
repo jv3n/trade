@@ -640,6 +640,15 @@
       "deleteSuccess": "Trade {{ticker}} supprimé.",
       "deleteError": "Échec de la suppression du trade. Réessaie."
     },
+    "refused": {
+      "futureDate": "Un trade ne peut pas être daté dans le futur.",
+      "noEntry": "Une position a besoin d'au moins une entrée.",
+      "exitsExceedEntries": "Les sorties dépassent les entrées.",
+      "exitBeforeEntry": "Une position ne peut pas sortir avant sa première entrée.",
+      "realPnlNeedsClosedPosition": "Le P&L broker ne se saisit qu'une fois la position clôturée.",
+      "statOwnsPattern": "Le pattern de ce trade vient de sa stat.",
+      "statOwnsDayAndTicker": "Le jour et le ticker de ce trade viennent de sa stat."
+    },
     "confirmEraseReal": {
       "title": "Effacer le P&L broker ?",
       "message": "La position n'est plus clôturée : le P&L broker de {{amount}} $ US est effacé et ne compte plus au compte.",

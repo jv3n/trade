@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
@@ -453,6 +454,38 @@ describe('JournalDetailPage', () => {
       variant: 'danger',
     });
     expect(update).not.toHaveBeenCalled();
+  });
+
+  it('shows why the backend refused a save', async () => {
+    findById = vi.fn(() => of(closedTrade()));
+    update = vi.fn(() =>
+      throwError(
+        () => new HttpErrorResponse({ status: 400, error: { code: 'EXIT_BEFORE_ENTRY' } }),
+      ),
+    );
+    const fixture = setup();
+    await settle(fixture);
+    const page = fixture.componentInstance;
+    page.setErrorNote('Covered the second half too early.');
+
+    page.save();
+    await settle(fixture);
+
+    expect(TestBed.inject(StbToast).error).toHaveBeenCalledWith('journal.refused.exitBeforeEntry');
+  });
+
+  it('keeps the generic toast when a save fails with no reason', async () => {
+    findById = vi.fn(() => of(closedTrade()));
+    update = vi.fn(() => throwError(() => new HttpErrorResponse({ status: 500 })));
+    const fixture = setup();
+    await settle(fixture);
+    const page = fixture.componentInstance;
+    page.setErrorNote('Covered the second half too early.');
+
+    page.save();
+    await settle(fixture);
+
+    expect(TestBed.inject(StbToast).error).toHaveBeenCalledWith('journal.snackbar.updateError');
   });
 
   it('disables the broker P&L field until the position is closed', async () => {

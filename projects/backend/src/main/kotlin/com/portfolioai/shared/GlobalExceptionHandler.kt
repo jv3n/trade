@@ -44,6 +44,11 @@ class GlobalExceptionHandler {
     ResponseEntity.status(HttpStatus.BAD_REQUEST)
       .body(mapOf("error" to (ex.message ?: "Bad request")))
 
+  @ExceptionHandler(RefusedWriteException::class)
+  fun handleRefusedWrite(ex: RefusedWriteException): ResponseEntity<Map<String, String>> =
+    ResponseEntity.status(HttpStatus.BAD_REQUEST)
+      .body(mapOf("error" to ex.message.orEmpty(), "code" to ex.code.name))
+
   /**
    * An external upstream service (today : the Frankfurter FX rate API) rate-limited, unreachable,
    * 5xx or auth-failed. Surfaced as HTTP 503 so the UI can differentiate from a generic 500 and

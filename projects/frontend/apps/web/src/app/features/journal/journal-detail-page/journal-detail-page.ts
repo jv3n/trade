@@ -46,6 +46,7 @@ import {
   TradeEntryInput,
   TradeExecutionInput,
 } from '../../../core/api/journal/trade-entry.model';
+import { tradeRefusalKey } from '../../../core/api/journal/trade-refusal';
 import { Locate } from '../../../core/api/locates/locates.model';
 import { LocatesRepository } from '../../../core/api/locates/locates.repository';
 import { PATTERNS, Pattern } from '../../../core/api/shared/pattern.model';
@@ -699,8 +700,10 @@ export class JournalDetailPage implements HasUnsavedChanges {
             this.translate.instant(`journal.snackbar.${key}`, { ticker: saved.ticker }),
           );
         }),
-        catchError(() => {
-          this.toasts.error(this.translate.instant('journal.snackbar.updateError'));
+        catchError((error: unknown) => {
+          this.toasts.error(
+            this.translate.instant(tradeRefusalKey(error) ?? 'journal.snackbar.updateError'),
+          );
           return EMPTY;
         }),
         finalize(() => this.saving.set(false)),
