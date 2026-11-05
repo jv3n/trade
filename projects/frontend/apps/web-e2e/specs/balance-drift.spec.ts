@@ -102,7 +102,11 @@ test('deleting a trade and re-creating it from its stat is a round trip', async 
 test('a closed month stays closed when a later row is edited', async ({ api, page }) => {
   const lastMonth = lastMonthOn(15);
   await deposit(api, START, lastMonthOn(10));
-  await api.post('/api/account/reconciliations', { brokerBalance: 9987.6, valueDate: lastMonth });
+  await api.post('/api/account/reconciliations', {
+    brokerBalance: 9987.6,
+    valueDate: lastMonth,
+    expectedBalance: START,
+  });
   await deposit(api, 1000, isoToday(), 'Virement du jour');
   await openAccount(page);
   // Clean : the closed month's correction is the only one a re-float could reach.

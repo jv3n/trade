@@ -70,7 +70,7 @@ class AccountReconciliationService(
     val balance = movements.balanceFor(user.id)
     // A stale page sees no gap, so no confirmation, and its figure would book a correction undoing
     // whatever moved the balance since : a trade saved in another tab (#839).
-    if (request.expectedBalance != null && !sameCents(request.expectedBalance, balance)) {
+    if (!sameCents(request.expectedBalance, balance)) {
       throw ResponseStatusException(HttpStatus.CONFLICT, "The balance moved — reload the page")
     }
     val existing = repo.findByUserIdAndValueDate(user.id, request.valueDate)

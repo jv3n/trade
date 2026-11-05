@@ -134,7 +134,13 @@ class AccountLocateSyncIntegrationTest {
       MovementRequest(AccountMovementType.DEPOSIT, BigDecimal("1000.00"), DAY.minusDays(1))
     )
     val morning =
-      reconciliationService.reconcile(ReconciliationRequest(BigDecimal("950.00"), DAY.plusDays(1)))
+      reconciliationService.reconcile(
+        ReconciliationRequest(
+          BigDecimal("950.00"),
+          DAY.plusDays(1),
+          expectedBalance = accountService.summary(AccountMovementFilter()).balance,
+        )
+      )
 
     locates.create(locateOn(shares = 1000, price = "0.05"))
 

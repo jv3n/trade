@@ -25,8 +25,13 @@ import org.junit.jupiter.api.Test
 import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.test.context.bean.override.mockito.MockitoBean
+import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.web.server.ResponseStatusException
 
 /**
@@ -42,12 +47,16 @@ import org.springframework.web.server.ResponseStatusException
  * - **One row per morning** — re-settling the same day overwrites the decision instead of stacking
  *   two lines, and the second pass compares against the balance as it stands then.
  * - **The history reads latest-first** and never crosses tenants.
+ * - **A morning is settled on the balance the page showed** — one that has moved since is a 409,
+ *   and a request that sends none, the old bundle of a stale page, is refused (#856).
  *
  * `AuthService` is mocked so the user scope is deterministic (mirrors [AccountIntegrationTest]).
  */
 @SpringBootTest
+@AutoConfigureMockMvc(addFilters = false)
 class MorningReconciliationIntegrationTest {
 
+  @Autowired private lateinit var mvc: MockMvc
   @Autowired private lateinit var service: AccountReconciliationService
   @Autowired private lateinit var accountService: AccountService
   @Autowired private lateinit var movements: AccountMovementRepository
@@ -71,7 +80,7 @@ class MorningReconciliationIntegrationTest {
   fun `a gap-free morning is timestamped and moves nothing`() {
     accountService.addMovement(deposit("1000.00"))
 
-    val settled = service.reconcile(ReconciliationRequest(BigDecimal("1000.00"), MONDAY))
+    val settled = settle("1000.00", MONDAY)
 
     assertEquals(0, BigDecimal.ZERO.compareTo(settled.gap), "the two figures agree")
     assertNull(settled.correctionId, "nothing to correct")
@@ -101,6 +110,22 @@ class MorningReconciliationIntegrationTest {
   }
 
   @Test
+  fun `a reconciliation without the balance the page showed is a 400 and writes nothing`() {
+    accountService.addMovement(deposit("1000.00"))
+
+    mvc
+      .perform(
+        post("/api/account/reconciliations")
+          .contentType(MediaType.APPLICATION_JSON)
+          .content("""{ "brokerBalance": 987.60, "valueDate": "$MONDAY" }""")
+      )
+      .andExpect(status().isBadRequest)
+
+    assertEquals(1, movements.findByUserId(testUser.id).size, "only the deposit — no correction")
+    assertNull(repo.findByUserIdAndValueDate(testUser.id, MONDAY), "the morning is not settled")
+  }
+
+  @Test
   fun `the balance the page showed settles the morning, whatever its scale`() {
     accountService.addMovement(deposit("1000.00"))
 
@@ -119,7 +144,7 @@ class MorningReconciliationIntegrationTest {
 
     val ex =
       assertThrows(ResponseStatusException::class.java) {
-        service.reconcile(ReconciliationRequest(BigDecimal("-999999999"), MONDAY))
+        settle("-999999999", MONDAY)
       }
 
     assertEquals(400, ex.statusCode.value())
@@ -132,7 +157,7 @@ class MorningReconciliationIntegrationTest {
     accountService.addMovement(deposit("1000.00"))
 
     // TradeZero shows 987.60 : 12.40 of borrow fees the app never saw.
-    val settled = service.reconcile(ReconciliationRequest(BigDecimal("987.60"), MONDAY))
+    val settled = settle("987.60", MONDAY)
 
     assertEquals(0, BigDecimal("-12.40").compareTo(settled.gap))
     assertEquals(0, BigDecimal("1000.00").compareTo(settled.appBalance), "the figures compared")
@@ -150,10 +175,10 @@ class MorningReconciliationIntegrationTest {
   @Test
   fun `re-settling the same morning overwrites it instead of stacking a second line`() {
     accountService.addMovement(deposit("1000.00"))
-    service.reconcile(ReconciliationRequest(BigDecimal("987.60"), MONDAY)) // typo : 12.40 too low
+    settle("987.60", MONDAY) // typo : 12.40 too low
 
     // Read the statement again : it actually says 995.00.
-    val corrected = service.reconcile(ReconciliationRequest(BigDecimal("995.00"), MONDAY))
+    val corrected = settle("995.00", MONDAY)
 
     assertEquals(1, service.history(10).size, "one morning, one row")
     assertEquals(
@@ -170,10 +195,10 @@ class MorningReconciliationIntegrationTest {
   @Test
   fun `re-settling after a row of that day was typed measures the gap without it`() {
     accountService.addMovement(deposit("1000.00"))
-    service.reconcile(ReconciliationRequest(BigDecimal("987.60"), MONDAY)) // −12.40
+    settle("987.60", MONDAY) // −12.40
     accountService.addMovement(deposit("100.00")) // dated that same Monday, typed in between
 
-    val settled = service.reconcile(ReconciliationRequest(BigDecimal("1095.00"), MONDAY))
+    val settled = settle("1095.00", MONDAY)
 
     assertEquals(0, BigDecimal("1100.00").compareTo(settled.appBalance), "1 000 + 100")
     assertEquals(0, BigDecimal("-5.00").compareTo(settled.gap), "not 1 095 − 1 000 = +95")
@@ -189,11 +214,11 @@ class MorningReconciliationIntegrationTest {
   @Test
   fun `a morning re-settled on the same figure keeps its correction, not a clean tick`() {
     accountService.addMovement(deposit("1000.00"))
-    val corrected = service.reconcile(ReconciliationRequest(BigDecimal("987.60"), MONDAY))
+    val corrected = settle("987.60", MONDAY)
     assertNotNull(corrected.correctionId)
 
     // Same figure again : the balance already sits there, nothing more to absorb.
-    val settled = service.reconcile(ReconciliationRequest(BigDecimal("987.60"), MONDAY))
+    val settled = settle("987.60", MONDAY)
 
     assertEquals(0, BigDecimal("-12.40").compareTo(settled.gap), "the morning still cost 12.40")
     assertEquals(corrected.correctionId, settled.correctionId, "its line is still in the ledger")
@@ -207,9 +232,9 @@ class MorningReconciliationIntegrationTest {
   @Test
   fun `the history reads latest-first, clean and corrected mornings alike`() {
     accountService.addMovement(deposit("1000.00"))
-    service.reconcile(ReconciliationRequest(BigDecimal("1000.00"), MONDAY))
-    service.reconcile(ReconciliationRequest(BigDecimal("980.00"), TUESDAY)) // −20
-    service.reconcile(ReconciliationRequest(BigDecimal("980.00"), WEDNESDAY))
+    settle("1000.00", MONDAY)
+    settle("980.00", TUESDAY) // −20
+    settle("980.00", WEDNESDAY)
 
     val history = service.history(10)
 
@@ -222,7 +247,7 @@ class MorningReconciliationIntegrationTest {
   fun `the history never crosses tenants`() {
     val other = saveUser("other")
     whenever(authService.getCurrentUser()).thenReturn(other)
-    service.reconcile(ReconciliationRequest(BigDecimal("500.00"), MONDAY))
+    settle("500.00", MONDAY)
 
     whenever(authService.getCurrentUser()).thenReturn(testUser)
 
@@ -243,7 +268,7 @@ class MorningReconciliationIntegrationTest {
   fun `cancelling a morning removes its correction and puts the balance back`() {
     accountService.addMovement(deposit("1000.00"))
     // A fat-fingered broker balance : 9 870 instead of 987.
-    val settled = service.reconcile(ReconciliationRequest(BigDecimal("9870.00"), MONDAY))
+    val settled = settle("9870.00", MONDAY)
     assertNotNull(settled.correctionId)
     assertEquals(
       0,
@@ -263,10 +288,10 @@ class MorningReconciliationIntegrationTest {
   @Test
   fun `the same morning can be settled again right after being cancelled`() {
     accountService.addMovement(deposit("1000.00"))
-    val mistyped = service.reconcile(ReconciliationRequest(BigDecimal("9870.00"), MONDAY))
+    val mistyped = settle("9870.00", MONDAY)
 
     service.cancel(mistyped.id)
-    val corrected = service.reconcile(ReconciliationRequest(BigDecimal("987.60"), MONDAY))
+    val corrected = settle("987.60", MONDAY)
 
     assertEquals(1, service.history(10).size)
     // The gap is measured from the untouched balance, not from the cancelled morning's figure.
@@ -285,7 +310,7 @@ class MorningReconciliationIntegrationTest {
   @Test
   fun `deleting the correction on its own takes its morning with it`() {
     accountService.addMovement(deposit("1000.00"))
-    val settled = service.reconcile(ReconciliationRequest(BigDecimal("987.60"), MONDAY))
+    val settled = settle("987.60", MONDAY)
 
     accountService.delete(settled.correctionId!!)
 
@@ -299,7 +324,7 @@ class MorningReconciliationIntegrationTest {
   @Test
   fun `cancelling a clean morning leaves the balance alone`() {
     accountService.addMovement(deposit("1000.00"))
-    val clean = service.reconcile(ReconciliationRequest(BigDecimal("1000.00"), MONDAY))
+    val clean = settle("1000.00", MONDAY)
     assertNull(clean.correctionId)
 
     service.cancel(clean.id)
@@ -310,6 +335,16 @@ class MorningReconciliationIntegrationTest {
       BigDecimal("1000.00").compareTo(accountService.summary(AccountMovementFilter()).balance),
     )
   }
+
+  /** Settles [date] as the page does, sending the balance it shows. */
+  private fun settle(brokerBalance: String, date: LocalDate) =
+    service.reconcile(
+      ReconciliationRequest(
+        BigDecimal(brokerBalance),
+        date,
+        expectedBalance = accountService.summary(AccountMovementFilter()).balance,
+      )
+    )
 
   private fun saveUser(prefix: String) =
     userRepository.save(
