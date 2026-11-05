@@ -338,7 +338,13 @@ class AccountTradeSyncIntegrationTest {
     )
 
   private fun morning(brokerBalance: String, date: LocalDate): ReconciliationDto =
-    reconciliationService.reconcile(ReconciliationRequest(BigDecimal(brokerBalance), date))
+    reconciliationService.reconcile(
+      ReconciliationRequest(
+        BigDecimal(brokerBalance),
+        date,
+        expectedBalance = accountService.summary(AccountMovementFilter()).balance,
+      )
+    )
 
   /** The morning's correction amount as it stands now, 0 on a clean morning. */
   private fun correctionOf(morning: ReconciliationDto): BigDecimal =
