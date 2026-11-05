@@ -3,7 +3,7 @@
 > **Shorter** un titre qui a fortement monté en intraday, s'est fait rejeter, et revient tester son
 > high. Le pari : le deuxième test échoue, parce que le rejet a convaincu le marché que le top est fait.
 
-*Dernière révision : 2026-10-27 (le Sink est le bas de la première chute ; ce que propose le scanner, #776) ; 2026-10-13 (les points nommés BARES, #716) ; 2026-10-12 (la chute mesurée, #706) ; 2026-09-25, d'après la séance du Trading Desk du 14 septembre, « Les Patterns ».*
+*Dernière révision : 2026-11-05 (l'Echo du scanner sous 25 min, #885) ; 2026-10-27 (le Sink est le bas de la première chute ; ce que propose le scanner, #776) ; 2026-10-13 (les points nommés BARES, #716) ; 2026-10-12 (la chute mesurée, #706) ; 2026-09-25, d'après la séance du Trading Desk du 14 septembre, « Les Patterns ».*
 
 ---
 
@@ -60,11 +60,11 @@ négatif ne se voit jamais. Chaque jambe est une cible ± une tolérance, dans s
 |-------|-------|-------|
 | **A** — Base → Apex | 40–200 % | ≤ 60 min |
 | **R** — sous l'Apex | 15–32 % | ≤ 30 min |
-| **E** — Rejection → Echo | 15–40 % | ≤ 60 min |
+| **E** — Rejection → Echo | 15–40 % | ≤ 25 min |
 
-L'Echo peut dépasser l'Apex de **6 %** au plus — la fausse sortie du dernier top ; au-delà, il a
-cassé et ce n'est pas un double top. La séance seulement, Base comprise : aucun double top ne se
-prend hors séance.
+Un test plus tardif ne déplace pas l'Echo : le double top garde celui d'avant. L'Echo peut dépasser
+l'Apex de **6 %** au plus — la fausse sortie du dernier top ; au-delà, il a cassé et ce n'est pas un
+double top. La séance seulement, Base comprise : aucun double top ne se prend hors séance.
 
 ---
 

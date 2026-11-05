@@ -3,7 +3,7 @@
 > **Short** a stock that ran hard intraday, got rejected, and comes back to test its high. The bet :
 > the second test fails, because the rejection convinced the market the top is in.
 
-*Last revised : 2026-10-27 (the Sink is the low of the first fall ; what the scanner proposes, #776) ; 2026-10-13 (the points named BARES, #716) ; 2026-10-12 (the measured drop, #706) ; 2026-09-25, from the Trading Desk session of 14 September, « Les Patterns ».*
+*Last revised : 2026-11-05 (the scanner's Echo within 25 min, #885) ; 2026-10-27 (the Sink is the low of the first fall ; what the scanner proposes, #776) ; 2026-10-13 (the points named BARES, #716) ; 2026-10-12 (the measured drop, #706) ; 2026-09-25, from the Trading Desk session of 14 September, « Les Patterns ».*
 
 ---
 
@@ -59,11 +59,11 @@ is never seen. Each leg is a target ± an acceptance, within its time :
 |-----|------|------|
 | **A** — Base → Apex | 40–200 % | ≤ 60 min |
 | **R** — off the Apex | 15–32 % | ≤ 30 min |
-| **E** — Rejection → Echo | 15–40 % | ≤ 60 min |
+| **E** — Rejection → Echo | 15–40 % | ≤ 25 min |
 
-The Echo may clear the Apex by up to **6 %** — the fake-out of the last top ; past that, it broke
-out and there is no double top. The session only, the Base included : no double top is taken in the
-extended hours.
+A later test does not move the Echo : the double top keeps the one before it. The Echo may clear the
+Apex by up to **6 %** — the fake-out of the last top ; past that, it broke out and there is no
+double top. The session only, the Base included : no double top is taken in the extended hours.
 
 ---
 
