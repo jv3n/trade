@@ -8,6 +8,6 @@
     "deploy:prod": "wrangler deploy --env prod"
   },
   "devDependencies": {
-    "wrangler": "4.156.0"
+    "wrangler": "4.158.0"
   }
 }
