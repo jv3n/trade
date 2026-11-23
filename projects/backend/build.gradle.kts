@@ -1,7 +1,7 @@
 plugins {
   kotlin("jvm") version "2.4.21"
   kotlin("plugin.spring") version "2.4.21"
-  id("org.springframework.boot") version "4.1.2"
+  id("org.springframework.boot") version "4.2.0"
   id("io.spring.dependency-management") version "1.1.7"
   kotlin("plugin.jpa") version "2.4.21"
   id("com.diffplug.spotless") version "8.11.0"
@@ -105,7 +105,7 @@ dependencies {
   // Spring Boot starter auto-instruments uncaught controller exceptions and pulls in the Logback
   // appender so MDC values (notably `userId`) become event extras automatically. The `-4` artifact
   // is the Spring Boot 4 one ; the `-jakarta` starter targets Boot 3 and doesn't wire on Boot 4.
-  implementation("io.sentry:sentry-spring-boot-4-starter:8.63.0")
+  implementation("io.sentry:sentry-spring-boot-4-starter:8.65.0")
   runtimeOnly("org.postgresql:postgresql")
   developmentOnly("org.springframework.boot:spring-boot-devtools")
   testImplementation("org.springframework.boot:spring-boot-starter-test")
