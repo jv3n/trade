@@ -7,4 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository
 interface ScannerRunRepository : JpaRepository<ScannerRun, UUID> {
 
   fun findFirstByUserIdOrderByStartedAtDesc(userId: UUID): ScannerRun?
+
+  fun findFirstByUserIdOrderByTradingDateDesc(userId: UUID): ScannerRun?
 }

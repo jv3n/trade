@@ -3,6 +3,7 @@ package com.portfolioai.scanner.infrastructure.http
 import com.portfolioai.daybars.application.dto.DayTicker
 import com.portfolioai.scanner.application.ScannerService
 import com.portfolioai.scanner.application.dto.DayBarsRequest
+import com.portfolioai.scanner.application.dto.LastScannedDay
 import com.portfolioai.scanner.application.dto.ScannedStatsRequest
 import com.portfolioai.scanner.application.dto.ScannerRunDto
 import com.portfolioai.scanner.application.dto.ScannerRunRequest
@@ -21,7 +22,8 @@ import org.springframework.web.bind.annotation.RestController
 @Tag(
   name = "Scanner",
   description =
-    "ts-scanner's way in : the POSTs and the missing-bars list take its bearer token and nothing " +
+    "ts-scanner's way in : the POSTs, the missing-bars list and the last trading day scanned take " +
+      "its bearer token and nothing " +
       "else, the latest run is read by the owner's session.",
 )
 @RestController
@@ -49,6 +51,11 @@ class ScannerController(private val service: ScannerService) {
   @PostMapping("/bars/not-found")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   fun recordBarsNotFound(@RequestBody request: DayTicker) = service.recordBarsNotFound(request)
+
+  /** The scanner's token, for a catch-up run (#911) ; 204 before the scanner ever ran. */
+  @GetMapping("/runs/last-trading-date")
+  fun lastScannedDay(): ResponseEntity<LastScannedDay> =
+    service.lastScannedDay()?.let { ResponseEntity.ok(it) } ?: ResponseEntity.noContent().build()
 
   /** 204 before the scanner ever ran. */
   @GetMapping("/runs/latest")

@@ -38,6 +38,9 @@ data class ScannerRunRequest(
   val missedTickers: List<String> = emptyList(),
 )
 
+/** The last trading day the scanner ran on — what a catch-up run starts after (#911). */
+data class LastScannedDay(val tradingDate: LocalDate)
+
 data class ScannerRunDto(
   val id: UUID,
   val tradingDate: LocalDate,
