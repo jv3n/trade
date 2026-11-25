@@ -101,7 +101,7 @@ class ScannerIntegrationTest {
   }
 
   @Test
-  fun `the token opens nothing but the scanner's POSTs`() {
+  fun `the token opens nothing but the scanner's own paths`() {
     mvc.perform(get("/api/stats").withToken()).andExpect(status().isUnauthorized)
     mvc.perform(get("/api/scanner/runs/latest").withToken()).andExpect(status().isUnauthorized)
   }
@@ -218,6 +218,47 @@ class ScannerIntegrationTest {
       .andExpect(jsonPath("$.startedAt").value("2026-10-23T11:00:00Z"))
       .andExpect(jsonPath("$.tickersScanned").value(412))
       .andExpect(jsonPath("$.error").value("Massive answered 429"))
+  }
+
+  @Test
+  fun `the token reads the last trading day scanned, none before the first`() {
+    mvc
+      .perform(get("/api/scanner/runs/last-trading-date").withToken())
+      .andExpect(status().isNoContent)
+    pushRun(run("2026-10-23T11:00:00Z", error = null, tradingDate = "2026-10-22"))
+      .andExpect(status().isCreated)
+
+    mvc
+      .perform(get("/api/scanner/runs/last-trading-date").withToken())
+      .andExpect(status().isOk)
+      .andExpect(jsonPath("$.tradingDate").value("2026-10-22"))
+  }
+
+  @Test
+  fun `the last trading day scanned is the latest day, not the latest run — a replay of an old day does not move it back`() {
+    pushRun(run("2026-10-23T11:00:00Z", error = null, tradingDate = "2026-10-22"))
+      .andExpect(status().isCreated)
+    pushRun(run("2026-10-24T11:00:00Z", error = null, tradingDate = "2026-10-15"))
+      .andExpect(status().isCreated)
+
+    mvc
+      .perform(get("/api/scanner/runs/last-trading-date").withToken())
+      .andExpect(jsonPath("$.tradingDate").value("2026-10-22"))
+  }
+
+  @Test
+  fun `a failed run counts as scanned — replaying it is a manual run`() {
+    pushRun(run("2026-10-23T11:00:00Z", error = "Massive answered 429", tradingDate = "2026-10-22"))
+      .andExpect(status().isCreated)
+
+    mvc
+      .perform(get("/api/scanner/runs/last-trading-date").withToken())
+      .andExpect(jsonPath("$.tradingDate").value("2026-10-22"))
+  }
+
+  @Test
+  fun `the last trading day scanned is closed without the token`() {
+    mvc.perform(get("/api/scanner/runs/last-trading-date")).andExpect(status().isUnauthorized)
   }
 
   @Test
@@ -358,10 +399,11 @@ class ScannerIntegrationTest {
     error: String?,
     gusFound: Int = 2,
     missedTickers: List<String> = emptyList(),
+    tradingDate: Any = DAY,
   ) =
     json.writeValueAsString(
       mapOf(
-        "tradingDate" to DAY,
+        "tradingDate" to tradingDate,
         "startedAt" to startedAt,
         "finishedAt" to startedAt.replace("11:00", "11:20"),
         "tickersScanned" to 412,

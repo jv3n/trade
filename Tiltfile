@@ -335,18 +335,14 @@ cmd_button(
     ],
 )
 
-# Production : the same, from SCANNER_PROD_URL and the `scanner-api-token` secret, after a
-# confirmation.
+# Production, from SCANNER_PROD_URL and the `scanner-api-token` secret, after a confirmation : no
+# dates (#911), it scans every trading day after the last one production has scanned.
 cmd_button(
     name="ts-scanner-prod",
     resource="ts-scanner 📡",
     text="scan → production",
     icon_name="cloud_upload",
-    argv=["sh", "-c", './devops/tools/tilt/ts-scanner.sh prod "$FROM" "$TO"'],
-    inputs=[
-        text_input("FROM", "First trading day (empty = the previous one)"),
-        text_input("TO", "Last trading day (empty = the previous one ; the first again = that day alone)"),
-    ],
+    argv=["./devops/tools/tilt/ts-scanner.sh", "prod"],
     requires_confirmation=True,
 )
 

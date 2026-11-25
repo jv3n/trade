@@ -7,6 +7,7 @@ import com.portfolioai.daybars.application.DayBarsService
 import com.portfolioai.daybars.application.dto.DayTicker
 import com.portfolioai.daybars.application.dto.toDomain
 import com.portfolioai.scanner.application.dto.DayBarsRequest
+import com.portfolioai.scanner.application.dto.LastScannedDay
 import com.portfolioai.scanner.application.dto.ScannedStatsRequest
 import com.portfolioai.scanner.application.dto.ScannerRunDto
 import com.portfolioai.scanner.application.dto.ScannerRunRequest
@@ -127,6 +128,14 @@ class ScannerService(
   @Transactional(readOnly = true)
   fun latestRun(): ScannerRunDto? =
     runs.findFirstByUserIdOrderByStartedAtDesc(authService.getCurrentUser().id)?.toDto()
+
+  /**
+   * The owner's latest trading day scanned, failed or partial runs included — not the latest run
+   * started, which a replay of an old day would move back. Null before the scanner ever ran.
+   */
+  @Transactional(readOnly = true)
+  fun lastScannedDay(): LastScannedDay? =
+    runs.findFirstByUserIdOrderByTradingDateDesc(owner().id)?.let { LastScannedDay(it.tradingDate) }
 
   /**
    * The tickers alone, each once : an entry is read down to its first word, kept when it is a

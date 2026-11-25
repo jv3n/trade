@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Runs ts-scanner (#766) from its sibling checkout : it scans the previous trading day — or every
 # trading day since a date, the one-month backfill — pushes what it found to trade's scanner
-# endpoints, and exits. Against the local backend, or staging / production when asked.
+# endpoints, and exits. Against the local backend, or staging / production when asked. Production
+# without dates catches up (#911) : every trading day after the last one it scanned.
 # shellcheck source=_common.sh
 . "$(dirname "${BASH_SOURCE[0]}")/_common.sh"
 
@@ -53,6 +54,38 @@ prod) remote SCANNER_PROD_URL scanner-api-token ;;
 esac
 
 is_day() { [[ "$1" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; }
+
+# Production's catch-up : the day after its last trading day scanned, weekends skipped here so an
+# up-to-date production spends no market-data call. None scanned yet → the previous trading day.
+if [ "$target" = prod ] && [ -z "$from" ]; then
+  # The header through a file descriptor : on the command line the token would show in `ps`.
+  body="$(mktemp)"
+  code="$(curl -sS -o "$body" -w '%{http_code}' -H @<(printf 'Authorization: Bearer %s' "$token") \
+    "$url/api/scanner/runs/last-trading-date")" || code=000
+  last="$(grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}' "$body" || true)"
+  rm -f "$body"
+  case "$code" in
+  200 | 204) ;;
+  401 | 404)
+    ko "production answers $code to the catch-up — not deployed with #911 yet, or the token is refused"
+    exit 1
+    ;;
+  *)
+    ko "could not read production's last trading day scanned (HTTP $code)"
+    exit 1
+    ;;
+  esac
+  if [ -n "$last" ]; then
+    next="$(date -d "$last + 1 day" +%F)"
+    while [ "$(date -d "$next" +%u)" -gt 5 ]; do next="$(date -d "$next + 1 day" +%F)"; done
+    if [[ ! "$next" < "$(date +%F)" ]]; then
+      ok "production is up to date — last trading day scanned : $last"
+      exit 0
+    fi
+    from="$next"
+    step "production last scanned $last — catching up from $from"
+  fi
+fi
 [ -z "$to" ] || [ -n "$from" ] || { ko "a last day needs a first one"; exit 1; }
 args=()
 if [ -n "$from" ]; then
